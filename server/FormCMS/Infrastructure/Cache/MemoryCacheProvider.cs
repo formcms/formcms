@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Caching.Memory;
 
-namespace FormCMS.Core.Cache;
+namespace FormCMS.Infrastructure.Cache;
 
 public class MemoryCacheProvider(IMemoryCache memoryCache) : ICacheProvider
 {

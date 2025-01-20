@@ -1,4 +1,4 @@
-using FormCMS.Utils.RelationDbDao;
+using FormCMS.Infrastructure.RelationDbDao;
 using Microsoft.Data.Sqlite;
 using Npgsql;
 using Microsoft.Data.SqlClient;
@@ -28,7 +28,7 @@ public static class Utils
                 connection.Open();
                 return connection;
             });
-            services.AddScoped<IDao, SqliteDao>();
+            services.AddScoped<IRelationDbDao, SqliteDao>();
             return services;
         }
 
@@ -40,7 +40,7 @@ public static class Utils
                 connection.Open();
                 return connection;
             });
-            services.AddScoped<IDao, SqlServerIDao>();
+            services.AddScoped<IRelationDbDao, SqlServerIDao>();
             return services;
         }
 
@@ -53,7 +53,7 @@ public static class Utils
                 return connection;
             });
 
-            services.AddScoped<IDao, PostgresDao>();
+            services.AddScoped<IRelationDbDao, PostgresDao>();
             return services;
         }
         return services;

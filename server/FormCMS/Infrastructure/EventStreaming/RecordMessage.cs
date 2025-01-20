@@ -1,4 +1,4 @@
-namespace FormCMS.Utils.EventStreaming;
+namespace FormCMS.Infrastructure.EventStreaming;
 
 public record RecordMessage(string Operation, string EntityName,  string Id, Record Data)
 {

@@ -4,9 +4,9 @@ using Microsoft.Data.Sqlite;
 using SqlKata.Compilers;
 using SqlKata.Execution;
 
-namespace FormCMS.Utils.RelationDbDao;
+namespace FormCMS.Infrastructure.RelationDbDao;
 
-public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> logger) : IDao
+public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> logger) : IRelationDbDao
 {
     private readonly Compiler _compiler = new SqliteCompiler();
     private SqliteTransaction? _transaction;

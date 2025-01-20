@@ -1,11 +1,40 @@
 using System.Data;
+using FormCMS.Utils.EnumExt;
 using SqlKata.Execution;
 
-namespace FormCMS.Utils.RelationDbDao;
+namespace FormCMS.Infrastructure.RelationDbDao;
 
 public sealed record DatabaseTypeValue(string S = "", int? I = null, DateTime? D = null);
 
-public interface IDao
+public enum ColumnType
+{
+    Int ,
+    Datetime ,
+
+    Text , //slow performance compare to string
+    String //has length limit 255 
+}
+
+public enum DefaultColumnNames
+{
+    Id,
+    Deleted,
+    CreatedAt,
+    UpdatedAt,
+    PublicationStatus 
+}
+
+public record Column(string Name, ColumnType Type);
+
+public static class ColumnHelper
+{
+    public static Column[] EnsureDeleted(this Column[] columnDefinitions)
+        => columnDefinitions.FirstOrDefault(x => x.Name == DefaultColumnNames.Deleted.ToCamelCase()) is not null
+            ? columnDefinitions
+            : [..columnDefinitions, new Column(DefaultColumnNames.Deleted.ToCamelCase(), ColumnType.Int)];
+}
+
+public interface IRelationDbDao
 {
     //after begin transaction, all operation begin to use this transaction
     //it is the caller's duty to dispose transaction

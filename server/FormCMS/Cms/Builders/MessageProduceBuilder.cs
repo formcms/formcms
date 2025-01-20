@@ -1,5 +1,5 @@
 using System.Text.Json;
-using FormCMS.Utils.EventStreaming;
+using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Core.HookFactory;
 
 namespace FormCMS.Cms.Builders;

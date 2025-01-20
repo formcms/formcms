@@ -1,12 +1,11 @@
 using System.Text.Json;
-using FormCMS.Core.Descriptors;
 using FormCMS.Utils.HttpClientExt;
 using FormCMS.Utils.JsonUtil;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
-using FormCMS.CoreKit.DocDbQuery;
 using FormCMS.DataLink.Types;
-using FormCMS.Utils.EventStreaming;
+using FormCMS.Infrastructure.DocumentDbDao;
+using FormCMS.Infrastructure.EventStreaming;
 
 namespace FormCMS.DataLink.Workers;
 

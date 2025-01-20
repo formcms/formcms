@@ -1,9 +1,9 @@
 using SqlKata;
 
-namespace FormCMS.Utils.RelationDbDao;
+namespace FormCMS.Infrastructure.RelationDbDao;
 
 public record KateQueryExecutorOption(int? TimeoutSeconds);
-public sealed class KateQueryExecutor(IDao provider, KateQueryExecutorOption option)
+public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutorOption option)
 {
    public Task<int> Exec(
       Query query,  CancellationToken ct = default

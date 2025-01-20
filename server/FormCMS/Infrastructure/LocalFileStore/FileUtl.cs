@@ -1,10 +1,10 @@
 using FluentResults;
 using SkiaSharp; 
 
-namespace FormCMS.Utils.LocalFileStore;
+namespace FormCMS.Infrastructure.LocalFileStore;
 
 public record LocalFileStoreOptions(string PathPrefix, int MaxImageWith, int Quality);
-public class LocalFileStore(LocalFileStoreOptions options)
+public class LocalFileStore(LocalFileStoreOptions options):IFileStore
 {
     public async Task<Result<string[]>> Save(IEnumerable<IFormFile> files)
     {

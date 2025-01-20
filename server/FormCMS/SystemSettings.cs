@@ -1,4 +1,4 @@
-namespace FormCMS.Cms;
+namespace FormCMS;
 
 public class ImageCompressionOptions
 {

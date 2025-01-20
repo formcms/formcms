@@ -1,6 +1,6 @@
 using FluentResults;
 
-namespace FormCMS.Auth.WebAppBuilders;
+namespace FormCMS.Auth.Builders;
 
 public interface IAuthBuilder
 {

@@ -1,6 +1,6 @@
 using NATS.Client.Core;
 
-namespace FormCMS.Utils.EventStreaming;
+namespace FormCMS.Infrastructure.EventStreaming;
 
 public class NatsConsumer(ILogger<NatsConsumer> logger,INatsConnection connection):IStringMessageConsumer
 {

@@ -4,8 +4,8 @@ using FormCMS.Utils.JsonUtil;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
 using FormCMS.Core.Descriptors;
-using FormCMS.CoreKit.DocDbQuery;
 using FormCMS.DataLink.Types;
+using FormCMS.Infrastructure.DocumentDbDao;
 
 namespace FormCMS.DataLink.Workers;
 

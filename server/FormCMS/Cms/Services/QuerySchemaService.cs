@@ -1,4 +1,4 @@
-using FormCMS.Core.Cache;
+using FormCMS.Infrastructure.Cache;
 using FormCMS.Cms.Graph;
 using FluentResults;
 using FluentResults.Extensions;

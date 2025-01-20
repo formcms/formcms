@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Caching.Hybrid;
 
-namespace FormCMS.Core.Cache;
+namespace FormCMS.Infrastructure.Cache;
 
 public sealed class HybridCacheProvider(HybridCache hybridCache):ICacheProvider
 {

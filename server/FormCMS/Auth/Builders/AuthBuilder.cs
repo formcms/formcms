@@ -7,7 +7,7 @@ using FormCMS.Core.HookFactory;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
-namespace FormCMS.Auth.WebAppBuilders;
+namespace FormCMS.Auth.Builders;
 
 public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger): IAuthBuilder
     where TCmsUser : IdentityUser, new()

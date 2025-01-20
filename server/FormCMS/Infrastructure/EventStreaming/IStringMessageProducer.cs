@@ -1,4 +1,4 @@
-namespace FormCMS.Utils.EventStreaming;
+namespace FormCMS.Infrastructure.EventStreaming;
 
 public interface IStringMessageProducer
 {

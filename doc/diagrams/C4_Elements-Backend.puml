@@ -1,0 +1,81 @@
+@startuml C4_Elements
+!include ../../../C4-PlantUML/C4_Component.puml
+title Backend
+
+Container_Boundary(application, "Applications"){
+
+Container_Boundary(cms,"CMS"){
+    Container(cmsServices,"CMS Services"){
+        Component(schemaService,"Schema Service")
+        Component(entityService,"Entity Service")
+        Component(queryService,"Query Service")
+        Component(pageService,"Page Service")
+    }
+    Container(graphQL,"GraphQL"){
+        Component(graphSchema,"GraphQL Schema")
+        Component(graphQuery,"GraphQL Query")
+        Component(graphResolver,"GraphQL Resolver")
+        
+    }
+    Container(cmsBuilders,"Builders"){
+        Component(cmsBuilder,"CMS Builder")
+        Component(cmsWorkerBuilder,"CMS WorkderBuilder")
+        Component(msgProducer,"Message Producer Builder")
+        Component(mongoQuery,"Mongo Query Builder")
+    }
+}
+
+Container_Boundary(auth,"Auth"){
+     Container(authServices,"Auth Services"){
+            Component(accountService,"Account Service")
+            Component(profileService,"Profile Service")
+            Component(schemaPermission,"Schema Permission Service")
+            Component(entityPermission,"Entity Permission Service")
+        }
+}
+
+Container_Boundary(dataLink,"Data Link"){
+     Container(dataLinkWorkers,"Data Link Workers"){
+         Component(migrateWorker,"Migrate Worker")
+         Component(syncWorker,"Sync Workder")
+     }
+}
+}
+
+Container_Boundary(core,"Core"){
+    Container(coreModel,"Core (Domain Model)"){
+        Component(descriptors,"Descriptors")
+        Component(hookFactory,"Hook Factory")
+    }
+    Container(coreKit,"Core Kit"){
+        Component(relationDbQuery,"RelationDbQuery")
+        Component(docDbQuery,"DocDbQuery")
+    }
+}
+
+Container(utils,"Utils"){
+    Component(dictionaryExt,"DictionaryExt")
+    Component(jsonUtil,"jsonUtil")
+    Component(resultExt,"resultEXt")
+    Component(enumExt,"EnumExt")
+    Component(pageRender,"Page Render")
+    Component(graphTypeConverter,"GraphQL Type Converter")
+}
+
+Container(infrastructure,"Infrastructure"){
+    Component(cache,"Cache")
+    Component(relationDbDao,"Relation DB Dao")
+    Component(documentDbDao,"Document DB Dao")
+    Component(fileStore,"File Storage")
+    Component(eventStreaming,"Event Streaming")
+}
+    
+
+Rel(application,core,"ref","")
+Rel(application,infrastructure,"ref","")
+Rel(application,utils,"ref","")
+
+Rel(infrastructure, utils,"ref","")
+Rel(core,utils,"ref","")
+
+@enduml

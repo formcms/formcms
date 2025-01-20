@@ -1,4 +1,4 @@
-namespace FormCMS.Core.Cache;
+namespace FormCMS.Infrastructure.Cache;
 
 public interface ICacheProvider
 {

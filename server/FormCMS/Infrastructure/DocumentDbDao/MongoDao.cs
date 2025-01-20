@@ -2,7 +2,7 @@ using FormCMS.Utils.BsonDocumentExt;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
-namespace FormCMS.CoreKit.DocDbQuery;
+namespace FormCMS.Infrastructure.DocumentDbDao;
 
 public sealed class MongoDao(ILogger<MongoDao> logger, IMongoDatabase db):IDocumentDbDao 
 {

@@ -1,10 +1,10 @@
 using System.Collections.Immutable;
-using FormCMS.Core.Cache;
+using FormCMS.Infrastructure.Cache;
 using FluentResults;
 using FluentResults.Extensions;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
-using FormCMS.Utils.RelationDbDao;
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.ResultExt;
 using Descriptors_Attribute = FormCMS.Core.Descriptors.Attribute;
 
@@ -12,7 +12,7 @@ namespace FormCMS.Cms.Services;
 
 public sealed class EntitySchemaService(
     ISchemaService schemaSvc,
-    IDao dao,
+    IRelationDbDao dao,
     KeyValueCache<ImmutableArray<Entity>> entityCache,
     HookRegistry hook,
     IServiceProvider provider

@@ -4,13 +4,13 @@ using FormCMS.Auth.Handlers;
 using FormCMS.Auth.Services;
 using FormCMS.Cms.Handlers;
 using FormCMS.Cms.Services;
-using FormCMS.Core.Cache;
 using FormCMS.Cms.Graph;
 using FormCMS.Core.HookFactory;
-using FormCMS.Utils.LocalFileStore;
 using FormCMS.Utils.PageRender;
 using FormCMS.Core.Descriptors;
-using FormCMS.Utils.RelationDbDao;
+using FormCMS.Infrastructure.Cache;
+using FormCMS.Infrastructure.LocalFileStore;
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.ResultExt;
 using GraphQL;
 using Microsoft.AspNetCore.Diagnostics;
@@ -138,7 +138,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
                 Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/files"),
                 systemSettings.ImageCompression.MaxWidth,
                 systemSettings.ImageCompression.Quality));
-            services.AddSingleton<LocalFileStore>();
+            services.AddSingleton<IFileStore,LocalFileStore>();
         }
     }
 

@@ -4,9 +4,9 @@ using Microsoft.Data.SqlClient;
 using SqlKata.Compilers;
 using SqlKata.Execution;
 
-namespace FormCMS.Utils.RelationDbDao;
+namespace FormCMS.Infrastructure.RelationDbDao;
 
-public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logger ) : IDao
+public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logger ) : IRelationDbDao
 {
     private readonly Compiler _compiler = new SqlServerCompiler();
     private  SqlTransaction? _transaction = null;

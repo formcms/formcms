@@ -1,7 +1,6 @@
 using FluentResults;
-using FormCMS.Cms.Handlers;
 using FormCMS.Core.HookFactory;
-using FormCMS.Utils.RelationDbDao;
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
@@ -9,7 +8,7 @@ using FormCMS.Utils.ResultExt;
 namespace FormCMS.Cms.Services;
 
 public sealed class SchemaService(
-    IDao dao,
+    IRelationDbDao dao,
     KateQueryExecutor queryExecutor,
     HookRegistry hook,
     IServiceProvider provider

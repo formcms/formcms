@@ -1,6 +1,6 @@
 using Confluent.Kafka;
 
-namespace FormCMS.Utils.EventStreaming;
+namespace FormCMS.Infrastructure.EventStreaming;
 
 public sealed class KafkaProducer(ILogger<KafkaProducer> logger,IProducer<string,string> producer):IStringMessageProducer
 {

@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Caching.Memory;
 
-namespace FormCMS.Core.Cache;
+namespace FormCMS.Infrastructure.Cache;
 public sealed class KeyValueCache<T>
 {
     private string CacheKey(string key) => _prefix + key;

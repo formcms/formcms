@@ -4,9 +4,9 @@ using Npgsql;
 using SqlKata.Compilers;
 using SqlKata.Execution;
 
-namespace FormCMS.Utils.RelationDbDao;
+namespace FormCMS.Infrastructure.RelationDbDao;
 
-public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connection):IDao
+public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connection):IRelationDbDao
 {
     private NpgsqlTransaction? _transaction;
     private readonly Compiler _compiler = new PostgresCompiler();

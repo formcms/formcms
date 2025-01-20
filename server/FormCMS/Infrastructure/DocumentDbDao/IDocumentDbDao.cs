@@ -1,7 +1,4 @@
-using FormCMS.Core.Descriptors;
-using FluentResults;
-
-namespace FormCMS.CoreKit.DocDbQuery;
+namespace FormCMS.Infrastructure.DocumentDbDao;
 
 public interface IDocumentDbDao
 {
