@@ -2,18 +2,15 @@
 Welcome to [FormCMS](https://github.com/formcms/formcms)! 🚀  
 [![GitHub stars](https://img.shields.io/github/stars/formcms/formcms.svg?style=social&label=Star)](https://github.com/formcms/formcms/stargazers)
 
-Its mission is to simplify data modeling, backend development, and frontend development, making them as effortless as filling out a FORM📋.
-
-If you'd like to contribute, please check out our [CONTRIBUTING guide](https://github.com/formcms/formcms/blob/main/CONTRIBUTING.md).  
-Enjoying FormCMS? Don’t forget to give us a ⭐ and help us grow!     
-
-
+Our mission is to make **data modeling**, **backend development**, and **frontend development** as simple and intuitive as filling out a **form** 📋  
+We’d love for you to contribute to FormCMS! Check out our [CONTRIBUTING guide](https://github.com/formcms/formcms/blob/main/CONTRIBUTING.md) to get started.  
+Love FormCMS? Show your support by giving us a ⭐ on GitHub and help us grow! 🌟  
 
 
 ---
 ## What is  FormCMS?
 
-**FormCMS** is an open-source Content Management System designed to simplify and accelerate web development workflows. While it's particularly suited for CMS projects, it is also highly beneficial for general web applications, reducing the need for repetitive REST/GraphQL API development.
+**FormCMS** is an open-source Content Management System designed to simplify and speed-up web development workflows. While it's particularly suited for CMS projects, it is also highly beneficial for general web applications, reducing the need for repetitive REST/GraphQL API development.
 
 - **Effortless CRUD Operations:**  FormCMS includes built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations, complemented by a React-based admin panel for efficient data management.
 
@@ -128,13 +125,13 @@ The `Materials` table inventories resources linked to courses.
 After launching the web application, locate the **Schema Builder** menu on the homepage to start defining your schema.
 
 #### Adding Entities
-[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/list.html?schema=entity)  
+[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/list.html?schema=entity)  
 1. Navigate to the **Entities** section of the Schema Builder.
 2. Create entities such as "Teacher" and "Course."
 3. For the `Course` entity, add attributes such as `name`, `status`, `level`, and `description`.
 ---
 ### Defining Relationships
-[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/edit.html?schema=entity&id=27)  
+[Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&id=27)  
 
 #### 1. **Course and Teacher (Many-to-One Relationship)**
 To establish a many-to-one relationship between the `Course` and `Teacher` entities, you can include a `Lookup` attribute in the `Course` entity. This allows selecting a single `Teacher` record when adding or updating a `Course`.
@@ -148,7 +145,7 @@ To establish a many-to-one relationship between the `Course` and `Teacher` entit
 
 **Description:** When a course is created or modified, a teacher record can be looked up and linked to the course.
 
-#### 2 ** Course and Lesson(One-to-Many Relationship)**
+#### 2 **Course and Lesson(One-to-Many Relationship)**
 To establish a one-to-many relationship between the `Course` and `Lesson` entities, use a `Collection` attribute in the `Course` entity. This enables associating multiple lessons with a single course.
 
 | **Attribute**   | **Value**  |
@@ -204,11 +201,12 @@ The Admin Panel supports various UI controls to display attributes:
 - `"treeSelect"`: Select an item from another entity with a many-to-one relationship (requires `Lookup` data type), items are organized as tree.
 
 - `"picklist"`: Select multiple items from another entity with a many-to-many relationship (requires `Junction` data type).
-- `"tree"`: Select multiple items from another entity with a many-to-many relationship (requires `Junction` data type), items are organized as tree.
+- `"tree"`: Select multiple items from another entity with a many-to-many relationship (requires `Junction` data type), items are organized as a tree.
+- `"edittable"`: Manage items of a one-to-many sub-entity (requires `Collection` data type).  
 
-- `"edittable"`: Manage items of a one-to-many sub-entity (requires `Collection` data type).
+
 ---
-[See this example how to configure entity `category`, so it's item can be organized as tree.] (https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&id=103)
+[See this example how to configure entity `category`, so it's item can be organized as tree.](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&id=103)
 ### **DataType to DisplayType Mapping Table**
 Below is a mapping of valid `DataType` and `DisplayType` combinations:
 
@@ -266,6 +264,42 @@ Detail page provides an interface to manage single record.
 #### Example of `lookup`,`picklist`,`edittable`
 [Course Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course/22)
 
+
+
+
+
+
+---
+
+## Publish Content
+This feature allows content creators to plan and organize their work, saving drafts for later completion.
+
+### Content Publication Status
+Content can have one of the following publication statuses:
+- **`draft`**
+- **`scheduled`**
+- **`published`**
+- **`unpublished`**
+
+Only content with the status **`published`** can be retrieved through GraphQL queries.
+
+---
+
+### Setting Default Publication Status in the Schema Builder
+When defining an entity in the Schema Builder, you can configure its default publication status as either **`draft`** or **`published`**.
+
+---
+
+### Managing Publication Status in the Admin Panel
+On the content edit page, you can:
+- **Publish**: Make content immediately available.
+- **Unpublish**: Remove content from public view.
+- **Schedule**: Set a specific date and time for the content to be published.
+
+---
+
+### Publication Worker
+The **Publication Worker** automates the process of updating scheduled items in batches, transitioning them to the **`published`** status at the appropriate time.
 
 
 
@@ -805,7 +839,7 @@ FormCMS leverages [Handlebars expressions](https://github.com/Handlebars-Net/Han
 
 Singleton fields are enclosed within `{{ }}` to dynamically bind individual values.
 
-- **Example Page Settings:** [Page Schema Settings](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/page.html?schema=page&id=33)
+- **Example Page Settings:** [Page Schema Settings](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/page.html?schema=page&id=33)
 - **Example Query:** [Retrieve Course Data](https://fluent-cms-admin.azurewebsites.net/api/queries/course/?course_id=22)
 - **Example Rendered Page:** [Rendered Course Page](https://fluent-cms-admin.azurewebsites.net/pages/course/22)
 
@@ -823,7 +857,7 @@ Singleton fields are enclosed within `{{ }}` to dynamically bind individual valu
 
 In FormCMS, you won’t explicitly see the `{{#each}}` statement in the Page Designer. If a block's data source is set to `data-list`, the system automatically generates the loop.
 
-- **Example Page Settings:** [Page Schema Settings](https://fluent-cms-admin.azurewebsites.net/_content/FluentCMS/schema-ui/page.html?schema=page&id=32)
+- **Example Page Settings:** [Page Schema Settings](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/page.html?schema=page&id=32)
 - **Example Rendered Page:** [Rendered List Page](https://fluent-cms-admin.azurewebsites.net/)
 - **Example Queries:**
    - [Featured Courses](https://fluent-cms-admin.azurewebsites.net/api/queries/course/?status=featured)
@@ -911,6 +945,48 @@ Course Details <-------> Teacher Details
 ![Teacher Page Designer](https://raw.githubusercontent.com/formcms/formcms/doc/doc/screenshots/designer-teacher.png)
 
 When rendering the page, the `PageService` automatically passes the `teacher_id` (e.g., `{teacher_id: 3}`) to the query.
+
+
+
+---
+
+## Navigation by Category  
+
+### **Demo of Category Tree and Breadcrumb Navigation**  
+- **Category Tree Navigation**:  
+  [View Demo](https://fluent-cms-admin.azurewebsites.net/course)  
+- **Breadcrumb Navigation**:  
+  [View Demo](https://fluent-cms-admin.azurewebsites.net/course/27)  
+
+---
+
+### **Creating a Category Entity**
+To create a category entity in the Schema Builder, include `parent` and `children` attributes.
+- **Example Configuration**:  
+  [Edit Example](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&id=103)
+
+---
+
+### **Configuration Options for Navigation**
+- **DataType: `lookup`** & **DisplayType: `TreeSelect`**  
+  Use this configuration to display a category as a property.  
+  [Edit Example](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&id=96)
+
+- **DataType: `junction`** & **DisplayType: `Tree`**  
+  Use this configuration to enable category-based navigation.  
+  [Edit Example](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&id=27)
+
+---
+
+### **Using Navigation Components in Page Designer**
+- **Tree Layer Menu**:  
+  Use the `Tree Layer Menu` component for hierarchical navigation.  
+  [Edit Example](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/page.html?schema=page&id=42)
+
+- **Breadcrumbs**:  
+  Use the `Breadcrumbs` component to display navigation paths.  
+  [Edit Example](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/page.html?schema=page&id=33)
+
 
 
 ---
@@ -1315,54 +1391,102 @@ With this setup, events are produced to Kafka, allowing consumers to process bus
 
 
 
+
+
+
 ---
+
 ## Development Guide
+
 The backend is written in ASP.NET Core, the Admin Panel uses React, and the Schema Builder is developed with jQuery.
 
+### Overview  
+The system comprises three main components:  
+1. **Backend** - Developed in ASP.NET Core.  
+2. **Admin Panel** - Built using React.  
+3. **Schema Builder** - Created with jQuery.  
 
-### System Overviews
-![System Overview](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/overview.png)   
+#### System Diagram  
+![System Overview](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/overview.png)
+
+### Repository Links  
 - [**Backend Server**](https://github.com/formcms/formcms/tree/main/server/FormCMS)  
 - [**Admin Panel UI**](https://github.com/formcms/formcms/tree/main/admin-panel)  
 - [**Schema Builder**](https://github.com/formcms/formcms/tree/main/server/FormCMS/wwwroot/schema-ui)  
 
-### Backend Server
-- **Tools**:  
-    - **ASP.NET Core**  
-    - **SqlKata**: [SqlKata](https://sqlkata.com/)  
+---
 
-![API Controller Service](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/api-controller-service.png)
+### Backend Server
+#### Tools
+- **ASP.NET Core**
+- **SqlKata** ([SqlKata Documentation](https://sqlkata.com/))
+
+#### Architecture
+The backend is influenced by Domain-Driven Design (DDD).  
+![DDD Architecture](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/ddd-architecture.png)
+
+Code organization follows this diagram:  
+![Backend Code Structure](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/C4_Elements-Backend.png)
+
+##### Core (Domain Layer)
+The **Core layer** encapsulates:
+- **Descriptors**: Includes `Entity`, `Filter`, `Sort`, and similar components for building queries.
+- **HookFactory**: Maintains a global `Hook Registry`, enabling developers to integrate custom plugins.
+
+> **Note**: The Core layer is independent of both the Application and Infrastructure layers.
+
+##### Application Layer
+The **Application layer** provides the following functionalities:
+1. **CMS**: Entity CRUD, GraphQL Queries, and Page Designer.
+2. **Auth**: Manages permissions and roles.
+3. **DataLink**: Integrates DocumentDB and Event Streams for scalability.
+
+> Includes `Builders` to configure Dependency Injection and manage Infrastructure components.
+
+##### Infrastructure Layer
+The **Infrastructure layer** defines reusable system infrastructural components.
+- Application services depend on interfaces instead of implementations.
+- Components are designed for portability and can be reused across other projects.
+
+##### Util Layer
+A separate **Util component** contains static classes with pure functions.
+- Accessible across all layers.
+
+---
 
 ### Admin Panel UI
-- **Tools**:
-    - **React**
-    - **PrimeReact**: [PrimeReact UI Library](https://primereact.org/)
-    - **SWR**: [Data Fetching/State Management](https://swr.vercel.app/)
+#### Tools
+- **React**
+- **PrimeReact** ([PrimeReact UI Library](https://primereact.org/))
+- **SWR** ([Data Fetching/State Management](https://swr.vercel.app/))
 
+#### Admin Panel Sequence
 ![Admin Panel Sequence](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/admin-panel-sequence.png)
 
-### Schema Builder UI
-- **Tools**:
-    - **jsoneditor**: [JSON Editor](https://github.com/json-editor/json-editor)
+---
 
-![Schema Builder Sequence](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/schema-builder-sequence.png)
+### Schema Builder UI
+#### Tools
+- **jsoneditor** ([JSON Editor Documentation](https://github.com/json-editor/json-editor))
 
 
 
 ---
 ## Testing Strategy
-This chapter describes  FormCMS's automated testing strategy
+This chapter describes the systems' automated testing strategy
 
- FormCMS favors integration testing over unit testing because integration tests can catch more real-world issues. For example, when inserting a record into the database, multiple modules are involved:
-- `EntitiesController`
+Favors integration testing over unit testing because integration tests can catch more real-world issues.
+For example, when inserting a record into the database, multiple modules are involved:
+- `EntitiesHandler`
 - `EntitiesService`
-- `Entity` (in the query builder)
-- Query executors (e.g., `SqlLite`, `Postgres`, `SqlServer`)
+- `Entity` (in core)
+- `Query executors` (e.g., `SqlLite`, `Postgres`, `SqlServer`)
 
-Writing unit tests for each individual function and mocking its upstream and downstream services can be tedious. Instead, FormCMS focuses on checking the input and output of RESTful API endpoints in its integration tests.
+Writing unit tests for each function and mocking its upstream and downstream services can be tedious.
+Instead, FormCMS focuses on checking the input and output of RESTful API endpoints in its integration tests.
 
-### Integration Testing for FormCMS.Blog `/formcms/server/FormCMS.Course.Tests`
-This project focuses on verifying the functionalities of the FormCMS.Blog example project.
+### Integration Testing for FormCMS.Course `/formcms/server/FormCMS.Course.Tests`
+This project focuses on verifying the functionalities of the FormCMS.Course example project.
 
 ### New Feature Testing `/formcms/server/FormCMS.App.Tests`
 This project is dedicated to testing experimental functionalities, like MongoDB and Kafka plugins.

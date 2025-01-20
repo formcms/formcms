@@ -43,25 +43,35 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     {
         var parts = cols.Select(column => column switch
         {
-            _ when column.Name == DefaultColumnNames.Id.ToCamelCase() => $"{DefaultColumnNames.Id.ToCamelCase()} SERIAL PRIMARY KEY",
-            _ when column.Name == DefaultColumnNames.Deleted.ToCamelCase() => $"{DefaultColumnNames.Deleted.ToCamelCase()} BOOLEAN DEFAULT FALSE",
-            _ when column.Name == DefaultColumnNames.CreatedAt.ToCamelCase()=> $"{DefaultColumnNames.CreatedAt.ToCamelCase()}  TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
-            _ when column.Name == DefaultColumnNames.UpdatedAt.ToCamelCase()=> $"{DefaultColumnNames.UpdatedAt.ToCamelCase()} TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
-            _ => $"\"{column.Name}\" {ColTypeToString(column.Type)}"
+            _ when column.Name == DefaultColumnNames.Id.ToCamelCase() => $"""
+                                                                         "{DefaultColumnNames.Id.ToCamelCase()}" SERIAL PRIMARY KEY
+                                                                         """,
+            _ when column.Name == DefaultColumnNames.Deleted.ToCamelCase() => $"""
+                                                                               "{DefaultColumnNames.Deleted.ToCamelCase()}" BOOLEAN DEFAULT FALSE
+                                                                               """,
+            _ when column.Name == DefaultColumnNames.CreatedAt.ToCamelCase()=> $"""
+                                                                                "{DefaultColumnNames.CreatedAt.ToCamelCase()}"  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                                                                                """,
+            _ when column.Name == DefaultColumnNames.UpdatedAt.ToCamelCase()=> $"""
+                                                                                "{DefaultColumnNames.UpdatedAt.ToCamelCase()}" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                                                                                """,
+            _ => $"""
+                  "{column.Name}" {ColTypeToString(column.Type)}
+                  """
         });
         
-        var sql= $"CREATE TABLE {table} ({string.Join(", ", parts)});";
-        sql += $$"""
+         var sql = $"""
+                CREATE TABLE {table} ({string.Join(", ", parts)});
                 CREATE OR REPLACE FUNCTION __update_updatedAt_column()
                     RETURNS TRIGGER AS $$
                 BEGIN
-                    NEW.{{DefaultColumnNames.UpdatedAt.ToCamelCase()}} = NOW();
+                    NEW."{DefaultColumnNames.UpdatedAt.ToCamelCase()}" = NOW();
                     RETURN NEW;
                 END;
                 $$ LANGUAGE plpgsql;
                 
-                CREATE TRIGGER update_{{table}}_updatedAt} 
-                                BEFORE UPDATE ON {{table}} 
+                CREATE TRIGGER update_{table}_updatedAt 
+                                BEFORE UPDATE ON {table} 
                                 FOR EACH ROW
                 EXECUTE FUNCTION __update_updatedAt_column();
                 """;
@@ -98,9 +108,11 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     
     public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct)
     {
-        var sql = @"SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
-                FROM information_schema.columns
-                WHERE table_name = @tableName;";
+        var sql = $"""
+                  SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
+                  FROM information_schema.columns
+                  WHERE table_name = '{table}';
+                  """;
 
         return await ExecuteQuery(sql, async command =>
         {
@@ -111,7 +123,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                 columnDefinitions.Add(new Column(reader.GetString(0),StringToColType(reader.GetString(1))));
             }
             return columnDefinitions.ToArray();
-        }, ("tableName", table));
+        } );
     }
 
     private string ColTypeToString(ColumnType t)

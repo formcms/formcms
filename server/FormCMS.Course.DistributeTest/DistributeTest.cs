@@ -1,3 +1,4 @@
+using FormCMS.Auth.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.JsonUtil;
 using FormCMS.Utils.ResultExt;
@@ -15,7 +16,6 @@ public class DistributeTest
     private readonly SchemaApiClient _leaderSchema;
     private readonly EntityApiClient _leaderEntity;
     private readonly QueryApiClient _leaderQuery;
-    private readonly AccountApiClient _leaderAccount;
     
     private readonly QueryApiClient _followerQuery;
 
@@ -30,12 +30,13 @@ public class DistributeTest
             BaseAddress = new Uri(Addr2)
         };
          
-        _leaderAccount = new AccountApiClient(httpClient1);
         _leaderSchema = new SchemaApiClient(httpClient1);
         _leaderEntity = new EntityApiClient(httpClient1);
         _leaderQuery = new QueryApiClient(httpClient1);
         
         _followerQuery = new QueryApiClient(httpClient2);
+
+        new AuthApiClient(httpClient1).EnsureSaLogin();
     }
 
     string EntityName()
@@ -47,36 +48,34 @@ public class DistributeTest
     [Fact]
     public async Task EntityChange()
     {
-        (await _leaderAccount.EnsureLogin()).Ok();
         
         var entityName = EntityName();
-        var schema = (await _leaderSchema.EnsureSimpleEntity(entityName, Title)).Ok();
+        var schema = (await _leaderSchema.EnsureSimpleEntity(entityName, Title,false)).Ok();
         await _leaderEntity.Insert(entityName, Title,"title1");
         
         Thread.Sleep(TimeSpan.FromSeconds(20));
-        (await _followerQuery.SingleGraphQl(entityName, ["id",Title])).Ok();
-        (await _leaderSchema.Delete(schema.Id)).Ok();
+        await _followerQuery.SingleGraphQl(entityName, ["id",Title]).Ok();
+        await _leaderSchema.Delete(schema.Id).Ok();
         Thread.Sleep(TimeSpan.FromSeconds(20)); 
-        (await _followerQuery.SingleGraphQl(entityName, [Title])).Ok();
+        await _followerQuery.SingleGraphQl(entityName, [Title]).Ok();
     }
 
     [Fact]
     public async Task QueryChange()
     {
-        (await _leaderAccount.EnsureLogin()).Ok();
 
         var entityName = EntityName();
-        (await _leaderSchema.EnsureSimpleEntity(entityName, Title)).Ok();
+        await _leaderSchema.EnsureSimpleEntity(entityName, Title,false).Ok();
         await _leaderEntity.Insert(entityName, Title, "title1");
         
-        (await _leaderQuery.SingleGraphQl(entityName, ["id"])).Ok();
+        await _leaderQuery.SingleGraphQl(entityName, ["id"]).Ok();
         Thread.Sleep(TimeSpan.FromSeconds(20));
-        var result = (await _followerQuery.List(entityName)).Ok();
+        var result = await _followerQuery.List(entityName).Ok();
         Assert.Equal(4,result.First().ToDictionary().Count);
         
-        (await _leaderQuery.SingleGraphQl(entityName, ["id", Title])).Ok();
+        await _leaderQuery.SingleGraphQl(entityName, ["id", Title]).Ok();
         Thread.Sleep(TimeSpan.FromSeconds(20));
-        result =(await _followerQuery.List(entityName)).Ok();
+        result =await _followerQuery.List(entityName).Ok();
         Assert.Equal(5, result.First().ToDictionary().Count);
     }
 }

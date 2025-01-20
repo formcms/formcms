@@ -112,7 +112,7 @@ To establish a many-to-one relationship between the `Course` and `Teacher` entit
 
 **Description:** When a course is created or modified, a teacher record can be looked up and linked to the course.
 
-#### 2 ** Course and Lesson(One-to-Many Relationship)**
+#### 2 **Course and Lesson(One-to-Many Relationship)**
 To establish a one-to-many relationship between the `Course` and `Lesson` entities, use a `Collection` attribute in the `Course` entity. This enables associating multiple lessons with a single course.
 
 | **Attribute**   | **Value**  |

@@ -60,7 +60,7 @@
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net9.0</TargetFramework>
         <PackageId>FormCMS</PackageId>
-        <Version>0.3.5</Version>
+        <Version>0.3.6</Version>
         <Authors>Jason C</Authors>
         <Company>FormCMS</Company>
         <Description>A headless CMS with GraphQL API and drag-and-drop page designer.</Description>

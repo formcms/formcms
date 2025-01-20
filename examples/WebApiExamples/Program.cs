@@ -22,8 +22,8 @@ var app = builder.Build();
 //use fluent cms' CRUD 
 await app.UseCmsAsync();
 
-(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa])).Ok();
-(await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin])).Ok();
+await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa]).Ok();
+await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin]).Ok();
 
 var registry = app.GetHookRegistry();
 registry.EntityPreAdd.Register("teacher", addArgs =>

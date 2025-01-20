@@ -3,8 +3,8 @@ using FormCMS.Auth.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.JsonUtil;
 using FormCMS.Core.Descriptors;
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.EnumExt;
-using FormCMS.Utils.RelationDbDao;
 using FormCMS.Utils.ResultExt;
 using IdGen;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
@@ -26,7 +26,7 @@ public class EntityApiTest
 
     public EntityApiTest()
     {
-        Util.SetTestConnectionString();
+        //Util.SetTestConnectionString();
 
         WebAppClient<Program> webAppClient = new();
         _entityApiClient = new EntityApiClient(webAppClient.GetHttpClient());

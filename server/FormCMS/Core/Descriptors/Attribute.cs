@@ -220,7 +220,8 @@ public static class AttributeHelper
 
         string[] timeAttrs =
         [
-            DefaultAttributeNames.CreatedAt.ToCamelCase(), DefaultAttributeNames.UpdatedAt.ToCamelCase(),
+            DefaultAttributeNames.CreatedAt.ToCamelCase(), 
+            DefaultAttributeNames.UpdatedAt.ToCamelCase(),
             DefaultAttributeNames.PublishedAt.ToCamelCase()
         ];
 

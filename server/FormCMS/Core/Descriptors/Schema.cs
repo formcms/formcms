@@ -49,14 +49,14 @@ public static class SchemaHelper
         => BaseQuery().Where(SchemaFields.Id, id);
 
     public static SqlKata.Query ByStartsNameAndType(string name, SchemaType type)
-        => SchemaHelper.BaseQuery()
+        => BaseQuery()
             .WhereStarts(SchemaFields.Name, name)
             .Where(SchemaFields.Type, type.ToCamelCase());
 
     public static SqlKata.Query ByNameAndTypeAndNotId(string name, SchemaType type, int id)
-        => SchemaHelper.BaseQuery()
+        => BaseQuery()
             .Where(SchemaFields.Name, name)
-            .Where(SchemaFields.Type, type)
+            .Where(SchemaFields.Type, type.ToCamelCase())
             .WhereNot(SchemaFields.Id, id);
     
     public static SqlKata.Query ByNameAndType(SchemaType? type, IEnumerable<string>? names)

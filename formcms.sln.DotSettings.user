@@ -121,9 +121,13 @@
   &lt;TestAncestor&gt;
     &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.EntityApiTest.PublishUnpublishEntity&lt;/TestId&gt;
     &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.PageApiTest&lt;/TestId&gt;
+    &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.EntityApiTest&lt;/TestId&gt;
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=5936145c_002Dac6c_002D42d7_002D9696_002Dbc3b141648a6/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="PublishEntity #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=5936145c_002Dac6c_002D42d7_002D9696_002Dbc3b141648a6/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="PublishEntity #2" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;Project Location="/Users/jingshunchen/repos/formcms/server/FormCms.Course.Tests" Presentation="&amp;lt;FormCms.Course.Tests&amp;gt;" /&gt;
+&lt;/SessionState&gt;</s:String>
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=bcc6f3fd_002Da088_002D4ccc_002D98a3_002Dc6e2528c4823/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="InsertListDeleteOk" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;Project Location="/Users/jingshunchen/repos/formcms/server/FormCms.Course.Tests" Presentation="&amp;lt;FormCms.Course.Tests&amp;gt;" /&gt;
 &lt;/SessionState&gt;</s:String>
 	

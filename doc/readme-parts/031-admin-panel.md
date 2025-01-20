@@ -32,11 +32,12 @@ The Admin Panel supports various UI controls to display attributes:
 - `"treeSelect"`: Select an item from another entity with a many-to-one relationship (requires `Lookup` data type), items are organized as tree.
 
 - `"picklist"`: Select multiple items from another entity with a many-to-many relationship (requires `Junction` data type).
-- `"tree"`: Select multiple items from another entity with a many-to-many relationship (requires `Junction` data type), items are organized as tree.
+- `"tree"`: Select multiple items from another entity with a many-to-many relationship (requires `Junction` data type), items are organized as a tree.
+- `"edittable"`: Manage items of a one-to-many sub-entity (requires `Collection` data type).  
 
-- `"edittable"`: Manage items of a one-to-many sub-entity (requires `Collection` data type).
+
 ---
-[See this example how to configure entity `category`, so it's item can be organized as tree.] (https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&id=103)
+[See this example how to configure entity `category`, so it's item can be organized as tree.](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&id=103)
 ### **DataType to DisplayType Mapping Table**
 Below is a mapping of valid `DataType` and `DisplayType` combinations:
 
