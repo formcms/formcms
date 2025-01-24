@@ -66,10 +66,12 @@ public sealed class EntityService(
         var attr = ctx.Entity.Attributes
             .Where(x => 
                 x.Field == ctx.Entity.PrimaryKey 
+                || x.Field == DefaultAttributeNames.UpdatedAt.ToCamelCase() // to avoid dirty write
                 || x.Field == DefaultAttributeNames.PublicationStatus.ToCamelCase()
                 || x.Field == DefaultAttributeNames.PublishedAt.ToCamelCase()
                 || x.InDetail && x.IsLocal())
             .ToArray();
+        
         var query = ctx.Entity.ByIdsQuery(attr.Select(x=>x.AddTableModifier()), [ctx.Id],false);
         var record = await queryExecutor.One(query, ct) ??
                      throw new ResultException($"not find record by [{id}]");
@@ -321,7 +323,12 @@ public sealed class EntityService(
             new EntityPreUpdateArgs(entity.Name, id.ToString()!, record));
 
         var query = entity.UpdateQuery(res.RefRecord).Ok();
-        await queryExecutor.Exec(query, token);
+        
+        var affected = await queryExecutor.ExecAndGetAffected(query, token);
+        if (affected == 0)
+        {
+            throw new ResultException("Error: Concurrent Update Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
+        }
         await hookRegistry.EntityPostUpdate.Trigger(provider,
             new EntityPostUpdateArgs(entity.Name, id.ToString()!, record));
         return record;

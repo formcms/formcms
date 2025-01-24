@@ -2,6 +2,7 @@ using System.Text.Json;
 using FormCMS.Utils.HttpClientExt;
 using FluentResults;
 using FormCMS.Core.Descriptors;
+using FormCMS.Utils.EnumExt;
 
 namespace FormCMS.CoreKit.ApiClient;
 
@@ -51,11 +52,13 @@ public class EntityApiClient(HttpClient client)
     ) => client.PostResult<JsonElement>($"/{entity}/insert".ToEntityApi(), payload,JsonOptions.IgnoreCase);
 
     public Task<Result> Update(
-        string entity, int id, string field, string val
+        string entity, int id, string field, string val, string updatedAt
     ) => Update(entity, new Dictionary<string,object>
     {
-        { "id", id },
-        { field, val }
+        { DefaultAttributeNames.Id.ToCamelCase(), id },
+        { DefaultAttributeNames.UpdatedAt.ToCamelCase(),  updatedAt},
+        { field, val },
+        
     });
 
     private Task<Result> Update(

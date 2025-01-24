@@ -34,7 +34,6 @@ test_sqlserver_container(){
   local password=Admin12345678!
   remove_container $container_name
 
- # docker run --cap-add SYS_PTRACE -e 'ACCEPT_EULA=1' -e "MSSQL_SA_PASSWORD=$password" -p 1433:1433 --name $container_name -d mcr.microsoft.com/azure-sql-edge
   docker run --cap-add SYS_PTRACE -e 'ACCEPT_EULA=1' -e "MSSQL_SA_PASSWORD=$password" -p 1433:1433 --name $container_name -d mcr.microsoft.com/mssql/server:2022-latest 
   sleep 10
   
@@ -48,10 +47,10 @@ set -e
 export Logging__LogLevel__Default=Warning
 export Logging__LogLevel__Microsoft_AspNetCore=Warning
 
-# Sqlite With Default Data 
+#Sqlite With Default Data 
 db_path=$(pwd)/default.db && rm -f "$db_path" && cp ../FormCMS.Blog/cms.db "$db_path" && test_sqlite "$db_path"
 
-# Sqlite With Empty Data 
+#Sqlite With Empty Data 
 db_path=$(pwd)/temp.db && rm -f "$db_path" && test_sqlite "$db_path"
 
 test_postgres_container 

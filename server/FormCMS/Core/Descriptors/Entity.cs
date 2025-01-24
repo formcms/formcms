@@ -8,6 +8,7 @@ using FormCMS.CoreKit.RelationDbQuery;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
 using FormCMS.Utils.EnumExt;
+using GraphQL.Client.Abstractions.Utilities;
 using Npgsql.Internal.Postgres;
 
 namespace FormCMS.Core.Descriptors;
@@ -39,6 +40,7 @@ public record LoadedEntity(
     LoadedAttribute LabelAttribute,
     LoadedAttribute DeletedAttribute,
     LoadedAttribute PublicationStatusAttribute,
+    LoadedAttribute UpdatedAtAttribute,
     string Name,
     string DisplayName , //needed by admin panel
     string TableName,
@@ -63,6 +65,7 @@ public static class EntityHelper
         var attributes = entity.Attributes.Select(x => x.ToLoaded(entity.TableName));
         var deletedAttribute = new LoadedAttribute(entity.TableName, DefaultAttributeNames.Deleted.ToCamelCase());
         var publicationStatusAttribute = new LoadedAttribute(entity.TableName, DefaultAttributeNames.PublicationStatus.ToCamelCase());
+        var updatedAtAttribute = new LoadedAttribute(entity.TableName, DefaultAttributeNames.UpdatedAt.ToCamelCase());
         return new LoadedEntity(
             [..attributes],
             PrimaryKeyAttribute:primaryKey,
@@ -75,6 +78,7 @@ public static class EntityHelper
             LabelAttributeName:entity.LabelAttributeName,
             DefaultPageSize:entity.DefaultPageSize,
             DefaultPublicationStatus:entity.DefaultPublicationStatus,
+            UpdatedAtAttribute:updatedAtAttribute,
             PublicationStatusAttribute:publicationStatusAttribute
         );
     }
@@ -204,13 +208,22 @@ public static class EntityHelper
     public static Result<SqlKata.Query> UpdateQuery(this LoadedEntity e, Record item)
     {
         //to prevent SqlServer 'Cannot update identity column' error 
-        if (!item.Remove(e.PrimaryKey, out var val))
+        if (!item.Remove(e.PrimaryKey, out var id))
         {
-            return Result.Fail($"Failed to get value with primary key [${e.PrimaryKey}]");
+            return Result.Fail($"Failed to get id value with primary key [${e.PrimaryKey}]");
+        }
+        
+        if (!item.Remove(DefaultAttributeNames.UpdatedAt.ToCamelCase(), out var updatedAt))
+        {
+            return Result.Fail($"Failed to get updatedAt value with field [{e.UpdatedAtAttribute.Field.ToCamelCase()}]");
         }
 
-        var ret = new SqlKata.Query(e.TableName).Where(e.PrimaryKey, val).AsUpdate(item.Keys, item.Values);
-        item[e.PrimaryKey] = val;
+        var ret = new SqlKata.Query(e.TableName)
+            .Where(e.PrimaryKey, id)
+            .Where(DefaultAttributeNames.UpdatedAt.ToCamelCase(), updatedAt!)
+            .Where(DefaultAttributeNames.Deleted.ToCamelCase(), false)
+            .AsUpdate(item.Keys, item.Values);
+        item[e.PrimaryKey] = id;
         return ret;
     }
 

@@ -201,13 +201,16 @@ public class EntityApiTest
     public async Task InsertAndUpdateAndOneOk()
     {
         await _schemaApiClient.EnsureSimpleEntity(_post, Name,false).Ok();
-        var item = (await _entityApiClient.Insert(_post, Name, "post1")).Ok();
+        var item = await _entityApiClient.Insert(_post, Name, "post1").Ok();
         Assert.True(item.ToDictionary().TryGetValue("id", out var element));
         Assert.Equal(1, element);
+        
+        item = await _entityApiClient.Single(_post, 1).Ok();
+        var updatedAt = item.GetProperty(DefaultAttributeNames.UpdatedAt.ToCamelCase()).GetString()!;
 
-        await _entityApiClient.Update(_post, 1, Name, "post2").Ok();
+        await _entityApiClient.Update(_post, 1, Name, "post2", updatedAt).Ok();
 
-        item = (await _entityApiClient.Single(_post, 1)).Ok();
+        item = await _entityApiClient.Single(_post, 1).Ok();
         Assert.True(item.ToDictionary().TryGetValue(Name, out element));
         Assert.Equal("post2", element);
     }

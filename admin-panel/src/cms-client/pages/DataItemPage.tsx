@@ -58,8 +58,10 @@ export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, b
 
     const onSubmit = async (formData: any) => {
         formData[schema.primaryKey] = id
+        formData[DefaultAttributeNames.UpdatedAt] = data[DefaultAttributeNames.UpdatedAt];
+        
         const {error} = await updateItem(schema.name, formData)
-        await handlePageErrorOrSucess(error, 'Save Succeed', null)
+        await handlePageErrorOrSucess(error, 'Save Succeed', mutate)
     }
 
     const onDelete = async () => {
@@ -119,7 +121,9 @@ export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, b
         <Button type={'button'} label={"Schdule/Reschdule"}  onClick={showSchedule}/>
         {' '}
         <Button type={'button'} label={"Delete " + schema.displayName} severity="danger" onClick={onDelete}/>
-        <PageErrorStatus/>
+        <div>
+            <PageErrorStatus/>
+        </div>
         <Confirm/>
         <div className="grid">
             <div className={`col-12 md:col-12 lg:${trees.length > 0? "col-9":"col-12"}`}>

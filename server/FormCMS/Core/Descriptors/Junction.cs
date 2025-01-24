@@ -21,6 +21,7 @@ public static class JunctionHelper
         var id = new LoadedAttribute(tableName, DefaultAttributeNames.Id.ToCamelCase());
         var deleted = new LoadedAttribute(tableName, DefaultAttributeNames.Deleted.ToCamelCase());
         var publicationStatusAttr = new LoadedAttribute(tableName, DefaultAttributeNames.PublicationStatus.ToCamelCase());
+        var updatedAtAttr = new LoadedAttribute(tableName, DefaultAttributeNames.UpdatedAt.ToCamelCase());
         sourceEntity = sourceEntity with
         {
             Attributes =
@@ -80,6 +81,7 @@ public static class JunctionHelper
             LabelAttributeName:"",
             DefaultPageSize:EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published,
+            UpdatedAtAttribute:updatedAtAttr,
             PublicationStatusAttribute: publicationStatusAttr
         );
         
