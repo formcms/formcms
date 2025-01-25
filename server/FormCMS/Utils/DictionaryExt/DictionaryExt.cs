@@ -1,4 +1,7 @@
+using System.Reflection;
 using System.Text;
+using System.Text.Json;
+using FormCMS.Utils.EnumExt;
 using Microsoft.Extensions.Primitives;
 
 namespace FormCMS.Utils.DictionaryExt;
@@ -33,7 +36,55 @@ public static class DictionaryExt
         
         return roots.ToArray();
     }
+
+    public static Record FormObject(object input, HashSet<Enum>? whiteList = null,
+        HashSet<Enum>? blackList = null)
+    {
+        var wl = whiteList?.Select(x => x.ToString()).ToHashSet();
+        var bl = blackList?.Select(x => x.ToString()).ToHashSet();
+        return FormObject(input, wl, bl);
+    }
     
+    public static Record FormObject(object input, HashSet<string>? whiteList = null, HashSet<string>? blackList = null)
+    {
+        if (input == null)
+            throw new ArgumentNullException(nameof(input));
+
+        var dict = new Dictionary<string, object>();
+
+        // Iterate over properties of the input object
+        foreach (var property in input.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            if (whiteList != null && !whiteList.Contains(property.Name)) continue;
+            if (blackList != null && blackList.Contains(property.Name)) continue;
+            
+            var value = property.GetValue(input);
+
+            if (value == null)
+            {
+                dict[property.Name] = null;
+                continue;
+            }
+
+            if (value is Enum enumValue)
+            {
+                // If the property is an enum, use ToString()
+                dict[property.Name] = enumValue.ToCamelCase();
+            }
+            else if (typeof(IDictionary<string, object>).IsAssignableFrom(property.PropertyType))
+            {
+                // If the property is a dictionary, convert it to a JSON string
+                dict[property.Name] = JsonSerializer.Serialize(value);
+            }
+            else
+            {
+                // Copy the value as-is for other property types
+                dict[property.Name] = value;
+            }
+        }
+
+        return dict;
+    }
     public static string ToQueryString(this StrArgs? args)
     {
         if (args == null || args.Count == 0)

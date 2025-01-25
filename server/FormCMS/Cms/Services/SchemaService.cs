@@ -88,7 +88,7 @@ public sealed class SchemaService(
     public async Task Delete(int id, CancellationToken ct)
     {
         var res = await hook.SchemaPreDel.Trigger(provider, new SchemaPreDelArgs(id));
-        await queryExecutor.Exec(SchemaHelper.SoftDelete(res.SchemaId), ct);
+        await queryExecutor.ExecInt(SchemaHelper.SoftDelete(res.SchemaId), ct);
     }
 
     public async Task EnsureTopMenuBar(CancellationToken ct)
@@ -132,10 +132,11 @@ public sealed class SchemaService(
             new Column(SchemaFields.Settings, ColumnType.Text),
             new Column(SchemaFields.Deleted, ColumnType.Int),
             new Column(SchemaFields.CreatedBy, ColumnType.String),
-            new Column(DefaultAttributeNames.CreatedAt.ToCamelCase(), ColumnType.Datetime),
-            new Column(DefaultAttributeNames.UpdatedAt.ToCamelCase(), ColumnType.Datetime),
-            new Column(DefaultAttributeNames.PublishedAt.ToCamelCase(), ColumnType.Datetime),
-            new Column(DefaultAttributeNames.PublicationStatus.ToCamelCase(), ColumnType.Int),
+            
+            DefaultAttributeNames.CreatedAt.CreateColumn(ColumnType.Datetime),
+            DefaultAttributeNames.UpdatedAt.CreateColumn(ColumnType.Datetime),
+            DefaultAttributeNames.PublishedAt.CreateColumn(ColumnType.Datetime),
+            DefaultAttributeNames.PublicationStatus.CreateColumn(ColumnType.Int),
         ];
         await dao.CreateTable(SchemaHelper.TableName, cols, ct);
     }
@@ -185,7 +186,7 @@ public sealed class SchemaService(
 
     public async Task<Schema> Save(Schema dto, CancellationToken ct)
     {
-        dto = dto with { Id = await queryExecutor.Exec(dto.Save(), ct) };
+        dto = dto with { Id = await queryExecutor.ExecInt(dto.Save(), ct) };
         return dto;
     }
 

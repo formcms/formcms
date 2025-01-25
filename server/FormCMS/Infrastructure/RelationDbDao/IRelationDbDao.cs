@@ -28,6 +28,9 @@ public record Column(string Name, ColumnType Type);
 
 public static class ColumnHelper
 {
+    public static Column CreateColumn(this Enum enumValue,ColumnType columnType)
+    => new(enumValue.ToCamelCase(), columnType);
+    
     public static Column[] EnsureDeleted(this Column[] columnDefinitions)
         => columnDefinitions.FirstOrDefault(x => x.Name == DefaultColumnNames.Deleted.ToCamelCase()) is not null
             ? columnDefinitions

@@ -7,7 +7,9 @@ using DynamicExpresso;
 using FormCMS.CoreKit.RelationDbQuery;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
+using FormCMS.Utils;
 using FormCMS.Utils.EnumExt;
+using FormCMS.Utils.KateQueryExt;
 using GraphQL.Client.Abstractions.Utilities;
 using Npgsql.Internal.Postgres;
 
@@ -63,9 +65,10 @@ public static class EntityHelper
         var primaryKey = entity.Attributes.FirstOrDefault(x=>x.Field ==entity.PrimaryKey)!.ToLoaded(entity.TableName);
         var labelAttribute = entity.Attributes.FirstOrDefault(x=>x.Field == entity.LabelAttributeName)?.ToLoaded(entity.TableName) ?? primaryKey;
         var attributes = entity.Attributes.Select(x => x.ToLoaded(entity.TableName));
-        var deletedAttribute = new LoadedAttribute(entity.TableName, DefaultAttributeNames.Deleted.ToCamelCase());
-        var publicationStatusAttribute = new LoadedAttribute(entity.TableName, DefaultAttributeNames.PublicationStatus.ToCamelCase());
-        var updatedAtAttribute = new LoadedAttribute(entity.TableName, DefaultAttributeNames.UpdatedAt.ToCamelCase());
+        var deletedAttribute = DefaultAttributeNames.Deleted.CrateLoadedAttribute(entity.TableName);
+        var publicationStatusAttribute  = DefaultAttributeNames.PublicationStatus.CrateLoadedAttribute(entity.TableName);
+        var updatedAtAttribute =  DefaultAttributeNames.UpdatedAt.CrateLoadedAttribute(entity.TableName);
+        
         return new LoadedEntity(
             [..attributes],
             PrimaryKeyAttribute:primaryKey,
@@ -201,9 +204,9 @@ public static class EntityHelper
 
     public static SqlKata.Query PublishAllScheduled(this Entity e)
     => new SqlKata.Query(e.TableName)
-        .Where(DefaultAttributeNames.PublicationStatus.ToCamelCase(),PublicationStatus.Scheduled.ToCamelCase())
-        .WhereDate(DefaultAttributeNames.PublishedAt.ToCamelCase(), "<", DateTime.Now)
-        .AsUpdate([DefaultAttributeNames.PublicationStatus.ToCamelCase()], [PublicationStatus.Published.ToCamelCase()]) ;
+        .WhereE(DefaultAttributeNames.PublicationStatus, PublicationStatus.Scheduled)
+        .WhereDateE(DefaultAttributeNames.PublishedAt, "<", DateTime.Now)
+        .AsUpdateE([DefaultAttributeNames.PublicationStatus], [PublicationStatus.Published.ToCamelCase()]) ;
     
     public static Result<SqlKata.Query> UpdateQuery(this LoadedEntity e, Record item)
     {
@@ -213,6 +216,7 @@ public static class EntityHelper
             return Result.Fail($"Failed to get id value with primary key [${e.PrimaryKey}]");
         }
         
+        
         if (!item.Remove(DefaultAttributeNames.UpdatedAt.ToCamelCase(), out var updatedAt))
         {
             return Result.Fail($"Failed to get updatedAt value with field [{e.UpdatedAtAttribute.Field.ToCamelCase()}]");
@@ -220,18 +224,32 @@ public static class EntityHelper
 
         var ret = new SqlKata.Query(e.TableName)
             .Where(e.PrimaryKey, id)
-            .Where(DefaultAttributeNames.UpdatedAt.ToCamelCase(), updatedAt!)
-            .Where(DefaultAttributeNames.Deleted.ToCamelCase(), false)
+            .WhereE(DefaultAttributeNames.UpdatedAt, updatedAt!)
+            .WhereE(DefaultAttributeNames.Deleted, false)
             .AsUpdate(item.Keys, item.Values);
         item[e.PrimaryKey] = id;
         return ret;
     }
 
     public static Result<SqlKata.Query> DeleteQuery(this LoadedEntity e,Record item)
-         => item.TryGetValue(e.PrimaryKey, out var key)
-            ? Result.Ok(new SqlKata.Query(e.TableName).Where(e.PrimaryKey, key)
-                .AsUpdate([DefaultAttributeNames.Deleted.ToCamelCase()], [true]))
-            : Result.Fail($"Failed to get value with primary key [${e.PrimaryKey}]");
+    {
+        if (!item.TryGetValue(e.PrimaryKey, out var id))
+        {
+            return Result.Fail($"Failed to get id value with primary key [${e.PrimaryKey}]");
+        }
+
+
+        if (!item.TryGetValue(DefaultAttributeNames.UpdatedAt.ToCamelCase(), out var updatedAt))
+        {
+            return Result.Fail(
+                $"Failed to get updatedAt value with field [{e.UpdatedAtAttribute.Field.ToCamelCase()}]");
+        }
+
+        return new SqlKata.Query(e.TableName)
+            .Where(e.PrimaryKey, id)
+            .WhereE(DefaultAttributeNames.UpdatedAt, updatedAt!)
+            .AsUpdateE([DefaultAttributeNames.Deleted], [true]);
+    }
 
     public static SqlKata.Query Basic(this LoadedEntity e)
     {

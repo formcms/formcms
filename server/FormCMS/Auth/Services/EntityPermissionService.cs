@@ -63,7 +63,7 @@ public class EntityPermissionService(
             contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedAccess, entityName))
         {
             string[] attrs = [Constants.CreatedBy];
-            //need to query database to get userId in case client fake data
+            //need to query a database to get userId in case client fake data
             var record = await entityService.SingleByIdBasic(entityName, recordId, attrs);
             if (record.TryGetValue(Constants.CreatedBy, out var createdBy) && (string)createdBy == userId)
             {

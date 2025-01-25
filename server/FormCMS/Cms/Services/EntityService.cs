@@ -93,7 +93,7 @@ public sealed class EntityService(
         var cols = items[0].Select(x => x.Key);
         var values = items.Select(item => item.Select(kv => kv.Value));
         var query = new SqlKata.Query(tableName).AsInsert(cols, values);
-        await queryExecutor.Exec(query);
+        await queryExecutor.ExecInt(query);
     }
 
     public async Task<Record> UpdateWithAction(string name, JsonElement ele, CancellationToken ct)
@@ -110,7 +110,7 @@ public sealed class EntityService(
     {
         var (entity, _, id) = await GetRecordIdCtx(name, ele, ct);
         var query = entity.SavePublicationStatus(id, ele.ToDictionary() ).Ok();
-        await queryExecutor.Exec(query, ct);
+        await queryExecutor.ExecInt(query, ct);
     }
 
     public async Task<LookupListResponse> LookupList(string name, string startsVal, CancellationToken ct = default)
@@ -149,7 +149,7 @@ public sealed class EntityService(
             new JunctionPreDelArgs(name, id, ctx.Attribute, items));
 
         var query = ctx.Junction.Delete(ctx.Id, res.RefItems);
-        var ret = await queryExecutor.Exec(query, ct);
+        var ret = await queryExecutor.ExecInt(query, ct);
         await hookRegistry.JunctionPostDel.Trigger(provider,
             new JunctionPostDelArgs(name, id, ctx.Attribute, items));
         return ret;
@@ -166,7 +166,7 @@ public sealed class EntityService(
             new JunctionPreAddArgs(name, id, ctx.Attribute, items));
         var query = ctx.Junction.Insert(ctx.Id, res.RefItems);
 
-        var ret = await queryExecutor.Exec(query, ct);
+        var ret = await queryExecutor.ExecInt(query, ct);
         await hookRegistry.JunctionPostAdd.Trigger(provider,
             new JunctionPostAddArgs(name, id, ctx.Attribute, items));
         return ret;
@@ -324,7 +324,7 @@ public sealed class EntityService(
 
         var query = entity.UpdateQuery(res.RefRecord).Ok();
         
-        var affected = await queryExecutor.ExecAndGetAffected(query, token);
+        var affected = await queryExecutor.ExecAffected(query, token);
         if (affected == 0)
         {
             throw new ResultException("Error: Concurrent Update Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
@@ -351,7 +351,7 @@ public sealed class EntityService(
         }
 
         var query = entity.Insert(record);
-        var id = await queryExecutor.Exec(query, token);
+        var id = await queryExecutor.ExecInt(query, token);
         record[entity.PrimaryKey] = id;
 
         await hookRegistry.EntityPostAdd.Trigger(provider,
@@ -369,7 +369,12 @@ public sealed class EntityService(
 
 
         var query = entity.DeleteQuery(record).Ok();
-        await queryExecutor.Exec(query, token);
+        var affected = await queryExecutor.ExecAffected(query, token);
+        if (affected == 0)
+        {
+            throw new ResultException("Error: Concurrent Write Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
+        } 
+        
         (_, _, record) = await hookRegistry.EntityPostDel.Trigger(provider,
             new EntityPostDelArgs(entity.Name, id.ToString()!, record));
         return record;

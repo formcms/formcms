@@ -3,6 +3,28 @@ namespace FormCMS.Utils.IdentityExt;
 
 public static class HttpContextExt
 {
+    private const string UserIdKey = "UserId";
+    private const string UserNameKey = "UserName";
+
+    public static string GetUserId(this HttpContext? httpContext)
+    {
+        return httpContext?.Items[UserIdKey]?.ToString()??"";
+    }
+
+    public static string GetUserName(this HttpContext? httpContext)
+    {
+        return httpContext?.Items[UserNameKey]?.ToString()??"";
+    }
+
+    public static void SaveIdentityToItems(this HttpContext? context)
+    {
+        if (context == null) return;
+        
+        var ctxUser = context.User;
+        context.Items[UserNameKey] = ctxUser.Identity?.Name;
+        context.Items[UserIdKey] = ctxUser.FindFirstValue(ClaimTypes.NameIdentifier);
+   }
+    
     public static bool HasClaims(this HttpContext? context, string claimType, string value)
     {
         var userClaims = context?.User;
@@ -19,6 +41,8 @@ public static class HttpContextExt
     {
         return context?.User.IsInRole(role) == true;
     }
+    
+   
 
     public static bool GetUserId(this HttpContext? context, out string userId)
     {

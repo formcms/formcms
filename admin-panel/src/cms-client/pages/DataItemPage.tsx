@@ -66,8 +66,11 @@ export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, b
 
     const onDelete = async () => {
         confirm('Do you want to delete this item?', async () => {
-            data[schema.primaryKey] = id
-            const {error} = await deleteItem(schema.name, data)
+            var formData :any = {};
+            formData[schema.primaryKey] = data[schema.primaryKey];
+            formData[DefaultAttributeNames.UpdatedAt] = data[DefaultAttributeNames.UpdatedAt];
+            
+            const {error} = await deleteItem(schema.name, formData)
             await handlePageErrorOrSucess(error, 'Delete Succeed', ()=> {
                 window.location.href = referingUrl ?? `${baseRouter}/${schema.name}`
             });

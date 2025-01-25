@@ -5,7 +5,7 @@ namespace FormCMS.Infrastructure.RelationDbDao;
 public record KateQueryExecutorOption(int? TimeoutSeconds);
 public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutorOption option)
 {
-   public Task<int> Exec(
+   public Task<int> ExecInt(
       Query query,  CancellationToken ct = default
    ) => provider.ExecuteKateQuery((db,tx)
       => db.ExecuteScalarAsync<int>(
@@ -15,7 +15,7 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
          cancellationToken: ct)
    );
 
-   public Task<int> ExecAndGetAffected(
+   public Task<int> ExecAffected(
       Query query, CancellationToken ct = default
    ) => provider.ExecuteKateQuery((db, tx)
       => db.ExecuteAsync(

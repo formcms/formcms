@@ -32,6 +32,8 @@ public static class Web
         };
 
         builder.Services.AddCmsAuth<IdentityUser, IdentityRole, CmsDbContext>();
+        builder.Services.AddAuditLog();
+        
         AddHybridCache(builder);
         AddOutputCachePolicy(builder);
         builder.AddServiceDefaults();

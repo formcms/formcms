@@ -2,6 +2,7 @@ using System.Text.Json;
 using FormCMS.Utils.DictionaryExt;
 using FluentResults;
 using FormCMS.Utils.EnumExt;
+using FormCMS.Utils.KateQueryExt;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -51,12 +52,12 @@ public static class SchemaHelper
     public static SqlKata.Query ByStartsNameAndType(string name, SchemaType type)
         => BaseQuery()
             .WhereStarts(SchemaFields.Name, name)
-            .Where(SchemaFields.Type, type.ToCamelCase());
+            .WhereE(SchemaFields.Type, type);
 
     public static SqlKata.Query ByNameAndTypeAndNotId(string name, SchemaType type, int id)
         => BaseQuery()
             .Where(SchemaFields.Name, name)
-            .Where(SchemaFields.Type, type.ToCamelCase())
+            .WhereE(SchemaFields.Type, type)
             .WhereNot(SchemaFields.Id, id);
     
     public static SqlKata.Query ByNameAndType(SchemaType? type, IEnumerable<string>? names)
@@ -64,7 +65,7 @@ public static class SchemaHelper
         var query = BaseQuery();
         if (type is not null)
         {
-            query = query.Where(SchemaFields.Type, type.Value.ToCamelCase());
+            query = query.WhereE(SchemaFields.Type, type.Value);
         }
 
         if (names is not null)
@@ -85,26 +86,26 @@ public static class SchemaHelper
             .Where(SchemaFields.Id, id).AsUpdate([SchemaFields.Deleted], [true]);
     }
 
-    public static SqlKata.Query Save(this Schema dto)
+    public static SqlKata.Query Save(this Schema schema)
     {
-        if (dto.Id == 0)
+        if (schema.Id == 0)
         {
             var record = new Dictionary<string, object>
             {
-                { SchemaFields.Name, dto.Name },
-                { SchemaFields.Type, dto.Type.ToCamelCase() },
-                { SchemaFields.Settings, dto.Settings.Serialize()},
-                { SchemaFields.CreatedBy, dto.CreatedBy }
+                { SchemaFields.Name, schema.Name },
+                { SchemaFields.Type, schema.Type.ToCamelCase() },
+                { SchemaFields.Settings, schema.Settings.Serialize()},
+                { SchemaFields.CreatedBy, schema.CreatedBy }
             };
 
             return new SqlKata.Query(TableName).AsInsert(record, true);
         }
 
         var query = new SqlKata.Query(TableName)
-            .Where(SchemaFields.Id, dto.Id)
+            .Where(SchemaFields.Id, schema.Id)
             .AsUpdate(
                 [SchemaFields.Name, SchemaFields.Type, SchemaFields.Settings],
-                [dto.Name, dto.Type.ToCamelCase(), dto.Settings.Serialize()]
+                [schema.Name, schema.Type.ToCamelCase(), schema.Settings.Serialize()]
             );
         return query;
 

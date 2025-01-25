@@ -52,6 +52,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="AuditLogging\Handlers\" />
       <Folder Include="Infrastructure\" />
     </ItemGroup>
 

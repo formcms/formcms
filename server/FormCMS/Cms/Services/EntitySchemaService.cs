@@ -227,7 +227,7 @@ public sealed class EntitySchemaService(
 
     private async Task CreateMainTable(Entity entity, Column[] columns, CancellationToken ct)
     {
-        if (columns.Length > 0) //if table exists, alter table add columns
+        if (columns.Length > 0) //if table exists, alter table adds columns
         {
             var set = columns.Select(x => x.Name).ToHashSet();
             var missing = entity.Attributes.Where(c => c.IsLocal()&& !set.Contains(c.Field)).ToArray();

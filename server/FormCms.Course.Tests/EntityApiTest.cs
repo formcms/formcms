@@ -182,15 +182,40 @@ public class EntityApiTest
         Assert.Equal(2, children.GetArrayLength());
     }
 
+    [Fact]
+    public async Task PreventDirtyWrite()
+    {
+        await _schemaApiClient.EnsureSimpleEntity(_post, Name, false).Ok();
+        await _entityApiClient.Insert(_post, Name, "post1").Ok();
+
+        //make sure get the latest data
+        var item = await _entityApiClient.Single(_post, 1).Ok();
+        var updatedAt = item.GetProperty(DefaultAttributeNames.UpdatedAt.ToCamelCase()).GetString()!;
+
+        System.Threading.Thread.Sleep(TimeSpan.FromSeconds(1));
+        await _entityApiClient.Update(_post, 1, Name, "post2", updatedAt).Ok();
+        var newItem = await _entityApiClient.Single(_post, 1).Ok();
+        Assert.True(newItem.GetProperty(DefaultColumnNames.UpdatedAt.ToCamelCase()).GetString() != updatedAt);
+
+        //now updatedAt has changed, any dirty writing should fail
+        var res = await _entityApiClient.Delete(_post, item);
+        Assert.True(res.IsFailed);
+
+        res = await _entityApiClient.Update(_post, 1, Name, "post3", updatedAt);
+        Assert.True(res.IsFailed);
+    }
 
     [Fact]
     public async Task InsertListDeleteOk()
     {
         await _schemaApiClient.EnsureSimpleEntity(_post, Name,false).Ok();
-        var item = await _entityApiClient.Insert(_post, Name, "post1").Ok();
+        await _entityApiClient.Insert(_post, Name, "post1").Ok();
 
         var res = await _entityApiClient.List(_post, 0, 10).Ok();
         Assert.Single(res.Items);
+
+        //make sure get the latest data
+        var item = await _entityApiClient.Single(_post, 1).Ok();
 
         await _entityApiClient.Delete(_post, item).Ok();
         res = await _entityApiClient.List(_post, 0, 10).Ok();
@@ -321,7 +346,8 @@ public class EntityApiTest
         var listResponse = await _entityApiClient.CollectionList(_post, _attachment, 1).Ok();
         Assert.Single(listResponse.Items);
 
-        await _entityApiClient.Delete(_attachment, new { id = 1 });
+        var item = await _entityApiClient.Single(_post, 1).Ok();
+        await _entityApiClient.Delete(_attachment, item);
         listResponse = await _entityApiClient.CollectionList(_post, _attachment, 1).Ok();
         Assert.Empty(listResponse.Items);
 

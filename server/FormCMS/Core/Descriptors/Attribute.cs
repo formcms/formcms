@@ -98,7 +98,10 @@ public sealed record GraphAttribute(
 
 public static class AttributeHelper
 {
-   
+
+    public static LoadedAttribute CrateLoadedAttribute(this Enum enumValue, string tableName)
+        => new LoadedAttribute(tableName, enumValue.ToCamelCase());
+    
     public static Result<EntityLinkDesc> GetEntityLinkDesc(
         this LoadedAttribute attribute
     ) => attribute.DataType switch
