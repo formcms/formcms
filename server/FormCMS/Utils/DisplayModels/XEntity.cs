@@ -1,6 +1,6 @@
 using Humanizer;
 
-namespace  FormCMS.Utils.EntityDisplayModel;
+namespace  FormCMS.Utils.DisplayModels;
 
 public record XEntity(
     XAttr[] Attributes,

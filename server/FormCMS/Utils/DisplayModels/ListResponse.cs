@@ -1,4 +1,4 @@
-namespace FormCMS.Utils.EntityDisplayModel;
+namespace FormCMS.Utils.DisplayModels;
 
 public enum ListResponseMode
 {

@@ -1,10 +1,10 @@
 import useSWR from "swr";
 
 import {fetcher, swrConfig} from "../../services/util";
-import { Schema,MenuItem } from "../types/schema";
+import { Menu,MenuItem } from "../types/menu";
 import { fullAuthApiUrl } from "../configs";
 
 export function useTopMenuBar (): MenuItem[]{
-    const { data} = useSWR<Schema>(fullAuthApiUrl('/schemas/name/top-menu-bar?type=menu'), fetcher, swrConfig)
-    return data?.settings?.menu?.menuItems ?? [] as MenuItem[];
+    const { data} = useSWR<Menu>(fullAuthApiUrl('/schemas/menu/top-menu-bar'), fetcher, swrConfig)
+    return data?.menuItems ?? [] as MenuItem[];
 }

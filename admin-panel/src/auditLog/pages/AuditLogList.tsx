@@ -3,6 +3,7 @@ import { LazyDataTable } from "../../components/dataTable/LazyDataTable";
 import {useAuditLogs, useAuditLogsEntity} from "../services/auditLog"
 import { XEntity } from "../types/xEntity";
 import { useLazyStateHandlers } from "../../components/dataTable/useLazyStateHandlers";
+import { encodeLazyState } from "../../components/dataTable/lazyStateUtil";
 export function AuditLogListWapper({baseRouter}: { baseRouter: string }) {
     const {data:schema,error,isLoading} = useAuditLogsEntity()
     return <>
@@ -14,7 +15,7 @@ export function AuditLogListWapper({baseRouter}: { baseRouter: string }) {
 export function AuditLogList({baseRouter,schema}: { baseRouter: string,schema:XEntity }) {
     const columns = schema?.attributes?.filter(column => column.inList) ?? [];
     let {lazyState, eventHandlers} = useLazyStateHandlers(schema.defaultPageSize, columns,undefined )
-    const {data,error,isLoading}= useAuditLogs()
+    const {data,error,isLoading}= useAuditLogs(encodeLazyState(lazyState))
 
     return <>
         <FetchingStatus isLoading={isLoading} error={error}/>

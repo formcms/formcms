@@ -1,4 +1,4 @@
-namespace FormCMS.Utils.EntityDisplayModel;
+namespace FormCMS.Utils.DisplayModels;
 
 public enum DisplayType
 {
@@ -26,16 +26,4 @@ public enum DisplayType
     Tree,
     
     EditTable,
-}
-public enum DataType
-{
-    Int,
-    Datetime,
-
-    Text,
-    String,
-
-    Lookup,
-    Junction,
-    Collection,
 }

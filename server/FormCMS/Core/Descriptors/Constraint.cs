@@ -47,7 +47,7 @@ public static class Matches
     ];
 }
 
-public sealed record Constraint(string Match, ImmutableArray<string?> Value);
+public sealed record Constraint(string Match, string?[] Value);
 public sealed record ValidConstraint(string Match, ImmutableArray<ValidValue> Values);
 
 public static class ConstraintsHelper

@@ -1,8 +1,8 @@
 using System.Text.Json;
 
-namespace FormCMS.Utils.JsonUtil;
+namespace FormCMS.Utils.jsonElementExt;
 
-public static class JsonUtil
+public static class JasonElementExtensions
 {
    public static Dictionary<string, object> ToDictionary(this JsonElement element)
    {

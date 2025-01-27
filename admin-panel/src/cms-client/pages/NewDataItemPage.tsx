@@ -17,8 +17,8 @@ export function NewDataItemPageComponent({schema,baseRouter}:{schema:XEntity, ba
     const formId = "newForm" + schema.name
     const uploadUrl = fileUploadURL()
     const inputColumns = schema?.attributes?.filter(
-        (x: any) =>{
-            return x.inDetail &&!x.isDefault&& x.dataType != "Junction" && x.dataType != "Collection" ;
+        x =>{
+            return x.inDetail &&!x.isDefault&& x.displayType != "editTable" && x.displayType != "tree" &&x.displayType != 'picklist';
         }
     ) ??[];
     const onSubmit = async (formData: any) => {

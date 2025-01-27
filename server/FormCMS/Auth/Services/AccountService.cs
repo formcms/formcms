@@ -4,9 +4,9 @@ using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using FormCMS.Utils.IdentityExt;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Utils.HttpContextExt;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 
@@ -143,11 +143,11 @@ public class AccountService<TUser, TRole,TCtx>(
         var res = await userManager.CreateAsync(user, password);
         if (!res.Succeeded)
         {
-            return Result.Fail(res.ErrorMessage());
+            return Fail(res);
         }
 
         res = await userManager.AddToRolesAsync(user, roles);
-        return !res.Succeeded ? Result.Fail(res.ErrorMessage()) : Result.Ok();
+        return !res.Succeeded ? Fail(res): Result.Ok();
     }
 
     public async Task DeleteUser(string id)
@@ -155,11 +155,7 @@ public class AccountService<TUser, TRole,TCtx>(
         if(!accessor.HttpContext.HasRole(RoleConstants.Sa)) throw new ResultException("Only supper admin have permission");
         var user = await userManager.Users.FirstOrDefaultAsync(x => x.Id == id)
             ?? throw new ResultException($"Fail to Delete User, Cannot find user by id [{id}]");
-        var result = await userManager.DeleteAsync(user);
-        if (!result.Succeeded)
-        {
-            throw new ResultException(result.ErrorMessage());
-        }
+        Assure(await userManager.DeleteAsync(user));
     }
     
    
@@ -195,8 +191,7 @@ public class AccountService<TUser, TRole,TCtx>(
         if (name is RoleConstants.Admin or RoleConstants.Sa) throw new ResultException($"Cannot delete System Build-in Role [{name}]");
         if (!accessor.HttpContext.HasRole(RoleConstants.Sa)) throw new ResultException("Only supper admin have permission");
         var role = await roleManager.FindByNameAsync(name)?? throw new ResultException($"Cannot find role by name [{name}]");
-        var result = (await roleManager.DeleteAsync(role));
-        if (!result.Succeeded) throw new ResultException(result.ErrorMessage());
+        Assure(await roleManager.DeleteAsync(role));
     }
 
     public async Task SaveRole(RoleDto roleDto)
@@ -236,7 +231,7 @@ public class AccountService<TUser, TRole,TCtx>(
             var result = await userManager.RemoveClaimsAsync(user, toRemove.Select(x=>new Claim(type, x)));
             if (!result.Succeeded)
             {
-                return Result.Fail(result.ErrorMessage());
+                return Fail(result);
             }
         }
 
@@ -246,7 +241,7 @@ public class AccountService<TUser, TRole,TCtx>(
             var result = await userManager.AddClaimsAsync(user, toAdd.Select(x=>new Claim(type, x)));
             if (!result.Succeeded)
             {
-                return Result.Fail(result.ErrorMessage());
+                return Fail(result);
             }
         }
         return Result.Ok();
@@ -267,7 +262,7 @@ public class AccountService<TUser, TRole,TCtx>(
             var result = await userManager.RemoveFromRolesAsync(user, rolesToRemove);
             if (!result.Succeeded)
             {
-                return Result.Fail(result.ErrorMessage());
+                return Fail(result);
             }
         }
 
@@ -277,7 +272,7 @@ public class AccountService<TUser, TRole,TCtx>(
             var result = await userManager.AddToRolesAsync(user, rolesToAdd);
             if (!result.Succeeded)
             {
-                return Result.Fail(result.ErrorMessage());
+                return Fail(result);
             }
         }
         return Result.Ok();
@@ -298,7 +293,7 @@ public class AccountService<TUser, TRole,TCtx>(
             var identityResult = await roleManager.RemoveClaimAsync(role, claim);
             if (!identityResult.Succeeded)
             {
-                return Result.Fail(identityResult.ErrorMessage());
+                return Fail(identityResult);
             }
         }
 
@@ -307,7 +302,7 @@ public class AccountService<TUser, TRole,TCtx>(
             var identityResult = await roleManager.AddClaimAsync(role, claim);
             if (!identityResult.Succeeded)
             {
-                return Result.Fail(identityResult.ErrorMessage());
+                return Fail(identityResult);
             }
         }
         return Result.Ok();
@@ -325,11 +320,21 @@ public class AccountService<TUser, TRole,TCtx>(
             var res = await roleManager.CreateAsync(new TRole { Name = roleName });
             if (!res.Succeeded)
             {
-                return Result.Fail(res.ErrorMessage());
+                return Fail(res);
             }
         }
 
         return Result.Ok();
     }
     
+    private Result Fail(IdentityResult result) =>
+        Result.Fail(string.Join("\r\n", result.Errors.Select(e => e.Description)));
+
+    private void Assure(IdentityResult result)
+    {
+        if (!result.Succeeded)
+        {
+            throw new ResultException(string.Join("\r\n", result.Errors.Select(e => e.Description)));
+        }
+    } 
 }

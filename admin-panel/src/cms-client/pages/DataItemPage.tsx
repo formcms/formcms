@@ -16,7 +16,7 @@ import { SaveDialog } from "../../components/dialogs/SaveDialog";
 import { useDialogState } from "../../components/dialogs/useDialogState";
 import { PublicationSettings } from "../containers/PublicationSettings";
 import { DefaultAttributeNames } from "../types/defaultAttributeNames";
-import { PublicationStatus } from "../types/schema";
+import { PublicationStatus } from "../types/publicationStatus";
 
 export function DataItemPage({baseRouter}: { baseRouter: string }) {
     const {schemaName} = useParams()
@@ -45,7 +45,7 @@ export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, b
 
     const inputColumns = schema?.attributes?.filter(
         (x) => {
-            return x.inDetail && !x.isDefault && x.dataType != "collection" && x.dataType != "junction";
+            return x.inDetail && !x.isDefault &&  x.displayType != 'picklist' && x.displayType != "tree" && x.displayType != 'editTable'
         }
     ) ?? [];
     

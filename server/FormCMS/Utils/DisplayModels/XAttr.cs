@@ -2,13 +2,12 @@
 using System.Linq.Expressions;
 using Humanizer;
 
-namespace FormCMS.Utils.EntityDisplayModel;
+namespace FormCMS.Utils.DisplayModels;
 
 
 public record XAttr(
     string Field,
     string Header ,
-    DataType DataType ,
     DisplayType DisplayType ,
     bool InList ,
     bool InDetail ,
@@ -24,7 +23,6 @@ public static class XAttrExtensions
     public static XAttr CreateAttr<T, TValue>(
         Expression<Func<T, TValue>> expression,
         string? header = null,
-        DataType? dataType = null,
         DisplayType? displayType = null,
         bool inList = true,
         bool inDetail = true,
@@ -36,13 +34,6 @@ public static class XAttrExtensions
         header ??= name.Humanize();
         name = name.Camelize();
         
-        dataType ??= typeof(TValue) switch
-        {
-            { } t when t == typeof(string) => DataType.String,
-            { } t when t == typeof(int) => DataType.Int,
-            { } t when t == typeof(DateTime) => DataType.Datetime,
-            _ => DataType.String
-        };
         displayType ??= typeof(TValue) switch
         {
             { } t when t == typeof(string) => DisplayType.Text,
@@ -51,7 +42,7 @@ public static class XAttrExtensions
             _ => DisplayType.Text
         };
         
-        return new XAttr(name, header,dataType.Value,displayType.Value,inList,inDetail,isDefault,options);
+        return new XAttr(name, header,displayType.Value,inList,inDetail,isDefault,options);
     }
     
     private static string GetName<TClass,TValue>(this Expression<Func<TClass, TValue>> e)

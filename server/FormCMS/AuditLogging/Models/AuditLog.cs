@@ -1,4 +1,6 @@
 using FormCMS.Core.Descriptors;
+using FormCMS.Utils.DataModels;
+using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.RecordExt;
 using Query = SqlKata.Query;
 
@@ -30,21 +32,30 @@ public static class AuditLogConstants
 
 public static class AuditLogHelper
 {
-    private static readonly string []ListAttributes =
-    [
-        nameof(AuditLog.Id),
-        nameof(AuditLog.UserId),
-        nameof(AuditLog.UserName),
-        nameof(AuditLog.Action),
+    public static readonly XEntity Entity  = XEntityExtensions.CreateEntity<AuditLog>(
         nameof(AuditLog.EntityName),
-        nameof(AuditLog.RecordId),
-        nameof(AuditLog.CreatedAt),
-    ];
+        defaultPageSize: AuditLogConstants.DefaultPageSize,
+        attributes:
+        [
+            XAttrExtensions.CreateAttr<AuditLog, int>(x => x.Id, isDefault: true),
+            XAttrExtensions.CreateAttr<AuditLog, string>(x => x.UserId),
+            XAttrExtensions.CreateAttr<AuditLog, string>(x => x.UserName),
+            XAttrExtensions.CreateAttr<AuditLog, string>(x => x.EntityName),
+            XAttrExtensions.CreateAttr<AuditLog, object>(x => x.Action),
+            XAttrExtensions.CreateAttr<AuditLog, string>(x => x.RecordId),
+            XAttrExtensions.CreateAttr<AuditLog, DateTime>(x => x.CreatedAt,isDefault:true),
+            XAttrExtensions.CreateAttr<AuditLog, object>(x => x.Payload, inList: false)
+        ]);
 
-    public static string[] AllAttributes =
-    [
-        ..ListAttributes,
-        nameof(AuditLog.Payload),
+    public static readonly Column[] Columns =  [
+        ColumnHelper.CreateCamelColumn<AuditLog,int>(x=>x.Id),
+        ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.UserName),
+        ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.UserId),
+        ColumnHelper.CreateCamelColumn<AuditLog>(x=>x.Action,ColumnType.String),
+        ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.EntityName),
+        ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.RecordId),
+        ColumnHelper.CreateCamelColumn<AuditLog,DateTime>(x=>x.CreatedAt),
+        ColumnHelper.CreateCamelColumn<AuditLog>(x=>x.Payload,ColumnType.Text),
     ];
 
     public static Query Insert(this AuditLog auditLog) =>
@@ -57,7 +68,7 @@ public static class AuditLogHelper
     public static Query List(Filter[] filters, Sort[] sorts, int?offset = null, int? limit = null)
     {
         var q = new Query(AuditLogConstants.TableName);
-        q= q.Select(ListAttributes);
+        q= q.Select(Entity.Attributes.Where(x=>x.InList).Select(x=>x.Field));
         if (offset > 0) q.Offset(offset.Value);
         q.Limit(limit ?? AuditLogConstants.DefaultPageSize);
         return q;

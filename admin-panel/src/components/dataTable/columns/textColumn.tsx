@@ -8,7 +8,7 @@ export function textColumn({column, baseRouter, schema}:{
     column: XAttr,
 }){
     let field = column.field;
-    if (column.displayType == "lookup"){
+    if (column.displayType == "lookup" || column.displayType === "treeSelect"){
         field = column.field + "." + column.lookup!.labelAttributeName;
     }
     var colType = 'text';
@@ -25,7 +25,7 @@ export function textColumn({column, baseRouter, schema}:{
     const bodyTemplate = (item:any) => {
         let val = item[column.field]
         if (val) {
-            if (column.dataType === "lookup") {
+            if (column.displayType === "lookup" || column.displayType === "treeSelect") {
                 val = val[column.lookup!.labelAttributeName]
             }else if (column.displayType === 'multiselect'){
                 val = val.join(", ")

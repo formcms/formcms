@@ -2,7 +2,7 @@ using System.Text.Json;
 using FormCMS.Utils.HttpClientExt;
 using FluentResults;
 using FormCMS.Core.Descriptors;
-using FormCMS.Utils.EntityDisplayModel;
+using FormCMS.Utils.DisplayModels;
 using Humanizer;
 
 namespace FormCMS.CoreKit.ApiClient;

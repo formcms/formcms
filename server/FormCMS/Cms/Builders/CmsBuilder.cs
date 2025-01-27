@@ -13,13 +13,12 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.Cache;
 using FormCMS.Infrastructure.LocalFileStore;
 using FormCMS.Infrastructure.RelationDbDao;
-using FormCMS.Utils.EntityDisplayModel;
+using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.ResultExt;
 using GraphQL;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Rewrite;
-using DataType = FormCMS.Utils.EntityDisplayModel.DataType;
-using DisplayType = FormCMS.Utils.EntityDisplayModel.DisplayType;
+using DisplayType = FormCMS.Utils.DisplayModels.DisplayType;
 using Schema = FormCMS.Cms.Graph.Schema;
 
 namespace FormCMS.Cms.Builders;

@@ -1,9 +1,8 @@
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
-using FormCMS.Utils.EntityDisplayModel;
+using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.ResultExt;
-using DataType = FormCMS.Utils.EntityDisplayModel.DataType;
-using DisplayType = FormCMS.Utils.EntityDisplayModel.DisplayType;
+using DisplayType = FormCMS.Utils.DisplayModels.DisplayType;
 using Entity = FormCMS.Core.Descriptors.Entity;
 
 namespace FormCMS.Cms.Handlers;
@@ -28,10 +27,14 @@ public static class SchemaHandler
             ISchemaService svc, int id, CancellationToken ct
         ) => await svc.ByIdWithAction(id, ct) ?? throw new ResultException($"Cannot find schema {id}"));
 
-        app.MapGet("/name/{name}", async (
-                ISchemaService svc, string name, string type, CancellationToken ct
-            ) => await svc.GetByNameDefault(name, type.MustToEnum<SchemaType>(), ct) ??
-                 throw new ResultException($"Cannot find schema {name} of type {type}"));
+        app.MapGet("/menu/{name}", async (
+                ISchemaService svc, string name, CancellationToken ct
+            ) =>
+        {
+            var schema = await svc.GetByNameDefault(name, SchemaType.Menu, ct) ??
+                   throw new ResultException($"Cannot find menu [{name}]");
+            return schema.Settings.Menu;
+        });
 
         app.MapDelete("/{id:int}", async (
             ISchemaService schemaSvc,
@@ -93,7 +96,6 @@ public static class SchemaHandler
         return new(
             Field: attribute.Field,
             Header: attribute.Header,
-            DataType: Enum.Parse<DataType>(attribute.DataType.ToString()),
             DisplayType: Enum.Parse<DisplayType>(attribute.DisplayType.ToString()),
             InList: attribute.InList,
             InDetail: attribute.InDetail,

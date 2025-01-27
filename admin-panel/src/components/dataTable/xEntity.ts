@@ -13,7 +13,6 @@
 export interface XAttr {
     field: string;
     header: string;
-    dataType: DataType;
     displayType: DisplayType;
     inList: boolean;
     inDetail: boolean;
@@ -22,16 +21,6 @@ export interface XAttr {
     junction: XEntity | undefined;
     lookup: XEntity | undefined;
     collection: XEntity | undefined;
-}
-
-export enum DataType {
-    Int = "int",
-    Datetime = "datetime",
-    Text = "text",
-    String = "string",
-    Lookup = "lookup",
-    Junction = "junction",
-    Collection = "collection",
 }
 
 export enum DisplayType {

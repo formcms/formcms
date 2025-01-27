@@ -16,7 +16,7 @@ export function DataListPage({baseRouter}:{baseRouter:string}){
 }
 
 export function DataListPageComponent({schema,baseRouter}:{schema:XEntity,baseRouter:string}) {
-    const columns = schema?.attributes?.filter(column => column.inList && column.dataType != 'junction' && column.dataType !='collection') ?? [];
+    const columns = schema?.attributes?.filter(x => x.inList &&  x.displayType != 'picklist' && x.displayType != "tree" && x.displayType != 'editTable') ?? [];
     let {lazyState, eventHandlers} = useLazyStateHandlers(schema.defaultPageSize, columns, useLocation().search.replace("?",""))
     var qs = encodeLazyState(lazyState);
     const {data, error, isLoading}= useListData(schema.name,qs)

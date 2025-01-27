@@ -10,7 +10,7 @@ public static class MatchTypes
     public const string MatchAny = "matchAny";
 }
 
-public sealed record Filter(string FieldName, string MatchType, ImmutableArray<Constraint> Constraints);
+public sealed record Filter(string FieldName, string MatchType, Constraint[] Constraints);
 
 public sealed record ValidFilter(AttributeVector Vector, string MatchType, ImmutableArray<ValidConstraint> Constraints);
 
@@ -138,7 +138,7 @@ public static class QueryStringFilterResolver
             }
 
 
-            if (match == Matches.Between || match == Matches.In || match == Matches.NotIn)
+            if (match is Matches.Between or Matches.In or Matches.NotIn)
             {
                 constraints.Add(new ValidConstraint(match, [..validValues]));
             }

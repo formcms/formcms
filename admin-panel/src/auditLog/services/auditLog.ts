@@ -9,7 +9,7 @@ export  function useAuditLogsEntity() {
     let res = useSWR<XEntity>(fullAuditLogUrl(`/audit_log/entity`), fetcher,swrConfig);
     return {...res, error:decodeError(res.error)}
 }
-export  function useAuditLogs() {
-    let res = useSWR<ListResponse>(fullAuditLogUrl(`/audit_log`), fetcher,swrConfig);
+export  function useAuditLogs(qs:string) {
+    let res = useSWR<ListResponse>(fullAuditLogUrl(`/audit_log?${qs}`), fetcher,swrConfig);
     return {...res, error:decodeError(res.error)}
 }

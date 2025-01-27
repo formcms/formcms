@@ -1,6 +1,6 @@
 using System.Text.Json;
 using FormCMS.Core.Descriptors;
-using FormCMS.Utils.EntityDisplayModel;
+using FormCMS.Utils.DisplayModels;
 
 namespace FormCMS.Cms.Services;
 

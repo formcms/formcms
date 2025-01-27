@@ -1,7 +1,8 @@
 using FormCMS.AuditLogging.Models;
+using FormCMS.CoreKit.UserContext;
 using FormCMS.Infrastructure.RelationDbDao;
-using FormCMS.Utils.EntityDisplayModel;
-using FormCMS.Utils.IdentityExt;
+using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.HttpContextExt;
 
 namespace FormCMS.AuditLogging.Services;
 
@@ -11,7 +12,7 @@ public class AuditLogService(
     IRelationDbDao dao
     ):IAuditLogService
 {
-    public async Task<ListResponse> List(int? offset, int? limit, CancellationToken ct)
+    public async Task<ListResponse> List(StrArgs args,int? offset, int? limit, CancellationToken ct)
     {
         var items = await executor.Many(AuditLogHelper.List([], [], offset,limit),ct);
         var count = await executor.Count(AuditLogHelper.Count([]),ct);
@@ -39,35 +40,8 @@ public class AuditLogService(
         {
             return;
         }
-
-        cols =
-        [
-            ColumnHelper.CreateCamelColumn<AuditLog,int>(x=>x.Id),
-            ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.UserName),
-            ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.UserId),
-            ColumnHelper.CreateCamelColumn<AuditLog>(x=>x.Action,ColumnType.String),
-            ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.EntityName),
-            ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.RecordId),
-            ColumnHelper.CreateCamelColumn<AuditLog,DateTime>(x=>x.CreatedAt),
-            ColumnHelper.CreateCamelColumn<AuditLog>(x=>x.Payload,ColumnType.Text),
-        ];
-        
-        await dao.CreateTable(AuditLogConstants.TableName, cols, CancellationToken.None);
+        await dao.CreateTable(AuditLogConstants.TableName, AuditLogHelper.Columns, CancellationToken.None);
     }
 
-    public XEntity GetAuditLogEntity()
-        => XEntityExtensions.CreateEntity<AuditLog>(
-            nameof(AuditLog.EntityName),
-            defaultPageSize: AuditLogConstants.DefaultPageSize,
-            attributes:
-            [
-                XAttrExtensions.CreateAttr<AuditLog, int>(x => x.Id, isDefault: true),
-                XAttrExtensions.CreateAttr<AuditLog, string>(x => x.UserId),
-                XAttrExtensions.CreateAttr<AuditLog, string>(x => x.UserName),
-                XAttrExtensions.CreateAttr<AuditLog, string>(x => x.EntityName),
-                XAttrExtensions.CreateAttr<AuditLog, object>(x => x.Action),
-                XAttrExtensions.CreateAttr<AuditLog, string>(x => x.RecordId),
-                XAttrExtensions.CreateAttr<AuditLog, DateTime>(x => x.CreatedAt,isDefault:true),
-                XAttrExtensions.CreateAttr<AuditLog, object>(x => x.Payload, inList: false)
-            ]);
+    public XEntity GetAuditLogEntity() => AuditLogHelper.Entity;
 }

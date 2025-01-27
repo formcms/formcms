@@ -1,30 +1,19 @@
 using System.Security.Claims;
-namespace FormCMS.Utils.IdentityExt;
+using Microsoft.AspNetCore.WebUtilities;
+
+namespace FormCMS.Utils.HttpContextExt;
 
 public static class HttpContextExt
 {
-    private const string UserIdKey = "UserId";
-    private const string UserNameKey = "UserName";
-
-    public static string GetUserId(this HttpContext? httpContext)
-    {
-        return httpContext?.Items[UserIdKey]?.ToString()??"";
-    }
-
-    public static string GetUserName(this HttpContext? httpContext)
-    {
-        return httpContext?.Items[UserNameKey]?.ToString()??"";
-    }
-
-    public static void SaveIdentityToItems(this HttpContext? context)
-    {
-        if (context == null) return;
-        
-        var ctxUser = context.User;
-        context.Items[UserNameKey] = ctxUser.Identity?.Name;
-        context.Items[UserIdKey] = ctxUser.FindFirstValue(ClaimTypes.NameIdentifier);
-   }
+    public static StrArgs Args(this HttpContext context) =>
+        QueryHelpers.ParseQuery(context.Request.QueryString.Value);
     
+    public static Task Html(this HttpContext context, string html, CancellationToken ct)
+    {
+        context.Response.ContentType = "text/html";
+        return context.Response.WriteAsync(html, ct);
+    }
+   
     public static bool HasClaims(this HttpContext? context, string claimType, string value)
     {
         var userClaims = context?.User;
@@ -36,13 +25,10 @@ public static class HttpContextExt
         return userClaims.Claims.FirstOrDefault(x => x.Value == value && x.Type == claimType) != null;
     }
 
-
     public static bool HasRole(this HttpContext? context,string role)
     {
         return context?.User.IsInRole(role) == true;
     }
-    
-   
 
     public static bool GetUserId(this HttpContext? context, out string userId)
     {

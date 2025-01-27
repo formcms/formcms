@@ -2,7 +2,7 @@ using MongoDB.Bson;
 
 namespace FormCMS.Utils.BsonDocumentExt;
 
-public static class BsonDocumentExt
+public static class BsonDocumentExtensions
 {
     internal static IDictionary<string, object> ToRecord(this BsonDocument doc)
         => doc.ToDictionary(x => x.Name, x => ToBson(x.Value));

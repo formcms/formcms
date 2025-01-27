@@ -1,9 +1,10 @@
+using System.Security.Claims;
 using FormCMS.Auth.Handlers;
 using FluentResults;
 using FormCMS.Auth.DTO;
 using FormCMS.Auth.Services;
 using FormCMS.Core.HookFactory;
-using FormCMS.Utils.IdentityExt;
+using FormCMS.CoreKit.UserContext;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
@@ -63,7 +64,7 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
                 IHttpContextAccessor accessor,  ISchemaPermissionService schemaPermissionService, SchemaPreSaveArgs args
             ) =>
             {
-                accessor.HttpContext.SaveIdentityToItems();
+                SaveIdentity(accessor.HttpContext);
                 return args with
                 {
                     RefSchema = await schemaPermissionService.BeforeSave(args.RefSchema)
@@ -71,102 +72,102 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
             });
 
             registry.SchemaPostSave.RegisterDynamic("*", async (
-                IHttpContextAccessor accessor,  ISchemaPermissionService schemaPermissionService, SchemaPostSaveArgs args
+               IHttpContextAccessor accessor,  ISchemaPermissionService schemaPermissionService, SchemaPostSaveArgs args
             ) =>
             {
                 await schemaPermissionService.AfterSave(args.Schema);
-                accessor.HttpContext.SaveIdentityToItems();
+                SaveIdentity(accessor.HttpContext);
                 return args;
             });
 
             registry.SchemaPreDel.RegisterDynamic("*", async (
-                IHttpContextAccessor accessor,  ISchemaPermissionService schemaPermissionService, SchemaPreDelArgs args
+               IHttpContextAccessor accessor,  ISchemaPermissionService schemaPermissionService, SchemaPreDelArgs args
             ) =>
             {
                 await schemaPermissionService.Delete(args.SchemaId);
-                accessor.HttpContext.SaveIdentityToItems();
+                SaveIdentity(accessor.HttpContext);
                 return args;
             });
 
             registry.SchemaPreGetAll.RegisterDynamic("*", (
-                IHttpContextAccessor accessor, ISchemaPermissionService schemaPermissionService, SchemaPreGetAllArgs args
+               IHttpContextAccessor accessor, ISchemaPermissionService schemaPermissionService, SchemaPreGetAllArgs args
             ) =>
             {
-                accessor.HttpContext.SaveIdentityToItems();
+                SaveIdentity(accessor.HttpContext);
                 return args with { OutSchemaNames = schemaPermissionService.GetAll() };
             });
 
             registry.SchemaPostGetSingle.RegisterDynamic("*", (
-                IHttpContextAccessor accessor,  ISchemaPermissionService schemaPermissionService, SchemaPostGetSingleArgs args
+               IHttpContextAccessor accessor,
+                ISchemaPermissionService schemaPermissionService, SchemaPostGetSingleArgs args
             ) =>
             {
                 schemaPermissionService.GetOne(args.Schema);
-                accessor.HttpContext.SaveIdentityToItems();
+                SaveIdentity(accessor.HttpContext);
                 return args;
             });
 
             registry.EntityPreGetSingle.RegisterDynamic("*", (
-               IHttpContextAccessor accessor,   IEntityPermissionService service, EntityPreGetSingleArgs args
+              IHttpContextAccessor accessor,   IEntityPermissionService service, EntityPreGetSingleArgs args
             ) =>
             {
                 service.GetOne(args.Name, args.RecordId);
-                accessor.HttpContext.SaveIdentityToItems();
+                SaveIdentity(accessor.HttpContext);
                 return args;
             });
 
             registry.EntityPreGetList.RegisterDynamic("*", (
-               IHttpContextAccessor accessor,  IEntityPermissionService service, EntityPreGetListArgs args
+              IHttpContextAccessor accessor,  IEntityPermissionService service, EntityPreGetListArgs args
             ) =>
             {
-                
                 args = args with { RefFilters = service.List(args.Name, args.Entity, args.RefFilters) };
-                accessor.HttpContext.SaveIdentityToItems();
+                SaveIdentity(accessor.HttpContext);
                 return args;
             });
 
             registry.JunctionPreAdd.RegisterDynamic("*", async (
-                IHttpContextAccessor accessor, IEntityPermissionService service, JunctionPreAddArgs args
+               IHttpContextAccessor accessor, IEntityPermissionService service, JunctionPreAddArgs args
             ) =>
             {
                 await service.Change(args.Name, args.RecordId);
-                accessor.HttpContext.SaveIdentityToItems();
+                SaveIdentity(accessor.HttpContext);
                 return args;
             });
 
             registry.JunctionPreDel.RegisterDynamic("*", async (
-                IHttpContextAccessor accessor, IEntityPermissionService service, JunctionPreDelArgs args
+               IHttpContextAccessor accessor, IEntityPermissionService service, JunctionPreDelArgs args
             ) =>
             {
                 await service.Change(args.Name, args.RecordId);
-                accessor.HttpContext.SaveIdentityToItems();
+                SaveIdentity(accessor.HttpContext);
                 return args;
             });
 
             registry.EntityPreDel.RegisterDynamic("*", async (
-                IHttpContextAccessor accessor, IEntityPermissionService service, EntityPreDelArgs args
+               IHttpContextAccessor accessor, IEntityPermissionService service, EntityPreDelArgs args
             ) =>
             {
                 await service.Change(args.Name, args.RecordId);
-                accessor.HttpContext.SaveIdentityToItems();
+                SaveIdentity(accessor.HttpContext);
                 return args;
             });
 
             registry.EntityPreUpdate.RegisterDynamic("*", async (
-                IHttpContextAccessor accessor, IEntityPermissionService service, EntityPreUpdateArgs args
+               IHttpContextAccessor accessor, IEntityPermissionService service, EntityPreUpdateArgs args
             ) =>
             {
                 await service.Change(args.Name, args.RecordId);
-                accessor.HttpContext.SaveIdentityToItems();
+                SaveIdentity(accessor.HttpContext);
                 return args;
             });
 
             registry.EntityPreAdd.RegisterDynamic("*", (
-                IHttpContextAccessor accessor, IEntityPermissionService service, EntityPreAddArgs args
+               IHttpContextAccessor accessor, IEntityPermissionService service, EntityPreAddArgs args
             ) =>
             {
                 service.Create(args.Name);
                 service.AssignCreatedBy(args.RefRecord);
-                accessor.HttpContext.SaveIdentityToItems();
+                SaveIdentity(accessor.HttpContext);
                 return args;
             });
         }
@@ -186,5 +187,14 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
             Using CMS Auth API endpoints
             *********************************************************
             """);
+    }
+    
+    private static void SaveIdentity(HttpContext? context)
+    {
+        if (context == null) return;
+        
+        var ctxUser = context.User;
+        context.SetUserId(ctxUser.FindFirstValue(ClaimTypes.NameIdentifier));
+        context.SetUserName(ctxUser.Identity?.Name);
     }
 }

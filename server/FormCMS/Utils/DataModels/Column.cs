@@ -1,9 +1,8 @@
 using System.Linq.Expressions;
 using Humanizer;
 
-namespace FormCMS.Infrastructure.RelationDbDao;
+namespace FormCMS.Utils.DataModels;
 
-public sealed record DatabaseTypeValue(string S = "", int? I = null, DateTime? D = null);
 
 public enum ColumnType
 {
