@@ -1,9 +1,9 @@
 import {useReducer} from "react";
 import {FilterMatchMode} from "primereact/api";
-import {decodeLazyState} from "../services/lazyState";
-import { XAttr } from "../types/schemaExt";
+import { XAttr } from "./xEntity";
+import { decodeLazyState } from "./lazyStateUtil";
 
-function createDefaultState(rows:any, cols:XAttr[],qs: string) {
+function createDefaultState(rows:any, cols:XAttr[],qs: string|undefined) {
     const defaultState :any= {
         first: 0,
         rows,
@@ -59,7 +59,7 @@ function reducer(state: any, action: any) {
     return state
 }
 
-export function useLazyStateHandlers(rows:number, cols: XAttr[], qs: string) {
+export function useLazyStateHandlers(rows:number, cols: XAttr[], qs: string|undefined) {
     const defaultState:any = createDefaultState(rows,cols,qs);
     const [lazyState, dispatch] = useReducer(reducer, defaultState)
     return {

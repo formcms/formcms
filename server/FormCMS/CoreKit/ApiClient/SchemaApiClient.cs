@@ -2,31 +2,31 @@ using System.Text.Json;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.HttpClientExt;
 using FluentResults;
-using FormCMS.Utils.EnumExt;
+using Humanizer;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.CoreKit.ApiClient;
 
 public class SchemaApiClient (HttpClient client)
 {
-    public Task<Result<Schema[]>> All(SchemaType? type) => client.GetResult<Schema[]>($"/?type={type?.ToCamelCase()}".ToSchemaApi(),JsonOptions.IgnoreCase);
+    public Task<Result<Schema[]>> All(SchemaType? type) => client.GetResult<Schema[]>($"/?type={type?.ToString().Camelize()}".ToSchemaApi());
 
-    public Task<Result> Save(Schema schema) => client.PostResult("/".ToSchemaApi(), schema,JsonOptions.IgnoreCase);
+    public Task<Result> Save(Schema schema) => client.PostResult("/".ToSchemaApi(), schema);
 
-    public Task<Result<JsonElement>> One(int id) => client.GetResult<JsonElement>($"/{id}".ToSchemaApi(),JsonOptions.IgnoreCase);
+    public Task<Result<JsonElement>> One(int id) => client.GetResult<JsonElement>($"/{id}".ToSchemaApi());
 
-    public Task<Result<Schema>> GetTopMenuBar() => client.GetResult<Schema>("/name/top-menu-bar/?type=menu".ToSchemaApi(),JsonOptions.IgnoreCase);
+    public Task<Result<Schema>> GetTopMenuBar() => client.GetResult<Schema>("/name/top-menu-bar/?type=menu".ToSchemaApi());
 
     public Task<Result> Delete(int id) => client.DeleteResult($"/{id}".ToSchemaApi());
     
     public Task<Result<Schema>> SaveEntityDefine(Schema schema)
-        =>  client.PostResult<Schema>("/entity/define".ToSchemaApi(), schema,JsonOptions.IgnoreCase);
+        =>  client.PostResult<Schema>("/entity/define".ToSchemaApi(), schema);
 
     public Task<Result<Entity>> GetTableDefine(string table)
-        =>  client.GetResult<Entity>($"/entity/{table}/define".ToSchemaApi(),JsonOptions.IgnoreCase);
+        =>  client.GetResult<Entity>($"/entity/{table}/define".ToSchemaApi());
 
     public Task<Result<Entity>> GetLoadedEntity(string entityName)
-        => client.GetResult<Entity>($"/entity/{entityName}".ToSchemaApi(),JsonOptions.IgnoreCase);
+        => client.GetResult<Entity>($"/entity/{entityName}".ToSchemaApi());
 
     public async Task<bool> ExistsEntity(string entityName)
     {
@@ -104,7 +104,7 @@ public class SchemaApiClient (HttpClient client)
     public Task<Result<Schema>> EnsureEntity(string entityName, string labelAttribute, bool needPublish,params Attribute[] attributes)
     {
         var entity = new Entity(
-            PrimaryKey: DefaultAttributeNames.Id.ToCamelCase(),
+            PrimaryKey: DefaultAttributeNames.Id.ToString().Camelize(),
             Attributes:[..attributes],
             Name: entityName,
             TableName: entityName,
@@ -119,7 +119,7 @@ public class SchemaApiClient (HttpClient client)
     public Task<Result<Schema>> EnsureEntity(Entity entity)
     {
         var url = $"/entity/add_or_update".ToSchemaApi();
-        return client.PostResult<Schema>(url, entity,JsonOptions.IgnoreCase);
+        return client.PostResult<Schema>(url, entity);
     }
 
     public Task<Result> GraphQlClientUrl() => client.GetResult("/graphql".ToSchemaApi());

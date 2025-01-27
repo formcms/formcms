@@ -1,5 +1,7 @@
 using System.Collections.Immutable;
 using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using FormCMS.Auth.Handlers;
 using FormCMS.Auth.Services;
 using FormCMS.Cms.Handlers;
@@ -11,10 +13,13 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.Cache;
 using FormCMS.Infrastructure.LocalFileStore;
 using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Utils.EntityDisplayModel;
 using FormCMS.Utils.ResultExt;
 using GraphQL;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Rewrite;
+using DataType = FormCMS.Utils.EntityDisplayModel.DataType;
+using DisplayType = FormCMS.Utils.EntityDisplayModel.DisplayType;
 using Schema = FormCMS.Cms.Graph.Schema;
 
 namespace FormCMS.Cms.Builders;
@@ -43,11 +48,11 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         optionsAction?.Invoke(systemSettings);
 
         //only set options to FormCMS enum types.
-        services.ConfigureHttpJsonOptions(JsonOptions.AddCamelEnumConverter<DataType>);
-        services.ConfigureHttpJsonOptions(JsonOptions.AddCamelEnumConverter<DisplayType>);
-        services.ConfigureHttpJsonOptions(JsonOptions.AddCamelEnumConverter<ListResponseMode>);
-        services.ConfigureHttpJsonOptions(JsonOptions.AddCamelEnumConverter<SchemaType>);
-        services.ConfigureHttpJsonOptions(JsonOptions.AddCamelEnumConverter<PublicationStatus>);
+        services.ConfigureHttpJsonOptions(AddCamelEnumConverter<DataType>);
+        services.ConfigureHttpJsonOptions(AddCamelEnumConverter<DisplayType>);
+        services.ConfigureHttpJsonOptions(AddCamelEnumConverter<ListResponseMode>);
+        services.ConfigureHttpJsonOptions(AddCamelEnumConverter<SchemaType>);
+        services.ConfigureHttpJsonOptions(AddCamelEnumConverter<PublicationStatus>);
         
         services.AddSingleton(systemSettings);
         services.AddSingleton(new DbOption(databaseProvider, connectionString));
@@ -67,6 +72,12 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         
         return services;
 
+        void AddCamelEnumConverter<T>(Microsoft.AspNetCore.Http.Json.JsonOptions options)
+            where T: struct, Enum
+        {
+            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter<T>(JsonNamingPolicy.CamelCase));
+        }
+        
         void AddCmsServices()
         {
             services.AddScoped<ISchemaService, SchemaService>();
@@ -185,10 +196,12 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             apiGroup.MapGroup("/files").MapFileHandlers();
             apiGroup.MapGroup("/queries").MapQueryHandlers().CacheOutput(options.QueryCachePolicy);
 
-            // if auth component is not use, the handler will use dummy profile service
+            // if an auth component is not use, the handler will use fake profile service
             apiGroup.MapGroup("/profile").MapProfileHandlers();
 
-            app.MapGroup(options.RouteOptions.PageBaseUrl).MapPages().CacheOutput(options.PageCachePolicy);
+            app.MapGroup(options.RouteOptions.PageBaseUrl)
+                .MapPages("files", options.RouteOptions.ApiBaseUrl)
+                .CacheOutput(options.PageCachePolicy);
             if (options.MapCmsHomePage) app.MapHomePage().CacheOutput(options.PageCachePolicy);
         }
 

@@ -1,5 +1,5 @@
 namespace FormCMS;
-
+public sealed record SystemResources(List<string> Menus);
 public class ImageCompressionOptions
 {
     public int MaxWidth { get; set; } = 1200;

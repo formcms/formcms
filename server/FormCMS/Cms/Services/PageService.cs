@@ -1,8 +1,9 @@
-using FormCMS.Utils.DictionaryExt;
 using FormCMS.Utils.PageRender;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
+using FormCMS.Utils.RecordExt;
+using FormCMS.Utils.StrArgsExt;
 using HandlebarsDotNet;
 using HtmlAgilityPack;
 using Microsoft.AspNetCore.WebUtilities;
@@ -123,7 +124,7 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
     {
         foreach (var node in ctx.Nodes.Where(x => x.DataSource.Offset > 0 || x.DataSource.Limit > 0))
         {
-            if (data.GetValueByPath<Record[]>(node.DataSource.Field, out var value))
+            if (data.ByJsonPath<Record[]>(node.DataSource.Field, out var value))
             {
                 var nodeWithArg = node with
                 {

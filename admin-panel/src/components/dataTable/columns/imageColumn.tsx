@@ -5,12 +5,12 @@ import { XAttr } from "../../../cms-client/types/schemaExt";
 
 export function imageColumn({column, getFullAssetsURL}:{
     column: {field:string,header:string}
-    getFullAssetsURL : (arg:string) =>string
+    getFullAssetsURL ?: (arg:string) =>string | undefined;
 }){
     const bodyTemplate = (item:any) => {
         var value = item[column.field];
         const urls:string[] = Array.isArray(value) ? value : [value];
-        const fullURLs =  urls.map(x=>getFullAssetsURL(x ));
+        const fullURLs =  getFullAssetsURL?urls.map(x=>getFullAssetsURL(x )):urls;
         
         return <AvatarGroup>
             {

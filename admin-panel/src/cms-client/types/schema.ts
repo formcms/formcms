@@ -29,8 +29,8 @@ export interface Entity {
     name: string;
     displayName: string;
     tableName: string;
-    primaryKey: string;
     labelAttributeName: string;
+    primaryKey: string;
     defaultPageSize: number;
     defaultPublicationStatus: PublicationStatus;
 }

@@ -10,7 +10,7 @@ export function LazyDataTable({baseRouter, schema, columns, data, lazyState, eve
     data: ListResponse | undefined
     lazyState: any
     eventHandlers: any
-    getFullAssetsURL: (arg: string) => string
+    getFullAssetsURL?: (arg: string) => string | undefined
 }) {
     return columns && data && schema && <DataTable
         sortMode="multiple"

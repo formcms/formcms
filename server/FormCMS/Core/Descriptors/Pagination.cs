@@ -1,4 +1,4 @@
-using FormCMS.Utils.DictionaryExt;
+using FormCMS.Utils.StrArgsExt;
 using Microsoft.Extensions.Primitives;
 
 namespace FormCMS.Core.Descriptors;

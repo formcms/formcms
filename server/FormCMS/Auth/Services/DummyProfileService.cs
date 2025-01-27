@@ -12,7 +12,7 @@ public class DummyProfileService: IProfileService
             Id:"",
             Email : "sadmin@cms.com",
             Roles : [RoleConstants.Sa],
-            AllowedMenus : [UserConstants.MenuSchemaBuilder],
+            AllowedMenus : [SystemMenus.MenuSchemaBuilder],
             ReadonlyEntities:[],
             RestrictedReadonlyEntities:[],
             ReadWriteEntities:[],

@@ -1,5 +1,5 @@
 using System.Data;
-using FormCMS.Utils.EnumExt;
+using Humanizer;
 using Microsoft.Data.Sqlite;
 using SqlKata.Compilers;
 using SqlKata.Execution;
@@ -41,11 +41,11 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
    {
        var strs = cols.Select(column => column switch
        {
-           _ when column.Name == DefaultColumnNames.Id.ToCamelCase() =>
-               $"{DefaultColumnNames.Id.ToCamelCase()} INTEGER  primary key autoincrement",
-           _ when column.Name == DefaultColumnNames.Deleted.ToCamelCase() => $"{DefaultColumnNames.Deleted.ToCamelCase()} INTEGER   default 0",
-           _ when column.Name == DefaultColumnNames.CreatedAt.ToCamelCase() => $"{DefaultColumnNames.CreatedAt.ToCamelCase()} integer default (datetime('now','localtime'))",
-           _ when column.Name == DefaultColumnNames.UpdatedAt.ToCamelCase() => $"{DefaultColumnNames.UpdatedAt.ToCamelCase()} integer default (datetime('now','localtime'))",
+           _ when column.Name == DefaultColumnNames.Id.ToString().Camelize() =>
+               $"{DefaultColumnNames.Id.ToString().Camelize()} INTEGER  primary key autoincrement",
+           _ when column.Name == DefaultColumnNames.Deleted.ToString().Camelize() => $"{DefaultColumnNames.Deleted.ToString().Camelize()} INTEGER   default 0",
+           _ when column.Name == DefaultColumnNames.CreatedAt.ToString().Camelize() => $"{DefaultColumnNames.CreatedAt.ToString().Camelize()} integer default (datetime('now','localtime'))",
+           _ when column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize() => $"{DefaultColumnNames.UpdatedAt.ToString().Camelize()} integer default (datetime('now','localtime'))",
            _ => $"{column.Name} {DataTypeToString(column.Type)}"
        });
         
@@ -55,7 +55,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
                 BEFORE UPDATE ON {tableName} 
                 FOR EACH ROW
             BEGIN 
-                UPDATE {tableName} SET {DefaultColumnNames.UpdatedAt.ToCamelCase()} = (datetime('now','localtime')) WHERE id = OLD.id; 
+                UPDATE {tableName} SET {DefaultColumnNames.UpdatedAt.ToString().Camelize()} = (datetime('now','localtime')) WHERE id = OLD.id; 
             END;";
       await ExecuteQuery(sql,async cmd => await cmd.ExecuteNonQueryAsync(ct));
    }

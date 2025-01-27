@@ -1,9 +1,9 @@
 using System.Collections.Immutable;
 using System.Text.Json;
 using Microsoft.IdentityModel.Tokens;
-using FormCMS.Utils.DictionaryExt;
 using FormCMS.Utils.JsonUtil;
 using FluentResults;
+using FormCMS.Utils.RecordExt;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -128,7 +128,7 @@ public static class SpanHelper
         var dict = new Dictionary<string, object>();
         foreach (var sort in sorts)
         {
-            if (item.GetValueByPath<object>(sort.Field, out var val)) dict[sort.Field] = val!;
+            if (item.ByJsonPath<object>(sort.Field, out var val)) dict[sort.Field] = val!;
         }
 
         if (sourceId is not null)

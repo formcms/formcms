@@ -1,5 +1,5 @@
 using System.Data;
-using FormCMS.Utils.EnumExt;
+using Humanizer;
 using Npgsql;
 using SqlKata.Compilers;
 using SqlKata.Execution;
@@ -43,17 +43,17 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     {
         var parts = cols.Select(column => column switch
         {
-            _ when column.Name == DefaultColumnNames.Id.ToCamelCase() => $"""
-                                                                         "{DefaultColumnNames.Id.ToCamelCase()}" SERIAL PRIMARY KEY
+            _ when column.Name == DefaultColumnNames.Id.ToString().Camelize() => $"""
+                                                                         "{DefaultColumnNames.Id.ToString().Camelize()}" SERIAL PRIMARY KEY
                                                                          """,
-            _ when column.Name == DefaultColumnNames.Deleted.ToCamelCase() => $"""
-                                                                               "{DefaultColumnNames.Deleted.ToCamelCase()}" BOOLEAN DEFAULT FALSE
+            _ when column.Name == DefaultColumnNames.Deleted.ToString().Camelize() => $"""
+                                                                               "{DefaultColumnNames.Deleted.ToString().Camelize()}" BOOLEAN DEFAULT FALSE
                                                                                """,
-            _ when column.Name == DefaultColumnNames.CreatedAt.ToCamelCase()=> $"""
-                                                                                "{DefaultColumnNames.CreatedAt.ToCamelCase()}"  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            _ when column.Name == DefaultColumnNames.CreatedAt.ToString().Camelize()=> $"""
+                                                                                "{DefaultColumnNames.CreatedAt.ToString().Camelize()}"  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                                                                                 """,
-            _ when column.Name == DefaultColumnNames.UpdatedAt.ToCamelCase()=> $"""
-                                                                                "{DefaultColumnNames.UpdatedAt.ToCamelCase()}" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            _ when column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize()=> $"""
+                                                                                "{DefaultColumnNames.UpdatedAt.ToString().Camelize()}" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                                                                                 """,
             _ => $"""
                   "{column.Name}" {ColTypeToString(column.Type)}
@@ -65,7 +65,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                 CREATE OR REPLACE FUNCTION __update_updatedAt_column()
                     RETURNS TRIGGER AS $$
                 BEGIN
-                    NEW."{DefaultColumnNames.UpdatedAt.ToCamelCase()}" = NOW();
+                    NEW."{DefaultColumnNames.UpdatedAt.ToString().Camelize()}" = NOW();
                     RETURN NEW;
                 END;
                 $$ LANGUAGE plpgsql;

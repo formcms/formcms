@@ -5,10 +5,10 @@ export function fileColumn({column, getFullAssetsURL}: {
         field: any,
         header: any,
     },
-    getFullAssetsURL : (arg:string) =>string
+    getFullAssetsURL ?: (arg:string) =>string |undefined;
 }) {
     const bodyTemplate = (item: any) => {
-        const fullURL = getFullAssetsURL(item[column.field]);
+        const fullURL =getFullAssetsURL ? getFullAssetsURL(item[column.field]): item[column.field];
         return <a href={ fullURL}>Download</a>;
     };
     return <Column key={column.field} field={column.field} header={column.header} body={bodyTemplate}></Column>

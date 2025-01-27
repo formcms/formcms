@@ -1,5 +1,4 @@
 using FormCMS.CoreKit.RelationDbQuery;
-using FormCMS.Utils.EnumExt;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -18,10 +17,11 @@ public static class JunctionHelper
         LoadedAttribute crossAttribute)
     {
         var tableName = GetJunctionTableName(sourceEntity.Name, targetEntity.Name);
-        var id = new LoadedAttribute(tableName, DefaultAttributeNames.Id.ToCamelCase());
-        var deleted = new LoadedAttribute(tableName, DefaultAttributeNames.Deleted.ToCamelCase());
-        var publicationStatusAttr = new LoadedAttribute(tableName, DefaultAttributeNames.PublicationStatus.ToCamelCase());
-        var updatedAtAttr = new LoadedAttribute(tableName, DefaultAttributeNames.UpdatedAt.ToCamelCase());
+        var id = DefaultAttributeNames.Id.CreateLoadedAttribute(tableName, DataType.Int, DisplayType.Number);
+        var deleted =  DefaultAttributeNames.Deleted.CreateLoadedAttribute(tableName,DataType.Int, DisplayType.Number);
+        var publicationStatusAttr = DefaultAttributeNames.PublicationStatus.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.Datetime);
+        var updatedAtAttr = DefaultAttributeNames.UpdatedAt.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.Datetime);
+        var createdAtAttr = DefaultAttributeNames.CreatedAt.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.Datetime);
         sourceEntity = sourceEntity with
         {
             Attributes =
@@ -44,39 +44,15 @@ public static class JunctionHelper
             DisplayType:DisplayType.Number
         );
         
-        var idAttr = new LoadedAttribute
-        (
-            Field: DefaultAttributeNames.Id.ToCamelCase(),
-            TableName: tableName,
-            DataType: DataType.Int,
-            DisplayType:DisplayType.Number
-        );
-
-        var created = new LoadedAttribute
-        (
-            Field: DefaultAttributeNames.CreatedAt.ToCamelCase(),
-            TableName: tableName,
-            DataType: DataType.Datetime,
-            DisplayType:DisplayType.Datetime
-        );
-
-        var updated = new LoadedAttribute
-        (
-            Field: DefaultAttributeNames.UpdatedAt.ToCamelCase(),
-            TableName: tableName,
-            DataType: DataType.Datetime,
-            DisplayType:DisplayType.Datetime
-        );
-
         var junctionEntity = new LoadedEntity
         (
-            Attributes: [idAttr,sourceAttribute, targetAttribute,created,updated],
+            Attributes: [id,sourceAttribute, targetAttribute,createdAtAttr,updatedAtAttr],
             PrimaryKeyAttribute: id,
             LabelAttribute: id,
             DeletedAttribute: deleted,
             Name: tableName,
             TableName: tableName,
-            PrimaryKey:idAttr.Field,
+            PrimaryKey:id.Field,
             DisplayName:"",
             LabelAttributeName:"",
             DefaultPageSize:EntityConstants.DefaultPageSize,

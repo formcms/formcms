@@ -1,3 +1,4 @@
+using FormCMS.AuditLogging.Handlers;
 using FormCMS.AuditLogging.Models;
 using FormCMS.AuditLogging.Services;
 using FormCMS.Core.HookFactory;
@@ -22,9 +23,16 @@ public sealed class AuditLogBuilder(ILogger<AuditLogBuilder> logger )
             *********************************************************
             """);
 
+        app.Services.GetService<SystemResources>()?.Menus.Add("menu_audit_log");
+
         using var scope = app.Services.CreateScope();
         var auditLogService = scope.ServiceProvider.GetRequiredService<IAuditLogService>();
         await auditLogService.EnsureAuditLogTable();
+        
+        var options = app.Services.GetRequiredService<SystemSettings>();
+        var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
+        apiGroup.MapGroup("/audit_log").MapAuditLogHandlers();
+        
         
         var registry = app.Services.GetRequiredService<HookRegistry>();
         registry.EntityPostAdd.RegisterDynamic("*",
@@ -42,7 +50,7 @@ public sealed class AuditLogBuilder(ILogger<AuditLogBuilder> logger )
             }
         );
         registry.EntityPostUpdate.RegisterDynamic("*",
-            async (IAuditLogService service, EntityPostAddArgs args) =>
+            async (IAuditLogService service, EntityPostUpdateArgs args) =>
             {
                 await service.AddLog(ActionType.Update, args.Name, args.RecordId, args.Record);
                 return args;

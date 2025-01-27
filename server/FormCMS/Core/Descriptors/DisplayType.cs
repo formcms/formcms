@@ -1,6 +1,5 @@
 namespace FormCMS.Core.Descriptors;
 
-//keep lower case to respect the naming convention of js
 public enum DisplayType
 {
     Text,

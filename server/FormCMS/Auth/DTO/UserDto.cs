@@ -12,7 +12,7 @@ public sealed record UserDto(
 );
 
 
-public static class UserConstants
+public static class SystemMenus
 {
     public const string MenuSchemaBuilder = "menu_schema_builder";
     public const string MenuUsers = "menu_users";

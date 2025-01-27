@@ -3,11 +3,12 @@ import {Button} from "primereact/button";
 import {useCheckError} from "../../components/useCheckError";
 import {useConfirm} from "../../components/useConfirm";
 import {usePicklist} from "./usePicklist";
-import {useLazyStateHandlers} from "./useLazyStateHandlers";
 import {useDialogState} from "../../components/dialogs/useDialogState";
 import {SelectDataTable} from "../../components/dataTable/SelectDataTable";
 import {SaveDialog} from "../../components/dialogs/SaveDialog";
 import { XAttr } from "../types/schemaExt";
+import { useLazyStateHandlers } from "../../components/dataTable/useLazyStateHandlers";
+import { encodeLazyState } from "../../components/dataTable/lazyStateUtil";
 
 export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
     data: any,
@@ -24,7 +25,7 @@ export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
     } = usePicklist(data, schema, column)
     
     const {lazyState ,eventHandlers}= useLazyStateHandlers(10, listColumns,"");
-    const {data: subgridData, mutate: subgridMutate} = useJunctionData(schema.name, id, column.field, false, lazyState);
+    const {data: subgridData, mutate: subgridMutate} = useJunctionData(schema.name, id, column.field, false, encodeLazyState(lazyState));
 
     const {lazyState :excludedLazyState,eventHandlers:excludedEventHandlers}= useLazyStateHandlers(10, listColumns,"");
     const {data: excludedSubgridData, mutate: execMutate} = useJunctionData(schema.name, id, column.field, true,excludedLazyState)

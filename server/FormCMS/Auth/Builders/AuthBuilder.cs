@@ -1,8 +1,7 @@
 using FormCMS.Auth.Handlers;
-using FormCMS.Cms.Builders;
 using FluentResults;
+using FormCMS.Auth.DTO;
 using FormCMS.Auth.Services;
-using FormCMS.Cms;
 using FormCMS.Core.HookFactory;
 using FormCMS.Utils.IdentityExt;
 using Microsoft.AspNetCore.Identity;
@@ -18,6 +17,10 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
         where TRole : IdentityRole, new()
         where TContext : IdentityDbContext<TUser>
     {
+
+        var systemResources = new SystemResources(Menus:
+            [SystemMenus.MenuUsers, SystemMenus.MenuRoles, SystemMenus.MenuSchemaBuilder]);
+        services.AddSingleton(systemResources);
         services.AddSingleton<IAuthBuilder, AuthBuilder<TUser>>();
         
         services.AddHttpContextAccessor();

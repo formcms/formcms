@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using FormCMS.Core.Descriptors;
+using FormCMS.Utils.EntityDisplayModel;
 
 namespace FormCMS.Core.HookFactory;
 public record EntityPreGetSingleArgs(string Name, string RecordId, Record? OutRecord):BaseArgs (Name);

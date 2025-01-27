@@ -5,18 +5,23 @@ import 'primeflex/primeflex.css'; // flex
 import './App.css';
 import {TopMenuBar} from "./layout/TopMenuBar";
 import React  from "react";
-import {setAPIUrlPrefix, setAssetsBaseURL} from "./cms-client/services/configs";
+import {setCmsApiBaseUrl, setCmsAssetBaseUrl} from "./cms-client/configs";
 import {configs} from "./config";
 import {EntityRouter} from "./cms-client/EntityRouter";
 import {Route, Routes} from "react-router-dom";
 import axios from "axios";
 import {useUserInfo} from "./auth/services/auth";
 import UserAvatarDropdown from "./layout/UserAvatarDropDown";
-import {setFullAuthAPIUrl} from "./auth/configs";
 import {AccountRouter, NotLoginAccountRouter} from "./auth/AccountRouter";
-setAPIUrlPrefix(configs.apiURL)
-setAssetsBaseURL(configs.assetURL);
-setFullAuthAPIUrl(configs.authAPIURL)
+import { AuditLogRouter } from './auditLog/AuditLogRouter';
+import { setAuditLogBaseUrl } from './auditLog/config';
+import { setAuthApiBaseUrl } from './auth/configs';
+
+setCmsApiBaseUrl(configs.apiURL)
+setAuditLogBaseUrl(configs.apiURL)
+setAuthApiBaseUrl(configs.apiURL)
+
+setCmsAssetBaseUrl(configs.assetURL);
 
 axios.defaults.withCredentials = true
 function App() {
@@ -35,6 +40,7 @@ function App() {
                 <Route path={`${configs.entityBaseRouter}/*`} element={<EntityRouter baseRouter={configs.entityBaseRouter}/>}/>
                 <Route path={configs.adminBaseRouter} element={<EntityRouter baseRouter={configs.entityBaseRouter} />} />
                 <Route path={`${configs.authBaseRouter}/*`} element={<AccountRouter baseRouter={configs.authBaseRouter}/>}/>
+                <Route path={`${configs.auditLogBaseRouter}/*`} element={<AuditLogRouter baseRouter={configs.auditLogBaseRouter}/>}/>
             </Routes>
         </>:<>
             <Routes>

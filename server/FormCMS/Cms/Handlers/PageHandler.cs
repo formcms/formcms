@@ -13,8 +13,11 @@ public static class PageHandler
         ) => await context.Html(await pageService.Get("home", context.Args(), ct), ct));
     }
 
-    public static RouteGroupBuilder MapPages(this RouteGroupBuilder app)
+    public static RouteGroupBuilder MapPages(this RouteGroupBuilder app, params string[] knownUrls)
     {
+        var excludedUrls = string.Join("|", knownUrls.Select(x => x.Replace("/", "")));
+        var prefix = $"/{{page:regex(^(?!({excludedUrls})).*)}}";
+        
         app.MapGet("/page_part", async (
             IPageService pageService,
             HttpContext context,
@@ -22,14 +25,14 @@ public static class PageHandler
             CancellationToken ct
         ) => await context.Html(await pageService.GetPart(token, ct), ct));
 
-        app.MapGet("/{page:regex(^(?!files).*)}", async (
+        app.MapGet(prefix, async (
             IPageService pageService,
             HttpContext context,
             string page,
             CancellationToken ct
         ) => await context.Html(await pageService.Get(page, context.Args(), ct), ct));
 
-        app.MapGet("/{page:regex(^(?!files).*)}/{slug}", async (
+        app.MapGet(prefix + "/{slug}", async (
             IPageService pageService,
             HttpContext context,
             string page,

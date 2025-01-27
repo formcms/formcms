@@ -1,42 +1,49 @@
 using System.Text;
 using FluentResults;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace FormCMS.Utils.HttpClientExt;
 
 public static class HttpClientExt
 {
+    
+    private static readonly JsonSerializerOptions JsonSerializerOptions= new JsonSerializerOptions
+    {
+        PropertyNameCaseInsensitive = true,
+        Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
+    };
     public static async Task<Result<string>> GetStringResult(this HttpClient client, string uri)
     {
         var res = await client.GetAsync(uri);
         return await res.ParseString();
     }
 
-    public static async Task<Result<T>> GetResult<T>(this HttpClient client, string uri, JsonSerializerOptions? options)
+    public static async Task<Result<T>> GetResult<T>(this HttpClient client, string uri)
     {
         var res = await client.GetAsync(uri);
-        return await res.ParseResult<T>(options);
+        return await res.ParseResult<T>(JsonSerializerOptions);
     }
     public static async Task<Result> GetResult(this HttpClient client, string uri)
     {
         var res = await client.GetAsync(uri);
         return await res.ParseResult();
     }
-    public static async Task<Result<T>> PostResult<T>(this HttpClient client, string url, object payload, JsonSerializerOptions? options)
+    public static async Task<Result<T>> PostResult<T>(this HttpClient client, string url, object payload )
     {
-        var res = await client.PostAsync(url, Content(payload,options));
-        return await res.ParseResult<T>(options);
+        var res = await client.PostAsync(url, Content(payload,JsonSerializerOptions));
+        return await res.ParseResult<T>(JsonSerializerOptions);
     }
 
-    public static async Task<Result> PostResult( this HttpClient client, string url, object payload, JsonSerializerOptions? options )
+    public static async Task<Result> PostResult( this HttpClient client, string url, object payload)
     {
-        var res= await client.PostAsync(url, Content(payload,options));
+        var res= await client.PostAsync(url, Content(payload,JsonSerializerOptions));
         return await res.ParseResult();
     }
 
-    public static async Task<Result> PostAndSaveCookie(this HttpClient client, string url, object payload,JsonSerializerOptions? options)
+    public static async Task<Result> PostAndSaveCookie(this HttpClient client, string url, object payload)
     {
-        var response = await client.PostAsync(url, Content(payload,options));
+        var response = await client.PostAsync(url, Content(payload,JsonSerializerOptions));
         client.DefaultRequestHeaders.Add("Cookie", response.Headers.GetValues("Set-Cookie"));
         return await response.ParseResult();
     }

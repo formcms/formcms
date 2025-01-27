@@ -2,7 +2,6 @@ using FluentResults;
 using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Core.Descriptors;
-using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
 
 namespace FormCMS.Cms.Services;
@@ -126,17 +125,17 @@ public sealed class SchemaService(
 
         cols =
         [
-            new Column(SchemaFields.Id, ColumnType.Int),
-            new Column(SchemaFields.Name, ColumnType.String),
-            new Column(SchemaFields.Type, ColumnType.String),
-            new Column(SchemaFields.Settings, ColumnType.Text),
-            new Column(SchemaFields.Deleted, ColumnType.Int),
-            new Column(SchemaFields.CreatedBy, ColumnType.String),
+            ColumnHelper.CreateCamelColumn<Schema,int>(x=>x.Id),
+            ColumnHelper.CreateCamelColumn<Schema,string>(x=>x.Name),
+            ColumnHelper.CreateCamelColumn<Schema>(x=>x.Type,ColumnType.String),
+            ColumnHelper.CreateCamelColumn<Schema,string>(x=>x.CreatedBy),
+            ColumnHelper.CreateCamelColumn<Schema>(x=>x.Settings,ColumnType.Text),
             
-            DefaultAttributeNames.CreatedAt.CreateColumn(ColumnType.Datetime),
-            DefaultAttributeNames.UpdatedAt.CreateColumn(ColumnType.Datetime),
-            DefaultAttributeNames.PublishedAt.CreateColumn(ColumnType.Datetime),
-            DefaultAttributeNames.PublicationStatus.CreateColumn(ColumnType.Int),
+            DefaultAttributeNames.Deleted.CreateCamelColumn(ColumnType.Int),
+            
+            DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.Datetime),
+            DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.Datetime),
+            
         ];
         await dao.CreateTable(SchemaHelper.TableName, cols, ct);
     }
@@ -186,7 +185,12 @@ public sealed class SchemaService(
 
     public async Task<Schema> Save(Schema dto, CancellationToken ct)
     {
-        dto = dto with { Id = await queryExecutor.ExecInt(dto.Save(), ct) };
+        var id = await queryExecutor.ExecInt(dto.Save(), ct);
+        if (dto.Id == 0)
+        {
+            dto = dto with { Id = id };
+        }
+
         return dto;
     }
 

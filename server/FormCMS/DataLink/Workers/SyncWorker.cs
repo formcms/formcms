@@ -69,7 +69,7 @@ public sealed class SyncWorker(
 
     private async Task<Result> FetchSaveSingle(ApiLinks links, string id )
     {
-        if (!(await _httpClient.GetResult<JsonElement>($"{links.Api}/single?{links.PrimaryKey}={id}",null))
+        if (!(await _httpClient.GetResult<JsonElement>($"{links.Api}/single?{links.PrimaryKey}={id}"))
             .Try(out var s, out var e))
         {
             return Result.Fail(e).WithError("Failed to fetch single data");

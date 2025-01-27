@@ -1,7 +1,7 @@
 let apiBaseURL = "";
-export function setFullAuthAPIUrl(v: string) {
+export function setAuthApiBaseUrl(v: string) {
     apiBaseURL = v;
 }
-export function fullAuthAPIURI (subPath :string){
+export function fullAuthApiUrl (subPath :string){
     return apiBaseURL + subPath
 }

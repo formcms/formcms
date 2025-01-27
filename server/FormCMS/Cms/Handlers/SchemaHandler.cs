@@ -1,7 +1,9 @@
-using FormCMS.Cms.DTO;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
+using FormCMS.Utils.EntityDisplayModel;
 using FormCMS.Utils.ResultExt;
+using DataType = FormCMS.Utils.EntityDisplayModel.DataType;
+using DisplayType = FormCMS.Utils.EntityDisplayModel.DisplayType;
 using Entity = FormCMS.Core.Descriptors.Entity;
 
 namespace FormCMS.Cms.Handlers;
@@ -74,5 +76,32 @@ public static class SchemaHandler
         app.MapGet("/graphql", (
             IQuerySchemaService service
         ) => Results.Redirect(service.GraphQlClientUrl()));
+    }
+
+    private static XEntity ToXEntity(this LoadedEntity entity)
+        => new(
+            Attributes: entity.Attributes.Select(x => x.ToXAttr()).ToArray(),
+            Name: entity.Name,
+            PrimaryKey: entity.PrimaryKey,
+            DisplayName: entity.DisplayName,
+            LabelAttributeName: entity.LabelAttributeName,
+            DefaultPageSize: entity.DefaultPageSize
+        );
+
+    private static XAttr ToXAttr(this LoadedAttribute attribute)
+    {
+        return new(
+            Field: attribute.Field,
+            Header: attribute.Header,
+            DataType: Enum.Parse<DataType>(attribute.DataType.ToString()),
+            DisplayType: Enum.Parse<DisplayType>(attribute.DisplayType.ToString()),
+            InList: attribute.InList,
+            InDetail: attribute.InDetail,
+            IsDefault: attribute.IsDefault,
+            Options: attribute.Options,
+            Junction: attribute.Junction?.TargetEntity.ToXEntity(),
+            Lookup: attribute.Lookup?.TargetEntity.ToXEntity(),
+            Collection: attribute.Collection?.TargetEntity.ToXEntity()
+        );
     }
 }

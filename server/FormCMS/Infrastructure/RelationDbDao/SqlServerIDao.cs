@@ -1,5 +1,5 @@
 using System.Data;
-using FormCMS.Utils.EnumExt;
+using Humanizer;
 using Microsoft.Data.SqlClient;
 using SqlKata.Compilers;
 using SqlKata.Execution;
@@ -41,11 +41,11 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
     {
         var strs = cols.Select(column => column switch
         {
-            _ when column.Name == DefaultColumnNames.Id.ToCamelCase() => $"[{DefaultColumnNames.Id.ToCamelCase()}] INT IDENTITY(1,1) PRIMARY KEY",
-            _ when column.Name == DefaultColumnNames.Deleted.ToCamelCase() => $"[{DefaultColumnNames.Deleted.ToCamelCase()}] BIT DEFAULT 0",
+            _ when column.Name == DefaultColumnNames.Id.ToString().Camelize() => $"[{DefaultColumnNames.Id.ToString().Camelize()}] INT IDENTITY(1,1) PRIMARY KEY",
+            _ when column.Name == DefaultColumnNames.Deleted.ToString().Camelize() => $"[{DefaultColumnNames.Deleted.ToString().Camelize()}] BIT DEFAULT 0",
             
-            _ when column.Name == DefaultColumnNames.CreatedAt.ToCamelCase() => $"[{DefaultColumnNames.CreatedAt.ToCamelCase()}] DATETIME DEFAULT GETDATE()",
-            _ when column.Name == DefaultColumnNames.UpdatedAt.ToCamelCase() => $"[{DefaultColumnNames.UpdatedAt.ToCamelCase()}] DATETIME DEFAULT GETDATE()",
+            _ when column.Name == DefaultColumnNames.CreatedAt.ToString().Camelize() => $"[{DefaultColumnNames.CreatedAt.ToString().Camelize()}] DATETIME DEFAULT GETDATE()",
+            _ when column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize() => $"[{DefaultColumnNames.UpdatedAt.ToString().Camelize()}] DATETIME DEFAULT GETDATE()",
             
             _ => $"[{column.Name}] {DataTypeToString(column.Type)}"
         });
@@ -61,7 +61,7 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
                BEGIN
                    SET NOCOUNT ON;
                    UPDATE [{table}]
-                   SET [{DefaultColumnNames.UpdatedAt.ToCamelCase()}] = GETDATE()
+                   SET [{DefaultColumnNames.UpdatedAt.ToString().Camelize()}] = GETDATE()
                    FROM inserted i
                    WHERE [{table}].[id] = i.[id];
                END;

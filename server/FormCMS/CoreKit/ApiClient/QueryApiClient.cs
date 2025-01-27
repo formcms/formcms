@@ -1,8 +1,7 @@
 using System.Text.Json;
-using FormCMS.Utils.DictionaryExt;
 using FormCMS.Utils.HttpClientExt;
 using FluentResults;
-using FormCMS.Core.Descriptors;
+using FormCMS.Utils.StrArgsExt;
 using GraphQL;
 using GraphQL.Client.Http;
 
@@ -16,30 +15,30 @@ public class QueryApiClient(HttpClient client)
         new($"{client.BaseAddress!.AbsoluteUri}graphql", new SystemTextJsonSerializer(), client);
 
 
-    // the json decoder will decode unknown object as JsonRecord
+    // the json decoder will decode an unknown object as JsonRecord
     public Task<Result<JsonElement[]>> List(
         string query, string? first = null, string? last = null, StrArgs? args = null, int offset = 0, int limit = 0)
         => client.GetResult<JsonElement[]>(
-            $"/{query}?first={first ?? ""}&last={last ?? ""}&offset={offset}&limit={limit}".ToQueryApi(),JsonOptions.IgnoreCase);
+            $"/{query}?first={first ?? ""}&last={last ?? ""}&offset={offset}&limit={limit}".ToQueryApi());
 
     public Task<Result<JsonElement[]>> ListArgs(
         string query, StrArgs args
-    ) => client.GetResult<JsonElement[]>($"/{query}?{args.ToQueryString()}".ToQueryApi(),JsonOptions.IgnoreCase);
+    ) => client.GetResult<JsonElement[]>($"/{query}?{args.ToQueryString()}".ToQueryApi());
 
     public Task<Result<JsonElement[]>> Many(
         string query, object[] ids
     ) => client.GetResult<JsonElement[]>(
-        $"/{query}/?{string.Join("&", ids.Select(x => $"id={x}"))}".ToQueryApi(),JsonOptions.IgnoreCase);
+        $"/{query}/?{string.Join("&", ids.Select(x => $"id={x}"))}".ToQueryApi());
 
     public Task<Result<JsonElement>> Single(
         string query, object id
-    ) => client.GetResult<JsonElement>($"/{query}/single?id={id}".ToQueryApi(),JsonOptions.IgnoreCase);
+    ) => client.GetResult<JsonElement>($"/{query}/single?id={id}".ToQueryApi());
 
 
     public Task<Result<JsonElement[]>> Part(
         string query, string attr, string? first = null, string? last = null, int limit = 0
     ) => client.GetResult<JsonElement[]>(
-        $"/{query}/part/{attr}?first={first ?? ""}&last={last ?? ""}&limit={limit}".ToQueryApi(),JsonOptions.IgnoreCase);
+        $"/{query}/part/{attr}?first={first ?? ""}&last={last ?? ""}&limit={limit}".ToQueryApi());
 
     public Task<Result<JsonElement[]>> ListGraphQl(
         string entity, string[] fields, string? queryName = null

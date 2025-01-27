@@ -1,7 +1,7 @@
 using FormCMS.Utils.ResultExt;
 using FormCMS.Core.Descriptors;
 using FormCMS.CoreKit.ApiClient;
-using FormCMS.Utils.EnumExt;
+using Humanizer;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 using QueryBuilder_Attribute = FormCMS.Core.Descriptors.Attribute;
 
@@ -107,11 +107,11 @@ public static class BlogsTestData
             TableName: "tags",
             DisplayName: "Tag",
             Name: "tag",
-            PrimaryKey:DefaultAttributeNames.Id.ToCamelCase(),
+            PrimaryKey:DefaultAttributeNames.Id.ToString().Camelize(),
             DefaultPublicationStatus:PublicationStatus.Published
         ),
         new(
-            PrimaryKey:DefaultAttributeNames.Id.ToCamelCase(),
+            PrimaryKey:DefaultAttributeNames.Id.ToString().Camelize(),
             Attributes:
             [
                 new Attribute(Field: "name", Header: "Name"),
@@ -127,7 +127,7 @@ public static class BlogsTestData
             DefaultPublicationStatus:PublicationStatus.Published
         ),
         new(
-            PrimaryKey:DefaultAttributeNames.Id.ToCamelCase(),
+            PrimaryKey:DefaultAttributeNames.Id.ToString().Camelize(),
             Attributes:
             [
                 new Attribute(Field: "name", Header: "Name"),
@@ -142,7 +142,7 @@ public static class BlogsTestData
             DefaultPublicationStatus:PublicationStatus.Published
         ),
         new (
-            PrimaryKey:DefaultAttributeNames.Id.ToCamelCase(),
+            PrimaryKey:DefaultAttributeNames.Id.ToString().Camelize(),
             Attributes:
             [
                 new Attribute(Field: "name", Header: "Name"),
@@ -157,7 +157,7 @@ public static class BlogsTestData
             DefaultPublicationStatus:PublicationStatus.Published
         ),
         new (
-            PrimaryKey:DefaultAttributeNames.Id.ToCamelCase(),
+            PrimaryKey:DefaultAttributeNames.Id.ToString().Camelize(),
             Attributes:
             [
                 new Attribute(Field: "title", Header: "Title"),

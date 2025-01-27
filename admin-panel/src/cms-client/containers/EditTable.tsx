@@ -1,16 +1,17 @@
 import {Button} from "primereact/button";
 import { useDialogState } from "../../components/dialogs/useDialogState";
 import { useEditTable } from "./useEditTable";
-import {useLazyStateHandlers} from "./useLazyStateHandlers";
 import {addCollectionItem, useCollectionData} from "../services/entity";
 import { SaveDialog } from "../../components/dialogs/SaveDialog";
 import { ItemForm } from "./ItemForm";
-import { fileUploadURL } from "../services/configs";
+import { fileUploadURL } from "../configs";
 import {Message} from "primereact/message";
 import {Toast} from "primereact/toast";
 import {useRef, useState} from "react";
 import { LazyDataTable } from "../../components/dataTable/LazyDataTable";
 import { XAttr, XEntity } from "../types/schemaExt";
+import { useLazyStateHandlers } from "../../components/dataTable/useLazyStateHandlers";
+import { encodeLazyState } from "../../components/dataTable/lazyStateUtil";
 
 
 export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
@@ -27,7 +28,7 @@ export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
     const [error, setError] = useState('')
     
     const {lazyState ,eventHandlers}= useLazyStateHandlers(10, listColumns,"");
-    const {data:collectionData,mutate} = useCollectionData(schema.name, id, column.field, lazyState);
+    const {data:collectionData,mutate} = useCollectionData(schema.name, id, column.field, encodeLazyState(lazyState));
     
     const onSubmit =async (formData: any) => {
         const {error} = await addCollectionItem(schema.name,id,column.field,formData)

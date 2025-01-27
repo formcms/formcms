@@ -1,5 +1,4 @@
 using FluentResults;
-using FormCMS.Core.Descriptors;
 using FormCMS.Utils.HttpClientExt;
 using FormCMS.Utils.ResultExt;
 
@@ -13,7 +12,7 @@ public class AuthApiClient(HttpClient client)
     public  Task<Result> Login(string email, string password)
     {
         var loginData = new { email, password};
-        return client.PostAndSaveCookie("/api/login?useCookies=true", loginData,JsonOptions.IgnoreCase);
+        return client.PostAndSaveCookie("/api/login?useCookies=true", loginData);
     }
 
     public async Task<Result> Logout()
@@ -26,7 +25,7 @@ public class AuthApiClient(HttpClient client)
     public async Task<Result> Register(string email, string password)
     {
         var loginData = new { email, password};
-        await client.PostResult("/api/register", loginData, JsonOptions.IgnoreCase).Ok();
+        await client.PostResult("/api/register", loginData ).Ok();
         return Result.Ok();
     }
 }

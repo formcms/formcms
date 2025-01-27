@@ -1,41 +1,9 @@
 using System.Data;
-using FormCMS.Utils.EnumExt;
 using SqlKata.Execution;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public sealed record DatabaseTypeValue(string S = "", int? I = null, DateTime? D = null);
 
-public enum ColumnType
-{
-    Int ,
-    Datetime ,
-
-    Text , //slow performance compare to string
-    String //has length limit 255 
-}
-
-public enum DefaultColumnNames
-{
-    Id,
-    Deleted,
-    CreatedAt,
-    UpdatedAt,
-    PublicationStatus 
-}
-
-public record Column(string Name, ColumnType Type);
-
-public static class ColumnHelper
-{
-    public static Column CreateColumn(this Enum enumValue,ColumnType columnType)
-    => new(enumValue.ToCamelCase(), columnType);
-    
-    public static Column[] EnsureDeleted(this Column[] columnDefinitions)
-        => columnDefinitions.FirstOrDefault(x => x.Name == DefaultColumnNames.Deleted.ToCamelCase()) is not null
-            ? columnDefinitions
-            : [..columnDefinitions, new Column(DefaultColumnNames.Deleted.ToCamelCase(), ColumnType.Int)];
-}
 
 public interface IRelationDbDao
 {

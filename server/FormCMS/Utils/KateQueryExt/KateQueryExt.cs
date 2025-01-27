@@ -1,22 +1,43 @@
-using FormCMS.Utils.EnumExt;
+using Humanizer;
 
 namespace FormCMS.Utils.KateQueryExt;
 
 public static class KateQueryExtensions
 {
-    public static SqlKata.Query WhereE(this SqlKata.Query query, Enum field, Enum value)
-        => query.Where(field.ToCamelCase(), value.ToCamelCase());
-    
-    public static SqlKata.Query WhereE(this SqlKata.Query query, string field, Enum value)
-        => query.Where(field, value.ToCamelCase());
-    
-    public static SqlKata.Query WhereE(this SqlKata.Query query, Enum field, object value)
-        => query.Where(field.ToCamelCase(), value);
-    
-    public static SqlKata.Query WhereDateE(this SqlKata.Query query, Enum field, string op, object value)
-        => query.WhereDate(field.ToCamelCase(), op,value);
-    
-    public static SqlKata.Query AsUpdateE(this SqlKata.Query query, IEnumerable<Enum> fields, IEnumerable<object> values)
-        => query.AsUpdate(fields.Select(x=>x.ToCamelCase()), values);
+    public static SqlKata.Query SelectCamelField(this SqlKata.Query query, IEnumerable<string> fields)
+        => query.Select(fields.Select(x=>x.Camelize()));
 
+    public static SqlKata.Query WhereNotCamelField(this SqlKata.Query query, string field, object value)
+        => query.WhereNot(field.Camelize(), value);
+
+    public static SqlKata.Query WhereCamelField(this SqlKata.Query query, string field, object value)
+        => query.Where(field.Camelize(), value);
+
+    public static SqlKata.Query Where(this SqlKata.Query query, Enum enumField, object value)
+        => query.Where(enumField.ToString().Camelize(), value);
+
+    public static SqlKata.Query WhereInCamelField(this SqlKata.Query query, string field, IEnumerable<object>values)
+        => query.WhereIn(field.Camelize(), values);
+
+    public static SqlKata.Query WhereCamelEnum(this SqlKata.Query query, Enum field, Enum value)
+        => query.Where(field.ToString().Camelize(), value.ToString().Camelize());
+
+    public static SqlKata.Query WhereCamelEnum(this SqlKata.Query query, string field, Enum value)
+        => query.Where(field, value.ToString().Camelize());
+    public static SqlKata.Query WhereCamelFieldEnum(this SqlKata.Query query, string field, Enum value)
+        => query.Where(field.Camelize(), value.ToString().Camelize());
+
+    public static SqlKata.Query WhereStartsCamelField(this SqlKata.Query query, string field, string value)
+        => query.WhereStarts(field.Camelize(), value);
+    
+    public static SqlKata.Query WhereDate(this SqlKata.Query query, Enum enumField, string op, object value)
+        => query.WhereDate(enumField.ToString().Camelize(), op,value);
+    
+    public static SqlKata.Query AsUpdate(this SqlKata.Query query, IEnumerable<Enum> fields, IEnumerable<object> values)
+        => query.AsUpdate(fields.Select(x=>x.ToString().Camelize()), values);
+
+    public static SqlKata.Query AsUpdateCamelEnum(this SqlKata.Query query, IEnumerable<Enum> fields, IEnumerable<Enum> values)
+        => query.AsUpdate(
+            fields.Select(x=>x.ToString().Camelize()), 
+            values.Select(x=>x.ToString().Camelize()));
 }

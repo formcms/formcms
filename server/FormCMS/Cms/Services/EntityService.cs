@@ -1,11 +1,13 @@
 using System.Text.Json;
-using FormCMS.Utils.DictionaryExt;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
-using FormCMS.Utils.EnumExt;
+using FormCMS.Utils.EntityDisplayModel;
 using FormCMS.Utils.JsonUtil;
+using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
+using FormCMS.Utils.StrArgsExt;
+using DataType = FormCMS.Core.Descriptors.DataType;
 
 namespace FormCMS.Cms.Services;
 
@@ -64,11 +66,12 @@ public sealed class EntityService(
         }
 
         var attr = ctx.Entity.Attributes
-            .Where(x => 
-                x.Field == ctx.Entity.PrimaryKey 
-                || x.Field == DefaultAttributeNames.UpdatedAt.ToCamelCase() // to avoid dirty write
-                || x.Field == DefaultAttributeNames.PublicationStatus.ToCamelCase()
-                || x.Field == DefaultAttributeNames.PublishedAt.ToCamelCase()
+            .Where(x =>
+                x.Field == ctx.Entity.PrimaryKey
+                || Enum.TryParse<DefaultAttributeNames>(x.Field, true, out var e) &&
+                e is DefaultAttributeNames.UpdatedAt 
+                    or DefaultAttributeNames.PublicationStatus
+                    or DefaultAttributeNames.PublishedAt
                 || x.InDetail && x.IsLocal())
             .ToArray();
         
@@ -344,12 +347,6 @@ public sealed class EntityService(
             new EntityPreAddArgs(entity.Name, record));
         record = res.RefRecord;
         
-        record[DefaultAttributeNames.PublicationStatus.ToCamelCase()] = entity.DefaultPublicationStatus.ToCamelCase();
-        if (entity.DefaultPublicationStatus == PublicationStatus.Published)
-        {
-            record[DefaultAttributeNames.PublishedAt.ToCamelCase()] = DateTime.Now;
-        }
-
         var query = entity.Insert(record);
         var id = await queryExecutor.ExecInt(query, token);
         record[entity.PrimaryKey] = id;

@@ -7,9 +7,11 @@ namespace FormCMS.Auth.Services;
 
 public sealed record ProfileDto(string OldPassword, string Password);
 
+
 public class ProfileService<TUser>(
     UserManager<TUser> userManager,
-    IHttpContextAccessor contextAccessor 
+    IHttpContextAccessor contextAccessor,
+    SystemResources systemResources
     ):IProfileService
 where TUser :IdentityUser, new()
 {
@@ -20,19 +22,19 @@ where TUser :IdentityUser, new()
         if (claims?.Identity?.IsAuthenticated != true) return null;
 
         string[] roles = [..claims.FindAll(ClaimTypes.Role).Select(x => x.Value)];
-        string[] menus = roles.Contains(RoleConstants.Sa) || roles.Contains(RoleConstants.Admin)
-            ? [UserConstants.MenuUsers, UserConstants.MenuRoles, UserConstants.MenuSchemaBuilder]
-            : [];
+
         return new UserDto
         (
             Id: "",
-            Email : claims.FindFirstValue(ClaimTypes.Email) ?? "",
-            Roles : roles,
-            ReadWriteEntities : [..claims.FindAll(AccessScope.FullAccess).Select(x=>x.Value)],
-            RestrictedReadWriteEntities : [..claims.FindAll(AccessScope.RestrictedAccess).Select(x=>x.Value)],
-            ReadonlyEntities : [..claims.FindAll(AccessScope.FullRead).Select(x=>x.Value)],
-            RestrictedReadonlyEntities : [..claims.FindAll(AccessScope.RestrictedRead).Select(x=>x.Value)],
-            AllowedMenus:menus
+            Email: claims.FindFirstValue(ClaimTypes.Email) ?? "",
+            Roles: roles,
+            ReadWriteEntities: [..claims.FindAll(AccessScope.FullAccess).Select(x => x.Value)],
+            RestrictedReadWriteEntities: [..claims.FindAll(AccessScope.RestrictedAccess).Select(x => x.Value)],
+            ReadonlyEntities: [..claims.FindAll(AccessScope.FullRead).Select(x => x.Value)],
+            RestrictedReadonlyEntities: [..claims.FindAll(AccessScope.RestrictedRead).Select(x => x.Value)],
+            AllowedMenus: roles.Contains(RoleConstants.Sa) || roles.Contains(RoleConstants.Admin)
+                ? systemResources.Menus.ToArray()
+                : []
         );
     }
     

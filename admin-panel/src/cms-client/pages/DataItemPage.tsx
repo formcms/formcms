@@ -6,7 +6,7 @@ import {Button} from "primereact/button";
 import {Picklist} from "../containers/Picklist";
 import {useCheckError} from "../../components/useCheckError";
 import {useConfirm} from "../../components/useConfirm";
-import {fileUploadURL, getFullAssetsURL} from "../services/configs";
+import {fileUploadURL, getFullCmsAssetUrl} from "../configs";
 import {PageLayout} from "./PageLayout";
 import {FetchingStatus} from "../../components/FetchingStatus";
 import {EditTable} from "../containers/EditTable";
@@ -135,11 +135,11 @@ export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, b
                     data,
                     id,
                     onSubmit,
-                    getFullAssetsURL
+                    getFullAssetsURL:getFullCmsAssetUrl
                 }} />
                 {
                     tables.map((column) => {
-                        const props = {schema, data, column, getFullAssetsURL, baseRouter}
+                        const props = {schema, data, column, getFullAssetsURL:getFullCmsAssetUrl, baseRouter}
                         return <div key={column.field}>
                             <Divider/>
                             {column.displayType === 'picklist' && <Picklist key={column.field} {...props}/>}

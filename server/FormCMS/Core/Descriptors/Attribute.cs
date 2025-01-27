@@ -2,7 +2,7 @@ using System.Collections.Immutable;
 using System.Globalization;
 using System.Text.Json;
 using FluentResults;
-using FormCMS.Utils.EnumExt;
+using Humanizer;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -99,8 +99,8 @@ public sealed record GraphAttribute(
 public static class AttributeHelper
 {
 
-    public static LoadedAttribute CrateLoadedAttribute(this Enum enumValue, string tableName)
-        => new LoadedAttribute(tableName, enumValue.ToCamelCase());
+    public static LoadedAttribute CreateLoadedAttribute(this Enum enumValue, string tableName, DataType dataType , DisplayType displayType )
+        => new (tableName, enumValue.ToString().Camelize(), DataType:dataType,DisplayType: displayType);
     
     public static Result<EntityLinkDesc> GetEntityLinkDesc(
         this LoadedAttribute attribute
@@ -191,11 +191,11 @@ public static class AttributeHelper
     public static Attribute[] WithDefaultAttr(this Attribute[] attributes)
     {
         var ret = new List<Attribute>();
-        if (attributes.FirstOrDefault(x=>x.Field ==DefaultAttributeNames.Id.ToCamelCase()) is null)
+        if (attributes.FirstOrDefault(x=>x.Field ==DefaultAttributeNames.Id.ToString().Camelize()) is null)
         {
             ret.Add(new Attribute
             ( 
-                Field : DefaultAttributeNames.Id.ToCamelCase(), Header : "id",
+                Field : DefaultAttributeNames.Id.ToString().Camelize(), Header : "id",
                 IsDefault : true, InDetail:true, InList:true,
                 DataType : DataType.Int, 
                 DisplayType : DisplayType.Number
@@ -204,28 +204,28 @@ public static class AttributeHelper
 
         ret.AddRange(attributes);
         
-        if (attributes.FirstOrDefault(x => x.Field == DefaultAttributeNames.PublicationStatus.ToCamelCase()) is null)
+        if (attributes.FirstOrDefault(x => x.Field == DefaultAttributeNames.PublicationStatus.ToString().Camelize()) is null)
         {
             ret.Add(new Attribute
             (
-                Field: DefaultAttributeNames.PublicationStatus.ToCamelCase(), Header: "Publication Status",
+                Field: DefaultAttributeNames.PublicationStatus.ToString().Camelize(), Header: "Publication Status",
                 IsDefault: true, InDetail: true, InList: true,
                 DataType: DataType.String,
                 DisplayType: DisplayType.Dropdown,
                 Options: string.Join(",", new []
                 {
-                    PublicationStatus.Draft.ToCamelCase(), 
-                    PublicationStatus.Published.ToCamelCase(),
-                    PublicationStatus.Scheduled.ToCamelCase()
+                    PublicationStatus.Draft.ToString().Camelize(), 
+                    PublicationStatus.Published.ToString().Camelize(),
+                    PublicationStatus.Scheduled.ToString().Camelize()
                 })
             ));
         }
 
         string[] timeAttrs =
         [
-            DefaultAttributeNames.CreatedAt.ToCamelCase(), 
-            DefaultAttributeNames.UpdatedAt.ToCamelCase(),
-            DefaultAttributeNames.PublishedAt.ToCamelCase()
+            DefaultAttributeNames.CreatedAt.ToString().Camelize(), 
+            DefaultAttributeNames.UpdatedAt.ToString().Camelize(),
+            DefaultAttributeNames.PublishedAt.ToString().Camelize()
         ];
 
         ret.AddRange(from attr in timeAttrs
@@ -310,23 +310,9 @@ public static class AttributeHelper
     {
         return new Attribute(
             Field: name,
-            Header: SnakeToTitle(name),
+            Header: name,
             DataType: colType
         );
-
-        string SnakeToTitle(string snakeStr)
-        {
-            var components = snakeStr.Split('_');
-            for (var i = 0; i < components.Length; i++)
-            {
-                if (components[i].Length > 0)
-                {
-                    components[i] = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(components[i]);
-                }
-            }
-
-            return string.Join(" ", components);
-        }
     }
 
 

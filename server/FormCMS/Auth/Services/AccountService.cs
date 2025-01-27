@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using FormCMS.Utils.IdentityExt;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 
 namespace FormCMS.Auth.Services;
@@ -26,7 +27,7 @@ public class AccountService<TUser, TRole,TCtx>(
     public async Task<string[]> GetEntities(CancellationToken ct)
     {
         var records= await queryExecutor.Many(SchemaHelper.ByNameAndType(SchemaType.Entity,null),ct);
-        return records.Select(x => (string)x[SchemaFields.Name]).ToArray();
+        return records.Select(x => x.CamelKeyStr(nameof(Entity.Name))).ToArray();
     }
     
     public async Task<string[]> GetRoles(CancellationToken ct)

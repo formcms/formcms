@@ -1,7 +1,7 @@
 import {ItemForm} from "../containers/ItemForm";
 import {addItem} from "../services/entity";
 import {Button} from "primereact/button";
-import {fileUploadURL, getFullAssetsURL} from "../services/configs";
+import {fileUploadURL, getFullCmsAssetUrl} from "../configs";
 import {useCheckError} from "../../components/useCheckError";
 import {useParams} from "react-router-dom";
 import {PageLayout} from "./PageLayout";
@@ -31,6 +31,6 @@ export function NewDataItemPageComponent({schema,baseRouter}:{schema:XEntity, ba
     return <>
         <Button label={'Save ' + schema.displayName} type="submit" form={formId}  icon="pi pi-check"/>
         <CheckErrorStatus/>
-        <ItemForm columns={inputColumns} {...{data:{}, onSubmit,  formId,uploadUrl,  getFullAssetsURL}}/>
+        <ItemForm columns={inputColumns} {...{data:{}, onSubmit,  formId,uploadUrl,  getFullAssetsURL:getFullCmsAssetUrl}}/>
     </>
 }
