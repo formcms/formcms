@@ -1,18 +1,13 @@
 using System.Collections.Immutable;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
+using FormCMS.Utils.Queryable;
 using FormCMS.Utils.StrArgsExt;
 using Microsoft.Extensions.Primitives;
 
 namespace FormCMS.Core.Descriptors;
 
-public static class SortOrder
-{
-    public const string Asc = "Asc";
-    public const string Desc = "Desc";
-}
 
-public record Sort(string Field, string Order);
 
 public sealed record ValidSort(AttributeVector Vector,string Field,string Order):Sort(Field, Order);
 
@@ -133,7 +128,7 @@ public static class SortHelper
     }
     
     public static async Task<Result<ValidSort[]>> ToValidSorts(
-        IEnumerable<Sort> list, 
+        this IEnumerable<Sort> list, 
         LoadedEntity entity,
         IEntityVectorResolver vectorResolver)
     {
@@ -166,27 +161,6 @@ public static class SortHelper
         return ret.ToArray();
     }
     
-    public static async Task<Result<ValidSort[]>> Parse(
-        LoadedEntity entity, 
-        Dictionary<string,StrArgs> dictionary, 
-        IEntityVectorResolver vectorResolver)
-    {
-        var ret = new List<ValidSort>();
-
-        if (!dictionary.TryGetValue(SortConstant.SortKey, out var dict)) return ret.ToArray();
-        foreach (var (fieldName, orderStr) in dict)
-        {
-            if (!(await vectorResolver.ResolveVector(entity, fieldName)).Try(out var vector, out var err))
-            {
-                return Result.Fail(err);
-            }
-                
-            var order = orderStr.ToString() == "1" ? SortOrder.Asc : SortOrder.Desc;
-            ret.Add(new ValidSort(vector, fieldName,order));
-        }
-        return ret.ToArray();
-    }
-
     public static ImmutableArray<ValidSort> ReverseOrder(this IEnumerable<ValidSort> sorts)
     {
         return [

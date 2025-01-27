@@ -18,7 +18,7 @@ using FormCMS.Utils.ResultExt;
 using GraphQL;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Rewrite;
-using DisplayType = FormCMS.Utils.DisplayModels.DisplayType;
+using DisplayType = FormCMS.Core.Descriptors.DisplayType;
 using Schema = FormCMS.Cms.Graph.Schema;
 
 namespace FormCMS.Cms.Builders;

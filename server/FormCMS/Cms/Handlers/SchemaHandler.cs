@@ -15,13 +15,7 @@ public static class SchemaHandler
             ISchemaService svc, string type, CancellationToken ct
         ) => await svc.AllWithAction(type.ToEnum<SchemaType>() , ct));
 
-        app.MapPost("/",  (
-            ISchemaService schemaSvc, IEntitySchemaService entitySchemaSvc, Schema dto, CancellationToken ct
-        ) => dto.Type switch
-        {
-            SchemaType.Entity =>  entitySchemaSvc.Save(dto, ct),
-            _ =>  schemaSvc.SaveWithAction(dto, ct)
-        });
+       
 
         app.MapGet("/{id}", async (
             ISchemaService svc, int id, CancellationToken ct
@@ -36,6 +30,44 @@ public static class SchemaHandler
             return schema.Settings.Menu;
         });
 
+       
+
+      
+        app.MapGet("/entity/{table}/define",  (
+            IEntitySchemaService svc, string table, CancellationToken ct
+        ) =>  svc.GetTableDefine(table, ct));
+
+        app.MapGet("/entity/{name}", async (
+            IEntitySchemaService service, string name, CancellationToken ct
+        ) =>
+        {
+            var entity = await service.LoadEntity(name, ct).Ok();
+            return entity.ToXEntity();
+        });
+
+        app.MapGet("/graphql", (
+            IQuerySchemaService service
+        ) => Results.Redirect(service.GraphQlClientUrl()));
+
+        
+        app.MapPost("/",  (
+            ISchemaService schemaSvc, IEntitySchemaService entitySchemaSvc, Schema dto, CancellationToken ct
+        ) => dto.Type switch
+        {
+            SchemaType.Entity =>  entitySchemaSvc.Save(dto, ct),
+            _ =>  schemaSvc.SaveWithAction(dto, ct)
+        });
+        
+        app.MapPost("/entity/define", (
+            IEntitySchemaService svc, Schema dto, CancellationToken ct
+        ) => svc.SaveTableDefine(dto, ct));
+
+        app.MapPost("/entity/add_or_update", async (
+            IEntitySchemaService svc,
+            Entity entity,
+            CancellationToken ct
+        ) => await svc.AddOrUpdateByName(entity, ct));
+        
         app.MapDelete("/{id:int}", async (
             ISchemaService schemaSvc,
             IEntitySchemaService entitySchemaSvc,
@@ -53,32 +85,7 @@ public static class SchemaHandler
             };
             await task;
         });
-
-        app.MapPost("/entity/define",  (
-            IEntitySchemaService svc, Schema dto, CancellationToken ct
-        ) =>  svc.SaveTableDefine(dto, ct));
-
-        app.MapGet("/entity/{table}/define",  (
-            IEntitySchemaService svc, string table, CancellationToken ct
-        ) =>  svc.GetTableDefine(table, ct));
-
-        app.MapGet("/entity/{name}", async (
-            IEntitySchemaService service, string name, CancellationToken ct
-        ) =>
-        {
-            var entity = await service.LoadEntity(name, ct).Ok();
-            return entity.ToXEntity();
-        });
-
-        app.MapPost("/entity/add_or_update", async (
-            IEntitySchemaService svc,
-            Entity entity,
-            CancellationToken ct
-        ) => await svc.AddOrUpdateByName(entity, ct));
-
-        app.MapGet("/graphql", (
-            IQuerySchemaService service
-        ) => Results.Redirect(service.GraphQlClientUrl()));
+       
     }
 
     private static XEntity ToXEntity(this LoadedEntity entity)

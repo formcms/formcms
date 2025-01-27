@@ -4,9 +4,9 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.jsonElementExt;
+using FormCMS.Utils.Queryable;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
-using FormCMS.Utils.StrArgsExt;
 using DataType = FormCMS.Core.Descriptors.DataType;
 
 namespace FormCMS.Cms.Services;
@@ -122,7 +122,7 @@ public sealed class EntityService(
         var count = await queryExecutor.Count(entity.Basic(), ct);
         if (count < entity.DefaultPageSize)
         {
-            //not enough for one page, search in client
+            //not enough for one page, search in a client
             var query = entity.ListQuery([], sorts, pagination, null, attributes,false);
             var items = await queryExecutor.Many(query, ct);
             return new LookupListResponse(false, items);
@@ -462,10 +462,11 @@ public sealed class EntityService(
     private record ListArgs(ValidFilter[] Filters, ValidSort[] Sorts, ValidPagination Pagination);
     private async Task<ListArgs> GetListArgs(LoadedEntity entity,  StrArgs args,Pagination pagination)
     {
-        var groupedArgs = args.GroupByFirstIdentifier();
-        var filters = (await QueryStringFilterResolver.Resolve(entity, groupedArgs, entitySchemaSvc, entitySchemaSvc)).Ok();
-        var sorts = (await SortHelper.Parse(entity, groupedArgs, entitySchemaSvc)).Ok();
+        var (filters,sorts) = QueryStringParser.Parse(args);
+        var validFilters = await filters.ToValidFilters(entity, entitySchemaSvc,entitySchemaSvc).Ok(); 
+        var validSort = await sorts.ToValidSorts( entity, entitySchemaSvc).Ok();
+        
         var validPagination = PaginationHelper.ToValid(pagination, entity.DefaultPageSize);
-        return new ListArgs(filters, sorts, validPagination);
+        return new ListArgs(validFilters, validSort, validPagination);
     }
 }

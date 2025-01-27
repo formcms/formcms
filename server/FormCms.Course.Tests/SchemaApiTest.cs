@@ -44,7 +44,7 @@ public class SchemaApiTest
     }
 
     [Fact]
-    public async Task GetTopMenuBar() => Assert.NotNull((await _schema.GetTopMenuBar()).Ok().Settings.Menu);
+    public async Task GetTopMenuBar() => Assert.NotNull((await _schema.GetTopMenuBar()).Ok().Name);
 
     [Fact]
     public async Task SaveSchemaAndOneAndGetLoaded()

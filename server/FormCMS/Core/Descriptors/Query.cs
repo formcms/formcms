@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
+using FormCMS.Utils.Queryable;
 
 namespace FormCMS.Core.Descriptors;
 

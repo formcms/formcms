@@ -15,7 +15,7 @@ public class SchemaApiClient (HttpClient client)
 
     public Task<Result<JsonElement>> One(int id) => client.GetResult<JsonElement>($"/{id}".ToSchemaApi());
 
-    public Task<Result<Schema>> GetTopMenuBar() => client.GetResult<Schema>("/name/top-menu-bar/?type=menu".ToSchemaApi());
+    public Task<Result<Menu>> GetTopMenuBar() => client.GetResult<Menu>("/menu/top-menu-bar".ToSchemaApi());
 
     public Task<Result> Delete(int id) => client.DeleteResult($"/{id}".ToSchemaApi());
     
@@ -30,7 +30,7 @@ public class SchemaApiClient (HttpClient client)
 
     public async Task<bool> ExistsEntity(string entityName)
     {
-        var res = await client.GetAsync($"/name/{entityName}?type=entity".ToSchemaApi());
+        var res = await client.GetAsync($"/entity/{entityName}".ToSchemaApi());
         return res.IsSuccessStatusCode;
     }
     

@@ -1,10 +1,10 @@
 using System.Collections.Immutable;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
+using FormCMS.Utils.Queryable;
 using FormCMS.Utils.StrArgsExt;
 
 namespace FormCMS.Core.Descriptors;
-
 
 public static class Matches
 {
@@ -47,7 +47,6 @@ public static class Matches
     ];
 }
 
-public sealed record Constraint(string Match, string?[] Value);
 public sealed record ValidConstraint(string Match, ImmutableArray<ValidValue> Values);
 
 public static class ConstraintsHelper

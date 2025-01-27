@@ -3,6 +3,7 @@ using FormCMS.Auth.DTO;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.HttpContextExt;
+using FormCMS.Utils.Queryable;
 using FormCMS.Utils.ResultExt;
 
 namespace FormCMS.Auth.Services;
@@ -40,7 +41,7 @@ public class EntityPermissionService(
         return
         [
             ..filters,
-            new ValidFilter(new AttributeVector("","",[],createBy),"and", 
+            new ValidFilter(new AttributeVector("","",[],createBy),MatchTypes.MatchAll, 
                 [new ValidConstraint(Matches.EqualsTo, [new ValidValue(userId)])])
         ];
     }

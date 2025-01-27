@@ -1,4 +1,5 @@
 using FormCMS.Core.Descriptors;
+using FormCMS.Utils.Queryable;
 using GraphQL.Types;
 
 namespace FormCMS.Cms.Graph;

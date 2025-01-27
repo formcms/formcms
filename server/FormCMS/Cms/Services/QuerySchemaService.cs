@@ -89,7 +89,7 @@ public sealed class QuerySchemaService(
     {
         var entity = (await entitySchemaSvc.LoadEntity(query.EntityName, ct)).Ok();
         var selection = (await ParseGraphFields("", entity, fields, null, ct)).Ok();
-        var sorts = (await SortHelper.ToValidSorts(query.Sorts, entity, entitySchemaSvc)).Ok();
+        var sorts = (await query.Sorts.ToValidSorts(entity, entitySchemaSvc)).Ok();
         var validFilter = (await query.Filters.ToValidFilters(entity, entitySchemaSvc, entitySchemaSvc)).Ok();
         return query.ToLoadedQuery(entity, selection, sorts, validFilter);
     }

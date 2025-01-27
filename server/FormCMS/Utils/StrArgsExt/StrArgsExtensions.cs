@@ -40,47 +40,7 @@ public static class StrArgsExtensions
             : StringValues.Empty;
     }
     
-    /*
-     * convert
-     * {
-     *      name[startsWidth]: a,
-     *      name[endsWith]: b,
-     * }
-     * to
-     * {
-     *      name : {
-     *          startsWidth : a,
-     *          endsWith : b
-     *      }
-     * }
-     */
-    public static Dictionary<string, StrArgs> GroupByFirstIdentifier(
-        this StrArgs strArgs, string startDelimiter = "[", string endDelimiter = "]")
-    {
-        var result = new Dictionary<string, StrArgs>();
-        foreach (var (key,value) in strArgs)
-        {
-            var parts = key.Split(startDelimiter);
-            if (parts.Length != 2)
-            {
-                continue;
-            }
-
-            var (k, subKey)= (parts[0], parts[1]);
-            if (!subKey.EndsWith(endDelimiter))
-            {
-                continue;
-            }
-            subKey = subKey[..^1];
-            if (!result.ContainsKey(k))
-            {
-                result[k] = new();
-            }
-
-            result[k][subKey] = value;
-        }
-        return result;
-    }
+    
     
     public static StrArgs OverwrittenBy(this StrArgs baseDict, StrArgs overWriteDict)
     {
