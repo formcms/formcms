@@ -1,5 +1,5 @@
 
-namespace FormCMS.Utils.Queryable;
+namespace FormCMS.Utils.DataModels;
 
 public record ParseResult(Filter[] Filters, Sort[] Sorts);
 

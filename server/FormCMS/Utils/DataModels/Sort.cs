@@ -1,4 +1,6 @@
-namespace FormCMS.Utils.Queryable;
+using SqlKata;
+
+namespace FormCMS.Utils.DataModels;
 
 public static class SortOrder
 {

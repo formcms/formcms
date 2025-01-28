@@ -1,51 +1,12 @@
 using System.Collections.Immutable;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
-using FormCMS.Utils.Queryable;
+using FormCMS.Utils.DataModels;
 using FormCMS.Utils.StrArgsExt;
 
 namespace FormCMS.Core.Descriptors;
 
-public static class Matches
-{
-    public const string Between = "between";
-    public const string StartsWith = "startsWith";
-    public const string Contains = "contains";
-    public const string NotContains = "notContains";
-    public const string EndsWith = "endsWith";
-    public const string EqualsTo = "equals";
-    public const string NotEquals = "notEquals";
-    public const string In = "in";
-    public const string NotIn = "notIn";
-    public const string Lt = "lt";
-    public const string Lte = "lte";
-    public const string Gt = "gt";
-    public const string Gte = "gte";
-    public const string DateIs = "dateIs";
-    public const string DateIsNot = "dateIsNot";
-    public const string DateBefore = "dateBefore";
-    public const string DateAfter = "dateAfter";
-    
-    
-    public static readonly ImmutableHashSet<string> SingleInt = [EqualsTo,Lt,Lte,Gt,Gte];
-    public static readonly ImmutableHashSet<string> MultiInt = [Between,In,NotIn];
-    
-    public static readonly ImmutableHashSet<string> SingleStr = [
-        EqualsTo,Lt,Lte,Gt,Gte,
-        StartsWith, Contains, NotContains, EndsWith
-    ];
-    public static readonly ImmutableHashSet<string> MultiStr = [Between,In,NotIn];
-    
-    public static readonly ImmutableHashSet<string> SingleDate = [DateIs,DateIsNot,DateBefore, DateAfter];
-    public static readonly ImmutableHashSet<string> MultiDate = [Between,In,NotIn];
-    
-    public static readonly ImmutableHashSet<string> Multi = [Between,In,NotIn];
-    public static readonly ImmutableHashSet<string> Single = [
-        StartsWith, Contains, NotContains, EndsWith,
-        EqualsTo,Lt,Lte,Gt,Gte,
-        DateIs,DateIsNot,DateBefore, DateAfter
-    ];
-}
+
 
 public sealed record ValidConstraint(string Match, ImmutableArray<ValidValue> Values);
 
@@ -86,7 +47,7 @@ public static class ConstraintsHelper
             }
             else
             {
-                if (!ValidValueHelper.Resolve(attribute, fromValue, resolver).Try(out var val, out var err))
+                if (!ValidValueHelper.Resolve(attribute, fromValue, resolver).Try(out var val,out _))
                 {
                     return Result.Fail(
                         $"Resolve constraint value fail: can not cast value [{fromValue}] to [{attribute.DataType}]");
@@ -120,7 +81,6 @@ public static class ConstraintsHelper
 
         return ret.ToArray();
     }
-
     
     private static Result<ValidValue[]> ReplaceVariables(IEnumerable<ValidValue> fromValues, LoadedAttribute attribute,
         StrArgs? args, IAttributeValueResolver resolver)

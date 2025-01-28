@@ -20,7 +20,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
 
     public void EndTransaction()=> _transaction = null;
 
-    public bool TryParseDataType(string s, ColumnType type, out DatabaseTypeValue? result)
+    public bool TryResolveDatabaseValue(string s, ColumnType type, out DatabaseTypeValue? result)
     {
         result = type switch
         {

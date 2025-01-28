@@ -1,6 +1,5 @@
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
-using FormCMS.Utils.Queryable;
 using FormCMS.Utils.RecordExt;
 using Query = SqlKata.Query;
 
@@ -65,7 +64,7 @@ public static class AuditLogHelper
                 blackList: [nameof(AuditLog.Id), nameof(AuditLog.CreatedAt)]
             ));
 
-    public static Query List(Filter[] filters, Sort[] sorts, int?offset = null, int? limit = null)
+    public static Query List(int?offset = null, int? limit = null)
     {
         var q = new Query(AuditLogConstants.TableName);
         q= q.Select(Entity.Attributes.Where(x=>x.InList).Select(x=>x.Field));
@@ -74,7 +73,7 @@ public static class AuditLogHelper
         return q;
     }
 
-    public static Query Count(Filter[] filters)
+    public static Query Count()
     {
         var q = new Query(AuditLogConstants.TableName);
         return q;

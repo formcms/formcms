@@ -161,7 +161,7 @@ public sealed class EntitySchemaService(
     {
         var dataType = attr.DataType == DataType.Lookup ? attr.Lookup!.TargetEntity.PrimaryKeyAttribute.DataType : attr.DataType;
         
-        result = dao.TryParseDataType(v, DataTypeToColumnType(dataType), out var val) switch
+        result = dao.TryResolveDatabaseValue(v, DataTypeToColumnType(dataType), out var val) switch
         {
             true => new ValidValue(S: val!.S, I: val.I, D: val.D),
             _ => null

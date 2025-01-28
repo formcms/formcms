@@ -27,7 +27,7 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
 
     public void EndTransaction() => _transaction = null;
 
-    public bool TryParseDataType(string s, ColumnType type, out DatabaseTypeValue? result)
+    public bool TryResolveDatabaseValue(string s, ColumnType type, out DatabaseTypeValue? result)
     {
         result = type switch
         {

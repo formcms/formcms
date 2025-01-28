@@ -1,7 +1,7 @@
 using System.Collections.Immutable;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
-using FormCMS.Utils.Queryable;
+using FormCMS.Utils.DataModels;
 using Microsoft.Extensions.Primitives;
 
 namespace FormCMS.Core.Descriptors;

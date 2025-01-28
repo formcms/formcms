@@ -1,5 +1,5 @@
 using FormCMS.Core.Descriptors;
-using FormCMS.Utils.Queryable;
+using FormCMS.Utils.DataModels;
 using GraphQL.Types;
 using Humanizer;
 

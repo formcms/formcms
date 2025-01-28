@@ -1,6 +1,6 @@
 using System.Globalization;
 using FormCMS.Core.Descriptors;
-using FormCMS.Utils.Queryable;
+using FormCMS.Utils.DataModels;
 using GraphQL.Types;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
