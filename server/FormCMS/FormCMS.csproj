@@ -51,22 +51,17 @@
         <None Include="../../doc/mkdoc/docs/index.md" Pack="true" PackagePath="\readme.md" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Infrastructure\" />
-    </ItemGroup>
-
-
     <PropertyGroup>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net9.0</TargetFramework>
         <PackageId>FormCMS</PackageId>
-        <Version>0.3.6</Version>
+        <Version>0.3.7.1</Version>
         <Authors>Jason C</Authors>
         <Company>FormCMS</Company>
         <Description>A headless CMS with GraphQL API and drag-and-drop page designer.</Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
-        <PackageProjectUrl>https://github.com/formcms/formcms/tree/main/server/FormCMS</PackageProjectUrl>
-        <RepositoryUrl>https://github.com/formcms/formcms</RepositoryUrl>
+        <PackageProjectUrl>https://github.com/FormCMS/FormCMS/tree/main/server/FormCMS</PackageProjectUrl>
+        <RepositoryUrl>https://github.com/FormCMS/FormCMS</RepositoryUrl>
         
         <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
         <!-- Add metadata to assembly -->

@@ -1,6 +1,7 @@
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FluentResults;
 using Humanizer;
 
 namespace FormCMS.Utils.RecordExt;
@@ -90,11 +91,11 @@ public static class RecordExtensions
         record.Add(field.ToString().Camelize(), value);
     }
 
-    public static T ToObject<T>(this Record r) 
+    public static Result<T> ToObject<T>(this Record r) 
     {
         var constructor = typeof(T).GetConstructors().FirstOrDefault();
         if (constructor == null)
-            throw new InvalidOperationException($"Type {typeof(T).Name} does not have a suitable constructor.");
+            return Result.Fail($"Type {typeof(T).Name} does not have a suitable constructor.");
 
         var parameters = constructor.GetParameters();
         var args = new object?[parameters.Length];

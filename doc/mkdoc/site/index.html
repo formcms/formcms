@@ -83,6 +83,16 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-bs-level="2"><a href="#concurrent-update-protection" class="nav-link">Concurrent Update Protection</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#audit-logging" class="nav-link">Audit Logging</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#graphql-query" class="nav-link">GraphQL Query</a>
               <ul class="nav flex-column">
               </ul>
@@ -142,8 +152,8 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p>Welcome to <a href="https://github.com/formcms/formcms">FormCMS</a>! 🚀<br />
-<a href="https://github.com/formcms/formcms/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/formcms/formcms.svg?style=social&amp;label=Star" /></a></p>
+<p>Welcome to <a href="https://github.com/FormCMS/FormCMS">FormCMS</a>! 🚀<br />
+<a href="https://github.com/FormCMS/FormCMS/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/FormCMS/FormCMS.svg?style=social&amp;label=Star" /></a></p>
 <p>Our mission is to make <strong>data modeling</strong>, <strong>backend development</strong>, and <strong>frontend development</strong> as simple and intuitive as filling out a <strong>form</strong> 📋<br />
 We’d love for you to contribute to FormCMS! Check out our <a href="https://github.com/formcms/formcms/blob/main/CONTRIBUTING.md">CONTRIBUTING guide</a> to get started.<br />
 Love FormCMS? Show your support by giving us a ⭐ on GitHub and help us grow! 🌟  </p>
@@ -762,6 +772,58 @@ Love FormCMS? Show your support by giving us a ⭐ on GitHub and help us grow! �
 <hr />
 <h3 id="publication-worker">Publication Worker</h3>
 <p>The <strong>Publication Worker</strong> automates the process of updating scheduled items in batches, transitioning them to the <strong><code>published</code></strong> status at the appropriate time.</p>
+<hr />
+<h2 id="concurrent-update-protection">Concurrent Update Protection</h2>
+<p>Protect user from dirty write(concurrent update)</p>
+<h3 id="how-does-it-work">How does it work?</h3>
+<p>Return the updated_at timestamp when fetching the item. When updating, compare the stored updated_at with the one in the request. If they differ, reject the update</p>
+<h3 id="when-is-updatedat-checked">When Is updatedAt Checked</h3>
+<ul>
+<li>During updates</li>
+<li>During Deletions</li>
+</ul>
+<p>If a concurrent modification is detected, the system will throw the following exception:<br />
+"Error: Concurrent Write Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again."</p>
+<hr />
+<h2 id="audit-logging">Audit Logging</h2>
+<p>Audit logging in FormCMS helps maintain accountability and provides a historical record of modifications made to entities within the system. </p>
+<h3 id="audit-log-entity">Audit Log Entity</h3>
+<p>An audit log entry captures essential information about each modification. The entity structure includes the following fields:</p>
+<ul>
+<li><strong>UserId</strong> (<em>string</em>): The unique identifier of the user performing the action.</li>
+<li><strong>UserName</strong> (<em>string</em>): The name of the user.</li>
+<li><strong>Action</strong> (<em>ActionType</em>): The type of action (Create, update, Delete) performed. </li>
+<li><strong>EntityName</strong> (<em>string</em>): The name of the entity affected.</li>
+<li><strong>RecordId</strong> (<em>string</em>): The unique identifier of the record modified.</li>
+<li><strong>RecordLabel</strong> (<em>string</em>): A human-readable label for the record.</li>
+<li><strong>Payload</strong> (<em>Record</em>): The data associated with the action.</li>
+<li><strong>CreatedAt</strong> (<em>DateTime</em>): The timestamp when the action occurred.</li>
+</ul>
+<h3 id="when-is-audit-log-added">When Is Audit Log Added</h3>
+<p>An audit log entry is created when a user performs any of the following actions:</p>
+<ul>
+<li><strong>Creating</strong> a new record.</li>
+<li><strong>Updating</strong> an existing record.</li>
+<li><strong>Deleting</strong> a record.</li>
+</ul>
+<h3 id="how-to-view-audit-log">How to view Audit Log</h3>
+<p>Audit logs can be accessed and searched by users with appropriate permissions. The following roles have access:</p>
+<ul>
+<li><strong>Admin</strong></li>
+<li><strong>Super Admin</strong></li>
+</ul>
+<p>These users can:
+- View a list of audit logs.
+- Search logs by user, entity, or action type.
+- Filter logs by date range.</p>
+<h3 id="benefits-of-audit-logging">Benefits of Audit Logging</h3>
+<ul>
+<li>Ensures transparency and accountability.</li>
+<li>Helps with troubleshooting and debugging.</li>
+<li>Provides insights into system usage and modifications.</li>
+<li>Supports compliance with regulatory requirements.</li>
+</ul>
+<p>By maintaining a detailed audit trail, the System enhances security and operational efficiency, ensuring that all modifications are tracked and can be reviewed when necessary.</p>
 <hr />
 <h2 id="graphql-query"><strong>GraphQL Query</strong></h2>
 <p>FormCMS simplifies frontend development by offering robust GraphQL support.</p>
@@ -1865,5 +1927,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-01-22 13:16:10.497607+00:00
+Build Date UTC : 2025-01-29 13:37:30.564776+00:00
 -->

@@ -105,22 +105,6 @@ public static class SchemaHelper
     }
     
     public static Result<Schema> RecordToSchema(Record? record)
-    {
-        if (record is null)
-            return Result.Fail("Can not parse schema, input record is null");
-
-        if (!record.CamelKeyEnum<SchemaType>(nameof(Schema.Type), out var t))
-        {
-            return Result.Fail($"Can not parse schema, invalid type");
-        }
-
-        return new Schema
-        (
-            Name: record.CamelKeyStr(nameof(Schema.Name)),
-            Type: t,
-            Settings: record.CamelKeyObject<Settings>(nameof(Schema.Settings)),
-            CreatedBy: record.CamelKeyStr(nameof(Schema.CreatedBy)),
-            Id: record.CamelKeyInt(nameof(Schema.Id))
-        );
-    }
+        => record is null ? Result.Fail("Can not parse schema, input record is null") : record.ToObject<Schema>();
+   
 }

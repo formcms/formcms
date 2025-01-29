@@ -20,7 +20,7 @@ public class AuditLogService(
         EnsureHasPermission();
         var query = AuditLogHelper.ById(id);
         var item = await executor.Single(query, ct)?? throw new ResultException("No record found");;
-        return item.ToObject<AuditLog>();
+        return item.ToObject<AuditLog>().Ok();
     }
     
     public async Task<ListResponse> List(StrArgs args,int? offset, int? limit, CancellationToken ct)

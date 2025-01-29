@@ -13,6 +13,7 @@ public class HookList<TArgs>
         });
     }
     public void RegisterAsync(string schemaName, Func<TArgs, Task<TArgs>> func) => RegisterDynamic(schemaName, func);
+    public void Register(string schemaName, Func<TArgs, TArgs> func) => RegisterDynamic(schemaName, func);
     public async Task<TArgs> Trigger(IServiceProvider provider, TArgs args)
     {
         foreach (var hook in _hooks.Where(x => StartsWith(args.Name,x.SchemaName)))

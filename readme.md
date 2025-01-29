@@ -1,7 +1,7 @@
 # FormCMS, powered by Asp.net Core(c#) and React, featuring Rest APIs, GraphQL and drag-and-drop page designer.
 
-Welcome to [FormCMS](https://github.com/formcms/formcms)! 🚀  
-[![GitHub stars](https://img.shields.io/github/stars/formcms/formcms.svg?style=social&label=Star)](https://github.com/formcms/formcms/stargazers)
+Welcome to [FormCMS](https://github.com/FormCMS/FormCMS)! 🚀  
+[![GitHub stars](https://img.shields.io/github/stars/FormCMS/FormCMS.svg?style=social&label=Star)](https://github.com/FormCMS/FormCMS/stargazers)
 
 Our mission is to make **data modeling**, **backend development**, and **frontend development** as simple and intuitive as filling out a **form** 📋  
 We’d love for you to contribute to FormCMS! Check out our [CONTRIBUTING guide](https://github.com/formcms/formcms/blob/main/CONTRIBUTING.md) to get started.  
@@ -338,6 +338,76 @@ The **Publication Worker** automates the process of updating scheduled items in 
 
 </details>  
 
+
+
+
+---
+## Concurrent Update Protection
+<details>
+<summary>
+Protect user from dirty write(concurrent update)
+</summary>
+
+###  How does it work?
+
+Return the updated_at timestamp when fetching the item. When updating, compare the stored updated_at with the one in the request. If they differ, reject the update
+
+### When Is updatedAt Checked
+- During updates
+- During Deletions
+
+If a concurrent modification is detected, the system will throw the following exception:  
+"Error: Concurrent Write Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again."
+
+</details>  
+
+
+
+
+---
+## Audit Logging
+<details>
+<summary>
+Audit logging in FormCMS helps maintain accountability and provides a historical record of modifications made to entities within the system. 
+</summary>
+
+###  Audit Log Entity
+An audit log entry captures essential information about each modification. The entity structure includes the following fields:
+
+- **UserId** (*string*): The unique identifier of the user performing the action.
+- **UserName** (*string*): The name of the user.
+- **Action** (*ActionType*): The type of action (Create, update, Delete) performed. 
+- **EntityName** (*string*): The name of the entity affected.
+- **RecordId** (*string*): The unique identifier of the record modified.
+- **RecordLabel** (*string*): A human-readable label for the record.
+- **Payload** (*Record*): The data associated with the action.
+- **CreatedAt** (*DateTime*): The timestamp when the action occurred.
+
+### When Is Audit Log Added
+An audit log entry is created when a user performs any of the following actions:
+
+- **Creating** a new record.
+- **Updating** an existing record.
+- **Deleting** a record.
+### How to view Audit Log
+Audit logs can be accessed and searched by users with appropriate permissions. The following roles have access:
+
+- **Admin**
+- **Super Admin**
+
+These users can:
+- View a list of audit logs.
+- Search logs by user, entity, or action type.
+- Filter logs by date range.
+
+### Benefits of Audit Logging
+- Ensures transparency and accountability.
+- Helps with troubleshooting and debugging.
+- Provides insights into system usage and modifications.
+- Supports compliance with regulatory requirements.
+
+By maintaining a detailed audit trail, the System enhances security and operational efficiency, ensuring that all modifications are tracked and can be reviewed when necessary.
+</details>  
 
 ---
 ## **GraphQL Query**
