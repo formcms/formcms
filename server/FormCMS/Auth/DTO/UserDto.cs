@@ -3,6 +3,7 @@ namespace FormCMS.Auth.DTO;
 public sealed record UserDto(
     string Id ,
     string Email ,
+    string Name ,
     string[] Roles ,
     string[] ReadWriteEntities ,
     string[] RestrictedReadWriteEntities ,

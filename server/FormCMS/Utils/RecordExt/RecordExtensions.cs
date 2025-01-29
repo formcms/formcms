@@ -89,51 +89,61 @@ public static class RecordExtensions
     {
         record.Add(field.ToString().Camelize(), value);
     }
+
+    public static T ToObject<T>(this Record r) 
+    {
+        var constructor = typeof(T).GetConstructors().FirstOrDefault();
+        if (constructor == null)
+            throw new InvalidOperationException($"Type {typeof(T).Name} does not have a suitable constructor.");
+
+        var parameters = constructor.GetParameters();
+        var args = new object?[parameters.Length];
+        foreach (var parameter in parameters)
+        {
+            var propertyName = parameter.Name?.Camelize();
+            if (propertyName == null || !r.TryGetValue(propertyName, out var value)) continue;
+            args[parameter.Position] = value switch
+            {
+                string enumStr when parameter.ParameterType.IsEnum =>
+                    Enum.Parse(parameter.ParameterType, enumStr, ignoreCase: true),
+
+                string jsonStr when typeof(Record).IsAssignableFrom(parameter.ParameterType) ||
+                                    parameter.ParameterType.IsClass &&
+                                    parameter.ParameterType != typeof(string) =>
+                    JsonSerializer.Deserialize(jsonStr, parameter.ParameterType, JsonSerializerOptions),
+
+                null when Nullable.GetUnderlyingType(parameter.ParameterType) != null => null,
+                _ => Convert.ChangeType(value, parameter.ParameterType)
+            };
+        }
+        return (T)constructor.Invoke(args);
+    }
+    
     public static Record FormObject(object input, HashSet<string>? whiteList = null, HashSet<string>? blackList = null)
     {
-        if (input == null)
-            throw new ArgumentNullException(nameof(input));
-
+        if (input == null) throw new ArgumentNullException(nameof(input));
         var dict = new Dictionary<string, object>();
-
-        // Iterate over properties of the input object
+        
         foreach (var property in input.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (whiteList != null && !whiteList.Contains(property.Name)) continue;
             if (blackList != null && blackList.Contains(property.Name)) continue;
-
-            var name = char.ToLowerInvariant(property.Name[0]) + property.Name[1..];
-
             var value = property.GetValue(input);
-
-            if (value == null)
+            dict[property.Name.Camelize()] = value switch
             {
-                dict[name] = null;
-                continue;
-            }
-
-            if (value is Enum enumValue)
-            {
-                // If the property is an enum, use ToString()
-                dict[name] = enumValue.ToString().Camelize();
-            }
-            else if (typeof(Record).IsAssignableFrom(property.PropertyType)
-                     || property.PropertyType.IsClass && property.PropertyType != typeof(string))
-            {
-                // If the property is a dictionary, convert it to a JSON string
-                dict[name] = JsonSerializer.Serialize(value);
-            }
-            else
-            {
-                // Copy the value as-is for other property types
-                dict[name] = value;
-            }
+                null => null!,
+                Enum valueEnum => valueEnum.ToString().Camelize(),
+                _ when typeof(Record).IsAssignableFrom(property.PropertyType) || 
+                       property.PropertyType.IsClass && property.PropertyType != typeof(string)
+                    => JsonSerializer.Serialize(value, JsonSerializerOptions),
+                
+                _ => value
+            };
         }
-
         return dict;
     }
 
-    public static bool ByJsonPath<T>(this IDictionary<string, object> dictionary, string key, out T? val)
+    public static bool ByJsonPath<T>(this Record dictionary, string key, out T? val)
     {
         val = default;
         var parts = key.Split('.');
@@ -141,7 +151,7 @@ public static class RecordExtensions
 
         foreach (var part in parts)
         {
-            if (current is IDictionary<string, object> dict && dict.TryGetValue(part, out var tmp))
+            if (current is Record dict && dict.TryGetValue(part, out var tmp))
             {
                 current = tmp;
             }
@@ -172,7 +182,7 @@ public static class RecordExtensions
             {
                 if (!parentRecord.ContainsKey("children"))
                 {
-                    parentRecord["children"] = new List<IDictionary<string, object>>();
+                    parentRecord["children"] = new List<Record>();
                 }
 
                 ((List<Record>)parentRecord["children"]).Add(record);

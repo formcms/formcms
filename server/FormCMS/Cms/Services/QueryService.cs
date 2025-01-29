@@ -103,7 +103,7 @@ public sealed class QueryService(
         else
         {
             var kateQuery = query.Entity.OneQuery(filters, sorts, query.Selection.Where(x=>x.IsLocal()),true).Ok();
-            item = await executor.One(kateQuery, ct);
+            item = await executor.Single(kateQuery, ct);
             if (item is not null)
             {
                 await LoadItems(query.Selection, args, [item], ct);

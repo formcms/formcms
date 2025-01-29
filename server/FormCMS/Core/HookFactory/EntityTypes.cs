@@ -12,9 +12,9 @@ public record EntityPreGetListArgs(LoadedEntity Entity,
     ListResponseMode ListResponseMode
     ):BaseArgs(Entity.Name) ;
 public record EntityPostGetListArgs(LoadedEntity Entity, ListResponse RefListResponse):BaseArgs(Entity.Name) ;
-public record EntityPreUpdateArgs(string Name, string RecordId, Record RefRecord):BaseArgs (Name);
-public record EntityPostUpdateArgs(string Name, string RecordId, Record Record):BaseArgs (Name);
-public record EntityPreAddArgs(string Name, Record RefRecord):BaseArgs (Name);
-public record EntityPostAddArgs(string Name, string RecordId, Record Record):BaseArgs(Name) ;
-public record EntityPreDelArgs(string Name, string RecordId, Record RefRecord):BaseArgs (Name);
-public record EntityPostDelArgs(string Name, string RecordId, Record Record):BaseArgs (Name);
+public record EntityPreUpdateArgs(string Name, string RecordId,string RecordLabel, Record RefRecord):BaseArgs (Name);
+public record EntityPostUpdateArgs(string Name, string RecordId,string RecordLabel, Record Record):BaseArgs (Name);
+public record EntityPreAddArgs(string Name,string RecordLabel, Record RefRecord):BaseArgs (Name);
+public record EntityPostAddArgs(string Name, string RecordId, string RecordLabel, Record Record):BaseArgs(Name) ;
+public record EntityPreDelArgs(string Name, string RecordId, string RecordLabel, Record RefRecord):BaseArgs (Name);
+public record EntityPostDelArgs(string Name, string RecordId, string RecordLabel, Record Record):BaseArgs (Name);

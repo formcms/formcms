@@ -42,40 +42,56 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
 
     public async Task CreateTable(string table, IEnumerable<Column> cols,CancellationToken ct)
     {
-        var parts = cols.Select(column => column switch
+        var parts = new List<string>();
+        bool haveUpdatedAt = false;
+        foreach (var column in cols)
         {
-            _ when column.Name == DefaultColumnNames.Id.ToString().Camelize() => $"""
-                                                                         "{DefaultColumnNames.Id.ToString().Camelize()}" SERIAL PRIMARY KEY
-                                                                         """,
-            _ when column.Name == DefaultColumnNames.Deleted.ToString().Camelize() => $"""
-                                                                               "{DefaultColumnNames.Deleted.ToString().Camelize()}" BOOLEAN DEFAULT FALSE
-                                                                               """,
-            _ when column.Name == DefaultColumnNames.CreatedAt.ToString().Camelize()=> $"""
-                                                                                "{DefaultColumnNames.CreatedAt.ToString().Camelize()}"  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                                                                                """,
-            _ when column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize()=> $"""
-                                                                                "{DefaultColumnNames.UpdatedAt.ToString().Camelize()}" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                                                                                """,
-            _ => $"""
-                  "{column.Name}" {ColTypeToString(column.Type)}
-                  """
-        });
+            if (column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize())
+            {
+                haveUpdatedAt = true;
+            }
+
+            var part = column switch
+            {
+                _ when column.Name == DefaultColumnNames.Id.ToString().Camelize() => $"""
+                     "{DefaultColumnNames.Id.ToString().Camelize()}" SERIAL PRIMARY KEY
+                     """,
+                _ when column.Name == DefaultColumnNames.Deleted.ToString().Camelize() => $"""
+                     "{DefaultColumnNames.Deleted.ToString().Camelize()}" BOOLEAN DEFAULT FALSE
+                     """,
+                _ when column.Name == DefaultColumnNames.CreatedAt.ToString().Camelize() => $"""
+                     "{DefaultColumnNames.CreatedAt.ToString().Camelize()}"  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                     """,
+                _ when column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize() => $"""
+                     "{DefaultColumnNames.UpdatedAt.ToString().Camelize()}" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                     """,
+                _ => $"""
+                      "{column.Name}" {ColTypeToString(column.Type)}
+                      """
+            };
+            parts.Add(part);
+        }
+        var sql = $"""
+            CREATE TABLE {table} ({string.Join(", ", parts)});
+        """;
         
-         var sql = $"""
-                CREATE TABLE {table} ({string.Join(", ", parts)});
-                CREATE OR REPLACE FUNCTION __update_updatedAt_column()
-                    RETURNS TRIGGER AS $$
-                BEGIN
-                    NEW."{DefaultColumnNames.UpdatedAt.ToString().Camelize()}" = NOW();
-                    RETURN NEW;
-                END;
-                $$ LANGUAGE plpgsql;
-                
-                CREATE TRIGGER update_{table}_updatedAt 
-                                BEFORE UPDATE ON {table} 
-                                FOR EACH ROW
-                EXECUTE FUNCTION __update_updatedAt_column();
-                """;
+        if (haveUpdatedAt)
+        {
+            sql += $"""
+                    CREATE OR REPLACE FUNCTION __update_updatedAt_column()
+                        RETURNS TRIGGER AS $$
+                    BEGIN
+                        NEW."{DefaultColumnNames.UpdatedAt.ToString().Camelize()}" = NOW();
+                        RETURN NEW;
+                    END;
+                    $$ LANGUAGE plpgsql;
+
+                    CREATE TRIGGER update_{table}_updatedAt 
+                                    BEFORE UPDATE ON {table} 
+                                    FOR EACH ROW
+                    EXECUTE FUNCTION __update_updatedAt_column();
+                    """;
+        }
         await ExecuteQuery(sql, cmd => cmd.ExecuteNonQueryAsync(ct));
     }
 

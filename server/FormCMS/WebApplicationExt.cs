@@ -16,7 +16,11 @@ public static class WebApplicationExt
         app.Services.GetService<IAuthBuilder>()?.UseCmsAuth(app);
         app.Services.GetService<MongoQueryBuilder>()?.UseMongoDbQuery(app);
         app.Services.GetService<MessageProduceBuilder>()?.UseEventProducer(app);
-        app.Services.GetService<AuditLogBuilder>()?.UseAuditLog(app);
+        var auditLog =  app.Services.GetService<AuditLogBuilder>();
+        if (auditLog != null)
+        {
+            await auditLog.UseAuditLog(app);
+        }
     }
 
     public static HookRegistry GetHookRegistry(this WebApplication app) =>

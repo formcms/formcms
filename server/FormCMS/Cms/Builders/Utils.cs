@@ -40,7 +40,7 @@ public static class Utils
                 connection.Open();
                 return connection;
             });
-            services.AddScoped<IRelationDbDao, SqlServerIDao>();
+            services.AddScoped<IRelationDbDao, SqlServerDao>();
             return services;
         }
 

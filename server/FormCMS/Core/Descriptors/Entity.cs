@@ -6,6 +6,7 @@ using DynamicExpresso;
 using FormCMS.CoreKit.RelationDbQuery;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
+using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.KateQueryExt;
 using FormCMS.Utils.RecordExt;
 using GraphQL.Client.Abstractions.Utilities;
@@ -239,7 +240,7 @@ public static class EntityHelper
         }
 
 
-        if (!item.CamelKeyDateTime(DefaultAttributeNames.UpdatedAt, out var updatedAt))
+        if (!item.RemoveCamelKey(DefaultAttributeNames.UpdatedAt, out var updatedAt))
         {
             return Result.Fail(
                 $"Failed to get updatedAt value with field [{e.UpdatedAtAttribute.Field.ToCamelCase()}]");

@@ -64,6 +64,7 @@ public class AccountService<TUser, TRole,TCtx>(
         (
             Email: item.Key.Email!,
             Id: item.Key.Id,
+            Name:item.Key.UserName??"",
             Roles: [..item.Values.Where(x => x.role is not null).Select(x => x.role.Name!).Distinct()],
             ReadWriteEntities:
             [
@@ -110,6 +111,7 @@ public class AccountService<TUser, TRole,TCtx>(
         (
             Email : x.Key.Email!,
             Id : x.Key.Id,
+            Name : x.Key.UserName??"",
             Roles : [..x.Roles.Where(val=>val?.role is not null).Select(val => val.role.Name!).Distinct()],
             AllowedMenus:[],
             ReadonlyEntities:[],

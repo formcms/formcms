@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FormCMS.AuditLogging.Models;
 using FormCMS.Auth.Handlers;
 using FormCMS.Auth.Services;
 using FormCMS.Cms.Handlers;
@@ -18,7 +19,6 @@ using FormCMS.Utils.ResultExt;
 using GraphQL;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Rewrite;
-using DisplayType = FormCMS.Core.Descriptors.DisplayType;
 using Schema = FormCMS.Cms.Graph.Schema;
 
 namespace FormCMS.Cms.Builders;
@@ -62,6 +62,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         services.AddDao(databaseProvider,connectionString);
         services.AddSingleton(new KateQueryExecutorOption(systemSettings.DatabaseQueryTimeout));
         services.AddScoped<KateQueryExecutor>();
+        services.AddScoped<DatabaseMigrator>();
         
         AddCacheServices();
         AddStorageServices();
@@ -71,11 +72,8 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         
         return services;
 
-        void AddCamelEnumConverter<T>(Microsoft.AspNetCore.Http.Json.JsonOptions options)
-            where T: struct, Enum
-        {
-            options.SerializerOptions.Converters.Add(new JsonStringEnumConverter<T>(JsonNamingPolicy.CamelCase));
-        }
+        void AddCamelEnumConverter<T>(Microsoft.AspNetCore.Http.Json.JsonOptions options) where T : struct, Enum
+            => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter<T>(JsonNamingPolicy.CamelCase));
         
         void AddCmsServices()
         {

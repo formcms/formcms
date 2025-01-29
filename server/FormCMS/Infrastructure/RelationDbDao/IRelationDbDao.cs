@@ -4,8 +4,6 @@ using SqlKata.Execution;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-
-
 public interface IRelationDbDao
 {
     //after beginning transaction, all operations begin to use this transaction

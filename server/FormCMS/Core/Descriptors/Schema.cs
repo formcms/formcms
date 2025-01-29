@@ -1,4 +1,6 @@
 using FluentResults;
+using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Utils.DataModels;
 using FormCMS.Utils.KateQueryExt;
 using FormCMS.Utils.RecordExt;
 
@@ -19,6 +21,20 @@ public static class SchemaHelper
 {
     public const string TableName = "__schemas";
 
+    public static readonly Column[] Columns =
+    [
+        ColumnHelper.CreateCamelColumn<Schema, int>(x => x.Id),
+        ColumnHelper.CreateCamelColumn<Schema, string>(x => x.Name),
+        ColumnHelper.CreateCamelColumn<Schema>(x => x.Type, ColumnType.String),
+        ColumnHelper.CreateCamelColumn<Schema, string>(x => x.CreatedBy),
+        ColumnHelper.CreateCamelColumn<Schema>(x => x.Settings, ColumnType.Text),
+
+        DefaultAttributeNames.Deleted.CreateCamelColumn(ColumnType.Int),
+
+        DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.Datetime),
+        DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.Datetime),
+
+    ];  
     public static SqlKata.Query ById(int id)
         => BaseQuery().WhereCamelField(nameof(Schema.Id), id);
 
@@ -38,7 +54,7 @@ public static class SchemaHelper
         var query = BaseQuery();
         if (type is not null)
         {
-            query = query.WhereCamelEnum(nameof(Schema.Type), type.Value);
+            query = query.WhereCamelFieldEnum(nameof(Schema.Type), type.Value);
         }
 
         if (names is not null)
@@ -82,7 +98,7 @@ public static class SchemaHelper
             ]);
 
             var query = new SqlKata.Query(TableName)
-                .Where(nameof(Schema.Id), schema.Id)
+                .WhereCamelField(nameof(Schema.Id), schema.Id)
                 .AsUpdate(record);
             return query;
         }

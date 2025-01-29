@@ -7,12 +7,20 @@ public static class AuditLogHandlers
 {
     public static void MapAuditLogHandlers(this RouteGroupBuilder builder)
     {
-        builder.MapGet("/entity", (IAuditLogService s) => s.GetAuditLogEntity());
         builder.MapGet("/", (
             IAuditLogService s, 
             HttpContext context,
-            int? offset, int? limit, 
+            int? offset, 
+            int? limit, 
             CancellationToken ct
         ) => s.List(QueryHelpers.ParseQuery(context.Request.QueryString.Value), offset, limit, ct));
+
+        builder.MapGet("/{id}", (
+            IAuditLogService s,
+            int id,
+            CancellationToken ct
+        ) => s.Single(id, ct));
+        
+        builder.MapGet("/entity", (IAuditLogService s) => s.GetAuditLogEntity());
     }
 }

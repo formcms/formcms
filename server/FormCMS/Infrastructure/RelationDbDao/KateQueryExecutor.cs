@@ -28,7 +28,7 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
          cancellationToken: ct)
    );
 
-   public async Task<Record?> One(
+   public async Task<Record?> Single(
       Query query, CancellationToken ct
    ) => await provider.ExecuteKateQuery((db,tx)
       => db.FirstOrDefaultAsync(query: query, transaction:tx, timeout: option.TimeoutSeconds, cancellationToken: ct)

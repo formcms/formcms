@@ -1,5 +1,6 @@
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.KateQueryExt;
 using FormCMS.Utils.RecordExt;
 using Query = SqlKata.Query;
 
@@ -19,6 +20,7 @@ public record AuditLog(
     ActionType Action,
     string EntityName,
     string RecordId,
+    string RecordLabel,
     Record Payload,
     DateTime CreatedAt
 );
@@ -32,27 +34,29 @@ public static class AuditLogConstants
 public static class AuditLogHelper
 {
     public static readonly XEntity Entity  = XEntityExtensions.CreateEntity<AuditLog>(
-        nameof(AuditLog.EntityName),
+        nameof(AuditLog.RecordLabel),
         defaultPageSize: AuditLogConstants.DefaultPageSize,
         attributes:
         [
             XAttrExtensions.CreateAttr<AuditLog, int>(x => x.Id, isDefault: true),
+            XAttrExtensions.CreateAttr<AuditLog, string>(x => x.RecordId),
+            XAttrExtensions.CreateAttr<AuditLog, string>(x => x.RecordLabel),
+            XAttrExtensions.CreateAttr<AuditLog, object>(x => x.Action),
+            XAttrExtensions.CreateAttr<AuditLog, string>(x => x.EntityName),
             XAttrExtensions.CreateAttr<AuditLog, string>(x => x.UserId),
             XAttrExtensions.CreateAttr<AuditLog, string>(x => x.UserName),
-            XAttrExtensions.CreateAttr<AuditLog, string>(x => x.EntityName),
-            XAttrExtensions.CreateAttr<AuditLog, object>(x => x.Action),
-            XAttrExtensions.CreateAttr<AuditLog, string>(x => x.RecordId),
             XAttrExtensions.CreateAttr<AuditLog, DateTime>(x => x.CreatedAt,isDefault:true),
             XAttrExtensions.CreateAttr<AuditLog, object>(x => x.Payload, inList: false)
         ]);
 
     public static readonly Column[] Columns =  [
         ColumnHelper.CreateCamelColumn<AuditLog,int>(x=>x.Id),
-        ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.UserName),
-        ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.UserId),
+        ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.RecordId),
+        ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.RecordLabel),
         ColumnHelper.CreateCamelColumn<AuditLog>(x=>x.Action,ColumnType.String),
         ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.EntityName),
-        ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.RecordId),
+        ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.UserName),
+        ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.UserId),
         ColumnHelper.CreateCamelColumn<AuditLog,DateTime>(x=>x.CreatedAt),
         ColumnHelper.CreateCamelColumn<AuditLog>(x=>x.Payload,ColumnType.Text),
     ];
@@ -73,10 +77,13 @@ public static class AuditLogHelper
         return q;
     }
 
-    public static Query Count()
+    public static Query ById(int id)
     {
-        var q = new Query(AuditLogConstants.TableName);
-        return q;
+        var fields = Entity.Attributes.Select(x=>x.Field);
+        return new Query(AuditLogConstants.TableName)
+            .WhereCamelField(nameof(AuditLog.Id),id).Select(fields);
     }
+
+    public static Query Count() => new (AuditLogConstants.TableName);
     
 }

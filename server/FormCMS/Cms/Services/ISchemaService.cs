@@ -26,7 +26,7 @@ public interface ISchemaService
     Task Delete(int id, CancellationToken ct = default);
     
     Task EnsureTopMenuBar(CancellationToken ct = default);
-    Task EnsureSchemaTable(CancellationToken ct = default);
+    Task EnsureSchemaTable();
 
     Task RemoveEntityInTopMenuBar(Entity entity, CancellationToken ct = default);
     public Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken ct = default);

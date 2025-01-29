@@ -13,6 +13,7 @@
 export interface UserDto {
     id: string;
     email: string;
+    name: string;
     roles: string[];
     readWriteEntities: string[];
     restrictedReadWriteEntities: string[];

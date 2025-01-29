@@ -7,7 +7,7 @@ using SqlKata.Execution;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logger ) : IRelationDbDao
+public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger ) : IRelationDbDao
 {
     private readonly Compiler _compiler = new SqlServerCompiler();
     private  SqlTransaction? _transaction = null;
@@ -40,35 +40,53 @@ public class SqlServerIDao(SqlConnection connection, ILogger<SqlServerIDao> logg
 
     public async Task CreateTable(string table, IEnumerable<Column> cols,  CancellationToken ct)
     {
-        var strs = cols.Select(column => column switch
+        var parts = new List<string>();
+        bool haveUpdatedAt = false;
+        foreach (var column in cols)
         {
-            _ when column.Name == DefaultColumnNames.Id.ToString().Camelize() => $"[{DefaultColumnNames.Id.ToString().Camelize()}] INT IDENTITY(1,1) PRIMARY KEY",
-            _ when column.Name == DefaultColumnNames.Deleted.ToString().Camelize() => $"[{DefaultColumnNames.Deleted.ToString().Camelize()}] BIT DEFAULT 0",
-            
-            _ when column.Name == DefaultColumnNames.CreatedAt.ToString().Camelize() => $"[{DefaultColumnNames.CreatedAt.ToString().Camelize()}] DATETIME DEFAULT GETDATE()",
-            _ when column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize() => $"[{DefaultColumnNames.UpdatedAt.ToString().Camelize()}] DATETIME DEFAULT GETDATE()",
-            
-            _ => $"[{column.Name}] {DataTypeToString(column.Type)}"
-        });
+            if (column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize())
+            {
+                haveUpdatedAt = true;
+            }
 
-        var sql = $"CREATE TABLE [{table}] ({string.Join(", ", strs)});";
+            var part = column switch
+            {
+                _ when column.Name == DefaultColumnNames.Id.ToString().Camelize() =>
+                    $"[{DefaultColumnNames.Id.ToString().Camelize()}] INT IDENTITY(1,1) PRIMARY KEY",
+                _ when column.Name == DefaultColumnNames.Deleted.ToString().Camelize() =>
+                    $"[{DefaultColumnNames.Deleted.ToString().Camelize()}] BIT DEFAULT 0",
+
+                _ when column.Name == DefaultColumnNames.CreatedAt.ToString().Camelize() =>
+                    $"[{DefaultColumnNames.CreatedAt.ToString().Camelize()}] DATETIME DEFAULT GETDATE()",
+                _ when column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize() =>
+                    $"[{DefaultColumnNames.UpdatedAt.ToString().Camelize()}] DATETIME DEFAULT GETDATE()",
+
+                _ => $"[{column.Name}] {DataTypeToString(column.Type)}"
+            };
+            parts.Add(part);
+        }
+
+        var sql = $"CREATE TABLE [{table}] ({string.Join(", ", parts)});";
         
         await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
-        sql = $"""
-               CREATE TRIGGER trg_{table}_updatedAt 
-               ON [{table}] 
-               AFTER UPDATE
-               AS 
-               BEGIN
-                   SET NOCOUNT ON;
-                   UPDATE [{table}]
-                   SET [{DefaultColumnNames.UpdatedAt.ToString().Camelize()}] = GETDATE()
-                   FROM inserted i
-                   WHERE [{table}].[id] = i.[id];
-               END;
-               """;
+        if (haveUpdatedAt)
+        {
+            sql = $"""
+                   CREATE TRIGGER trg_{table}_updatedAt 
+                   ON [{table}] 
+                   AFTER UPDATE
+                   AS 
+                   BEGIN
+                       SET NOCOUNT ON;
+                       UPDATE [{table}]
+                       SET [{DefaultColumnNames.UpdatedAt.ToString().Camelize()}] = GETDATE()
+                       FROM inserted i
+                       WHERE [{table}].[id] = i.[id];
+                   END;
+                   """;
 
-        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
+            await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
+        }
     }
 
     public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct)

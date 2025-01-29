@@ -18,20 +18,21 @@ where TUser :IdentityUser, new()
     public UserDto? GetInfo()
     {
         
-        var claims = contextAccessor.HttpContext?.User;
-        if (claims?.Identity?.IsAuthenticated != true) return null;
+        var claimsPrincipal = contextAccessor.HttpContext?.User;
+        if (claimsPrincipal?.Identity?.IsAuthenticated != true) return null;
 
-        string[] roles = [..claims.FindAll(ClaimTypes.Role).Select(x => x.Value)];
+        string[] roles = [..claimsPrincipal.FindAll(ClaimTypes.Role).Select(x => x.Value)];
 
         return new UserDto
         (
-            Id: "",
-            Email: claims.FindFirstValue(ClaimTypes.Email) ?? "",
+            Id: claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "",
+            Name: claimsPrincipal.Identity.Name??"",
+            Email: claimsPrincipal.FindFirstValue(ClaimTypes.Email) ?? "",
             Roles: roles,
-            ReadWriteEntities: [..claims.FindAll(AccessScope.FullAccess).Select(x => x.Value)],
-            RestrictedReadWriteEntities: [..claims.FindAll(AccessScope.RestrictedAccess).Select(x => x.Value)],
-            ReadonlyEntities: [..claims.FindAll(AccessScope.FullRead).Select(x => x.Value)],
-            RestrictedReadonlyEntities: [..claims.FindAll(AccessScope.RestrictedRead).Select(x => x.Value)],
+            ReadWriteEntities: [..claimsPrincipal.FindAll(AccessScope.FullAccess).Select(x => x.Value)],
+            RestrictedReadWriteEntities: [..claimsPrincipal.FindAll(AccessScope.RestrictedAccess).Select(x => x.Value)],
+            ReadonlyEntities: [..claimsPrincipal.FindAll(AccessScope.FullRead).Select(x => x.Value)],
+            RestrictedReadonlyEntities: [..claimsPrincipal.FindAll(AccessScope.RestrictedRead).Select(x => x.Value)],
             AllowedMenus: roles.Contains(RoleConstants.Sa) || roles.Contains(RoleConstants.Admin)
                 ? systemResources.Menus.ToArray()
                 : []

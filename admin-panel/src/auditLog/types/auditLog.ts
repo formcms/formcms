@@ -23,6 +23,7 @@ export interface AuditLog {
     action: ActionType;
     entityName: string;
     recordId: string;
+    recordLabel: string;
     payload: { [key: string]: any; };
     createdAt: Date;
 }

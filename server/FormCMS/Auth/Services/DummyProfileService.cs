@@ -10,6 +10,7 @@ public class DummyProfileService: IProfileService
         return new UserDto
         (
             Id:"",
+            Name:"admin",
             Email : "sadmin@cms.com",
             Roles : [RoleConstants.Sa],
             AllowedMenus : [SystemMenus.MenuSchemaBuilder],

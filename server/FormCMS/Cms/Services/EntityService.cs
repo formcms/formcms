@@ -51,7 +51,7 @@ public sealed class EntityService(
             .Where(x => x.IsLocal() && attributes.Contains(x.Field))
             .Select(x=>x.AddTableModifier());
         var query = ctx.Entity.ByIdsQuery( fields,[ctx.Id],false);
-        return await queryExecutor.One(query, ct) ??
+        return await queryExecutor.Single(query, ct) ??
                throw new ResultException($"not find record by [{id}]");
     }
 
@@ -76,7 +76,7 @@ public sealed class EntityService(
             .ToArray();
         
         var query = ctx.Entity.ByIdsQuery(attr.Select(x=>x.AddTableModifier()), [ctx.Id],false);
-        var record = await queryExecutor.One(query, ct) ??
+        var record = await queryExecutor.Single(query, ct) ??
                      throw new ResultException($"not find record by [{id}]");
 
         await LoadItems(attr, [record], ct);
@@ -111,7 +111,7 @@ public sealed class EntityService(
 
     public async Task SavePublicationSettings(string name, JsonElement ele, CancellationToken ct)
     {
-        var (entity, _, id) = await GetRecordIdCtx(name, ele, ct);
+        var (entity, _, id,_) = await GetRecordIdCtx(name, ele, ct);
         var query = entity.SavePublicationStatus(id, ele.ToDictionary() ).Ok();
         await queryExecutor.ExecInt(query, ct);
     }
@@ -214,7 +214,8 @@ public sealed class EntityService(
         var (collection,id) = await GetCollectionCtx(name, sid, attr, ct);
         var item = collection.TargetEntity.Parse(element, entitySchemaSvc).Ok();
         item[collection.LinkAttribute.Field] = id.ObjectValue!;
-        return await InsertWithAction(new RecordContext(collection.TargetEntity, item), ct);
+        var label = item.TryGetValue(collection.TargetEntity.LabelAttributeName, out var labelValue)  && labelValue is string strLabel? strLabel : "";
+        return await InsertWithAction(new RecordContext(collection.TargetEntity, item,label), ct);
     }
 
     public async Task<ListResponse> CollectionList(string name, string sid, string attr, Pagination pagination, StrArgs args, CancellationToken ct = default)
@@ -317,13 +318,13 @@ public sealed class EntityService(
 
     private async Task<Record> UpdateWithAction(RecordIdContext ctx, CancellationToken token)
     {
-        var (entity, record,id) = ctx;
+        var (entity, record,id,label) = ctx;
 
         ResultExt.Ensure(entity.ValidateLocalAttributes(record));
         ResultExt.Ensure(entity.ValidateTitleAttributes(record));
 
         var res = await hookRegistry.EntityPreUpdate.Trigger(provider,
-            new EntityPreUpdateArgs(entity.Name, id.ToString()!, record));
+            new EntityPreUpdateArgs(entity.Name, id.ToString()!, label,record));
 
         var query = entity.UpdateQuery(res.RefRecord).Ok();
         
@@ -333,18 +334,18 @@ public sealed class EntityService(
             throw new ResultException("Error: Concurrent Update Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
         }
         await hookRegistry.EntityPostUpdate.Trigger(provider,
-            new EntityPostUpdateArgs(entity.Name, id.ToString()!, record));
+            new EntityPostUpdateArgs(entity.Name, id.ToString()!, label,record));
         return record;
     }
 
     private async Task<Record> InsertWithAction(RecordContext ctx, CancellationToken token)
     {
-        var (entity, record) = ctx;
+        var (entity, record,label) = ctx;
         ResultExt.Ensure(entity.ValidateLocalAttributes(record));
         ResultExt.Ensure(entity.ValidateTitleAttributes(record));
 
         var res = await hookRegistry.EntityPreAdd.Trigger(provider,
-            new EntityPreAddArgs(entity.Name, record));
+            new EntityPreAddArgs(entity.Name,label, record));
         record = res.RefRecord;
         
         var query = entity.Insert(record);
@@ -352,16 +353,16 @@ public sealed class EntityService(
         record[entity.PrimaryKey] = id;
 
         await hookRegistry.EntityPostAdd.Trigger(provider,
-            new EntityPostAddArgs(entity.Name, id.ToString(), record));
+            new EntityPostAddArgs(entity.Name, id.ToString(), label,record));
         return record;
     }
 
     private async Task<Record> Delete(RecordIdContext ctx, CancellationToken token)
     {
-        var (entity, record,id) = ctx;
+        var (entity, record,id,label) = ctx;
 
         var res = await hookRegistry.EntityPreDel.Trigger(provider,
-            new EntityPreDelArgs(entity.Name, id.ToString()!, record));
+            new EntityPreDelArgs(entity.Name, id.ToString()!, label,record));
         record = res.RefRecord;
 
 
@@ -372,8 +373,8 @@ public sealed class EntityService(
             throw new ResultException("Error: Concurrent Write Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
         } 
         
-        (_, _, record) = await hookRegistry.EntityPostDel.Trigger(provider,
-            new EntityPostDelArgs(entity.Name, id.ToString()!, record));
+        (_, _,_, record) = await hookRegistry.EntityPostDel.Trigger(provider,
+            new EntityPostDelArgs(entity.Name, id.ToString()!, label,record));
         return record;
     }
 
@@ -390,7 +391,7 @@ public sealed class EntityService(
         return new IdContext(entity, idValue!.Value);
     }
     
-    private record CollectionContext(Collection Collection, ValidValue Id);
+    private record CollectionContext(Collection Collection, ValidValue Id );
 
     private async Task<CollectionContext> GetCollectionCtx(string entity, string sid, string attr, CancellationToken ct)
     {
@@ -402,6 +403,7 @@ public sealed class EntityService(
         {
             throw new ResultException($"Failed to cast {sid} to {loadedEntity.PrimaryKeyAttribute.DataType}");
         }
+        
         return new CollectionContext( collection, id!.Value);
     }
 
@@ -425,7 +427,7 @@ public sealed class EntityService(
         return new JunctionContext(attribute, junction, id!.Value);
     }
 
-    private record RecordIdContext(LoadedEntity Entity, Record Record, object Id);
+    private record RecordIdContext(LoadedEntity Entity, Record Record, object Id, string Label);
 
     private async Task<RecordIdContext> GetRecordIdCtx(string name, JsonElement ele, CancellationToken token)
     {
@@ -435,17 +437,19 @@ public sealed class EntityService(
         {
             throw new ResultException($"Failed to get Record Id, cannot find [{name}]");
         }
-        return new RecordIdContext(entity, record,id);
+        var label = record.TryGetValue(entity.LabelAttributeName,out var val) && val is not null ? val.ToString() : "";
+        return new RecordIdContext(entity, record,id, label??"");
     }
 
 
 
-    private record RecordContext(LoadedEntity Entity, Record Record);
+    private record RecordContext(LoadedEntity Entity, Record Record, string Label);
     private async Task<RecordContext> GetRecordCtx(string name, JsonElement ele, CancellationToken token)
     {
         var entity = (await entitySchemaSvc.LoadEntity(name, token)).Ok();
         var record = entity.Parse(ele, entitySchemaSvc).Ok();
-        return new RecordContext(entity, record);
+        var label = record.TryGetValue(entity.LabelAttributeName,out var val) && val is not null ? val.ToString() : "";
+        return new RecordContext(entity, record,label??"");
     }
 
     private record LookupContext(LoadedEntity Entity, ValidSort[] Sorts, ValidPagination Pagination, LoadedAttribute[] Attributes);

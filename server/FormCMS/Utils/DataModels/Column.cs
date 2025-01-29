@@ -3,7 +3,6 @@ using Humanizer;
 
 namespace FormCMS.Utils.DataModels;
 
-
 public enum ColumnType
 {
     Int ,
@@ -12,8 +11,6 @@ public enum ColumnType
     Text , //slow performance compare to string
     String //has length limit 255 
 }
-
-
 
 public record Column(string Name, ColumnType Type);
 
@@ -33,25 +30,23 @@ public static class ColumnHelper
     }
 
     public static Column CreateCamelColumn<T>(Expression<Func<T, object>> expression, ColumnType columnType)
-    {
-        return new Column(expression.GetName().Camelize(), columnType);
-    }
+        => new Column(expression.GetName().Camelize(), columnType);
 
     public static Column CreateCamelColumn(this Enum enumValue, ColumnType columnType)
         => new(enumValue.ToString().Camelize(), columnType);
-    
+
     public static Column[] EnsureColumn(this Column[] columnDefinitions, Enum colName)
-        => columnDefinitions.FirstOrDefault(x => x.Name == colName.ToString().Camelize()) is not null
+        => columnDefinitions.FirstOrDefault(x =>
+            x.Name == colName.ToString().Camelize()
+        ) is not null
             ? columnDefinitions
             : [..columnDefinitions, new Column(colName.ToString().Camelize(), ColumnType.Int)];
-    
-    private static string GetName<TClass,TValue>(this Expression<Func<TClass, TValue>> e)
-    {
-        return e.Body switch
+
+    private static string GetName<TClass, TValue>(this Expression<Func<TClass, TValue>> e)
+        => e.Body switch
         {
             MemberExpression m => m.Member.Name,
             UnaryExpression { Operand: MemberExpression m } => m.Member.Name,
             _ => throw new ArgumentException("Invalid property expression.")
         };
-    }
 }

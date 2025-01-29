@@ -40,25 +40,42 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
 
    public async Task CreateTable(string tableName, IEnumerable<Column> cols, CancellationToken ct)
    {
-       var strs = cols.Select(column => column switch
+       var parts = new List<string>();
+       bool haveUpdatedAt = false;
+       foreach (var column in cols)
        {
-           _ when column.Name == DefaultColumnNames.Id.ToString().Camelize() =>
-               $"{DefaultColumnNames.Id.ToString().Camelize()} INTEGER  primary key autoincrement",
-           _ when column.Name == DefaultColumnNames.Deleted.ToString().Camelize() => $"{DefaultColumnNames.Deleted.ToString().Camelize()} INTEGER   default 0",
-           _ when column.Name == DefaultColumnNames.CreatedAt.ToString().Camelize() => $"{DefaultColumnNames.CreatedAt.ToString().Camelize()} integer default (datetime('now','localtime'))",
-           _ when column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize() => $"{DefaultColumnNames.UpdatedAt.ToString().Camelize()} integer default (datetime('now','localtime'))",
-           _ => $"{column.Name} {DataTypeToString(column.Type)}"
-       });
-        
-       var sql= $"CREATE TABLE {tableName} ({string.Join(", ", strs)});";
-       sql += $@"
+           if (column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize())
+           {
+               haveUpdatedAt = true;
+           }
+
+           var part = column switch
+           {
+               _ when column.Name == DefaultColumnNames.Id.ToString().Camelize() =>
+                   $"{DefaultColumnNames.Id.ToString().Camelize()} INTEGER  primary key autoincrement",
+               _ when column.Name == DefaultColumnNames.Deleted.ToString().Camelize() =>
+                   $"{DefaultColumnNames.Deleted.ToString().Camelize()} INTEGER   default 0",
+               _ when column.Name == DefaultColumnNames.CreatedAt.ToString().Camelize() =>
+                   $"{DefaultColumnNames.CreatedAt.ToString().Camelize()} integer default (datetime('now','localtime'))",
+               _ when column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize() =>
+                   $"{DefaultColumnNames.UpdatedAt.ToString().Camelize()} integer default (datetime('now','localtime'))",
+               _ => $"{column.Name} {DataTypeToString(column.Type)}"
+           };
+           parts.Add(part);
+       }
+       
+       var sql= $"CREATE TABLE {tableName} ({string.Join(", ", parts)});";
+       if (haveUpdatedAt)
+       {
+           sql += $@"
             CREATE TRIGGER update_{tableName}_updatedAt 
                 BEFORE UPDATE ON {tableName} 
                 FOR EACH ROW
             BEGIN 
                 UPDATE {tableName} SET {DefaultColumnNames.UpdatedAt.ToString().Camelize()} = (datetime('now','localtime')) WHERE id = OLD.id; 
             END;";
-      await ExecuteQuery(sql,async cmd => await cmd.ExecuteNonQueryAsync(ct));
+       }
+       await ExecuteQuery(sql,async cmd => await cmd.ExecuteNonQueryAsync(ct));
    }
 
    public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct)

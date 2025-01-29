@@ -2,6 +2,7 @@ using System.Text.Json;
 using FormCMS.Auth.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Core.Descriptors;
+using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.jsonElementExt;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
@@ -25,7 +26,7 @@ public class EntityApiTest
 
     public EntityApiTest()
     {
-        //Util.SetTestConnectionString();
+        // Util.SetTestConnectionString();
 
         WebAppClient<Program> webAppClient = new();
         _entityApiClient = new EntityApiClient(webAppClient.GetHttpClient());
@@ -82,8 +83,6 @@ public class EntityApiTest
             && publishedAt.Equals(new DateTime(2025,1,1))
         );
     }
-    
-    
     
     [Fact]
     public async Task DropdownAttributeMustHaveOptions()
@@ -345,8 +344,8 @@ public class EntityApiTest
         var listResponse = await _entityApiClient.CollectionList(_post, _attachment, 1).Ok();
         Assert.Single(listResponse.Items);
 
-        var item = await _entityApiClient.Single(_post, 1).Ok();
-        await _entityApiClient.Delete(_attachment, item);
+        var item = await _entityApiClient.Single(_attachment, 1).Ok();
+        await _entityApiClient.Delete(_attachment, item).Ok();
         listResponse = await _entityApiClient.CollectionList(_post, _attachment, 1).Ok();
         Assert.Empty(listResponse.Items);
 

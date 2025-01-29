@@ -8,7 +8,7 @@ using FormCMS.Utils.ResultExt;
 namespace FormCMS.Cms.Services;
 
 public sealed class SchemaService(
-    IRelationDbDao dao,
+    DatabaseMigrator migrator,
     KateQueryExecutor queryExecutor,
     HookRegistry hook,
     IServiceProvider provider
@@ -42,14 +42,14 @@ public sealed class SchemaService(
 
     public async Task<Schema?> ById(int id, CancellationToken ct = default)
     {
-        var item = await queryExecutor.One(SchemaHelper.ById(id), ct);
+        var item = await queryExecutor.Single(SchemaHelper.ById(id), ct);
         var res = SchemaHelper.RecordToSchema(item);
         return res.IsSuccess ? res.Value : null;
     }
 
     public async Task<Schema?> GetByNameDefault(string name, SchemaType type, CancellationToken ct = default)
     {
-        var item = await queryExecutor.One(SchemaHelper.ByNameAndType(type,[name]), ct);
+        var item = await queryExecutor.Single(SchemaHelper.ByNameAndType(type,[name]), ct);
         var res = SchemaHelper.RecordToSchema(item);
         return res.IsSuccess ? res.Value : null;
     }
@@ -57,7 +57,7 @@ public sealed class SchemaService(
     public async Task<Schema?> GetByNamePrefixDefault(string name, SchemaType type,
         CancellationToken ct = default)
     {
-        var item = await queryExecutor.One(SchemaHelper.ByStartsNameAndType(name,type), ct);
+        var item = await queryExecutor.Single(SchemaHelper.ByStartsNameAndType(name,type), ct);
 
         var res = SchemaHelper.RecordToSchema(item);
 
@@ -93,7 +93,7 @@ public sealed class SchemaService(
 
     public async Task EnsureTopMenuBar(CancellationToken ct)
     {
-        var item = await queryExecutor.One(SchemaHelper.ByNameAndType(SchemaType.Menu, [SchemaName.TopMenuBar]), ct);
+        var item = await queryExecutor.Single(SchemaHelper.ByNameAndType(SchemaType.Menu, [SchemaName.TopMenuBar]), ct);
         if (item is not null)
         {
             return;
@@ -116,30 +116,7 @@ public sealed class SchemaService(
         await Save(menuBarSchema, ct);
     }
 
-    public async Task EnsureSchemaTable(CancellationToken ct)
-    {
-        var cols = await dao.GetColumnDefinitions(SchemaHelper.TableName, ct);
-        if (cols.Length > 0)
-        {
-            return;
-        }
-
-        cols =
-        [
-            ColumnHelper.CreateCamelColumn<Schema,int>(x=>x.Id),
-            ColumnHelper.CreateCamelColumn<Schema,string>(x=>x.Name),
-            ColumnHelper.CreateCamelColumn<Schema>(x=>x.Type,ColumnType.String),
-            ColumnHelper.CreateCamelColumn<Schema,string>(x=>x.CreatedBy),
-            ColumnHelper.CreateCamelColumn<Schema>(x=>x.Settings,ColumnType.Text),
-            
-            DefaultAttributeNames.Deleted.CreateCamelColumn(ColumnType.Int),
-            
-            DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.Datetime),
-            DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.Datetime),
-            
-        ];
-        await dao.CreateTable(SchemaHelper.TableName, cols, ct);
-    }
+    public Task EnsureSchemaTable() => migrator.MigrateTable(SchemaHelper.TableName, SchemaHelper.Columns);
 
     public async Task RemoveEntityInTopMenuBar(Entity entity, CancellationToken ct)
     {

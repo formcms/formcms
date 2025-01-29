@@ -1,19 +1,31 @@
 using FormCMS.AuditLogging.Models;
-using FormCMS.CoreKit.UserContext;
+using FormCMS.Auth.Services;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.DataModels;
+using FormCMS.Utils.RecordExt;
+using FormCMS.Utils.ResultExt;
 
 namespace FormCMS.AuditLogging.Services;
 
 public class AuditLogService(
-    IHttpContextAccessor httpContextAccessor,
+    IProfileService profileService,
     KateQueryExecutor executor,
-    IRelationDbDao dao
+    DatabaseMigrator migrator
     ):IAuditLogService
 {
+
+    public async Task<AuditLog> Single(int id, CancellationToken ct = default)
+    {
+        EnsureHasPermission();
+        var query = AuditLogHelper.ById(id);
+        var item = await executor.Single(query, ct)?? throw new ResultException("No record found");;
+        return item.ToObject<AuditLog>();
+    }
+    
     public async Task<ListResponse> List(StrArgs args,int? offset, int? limit, CancellationToken ct)
     {
+        EnsureHasPermission();
         var (filters, sorts) = QueryStringParser.Parse(args);
         var query = AuditLogHelper.List(offset, limit);
         var items = await executor.Many(query, AuditLogHelper.Columns,filters,sorts,ct);
@@ -21,30 +33,32 @@ public class AuditLogService(
         return new ListResponse(items,count);
     }
 
-    public Task AddLog(ActionType actionType, string entityName, string id, Record record)
+    public Task AddLog(ActionType actionType, string entityName, string id, string label, Record record)
     {
+        var currentUser = profileService.GetInfo();
         var log = new AuditLog(
             Id: 0,
-            UserId: httpContextAccessor.HttpContext.GetUserId(),
-            UserName: httpContextAccessor.HttpContext.GetUserName(),
-            ActionType.Create,
+            UserId: currentUser?.Id??"",
+            UserName: currentUser?.Email??"",
+            Action: actionType,
             EntityName: entityName,
             RecordId: id,
+            RecordLabel: label,
             Payload: record,
             CreatedAt: DateTime.Now
         );
         return executor.ExecInt(log.Insert());
     }
 
-    public async Task EnsureAuditLogTable()
-    {
-        var cols = await dao.GetColumnDefinitions(AuditLogConstants.TableName,CancellationToken.None);
-        if (cols.Length > 0)
-        {
-            return;
-        }
-        await dao.CreateTable(AuditLogConstants.TableName, AuditLogHelper.Columns, CancellationToken.None);
-    }
+    public  Task EnsureAuditLogTable()
+        =>migrator.MigrateTable(AuditLogConstants.TableName,AuditLogHelper.Columns);
 
     public XEntity GetAuditLogEntity() => AuditLogHelper.Entity;
+
+    private void EnsureHasPermission()
+    {
+        var menus = profileService.GetInfo()?.AllowedMenus??[];
+        if (!menus.Contains(AuditLoggingConstants.MenuId))
+            throw new ResultException("You don't have permission to view audit logs");
+    }
 }

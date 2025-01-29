@@ -1,12 +1,6 @@
-
-
-using FluentResults;
-using FormCMS.Utils.ResultExt;
-using SqlKata;
-
 namespace FormCMS.Utils.DataModels;
 
-public record Constraint(string Match, string?[] Value);
+public record Constraint(string Match, string?[] Values);
 
 public static class MatchTypes
 {
