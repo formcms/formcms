@@ -58,7 +58,12 @@
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#why-create-another-cms" class="nav-link">Why Create Another CMS?</a>
+            <li class="nav-item" data-bs-level="2"><a href="#new-cms-data-modeling" class="nav-link">New CMS? — Data Modeling</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#new-cms-solving-graphql-issues" class="nav-link">New CMS? — Solving GraphQL Issues</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -156,30 +161,30 @@
 <a href="https://github.com/FormCMS/FormCMS/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/FormCMS/FormCMS.svg?style=social&amp;label=Star" /></a></p>
 <p>Our mission is to make <strong>data modeling</strong>, <strong>backend development</strong>, and <strong>frontend development</strong> as simple and intuitive as filling out a <strong>form</strong> 📋<br />
 We’d love for you to contribute to FormCMS! Check out our <a href="https://github.com/formcms/formcms/blob/main/CONTRIBUTING.md">CONTRIBUTING guide</a> to get started.<br />
-Love FormCMS? Show your support by giving us a ⭐ on GitHub and help us grow! 🌟  </p>
+Love FormCMS? Show your support by giving us a ⭐ on GitHub and help us grow! 🌟<br />
+Have suggestions? Connect with us on Reddit! https://www.reddit.com/r/FormCMS/</p>
 <hr />
 <h2 id="what-is-formcms">What is  FormCMS?</h2>
 <p><strong>FormCMS</strong> is an open-source Content Management System designed to simplify and speed-up web development workflows. While it's particularly suited for CMS projects, it is also highly beneficial for general web applications, reducing the need for repetitive REST/GraphQL API development.</p>
 <ul>
 <li>
-<p><strong>Effortless CRUD Operations:</strong>  FormCMS includes built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations, complemented by a React-based admin panel for efficient data management.</p>
+<p><strong>CRUD Operations:</strong>  FormCMS includes built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations, complemented by a React-based admin panel for efficient data management.</p>
 </li>
 <li>
-<p><strong>Powerful GraphQL Queries:</strong> Access multiple related entities in a single query, enhancing client-side performance, security, and flexibility.</p>
+<p><strong>GraphQL Queries:</strong> Access multiple related entities in a single query, enhancing client-side performance, security, and flexibility.</p>
 </li>
 <li>
-<p><strong>Drag-and-Drop Page Designer:</strong> Build dynamic pages effortlessly using the integrated page designer powered by <a href="https://grapesjs.com/">Grapes.js</a> and <a href="https://handlebarsjs.com/">Handlebars</a>. Easily bind data sources for an interactive and streamlined design experience.</p>
+<p><strong>Grapes.js Page Designer:</strong> Build dynamic pages effortlessly using the integrated page designer powered by <a href="https://grapesjs.com/">Grapes.js</a> and <a href="https://handlebarsjs.com/">Handlebars</a>. Easily bind data sources for an interactive and streamlined design experience.</p>
 </li>
 </ul>
 <hr />
-<h2 id="why-create-another-cms">Why Create Another CMS?</h2>
-<p>While there are several open-source ASP.NET Core CMS options available, they often fall short of meeting my specific requirements. The primary challenge I face is how these systems model entities.</p>
+<h2 id="new-cms-data-modeling">New CMS? — Data Modeling</h2>
 <h3 id="data-modeling-in-current-cms-solutions">Data Modeling in Current CMS Solutions</h3>
 <p>Most CMS solutions support entity customization and adding custom properties, but they implement these changes in three distinct ways:</p>
 <ol>
 <li><strong>Denormalized Key-Value Storage</strong>: Custom properties are stored in a table with columns like ContentItemId, Key, and Value.</li>
 <li><strong>JSON Data Storage</strong>: Some CMS platforms store custom properties as JSON data in a document database, while others use relational databases.</li>
-<li><strong>Manually Created C# Classes</strong>: Custom properties are added by writing code to create classes that the system uses with Entity Framework.</li>
+<li><strong>Manually Created C# Classes</strong>: Writing code adds custom properties to create classes that the system uses with Entity Framework.</li>
 </ol>
 <h4 id="the-pros-and-cons">The Pros and Cons:</h4>
 <ul>
@@ -194,6 +199,34 @@ Love FormCMS? Show your support by giving us a ⭐ on GitHub and help us grow! �
 <li><strong>Data Accessibility</strong>: This model allows for easy data integration with other applications, Entity Framework, or even non-C# languages.</li>
 <li><strong>Support for Relationships</strong>: FormCMS enables complex relationships (many-to-one, one-to-many, many-to-many), making it easy to provide GraphQL Query out of the box and provide more advanced querying capabilities.</li>
 </ol>
+<hr />
+<h2 id="new-cms-solving-graphql-issues">New CMS? — Solving GraphQL Issues</h2>
+<h3 id="key-challenges">Key Challenges</h3>
+<ol>
+<li><strong>Security &amp; Over-Fetching</strong> – Complex or poorly optimized queries can overload the backend, exposing vulnerabilities and impacting performance.</li>
+<li><strong>Caching Limitations</strong> – GraphQL lacks built-in CDN caching, making performance optimization harder.</li>
+<li><strong>N+1 Query Problem</strong> – Individual resolver calls can lead to inefficient database queries.</li>
+</ol>
+<hr />
+<h3 id="solution-persisted-queries-with-get-requests">Solution: Persisted Queries with GET Requests</h3>
+<p>Many GraphQL frameworks support persisted queries with GET requests, enabling caching and improved performance.</p>
+<hr />
+<h3 id="how-formcms-solves-these-issues">How FormCMS Solves These Issues</h3>
+<p>FormCMS automatically saves GraphQL queries and converts them into RESTful GET requests. For example:</p>
+<pre><code class="language-graphql">query TeacherQuery($id: Int) {
+  teacherList(idSet: [$id]) {
+    id firstname lastname
+    skills { id name }
+  }
+}
+</code></pre>
+<p>becomes <code>GET /api/queries/TeacherQuery</code>.</p>
+<ul>
+<li><strong>Security &amp; Efficiency</strong> – Only Admins can define GraphQL queries, preventing abuse. Backend and frontend teams optimize queries to avoid excessive data requests.</li>
+<li><strong>Caching</strong> – GET requests enable efficient CDN caching, while ASP.NET Core’s hybrid cache further boosts performance.</li>
+<li><strong>Performance</strong> – Related entities are retrieved in a single optimized query, avoiding the N+1 problem.</li>
+</ul>
+<p>By transforming GraphQL into optimized REST-like queries, FormCMS ensures a secure, efficient, and scalable API experience.</p>
 <hr />
 <h2 id="online-course-system-demo">Online Course System Demo</h2>
 <h3 id="source-code">Source Code</h3>
@@ -1927,5 +1960,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-01-29 13:37:30.564776+00:00
+Build Date UTC : 2025-01-30 18:55:17.188957+00:00
 -->
