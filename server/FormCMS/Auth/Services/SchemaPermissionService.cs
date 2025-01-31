@@ -20,14 +20,13 @@ public class SchemaPermissionService<TUser>(
     where TUser : IdentityUser, new()
 {
    
-    public string[] GetAll()
+    public void GetAll()
     {
         if (!contextAccessor.HttpContext.HasRole(RoleConstants.Sa) &&
             !contextAccessor.HttpContext.HasRole(RoleConstants.Admin))
         {
             throw new ResultException($"Fail to get schema list, you don't have [Sa] or [Admin] role.");
         }
-        return [];
     }
 
     public void GetOne(Schema schema)
@@ -39,11 +38,9 @@ public class SchemaPermissionService<TUser>(
         }
     }
 
-    public async Task Delete(int schemaId)
+    public async Task Delete(Schema schema)
     {
-        var find = await schemaService.ById(schemaId) ??
-                   throw new ResultException($"can not find schema by id [{schemaId}]");
-        await EnsureWritePermissionAsync(find);
+        await EnsureWritePermissionAsync(schema);
     }
 
     public async Task<Schema> BeforeSave(Schema schema)

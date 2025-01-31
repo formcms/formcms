@@ -9,9 +9,7 @@ public class HookRegistry
         public HookList<QueryPreGetListArgs> QueryPreGetList { get; } = new();
         public HookList<QueryPreGetSingleArgs> QueryPreGetSingle { get; } = new();
         public HookList<EntityPreGetSingleArgs> EntityPreGetSingle { get; } = new();
-        public HookList<EntityPostGetSingleArgs> EntityPostGetSingle { get; } = new();
         public HookList<EntityPreGetListArgs> EntityPreGetList { get; } = new();
-        public HookList<EntityPostGetListArgs> EntityPostGetList { get; } = new();
         public HookList<EntityPreUpdateArgs> EntityPreUpdate { get; } = new();
         public HookList<EntityPostUpdateArgs> EntityPostUpdate { get; } = new();
         public HookList<EntityPreDelArgs> EntityPreDel { get; } = new();
@@ -19,7 +17,5 @@ public class HookRegistry
         public HookList<EntityPreAddArgs> EntityPreAdd { get; } = new();
         public HookList<EntityPostAddArgs> EntityPostAdd { get; } = new();
         public HookList<JunctionPreAddArgs> JunctionPreAdd { get; } = new();
-        public HookList<JunctionPostAddArgs> JunctionPostAdd { get; } = new();
         public HookList<JunctionPreDelArgs> JunctionPreDel { get; } = new();
-        public HookList<JunctionPostDelArgs> JunctionPostDel { get; } = new();
 }

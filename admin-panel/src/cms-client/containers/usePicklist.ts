@@ -10,7 +10,8 @@ export function usePicklist(data :any, schema:XEntity, column: XAttr )
     const [existingItems, setExistingItems] = useState(null)
     const [toAddItems, setToAddItems] = useState(null)
     return {
-        id, targetSchema, listColumns,
-        existingItems, setExistingItems, toAddItems, setToAddItems
+        id, listColumns,
+        existingItems, setExistingItems, 
+        toAddItems, setToAddItems
     }
 }

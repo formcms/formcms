@@ -1,21 +1,20 @@
 import {textColumn} from "./textColumn";
 import {imageColumn} from "./imageColumn";
 import {fileColumn} from "./fileColumn";
-import {XAttr, XEntity } from "../xEntity";
+import {XAttr} from "../xEntity";
 
-export function createColumn(props:{
-    schema:XEntity, 
+export function createColumn(
     column:XAttr, 
-    baseRouter:string, 
-    getFullAssetsURL? : (arg:string) =>string |undefined }
-) {
-    switch (props.column.displayType){
+    getFullAssetsURL? : (arg:string) =>string |undefined ,
+    onClick?: (rowData:any) => void,
+){
+    switch (column.displayType){
         case 'image':
         case 'gallery':
-            return imageColumn(props)
+            return imageColumn(column,getFullAssetsURL)
         case 'file':
-            return fileColumn(props)
+            return fileColumn(column,getFullAssetsURL)
         default:
-            return textColumn(props)
+            return textColumn(column,onClick)
     }
 }

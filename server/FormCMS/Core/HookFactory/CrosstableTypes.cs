@@ -2,7 +2,5 @@ using FormCMS.Core.Descriptors;
 
 namespace FormCMS.Core.HookFactory;
 
-public record JunctionPreAddArgs(string Name, string RecordId, LoadedAttribute Attribute, Record[] RefItems):BaseArgs(Name) ;
-public record JunctionPostAddArgs(string Name, string RecordId, LoadedAttribute Attribute, Record[] Items):BaseArgs (Name);
-public record JunctionPreDelArgs(string Name, string RecordId, LoadedAttribute Attribute, Record[] RefItems):BaseArgs (Name);
-public record JunctionPostDelArgs(string Name, string RecordId, LoadedAttribute Attribute, Record[] Items):BaseArgs (Name);
+public record JunctionPreAddArgs(LoadedEntity Entity, string RecordId, LoadedAttribute Attribute, Record[] RefItems):BaseArgs(Entity.Name) ;
+public record JunctionPreDelArgs(LoadedEntity Entity, string RecordId, LoadedAttribute Attribute, Record[] RefItems):BaseArgs (Entity.Name);

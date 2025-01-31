@@ -16,9 +16,8 @@ public sealed class SchemaService(
 {
     public async Task<Schema[]> AllWithAction(SchemaType? type, CancellationToken ct = default)
     {
-        var res = await hook.SchemaPreGetAll.Trigger(provider, new SchemaPreGetAllArgs(null));
-        IEnumerable<string>? names = res.OutSchemaNames?.Length > 0 ? res.OutSchemaNames : null;
-        return await All(type, names, ct);
+        var res = await hook.SchemaPreGetAll.Trigger(provider, new SchemaPreGetAllArgs());
+        return await All(type, null, ct);
     }
 
     public async Task<Schema[]> All(SchemaType? type, IEnumerable<string>? names,
@@ -87,8 +86,9 @@ public sealed class SchemaService(
 
     public async Task Delete(int id, CancellationToken ct)
     {
-        var res = await hook.SchemaPreDel.Trigger(provider, new SchemaPreDelArgs(id));
-        await queryExecutor.ExecInt(SchemaHelper.SoftDelete(res.SchemaId), ct);
+        var schema = await ById(id,ct)?? throw new ResultException($"Schema [{id}] not found");
+        await hook.SchemaPreDel.Trigger(provider, new SchemaPreDelArgs(schema));
+        await queryExecutor.ExecInt(SchemaHelper.SoftDelete(id), ct);
     }
 
     public async Task EnsureTopMenuBar(CancellationToken ct)

@@ -1,7 +1,26 @@
 import {useReducer} from "react";
 import {FilterMatchMode} from "primereact/api";
 import { XAttr } from "./xEntity";
-import { decodeLazyState } from "./lazyStateUtil";
+import { decodeDataTableState } from "./dataTableStateUtil";
+
+export function useDataTableStateManager(rows:number, cols: XAttr[], qs: string|undefined) {
+    const defaultState:any = createDefaultState(rows,cols,qs);
+    const [state, dispatch] = useReducer(reducer, defaultState)
+    return {
+        state,
+        handlers: {
+            onPage: (payload: any) => {
+                dispatch({type: 'onPage', payload})
+            },
+            onFilter: (payload: any) => {
+                dispatch({type: 'onFilter', payload})
+            },
+            onSort:(payload :any)=>{
+                dispatch({type: 'onSort', payload})
+            }
+        }
+    }
+}
 
 function createDefaultState(rows:any, cols:XAttr[],qs: string|undefined) {
     const defaultState :any= {
@@ -10,7 +29,7 @@ function createDefaultState(rows:any, cols:XAttr[],qs: string|undefined) {
         filters : createDefaultFilter(cols),
     }
     if (qs){
-        const s = decodeLazyState(qs);
+        const s = decodeDataTableState(qs);
         defaultState.first = s.first;
         if (s.rows > 0){
             defaultState.rows = s.rows;
@@ -57,23 +76,4 @@ function reducer(state: any, action: any) {
             return {...state, multiSortMeta: payload.multiSortMeta}
     }
     return state
-}
-
-export function useLazyStateHandlers(rows:number, cols: XAttr[], qs: string|undefined) {
-    const defaultState:any = createDefaultState(rows,cols,qs);
-    const [lazyState, dispatch] = useReducer(reducer, defaultState)
-    return {
-        lazyState,
-        eventHandlers: {
-            onPage: (payload: any) => {
-                dispatch({type: 'onPage', payload})
-            },
-            onFilter: (payload: any) => {
-                dispatch({type: 'onFilter', payload})
-            },
-            onSort:(payload :any)=>{
-                dispatch({type: 'onSort', payload})
-            }
-        }
-    }
 }

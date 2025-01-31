@@ -23,7 +23,7 @@ export function useEditTable(data :any, schema:XEntity, column: XAttr )
     const [existingItems, setExistingItems] = useState(null)
     const [toAddItems, setToAddItems] = useState(null)
     return {
-        id, targetSchema, listColumns, inputColumns,
+        id, listColumns, inputColumns,
         existingItems, setExistingItems, toAddItems, setToAddItems
     }
 }

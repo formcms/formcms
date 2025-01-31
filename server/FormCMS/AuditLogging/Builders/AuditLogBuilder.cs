@@ -4,6 +4,7 @@ using FormCMS.AuditLogging.Handlers;
 using FormCMS.AuditLogging.Models;
 using FormCMS.AuditLogging.Services;
 using FormCMS.Core.HookFactory;
+using FormCMS.Utils.RecordExt;
 
 namespace FormCMS.AuditLogging.Builders;
 
@@ -45,21 +46,38 @@ public sealed class AuditLogBuilder(ILogger<AuditLogBuilder> logger )
         registry.EntityPostAdd.RegisterDynamic("*",
             async (IAuditLogService service, EntityPostAddArgs args) =>
             {
-                await service.AddLog(ActionType.Create, args.Name, args.RecordId,args.RecordLabel, args.Record) ;
+                await service.AddLog(
+                    ActionType.Create, 
+                    args.Entity.Name, 
+                    args.Record.StrOrEmpty(args.Entity.PrimaryKey),
+                    args.Record.StrOrEmpty(args.Entity.LabelAttributeName),
+                    args.Record) ;
                 return args;
             }
         );
         registry.EntityPostDel.RegisterDynamic( "*",
             async (IAuditLogService service, EntityPostDelArgs args) =>
             {
-                await service.AddLog(ActionType.Delete, args.Name, args.RecordId, args.RecordLabel, args.Record);
+                await service.AddLog(
+                    ActionType.Delete, 
+                    args.Entity.Name, 
+                    args.Record.StrOrEmpty(args.Entity.PrimaryKey),
+                    args.Record.StrOrEmpty(args.Entity.LabelAttributeName),
+                    args.Record
+                    ) ;
                 return args;
             }
         );
         registry.EntityPostUpdate.RegisterDynamic("*",
             async (IAuditLogService service, EntityPostUpdateArgs args) =>
             {
-                await service.AddLog(ActionType.Update, args.Name, args.RecordId, args.RecordLabel, args.Record);
+                await service.AddLog(
+                    ActionType.Delete,
+                    args.Entity.Name,
+                    args.Record.StrOrEmpty(args.Entity.PrimaryKey),
+                    args.Record.StrOrEmpty(args.Entity.LabelAttributeName),
+                    args.Record
+                );
                 return args;
             }
         );

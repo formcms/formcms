@@ -59,7 +59,7 @@ public sealed class EntityService(
     {
         var ctx = await GetIdCtx(entityName, id, ct);
         var res = await hookRegistry.EntityPreGetSingle.Trigger(provider,
-            new EntityPreGetSingleArgs(entityName, id, null));
+            new EntityPreGetSingleArgs(ctx.Entity, id, null));
         if (res.OutRecord is not null)
         {
             return res.OutRecord;
@@ -80,7 +80,6 @@ public sealed class EntityService(
                      throw new ResultException($"not find record by [{id}]");
 
         await LoadItems(attr, [record], ct);
-        await hookRegistry.EntityPostGetSingle.Trigger(provider, new EntityPostGetSingleArgs(entityName, id, record));
         return record;
     }
 
@@ -149,12 +148,10 @@ public sealed class EntityService(
             ctx.Junction.TargetEntity.Parse(ele, entitySchemaSvc).Ok()).ToArray();
 
         var res = await hookRegistry.JunctionPreDel.Trigger(provider,
-            new JunctionPreDelArgs(name, id, ctx.Attribute, items));
+            new JunctionPreDelArgs(ctx.Entity, id, ctx.Attribute, items));
 
         var query = ctx.Junction.Delete(ctx.Id, res.RefItems);
         var ret = await queryExecutor.ExecInt(query, ct);
-        await hookRegistry.JunctionPostDel.Trigger(provider,
-            new JunctionPostDelArgs(name, id, ctx.Attribute, items));
         return ret;
     }
 
@@ -166,18 +163,16 @@ public sealed class EntityService(
         var items = elements
             .Select(ele => ctx.Junction.TargetEntity.Parse(ele, entitySchemaSvc).Ok()).ToArray();
         var res = await hookRegistry.JunctionPreAdd.Trigger(provider,
-            new JunctionPreAddArgs(name, id, ctx.Attribute, items));
+            new JunctionPreAddArgs(ctx.Entity, id, ctx.Attribute, items));
         var query = ctx.Junction.Insert(ctx.Id, res.RefItems);
 
         var ret = await queryExecutor.ExecInt(query, ct);
-        await hookRegistry.JunctionPostAdd.Trigger(provider,
-            new JunctionPostAddArgs(name, id, ctx.Attribute, items));
         return ret;
     }
 
     public async Task<object[]> JunctionTargetIds(string name, string sid, string attr, CancellationToken ct)
     {
-        var (_, junction, id) = await GetJunctionCtx(name, sid, attr, ct);
+        var (_,_, junction, id) = await GetJunctionCtx(name, sid, attr, ct);
         var query = junction.GetTargetIds([id]);
         var records = await queryExecutor.Many(query, ct);
         return records.Select(x => x[junction.TargetAttribute.Field]).ToArray();
@@ -187,7 +182,7 @@ public sealed class EntityService(
         Pagination pagination,
         StrArgs args, CancellationToken ct)
     {
-        var (_, junction, id) = await GetJunctionCtx(name, sid, attr, ct);
+        var (_,_, junction, id) = await GetJunctionCtx(name, sid, attr, ct);
         var target = junction.TargetEntity;
 
         var attrs = target.Attributes
@@ -215,7 +210,7 @@ public sealed class EntityService(
         var item = collection.TargetEntity.Parse(element, entitySchemaSvc).Ok();
         item[collection.LinkAttribute.Field] = id.ObjectValue!;
         var label = item.TryGetValue(collection.TargetEntity.LabelAttributeName, out var labelValue)  && labelValue is string strLabel? strLabel : "";
-        return await InsertWithAction(new RecordContext(collection.TargetEntity, item,label), ct);
+        return await InsertWithAction(new RecordContext(collection.TargetEntity, item), ct);
     }
 
     public async Task<ListResponse> CollectionList(string name, string sid, string attr, Pagination pagination, StrArgs args, CancellationToken ct = default)
@@ -249,8 +244,7 @@ public sealed class EntityService(
             Entity: entity,
             RefFilters: [..filters],
             RefSorts: [..sorts],
-            RefPagination: pagination,
-            ListResponseMode: mode
+            RefPagination: pagination
         );
 
         var res = await hookRegistry.EntityPreGetList.Trigger(provider, args);
@@ -259,16 +253,13 @@ public sealed class EntityService(
             .ToArray();
 
         var countQuery = entity.CountQuery([..res.RefFilters],false);
-        var ret = mode switch
+        return mode switch
         {
             ListResponseMode.Count => new ListResponse([], await queryExecutor.Count(countQuery, ct)),
             ListResponseMode.Items => new ListResponse(await RetrieveItems(), 0),
             _ => new ListResponse(await RetrieveItems(), await queryExecutor.Count(countQuery, ct))
         };
 
-        var postArgs = new EntityPostGetListArgs(Entity: entity, RefListResponse: ret);
-        var postRes = await hookRegistry.EntityPostGetList.Trigger(provider, postArgs);
-        return postRes.RefListResponse;
 
         async Task<Record[]> RetrieveItems()
         {
@@ -324,28 +315,28 @@ public sealed class EntityService(
         ResultExt.Ensure(entity.ValidateTitleAttributes(record));
 
         var res = await hookRegistry.EntityPreUpdate.Trigger(provider,
-            new EntityPreUpdateArgs(entity.Name, id.ToString()!, label,record));
+            new EntityPreUpdateArgs(entity,record));
 
-        var query = entity.UpdateQuery(res.RefRecord).Ok();
+        record = res.RefRecord;
+        var query = entity.UpdateQuery(record).Ok();
         
         var affected = await queryExecutor.ExecAffected(query, token);
         if (affected == 0)
         {
             throw new ResultException("Error: Concurrent Update Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
         }
-        await hookRegistry.EntityPostUpdate.Trigger(provider,
-            new EntityPostUpdateArgs(entity.Name, id.ToString()!, label,record));
+        await hookRegistry.EntityPostUpdate.Trigger(provider, new EntityPostUpdateArgs(entity,record));
         return record;
     }
 
     private async Task<Record> InsertWithAction(RecordContext ctx, CancellationToken token)
     {
-        var (entity, record,label) = ctx;
+        var (entity, record) = ctx;
         ResultExt.Ensure(entity.ValidateLocalAttributes(record));
         ResultExt.Ensure(entity.ValidateTitleAttributes(record));
 
         var res = await hookRegistry.EntityPreAdd.Trigger(provider,
-            new EntityPreAddArgs(entity.Name,label, record));
+            new EntityPreAddArgs(entity, record));
         record = res.RefRecord;
         
         var query = entity.Insert(record);
@@ -353,7 +344,7 @@ public sealed class EntityService(
         record[entity.PrimaryKey] = id;
 
         await hookRegistry.EntityPostAdd.Trigger(provider,
-            new EntityPostAddArgs(entity.Name, id.ToString(), label,record));
+            new EntityPostAddArgs(entity,record));
         return record;
     }
 
@@ -362,7 +353,7 @@ public sealed class EntityService(
         var (entity, record,id,label) = ctx;
 
         var res = await hookRegistry.EntityPreDel.Trigger(provider,
-            new EntityPreDelArgs(entity.Name, id.ToString()!, label,record));
+            new EntityPreDelArgs(entity, record));
         record = res.RefRecord;
 
 
@@ -373,8 +364,7 @@ public sealed class EntityService(
             throw new ResultException("Error: Concurrent Write Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
         } 
         
-        (_, _,_, record) = await hookRegistry.EntityPostDel.Trigger(provider,
-            new EntityPostDelArgs(entity.Name, id.ToString()!, label,record));
+        await hookRegistry.EntityPostDel.Trigger(provider, new EntityPostDelArgs(entity ,record));
         return record;
     }
 
@@ -408,7 +398,7 @@ public sealed class EntityService(
     }
 
 
-    private record JunctionContext(LoadedAttribute Attribute, Junction Junction, ValidValue Id);
+    private record JunctionContext(LoadedEntity Entity,LoadedAttribute Attribute, Junction Junction, ValidValue Id);
     
 
     private async Task<JunctionContext> GetJunctionCtx(string entity, string sid, string attr, CancellationToken ct)
@@ -424,7 +414,7 @@ public sealed class EntityService(
             throw new ResultException($"Failed to cast {sid} to {junction.SourceAttribute.DataType}");
         }
 
-        return new JunctionContext(attribute, junction, id!.Value);
+        return new JunctionContext(loadedEntity,attribute, junction, id!.Value);
     }
 
     private record RecordIdContext(LoadedEntity Entity, Record Record, object Id, string Label);
@@ -443,13 +433,12 @@ public sealed class EntityService(
 
 
 
-    private record RecordContext(LoadedEntity Entity, Record Record, string Label);
+    private record RecordContext(LoadedEntity Entity, Record Record);
     private async Task<RecordContext> GetRecordCtx(string name, JsonElement ele, CancellationToken token)
     {
         var entity = (await entitySchemaSvc.LoadEntity(name, token)).Ok();
         var record = entity.Parse(ele, entitySchemaSvc).Ok();
-        var label = record.TryGetValue(entity.LabelAttributeName,out var val) && val is not null ? val.ToString() : "";
-        return new RecordContext(entity, record,label??"");
+        return new RecordContext(entity, record);
     }
 
     private record LookupContext(LoadedEntity Entity, ValidSort[] Sorts, ValidPagination Pagination, LoadedAttribute[] Attributes);

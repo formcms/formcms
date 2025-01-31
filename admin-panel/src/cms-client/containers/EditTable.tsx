@@ -8,10 +8,11 @@ import { fileUploadURL } from "../configs";
 import {Message} from "primereact/message";
 import {Toast} from "primereact/toast";
 import {useRef, useState} from "react";
-import { LazyDataTable } from "../../components/dataTable/LazyDataTable";
+import { EditDataTable } from "../../components/dataTable/EditDataTable";
 import { XAttr, XEntity } from "../types/schemaExt";
-import { useLazyStateHandlers } from "../../components/dataTable/useLazyStateHandlers";
-import { encodeLazyState } from "../../components/dataTable/lazyStateUtil";
+import { useDataTableStateManager } from "../../components/dataTable/useDataTableStateManager";
+import { encodeDataTableState } from "../../components/dataTable/dataTableStateUtil";
+import { createColumn } from "../../components/dataTable/columns/createColumn";
 
 
 export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
@@ -22,13 +23,14 @@ export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
     baseRouter:string
 }) {
     const {visible, showDialog, hideDialog} = useDialogState()
-    const { id, targetSchema, listColumns, inputColumns} = useEditTable(data, schema, column)
+    const { id, listColumns, inputColumns} = useEditTable(data, schema, column)
+    const tableColumns = listColumns.map(x => createColumn(x, getFullAssetsURL));
     const formId = "edit-table" + column.field;
     const toastRef = useRef<any>(null);
     const [error, setError] = useState('')
     
-    const {lazyState ,eventHandlers}= useLazyStateHandlers(10, listColumns,"");
-    const {data:collectionData,mutate} = useCollectionData(schema.name, id, column.field, encodeLazyState(lazyState));
+    const stateManager= useDataTableStateManager(10, listColumns,"");
+    const {data:collectionData,mutate} = useCollectionData(schema.name, id, column.field, encodeDataTableState(stateManager.state));
     
     const onSubmit =async (formData: any) => {
         const {error} = await addCollectionItem(schema.name,id,column.field,formData)
@@ -42,7 +44,6 @@ export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
         }
     }
     
-
     return <div className={'card col-12'}>
         <Toast ref={toastRef} position="top-right" />
         <label id={column.field} className="font-bold">
@@ -50,8 +51,7 @@ export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
         </label><br/>
         <Button outlined label={'Add ' + column.header} onClick={showDialog} size="small"/>
         {' '}
-        <LazyDataTable columns={listColumns} schema={targetSchema} data={collectionData} {...{baseRouter,eventHandlers, lazyState,  getFullAssetsURL}}/>
-
+        <EditDataTable columns={tableColumns} data={collectionData} stateManager={stateManager}/>
         <SaveDialog
             formId={formId}
             visible={visible}

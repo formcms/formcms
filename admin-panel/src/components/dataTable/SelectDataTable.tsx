@@ -1,40 +1,56 @@
 import {DataTable} from "primereact/datatable";
 import {Column} from "primereact/column";
-import {createColumn} from "./columns/createColumn";
-import {XAttr, XEntity} from "../../cms-client/types/schemaExt";
 import { ListResponse } from "../../cms-client/types/listResponse";
 
-export function SelectDataTable({baseRouter,schema, columns, data, selectedItems, setSelectedItems, lazyState, eventHandlers,getFullAssetsURL}: {
-    columns: XAttr[]
-    schema:XEntity | undefined
+export function SelectDataTable(
+    {
+        columns,
+        data, 
+        selectedItems, setSelectedItems,
+        actionBodyTemplate,
+        stateManager:{state,handlers:{onPage,onFilter,onSort}},
+    }: 
+    {
+    columns: React.JSX.Element[];
     data: ListResponse | undefined
+    
     selectedItems: any
     setSelectedItems: any
-    lazyState: any
-    eventHandlers: any
-    getFullAssetsURL : (arg:string) => string,
-    baseRouter: string
+
+    actionBodyTemplate?:any
+
+    stateManager:{
+        state:any
+        handlers:{
+            onPage:any,
+            onFilter:any,
+            onSort:any,
+        }
+    } 
+    
 }) {
     const {items, totalRecords} = data ?? {}
-    return columns && data && schema && <DataTable
+    return columns && data && <DataTable
         sortMode="multiple"
-        dataKey={schema.primaryKey}
         value={items}
         paginator
         totalRecords={totalRecords}
-        rows={lazyState?.rows??10}
-        lazy={!!lazyState}
-        first={lazyState?.first}
-        filters={lazyState?.filters}
-        multiSortMeta={lazyState?.multiSortMeta}
-        sortField={lazyState?.sortField}
-        sortOrder={lazyState?.sortOrder}
-        {...eventHandlers}
-
+        rows={state?.rows??10}
+        lazy
+        first={state?.first}
+        filters={state?.filters}
+        multiSortMeta={state?.multiSortMeta}
+        sortField={state?.sortField}
+        sortOrder={state?.sortOrder}
+        onSort={onSort}
+        onFilter={onFilter}
+        onPage={onPage}
         selection={selectedItems}
         onSelectionChange={(e) => setSelectedItems(e.value)}
     >
         <Column selectionMode="multiple" headerStyle={{width: '3rem'}}></Column>
-        {columns.map((column: any, i: number) => createColumn({column, schema,getFullAssetsURL, baseRouter}))}
+        {columns}
+        {actionBodyTemplate &&
+            <Column body={actionBodyTemplate} exportable={false} style={{minWidth: '12rem'}}></Column>} 
     </DataTable>
 }

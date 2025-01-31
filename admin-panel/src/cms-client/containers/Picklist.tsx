@@ -7,8 +7,9 @@ import {useDialogState} from "../../components/dialogs/useDialogState";
 import {SelectDataTable} from "../../components/dataTable/SelectDataTable";
 import {SaveDialog} from "../../components/dialogs/SaveDialog";
 import { XAttr } from "../types/schemaExt";
-import { useLazyStateHandlers } from "../../components/dataTable/useLazyStateHandlers";
-import { encodeLazyState } from "../../components/dataTable/lazyStateUtil";
+import { useDataTableStateManager } from "../../components/dataTable/useDataTableStateManager";
+import { encodeDataTableState } from "../../components/dataTable/dataTableStateUtil";
+import { createColumn } from "../../components/dataTable/columns/createColumn";
 
 export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
     data: any,
@@ -19,18 +20,22 @@ export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
 }) {
     const {visible, showDialog, hideDialog} = useDialogState()
     const {
-        id, targetSchema, listColumns,
+        id, listColumns,
         existingItems, setExistingItems,
         toAddItems, setToAddItems
     } = usePicklist(data, schema, column)
     
-    const {lazyState ,eventHandlers}= useLazyStateHandlers(10, listColumns,"");
-    const {data: subgridData, mutate: subgridMutate} = useJunctionData(schema.name, id, column.field, false, encodeLazyState(lazyState));
+    const tableColumns = listColumns.map(x=>createColumn(x,getFullAssetsURL));
+    
+    const existingStateManager= useDataTableStateManager(10, listColumns,"");
+    const {data: subgridData, mutate: subgridMutate} = useJunctionData(schema.name, id, column.field, false, encodeDataTableState(existingStateManager.state));
 
-    const {lazyState :excludedLazyState,eventHandlers:excludedEventHandlers}= useLazyStateHandlers(10, listColumns,"");
-    const {data: excludedSubgridData, mutate: execMutate} = useJunctionData(schema.name, id, column.field, true,excludedLazyState)
+    const excludedStateManager= useDataTableStateManager(10, listColumns,"");
+    const {data: excludedSubgridData, mutate: execMutate} = useJunctionData(schema.name, id, column.field, true,encodeDataTableState(excludedStateManager.state));
+    
     const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
     const {confirm,Confirm} = useConfirm("picklist" +column.field);
+    
     const mutateDate = () => {
         setExistingItems(null);
         setToAddItems(null)
@@ -67,14 +72,10 @@ export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
         <Button type={'button'} label={"Delete "} severity="danger" onClick={onDelete} outlined size="small"/>
         <SelectDataTable
             data={subgridData}
-            columns={listColumns}
-            schema={targetSchema}
+            columns={tableColumns}
             selectedItems={existingItems}
             setSelectedItems={setExistingItems}
-            lazyState={lazyState}
-            eventHandlers={eventHandlers}
-            getFullAssetsURL={getFullAssetsURL}
-            baseRouter={baseRouter}
+            stateManager={existingStateManager}
         />
         <SaveDialog
             visible={visible}
@@ -82,15 +83,12 @@ export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
             handleSave={handleSave}
             header={'Select ' + column.header}>
             <SelectDataTable
-                schema={targetSchema}
-                getFullAssetsURL={getFullAssetsURL}
+                columns={tableColumns}
                 data={excludedSubgridData}
-                columns={listColumns}
+                stateManager={existingStateManager}
+                
                 selectedItems={toAddItems}
                 setSelectedItems={setToAddItems}
-                lazyState={excludedLazyState}
-                eventHandlers={excludedEventHandlers}
-                baseRouter={baseRouter}
             />
         </SaveDialog>
     </div>

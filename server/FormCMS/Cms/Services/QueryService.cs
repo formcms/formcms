@@ -64,7 +64,7 @@ public sealed class QueryService(
         var (query, filters, sorts, pagination) = ctx;
         var validSpan = span.ToValid(query.Entity.Attributes, resolver).Ok();
 
-        var hookParam = new QueryPreGetListArgs(query.Name, query.EntityName, [..filters], query.Sorts, validSpan,
+        var hookParam = new QueryPreGetListArgs(query,  [..filters], query.Sorts, validSpan,
             pagination.PlusLimitOne());
         var res = await hook.QueryPreGetList.Trigger(provider, hookParam);
         Record[] items;
@@ -93,7 +93,7 @@ public sealed class QueryService(
     {
         var (query, filters,sorts,_) = ctx;
         var res = await hook.QueryPreGetSingle.Trigger(provider,
-            new QueryPreGetSingleArgs(ctx.Query.Name, query.EntityName, [..filters]));
+            new QueryPreGetSingleArgs(ctx.Query,  [..filters]));
         Record? item;
         if (res.OutRecord is not null)
         {

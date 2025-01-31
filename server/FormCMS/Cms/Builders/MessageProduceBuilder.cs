@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Core.HookFactory;
+using FormCMS.Utils.RecordExt;
 
 namespace FormCMS.Cms.Builders;
 
@@ -53,7 +54,7 @@ public class MessageProduceBuilder(ILogger<MessageProduceBuilder> logger, Messag
             {
                 await messageProducer.Produce(
                     Topics.CmsCrud,
-                    EncodeMessage(Operations.Create, parameter.Name, parameter.RecordId, parameter.Record));
+                    EncodeMessage(Operations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record));
                 return parameter;
             });
 
@@ -61,7 +62,7 @@ public class MessageProduceBuilder(ILogger<MessageProduceBuilder> logger, Messag
             {
                 await messageProducer.Produce(
                     Topics.CmsCrud,
-                    EncodeMessage(Operations.Create, parameter.Name, parameter.RecordId, parameter.Record)
+                    EncodeMessage(Operations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record)
                 );
                 return parameter;
             });
@@ -69,7 +70,7 @@ public class MessageProduceBuilder(ILogger<MessageProduceBuilder> logger, Messag
             {
                 await messageProducer.Produce(
                     Topics.CmsCrud,
-                    EncodeMessage(Operations.Create, parameter.Name, parameter.RecordId, parameter.Record));
+                    EncodeMessage(Operations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record));
                 return parameter;
             });
         }

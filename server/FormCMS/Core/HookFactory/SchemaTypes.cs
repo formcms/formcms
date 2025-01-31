@@ -1,6 +1,9 @@
+using FormCMS.Core.Descriptors;
+
 namespace FormCMS.Core.HookFactory;
-public record SchemaPreGetAllArgs(string[]? OutSchemaNames) : BaseArgs("");
-public record SchemaPostGetSingleArgs(Descriptors.Schema Schema) : BaseArgs(Schema.Name);
-public record SchemaPreSaveArgs(Descriptors.Schema RefSchema ) : BaseArgs(RefSchema.Name);
-public record SchemaPostSaveArgs(Descriptors.Schema Schema ) : BaseArgs(Schema.Name);
-public record SchemaPreDelArgs(int SchemaId) : BaseArgs("");
+public record SchemaPreGetAllArgs() : BaseArgs("");
+
+public record SchemaPostGetSingleArgs(Schema Schema) : BaseArgs(Schema.Name);
+public record SchemaPreSaveArgs(Schema RefSchema ) : BaseArgs(RefSchema.Name);
+public record SchemaPostSaveArgs(Schema Schema ) : BaseArgs(Schema.Name);
+public record SchemaPreDelArgs(Schema Schema) : BaseArgs(Schema.Name);

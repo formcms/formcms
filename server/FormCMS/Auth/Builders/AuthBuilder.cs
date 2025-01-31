@@ -79,14 +79,18 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
                ISchemaPermissionService schemaPermissionService, SchemaPreDelArgs args
             ) =>
             {
-                await schemaPermissionService.Delete(args.SchemaId);
+                await schemaPermissionService.Delete(args.Schema);
                 return args;
             });
 
             registry.SchemaPreGetAll.RegisterDynamic("*", (
                ISchemaPermissionService schemaPermissionService, 
                SchemaPreGetAllArgs args
-            ) => args with { OutSchemaNames = schemaPermissionService.GetAll() });
+            ) =>
+            {
+                schemaPermissionService.GetAll();
+                return args;
+            });
 
             registry.SchemaPostGetSingle.RegisterDynamic("*", (
                 ISchemaPermissionService schemaPermissionService, SchemaPostGetSingleArgs args
@@ -119,7 +123,7 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
                JunctionPreAddArgs args
             ) =>
             {
-                await service.Change(args.Name, args.RecordId);
+                await service.Change(args.Entity.Name, args.RecordId);
                 return args;
             });
 
@@ -128,7 +132,7 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
                JunctionPreDelArgs args
             ) =>
             {
-                await service.Change(args.Name, args.RecordId);
+                await service.Change(args.Entity.Name, args.RecordId);
                 return args;
             });
 
@@ -137,7 +141,7 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
                EntityPreDelArgs args
             ) =>
             {
-                await service.Change(args.Name, args.RecordId);
+                await service.Change(args.Entity.Name, args.RefRecord[args.Entity.PrimaryKey].ToString()??"");
                 return args;
             });
 
@@ -146,7 +150,7 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
                EntityPreUpdateArgs args
             ) =>
             {
-                await service.Change(args.Name, args.RecordId);
+                await service.Change(args.Entity.Name, args.RefRecord[args.Entity.PrimaryKey].ToString()??"");
                 return args;
             });
 
@@ -154,7 +158,7 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
                IEntityPermissionService service, EntityPreAddArgs args
             ) =>
             {
-                service.Create(args.Name);
+                service.Create(args.Entity.Name);
                 service.AssignCreatedBy(args.RefRecord);
                 return args;
             });

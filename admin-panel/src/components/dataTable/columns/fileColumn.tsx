@@ -1,12 +1,12 @@
 import {Column} from "primereact/column";
 
-export function fileColumn({column, getFullAssetsURL}: {
+export function fileColumn(
     column: {
         field: any,
         header: any,
     },
-    getFullAssetsURL ?: (arg:string) =>string |undefined;
-}) {
+    getFullAssetsURL ?: (arg:string) =>string |undefined
+) {
     const bodyTemplate = (item: any) => {
         const fullURL =getFullAssetsURL ? getFullAssetsURL(item[column.field]): item[column.field];
         return <a href={ fullURL}>Download</a>;

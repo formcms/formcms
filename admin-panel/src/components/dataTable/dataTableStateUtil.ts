@@ -1,6 +1,6 @@
 import qs from 'qs';
 
-export function decodeLazyState(querystring :string){
+export function decodeDataTableState(querystring :string){
     const s = qs.parse(querystring);
     const state :any = {
         first: s.offset,
@@ -16,18 +16,18 @@ export function decodeLazyState(querystring :string){
     return state;
 }
 
-export function encodeLazyState(state:any) {
+export function encodeDataTableState(state:any) {
     if (!state){
         return ''
     }
     state = deepClone(state);
     return qs.stringify(
-        sanitizeLazyState(state),
+        sanitizeState(state),
         {encodeValuesOnly: true, skipNulls: true, arrayFormat:'repeat'}
     );
 }
 
-function sanitizeLazyState(payload:any){
+function sanitizeState(payload:any){
     sanitizeFilter(payload.filters);
     flatFilter(payload.filters);
 

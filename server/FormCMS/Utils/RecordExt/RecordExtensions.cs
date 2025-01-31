@@ -14,23 +14,6 @@ public static class RecordExtensions
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
 
-    public static TValue CamelKeyObject<TValue>(this Record r, string fieldName)
-    {
-        var s = (string)r[fieldName.Camelize()];
-        return JsonSerializer.Deserialize<TValue>(s, JsonSerializerOptions)!;
-    }
-
-    public static int CamelKeyInt(this Record r, string field)
-    {
-        var v = r[field.Camelize()];
-        return v switch
-        {
-            int val => val,
-            long val => (int)val,
-            _ => 0
-        };
-    }
-
     public static string CamelKeyStr(this Record r, string field)
         => (string)r[field.Camelize()];
 
@@ -63,21 +46,6 @@ public static class RecordExtensions
         return Enum.TryParse(s, true, out e);
     }
 
-    public static bool CamelKeyEnum<TEnum>(
-        this Record record,
-        string field,
-        out TEnum e)
-        where TEnum : struct
-    {
-        e = default;
-        if (!record.TryGetValue(field.Camelize(), out var o) || o is not string s)
-        {
-            return false;
-        }
-
-        return Enum.TryParse(s, true, out e);
-    }
-
     public static bool RemoveCamelKey(this Record r, Enum field, out object? val)
         => r.Remove(field.ToString().Camelize(), out val);
     
@@ -91,6 +59,9 @@ public static class RecordExtensions
         record.Add(field.ToString().Camelize(), value);
     }
 
+    public static string StrOrEmpty(this Record r, string field)
+        =>r.TryGetValue(field, out var o)?o.ToString() ?? string.Empty:string.Empty;
+    
     public static Result<T> ToObject<T>(this Record r) 
     {
         var constructor = typeof(T).GetConstructors().FirstOrDefault();
