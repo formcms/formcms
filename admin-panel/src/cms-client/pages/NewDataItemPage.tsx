@@ -1,5 +1,5 @@
 import {ItemForm} from "../containers/ItemForm";
-import {addItem} from "../services/entity";
+import {addItem, useItemData} from "../services/entity";
 import {Button} from "primereact/button";
 import {fileUploadURL, getFullCmsAssetUrl} from "../configs";
 import {useCheckError} from "../../components/useCheckError";
@@ -13,6 +13,11 @@ export function NewDataItemPage({baseRouter}:{baseRouter:string}) {
 }
 
 export function NewDataItemPageComponent({schema,baseRouter}:{schema:XEntity, baseRouter:string }) {
+    const id =  new URLSearchParams(location.search).get("sourceId");
+    const {data} = useItemData(schema.name, id)
+
+    const referingUrl = new URLSearchParams(location.search).get("ref");
+
     const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
     const formId = "newForm" + schema.name
     const uploadUrl = fileUploadURL()
@@ -30,7 +35,10 @@ export function NewDataItemPageComponent({schema,baseRouter}:{schema:XEntity, ba
 
     return <>
         <Button label={'Save ' + schema.displayName} type="submit" form={formId}  icon="pi pi-check"/>
+        {' '}
+        {referingUrl &&<Button type={'button'} label={"Back"}  onClick={()=>window.location.href = referingUrl}/>}
+
         <CheckErrorStatus/>
-        <ItemForm columns={inputColumns} {...{data:{}, onSubmit,  formId,uploadUrl,  getFullAssetsURL:getFullCmsAssetUrl}}/>
+        {(!id || data) && <ItemForm columns={inputColumns} {...{data:data??{} , onSubmit,  formId,uploadUrl,  getFullAssetsURL:getFullCmsAssetUrl}}/>}
     </>
 }

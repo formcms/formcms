@@ -18,7 +18,9 @@ export function DataListPage({baseRouter}:{baseRouter:string}){
     return <PageLayout schemaName={schemaName??''} baseRouter={baseRouter} page={DataListPageComponent}/>
 }
 
+export const NewItemRoute = "new";
 export function DataListPageComponent({schema,baseRouter}:{schema:XEntity,baseRouter:string}) {
+    
     const navigate = useNavigate();
 
     const columns = schema?.attributes?.filter(x => 
@@ -31,8 +33,14 @@ export function DataListPageComponent({schema,baseRouter}:{schema:XEntity,baseRo
     const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
     const {confirm, Confirm} = useConfirm("dataItemPage" + schema.name);
 
+    const onDuplicate = (rowData:any) => {
+        var id = rowData[schema.primaryKey];
+        const url =`${baseRouter}/${schema.name}/${NewItemRoute}?sourceId=${id}&ref=${encodeURIComponent(window.location.href)}`;
+        navigate(url);
+    }
     const onEdit = (rowData:any)=>{
-        const url =`${baseRouter}/${schema.name}/${rowData[schema.primaryKey]}?ref=${encodeURIComponent(window.location.href)}`;
+        var id = rowData[schema.primaryKey];
+        const url =`${baseRouter}/${schema.name}/${id}?ref=${encodeURIComponent(window.location.href)}`;
         navigate(url);
     }
 
@@ -49,7 +57,7 @@ export function DataListPageComponent({schema,baseRouter}:{schema:XEntity,baseRo
     return <>
         <FetchingStatus isLoading={isLoading} error={error}/>
         <h2>{schema.displayName} list</h2>
-        <Link to={"new"}><Button>Create New {schema.displayName}</Button></Link>
+        <Link to={NewItemRoute}><Button>Create New {schema.displayName}</Button></Link>
         <CheckErrorStatus/>
         <Confirm/>
         <div className="card">
@@ -60,6 +68,7 @@ export function DataListPageComponent({schema,baseRouter}:{schema:XEntity,baseRo
                     stateManager={stateManager} 
                     onEdit={onEdit}
                     onDelete={onDelete}
+                    onDuplicate={onDuplicate}
                 />
             }
         </div>

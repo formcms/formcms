@@ -120,6 +120,8 @@ export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, b
         <Button type={'button'} label={"Schdule/Reschdule"}  onClick={showSchedule}/>
         {' '}
         <Button type={'button'} label={"Delete " + schema.displayName} severity="danger" onClick={onDelete}/>
+        {' '}
+        {referingUrl &&<Button type={'button'} label={"Back"}  onClick={()=>window.location.href = referingUrl}/>}
         <div>
             <PageErrorStatus/>
         </div>

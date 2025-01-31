@@ -15,7 +15,8 @@ export function useTreeData(schemaName: string | undefined ) {
     return {...res, error:decodeError(res.error)}
 }
 export function useItemData(schemaName: string, id: any) {
-    let res =  useSWR(fullCmsApiUrl(`/entities/${schemaName}/${id}`), fetcher, swrConfig)
+    var url =id ? fullCmsApiUrl(`/entities/${schemaName}/${id}`):null;
+    let res =  useSWR(url, fetcher, swrConfig)
     return {...res, error:decodeError(res.error)}
 }
 

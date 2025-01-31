@@ -12,6 +12,7 @@ export function EditDataTable(
         onEdit,
         onDelete,
         onView,
+        onDuplicate,
     }:
     {
         columns: React.JSX.Element[];
@@ -27,12 +28,14 @@ export function EditDataTable(
         onEdit?:(rowData:any)=>void
         onDelete?:(rowData:any)=>void
         onView?:(rowData:any)=>void
+        onDuplicate?:(rowData:any)=>void
     }) {
     const navigate = useNavigate();
     const actionBodyTemplate = (rowData: any) => {
         return (
             <>
-
+                {onDuplicate &&
+                    <Button icon="pi pi-copy" rounded outlined className="mr-2" onClick={() => onDuplicate(rowData)}/>}
                 {onView &&
                     <Button icon="pi pi-eye" rounded outlined className="mr-2" onClick={() => onView(rowData)}/>}
                 {onEdit &&

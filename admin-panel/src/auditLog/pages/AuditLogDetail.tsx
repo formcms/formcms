@@ -12,7 +12,7 @@ export function AuditLogDetail({baseRouter}:{baseRouter:string}) {
     const referingUrl = new URLSearchParams(location.search).get("ref") ?? baseRouter;
     
     return <>
-        <Button type={'button'} label={"Return"}  onClick={()=>window.location.href = referingUrl}/>
+        <Button type={'button'} label={"Back"}  onClick={()=>window.location.href = referingUrl}/>
         <div className="surface-section">
             <div className="font-medium text-3xl text-900 mb-3">[{data.action} {data.entityName}] {data.recordId} - {data.recordLabel}</div>
             <div className="text-500 mb-5"> By User: <b>{data.userName}({data.userId})</b> At <b>{data.createdAt.toString()}</b></div>
