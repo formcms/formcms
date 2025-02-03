@@ -6,4 +6,4 @@ public record EntityLinkDesc(
     LoadedEntity TargetEntity,
     LoadedAttribute TargetAttribute,
     bool IsCollective,
-    Func<IEnumerable<GraphAttribute> , ValidValue[] , CollectiveQueryArgs? , SqlKata.Query> GetQuery);
+    Func<IEnumerable<GraphAttribute> , ValidValue[] , CollectiveQueryArgs? , PublicationStatus? , SqlKata.Query> GetQuery);

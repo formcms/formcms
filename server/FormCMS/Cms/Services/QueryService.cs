@@ -3,6 +3,7 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.ResultExt;
+using FormCMS.Utils.StrArgsExt;
 
 namespace FormCMS.Cms.Services;
 
@@ -45,8 +46,9 @@ public sealed class QueryService(
 
         var filters = FilterHelper.ReplaceVariables(attribute.Filters,args, resolver).Ok();
         var sorts = (await SortHelper.ReplaceVariables(attribute.Sorts, args, desc.TargetEntity, resolver)).Ok();
-        
-        var kateQuery = desc.GetQuery(fields,[validSpan.SourceId()],new CollectiveQueryArgs(filters,sorts,pagination.PlusLimitOne(),validSpan) );
+
+        var kateQuery = desc.GetQuery(fields, [validSpan.SourceId()],
+            new CollectiveQueryArgs(filters, sorts, pagination.PlusLimitOne(), validSpan), GetPubStatus(args));
         var records = await executor.Many(kateQuery, token);
 
         records = span.ToPage(records, pagination.Limit);
@@ -59,6 +61,8 @@ public sealed class QueryService(
         return records;
     }
 
+    private PublicationStatus? GetPubStatus(StrArgs args) =>
+        args.ContainsEnumKey(SpecialQueryKeys.Preview) ? null : PublicationStatus.Published;
     private async Task<Record[]> ListWithAction(QueryContext ctx, Span span, StrArgs args, CancellationToken ct = default)
     {
         var (query, filters, sorts, pagination) = ctx;
@@ -75,8 +79,9 @@ public sealed class QueryService(
         }
         else
         {
+            var fields = query.Selection.Where(x => x.IsLocal());
             var kateQuery = query.Entity.ListQuery(
-                filters, sorts, pagination.PlusLimitOne(), validSpan, query.Selection.Where(x=>x.IsLocal()),true);
+                filters, sorts, pagination.PlusLimitOne(), validSpan,fields ,GetPubStatus(args));
             items = await executor.Many(kateQuery, ct);
             items = span.ToPage(items, pagination.Limit);
             if (items.Length > 0)
@@ -102,7 +107,9 @@ public sealed class QueryService(
         }
         else
         {
-            var kateQuery = query.Entity.OneQuery(filters, sorts, query.Selection.Where(x=>x.IsLocal()),true).Ok();
+            var fields = query.Selection.Where(x => x.IsLocal());
+            PublicationStatus? pubStatus = args.ContainsEnumKey(SpecialQueryKeys.Preview) ? null : PublicationStatus.Published;
+            var kateQuery = query.Entity.SingleQuery(filters, sorts,fields ,pubStatus).Ok();
             item = await executor.Single(kateQuery, ct);
             if (item is not null)
             {
@@ -153,7 +160,7 @@ public sealed class QueryService(
         if (collectionArgs?.Pagination is null)
         {
             //get all items and no pagination
-            var query = desc.GetQuery(attr.Selection.Where(x=>x.IsLocal()) ,ids, collectionArgs);
+            var query = desc.GetQuery(attr.Selection.Where(x=>x.IsLocal()) ,ids, collectionArgs, GetPubStatus(args));
             var targetRecords = await executor.Many(query, ct);
             
             if (targetRecords.Length > 0)
@@ -174,10 +181,13 @@ public sealed class QueryService(
         }
         else
         {
+            var fields = attr.Selection.Where(x => x.IsLocal()).ToArray();
+            var pubStatus = GetPubStatus(args);
+            var plusOneArgs = collectionArgs with { Pagination = collectionArgs.Pagination.PlusLimitOne() };
             foreach (var id in ids)
             {
-                var query = desc.GetQuery(attr.Selection.Where(x => x.IsLocal()), ids,
-                    collectionArgs with { Pagination = collectionArgs.Pagination.PlusLimitOne() });
+                
+                var query = desc.GetQuery(fields, ids,plusOneArgs, pubStatus);
                 var targetRecords = await executor.Many(query, ct);
 
                 targetRecords = new Span().ToPage(targetRecords, collectionArgs.Pagination.Limit);

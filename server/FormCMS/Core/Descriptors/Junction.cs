@@ -59,7 +59,8 @@ public static class JunctionHelper
             DefaultPageSize:EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published,
             UpdatedAtAttribute:updatedAtAttr,
-            PublicationStatusAttribute: publicationStatusAttr
+            PublicationStatusAttribute: publicationStatusAttr,
+            PreviewUrl:""
         );
         
         return new Junction(
@@ -123,10 +124,11 @@ public static class JunctionHelper
         ValidSpan? span,
         IEnumerable<LoadedAttribute> selectAttributes,
         IEnumerable<ValidValue> sourceIds,
-        bool onlyPublished)
+        PublicationStatus? publicationStatus
+    )
     {
         selectAttributes = [..selectAttributes, c.SourceAttribute];
-        var query = c.TargetEntity.GetCommonListQuery(filters,sorts,pagination,span,selectAttributes,onlyPublished);
+        var query = c.TargetEntity.GetCommonListQuery(filters, sorts, pagination, span, selectAttributes, publicationStatus);
         c.ApplyJunctionFilter(query, sourceIds);
         return query;
     }
@@ -145,7 +147,8 @@ public static class JunctionHelper
     public static SqlKata.Query GetRelatedItemsCount(
         this Junction c,
         ValidFilter[] filters,
-        IEnumerable<ValidValue> sourceIds)
+        IEnumerable<ValidValue> sourceIds
+    )
     {
         var query = c.TargetEntity.GetCommonCountQuery(filters);
         c.ApplyJunctionFilter(query, sourceIds);
@@ -155,7 +158,8 @@ public static class JunctionHelper
     private static void ApplyJunctionFilter(
         this Junction c,
         SqlKata.Query baseQuery,
-        IEnumerable<ValidValue> sourceIds)
+        IEnumerable<ValidValue> sourceIds
+    )
     {
 
         var (a, b) = (c.TargetEntity.PrimaryKeyAttribute.AddTableModifier(), c.TargetAttribute.AddTableModifier());
@@ -167,7 +171,8 @@ public static class JunctionHelper
     private static void ApplyNotRelatedFilter(
         this Junction c,
         SqlKata.Query baseQuery,
-        IEnumerable<ValidValue> sourceIds)
+        IEnumerable<ValidValue> sourceIds
+    )
     {
         var (a, b) = (c.TargetEntity.PrimaryKeyAttribute.AddTableModifier(), c.TargetAttribute.AddTableModifier());
         baseQuery.LeftJoin(c.JunctionEntity.TableName,

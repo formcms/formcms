@@ -1,5 +1,5 @@
 import {useState} from "react";
-import {XAttr, XEntity } from "../types/schemaExt";
+import {XAttr, XEntity } from "../types/xEntity";
 
 export function usePicklist(data :any, schema:XEntity, column: XAttr )
 {

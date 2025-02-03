@@ -32,7 +32,8 @@ public record Entity(
     string PrimaryKey ,
     
     int DefaultPageSize = EntityConstants.DefaultPageSize,
-    PublicationStatus DefaultPublicationStatus = PublicationStatus.Published
+    PublicationStatus DefaultPublicationStatus = PublicationStatus.Published,
+    string PreviewUrl = ""
 );
 
 public record LoadedEntity(
@@ -49,7 +50,8 @@ public record LoadedEntity(
     string PrimaryKey,
     string LabelAttributeName, 
     int DefaultPageSize,
-    PublicationStatus DefaultPublicationStatus 
+    PublicationStatus DefaultPublicationStatus ,
+    string PreviewUrl
     );
 
 public static class EntityConstants
@@ -82,85 +84,97 @@ public static class EntityHelper
             DefaultPageSize:entity.DefaultPageSize,
             DefaultPublicationStatus:entity.DefaultPublicationStatus,
             UpdatedAtAttribute:updatedAtAttribute,
-            PublicationStatusAttribute:publicationStatusAttribute
+            PublicationStatusAttribute:publicationStatusAttribute,
+            PreviewUrl:entity.PreviewUrl
         );
     }
-    
-    public static Result<SqlKata.Query> OneQuery(this LoadedEntity e,ValidFilter[] filters, ValidSort[] sorts,IEnumerable<LoadedAttribute> attributes,bool onlyPublished)
+
+    public static Result<SqlKata.Query> SingleQuery(
+        this LoadedEntity e,
+        ValidFilter[] filters,
+        ValidSort[] sorts,
+        IEnumerable<LoadedAttribute> attributes,
+        PublicationStatus? publicationStatus 
+    )
     {
         var query = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
-        if (onlyPublished)
+        if (publicationStatus.HasValue)
         {
-            query.WhereCamelEnum(e.PublicationStatusAttribute.AddTableModifier(), PublicationStatus.Published);   
+            query.WhereCamelEnum(e.PublicationStatusAttribute.AddTableModifier(), publicationStatus.Value);
         }
-        query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)],onlyPublished);
-        var result = query.ApplyFilters(filters); 
+
+        query.ApplyJoin([..filters.Select(x => x.Vector), ..sorts.Select(x => x.Vector)], publicationStatus);
+        var result = query.ApplyFilters(filters);
         if (result.IsFailed)
         {
             return Result.Fail(result.Errors);
         }
+
         query.ApplySorts(sorts);
         return query;
     }
 
-    public static SqlKata.Query ByIdsQuery(this LoadedEntity e,IEnumerable<string> fields,IEnumerable<ValidValue> ids,bool onlyPublished)
+    public static SqlKata.Query ByIdsQuery(
+        this LoadedEntity e,
+        IEnumerable<string> fields,
+        IEnumerable<ValidValue> ids,
+        PublicationStatus? publicationStatus
+    )
     {
-        var query = e.Basic().WhereIn(e.PrimaryKey, ids.GetValues())
-            .Select(fields);
-        if (onlyPublished)
+        var query = e.Basic().WhereIn(e.PrimaryKey, ids.GetValues()).Select(fields);
+        if (publicationStatus.HasValue)
         {
-            query.WhereCamelEnum(e.PublicationStatusAttribute.AddTableModifier(), PublicationStatus.Published);
+            query.WhereCamelEnum(e.PublicationStatusAttribute.AddTableModifier(), publicationStatus.Value);
         }
+
         return query;
     }
 
     public static SqlKata.Query AllQuery(this LoadedEntity e, IEnumerable<LoadedAttribute> attributes)
         => e.Basic().Select(attributes.Select(x => x.Field));
     public static SqlKata.Query ListQuery(this LoadedEntity e,ValidFilter[] filters, ValidSort[] sorts, 
-        ValidPagination? pagination, ValidSpan? cursor, IEnumerable<LoadedAttribute> attributes,bool onlyPublished)
+        ValidPagination? pagination, ValidSpan? cursor, IEnumerable<LoadedAttribute> attributes,PublicationStatus? publicationStatus)
     {
-        var query = e.GetCommonListQuery(filters,sorts,pagination,cursor,attributes,onlyPublished);
-        query.ApplyJoin([..filters.Select(x=>x.Vector),..sorts.Select(x=>x.Vector)],onlyPublished);
+        var query = e.GetCommonListQuery(filters,sorts,pagination,cursor,attributes,publicationStatus);
+        query.ApplyJoin([..filters.Select(x => x.Vector), ..sorts.Select(x => x.Vector)], publicationStatus);
         return query;
     }
-    
-    internal static SqlKata.Query GetCommonListQuery(this LoadedEntity e, 
-        IEnumerable<ValidFilter> filters, 
-        ValidSort[] sorts, 
-        ValidPagination? pagination, 
-        ValidSpan? span, 
+
+    internal static SqlKata.Query GetCommonListQuery(this LoadedEntity e,
+        IEnumerable<ValidFilter> filters,
+        ValidSort[] sorts,
+        ValidPagination? pagination,
+        ValidSpan? span,
         IEnumerable<LoadedAttribute> attributes,
-        bool onlyPublished)
+        PublicationStatus? publicationStatus
+    )
     {
         var q = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
-        if (onlyPublished)
+        if (publicationStatus.HasValue)
         {
-            q.WhereCamelEnum(e.PublicationStatusAttribute.AddTableModifier(), PublicationStatus.Published);
+            q.WhereCamelEnum(e.PublicationStatusAttribute.AddTableModifier(), publicationStatus.Value);
         }
-        
+
         q.ApplyFilters(filters);
-        q.ApplySorts(SpanHelper.IsForward(span?.Span)?sorts: sorts.ReverseOrder());
-        q.ApplyCursor(span,sorts);
+        q.ApplySorts(SpanHelper.IsForward(span?.Span) ? sorts : sorts.ReverseOrder());
+        q.ApplyCursor(span, sorts);
         if (pagination is not null)
         {
             q.ApplyPagination(pagination);
         }
+
         return q;
     }
-    
 
-    public static SqlKata.Query CountQuery(this LoadedEntity e,ValidFilter[] filters,bool onlyPublished)
+    public static SqlKata.Query CountQuery(
+        this LoadedEntity e,
+        ValidFilter[] filters , 
+        PublicationStatus? publicationStatus
+    )
     {
         var query = e.GetCommonCountQuery(filters);
         //filter might contain lookup's target's attribute, 
-        query.ApplyJoin(filters.Select(x => x.Vector),onlyPublished);
-        return query;
-    }
-
-    internal static SqlKata.Query GetCommonCountQuery(this LoadedEntity e, IEnumerable<ValidFilter> filters)
-    {
-        var query = e.Basic();
-        query.ApplyFilters(filters);
+        query.ApplyJoin(filters.Select(x => x.Vector), publicationStatus);
         return query;
     }
 
@@ -172,10 +186,10 @@ public static class EntityHelper
             item.Remove(e.PrimaryKey);
         }
         
-        item.AddCamelKeyCamelValue(DefaultAttributeNames.PublicationStatus, e.DefaultPublicationStatus);
+        item.SetCamelKeyCamelValue(DefaultAttributeNames.PublicationStatus, e.DefaultPublicationStatus);
         if (e.DefaultPublicationStatus == PublicationStatus.Published)
         {
-            item.AddCamelKey(DefaultAttributeNames.PublishedAt, DateTime.Now);
+            item.SetCamelKey(DefaultAttributeNames.PublishedAt, DateTime.Now);
         }
 
         return new SqlKata.Query(e.TableName).AsInsert(item, true);
@@ -187,7 +201,7 @@ public static class EntityHelper
             return Result.Fail("Cannot save publication status, unknown status");
 
         var updatingRecord = new Dictionary<string, object>();
-        updatingRecord.AddCamelKeyCamelValue(DefaultAttributeNames.PublicationStatus, status);
+        updatingRecord.SetCamelKeyCamelValue(DefaultAttributeNames.PublicationStatus, status);
 
         if (status is PublicationStatus.Published or PublicationStatus.Scheduled)
         {
@@ -195,7 +209,7 @@ public static class EntityHelper
             {
                 return Result.Fail("Cannot save publication status, invalidate publish time");
             }
-            updatingRecord.AddCamelKey(DefaultAttributeNames.PublishedAt, dateTime);
+            updatingRecord.SetCamelKey(DefaultAttributeNames.PublishedAt, dateTime);
         }
         
         return new SqlKata.Query(e.TableName)
@@ -258,7 +272,6 @@ public static class EntityHelper
             .Where(e.DeletedAttribute.AddTableModifier(), false);
         return query;
     }
-
 
     public static Result ValidateTitleAttributes(this LoadedEntity e, Record record)
     {
@@ -329,5 +342,12 @@ public static class EntityHelper
            
         }
         return ret;
+    }
+
+    internal static SqlKata.Query GetCommonCountQuery(this LoadedEntity e, IEnumerable<ValidFilter> filters)
+    {
+        var query = e.Basic();
+        query.ApplyFilters(filters);
+        return query;
     }
 }

@@ -1,5 +1,5 @@
 import {useTreeData} from "../services/entity";
-import { XEntity } from "../types/schemaExt";
+import { XEntity } from "../types/xEntity";
 
 export function useTree(entity:XEntity) {
     const {data: options} = useTreeData(entity.name);

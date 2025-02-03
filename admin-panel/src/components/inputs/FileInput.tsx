@@ -17,7 +17,7 @@ export function FileInput(props: {
 
 
 }) {
-    return <InputPanel  {...props} component={(field: any) => {
+    return <InputPanel  {...props} childComponent={(field: any) => {
         const {uploadUrl} = props
         return <>
             <InputText id={field.name} value={field.value} className={' w-full'}

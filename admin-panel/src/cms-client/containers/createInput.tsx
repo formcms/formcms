@@ -11,7 +11,7 @@ import {FileInput} from "../../components/inputs/FileInput";
 import {GalleryInput} from "../../components/inputs/GalleryInput";
 import {DropDownInput} from "../../components/inputs/DropDownInput";
 import {MultiSelectInput} from "../../components/inputs/MultiSelectInput";
-import { XAttr } from "../types/schemaExt";
+import {XAttr } from "../types/xEntity";
 
 export function createInput(props :{
     column: XAttr,

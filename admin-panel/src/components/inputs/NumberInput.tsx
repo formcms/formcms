@@ -12,7 +12,7 @@ export function NumberInput(
     control:any
         id:any
 }) {
-    return <InputPanel  {...props} component={(field: any) =>
+    return <InputPanel  {...props} childComponent={(field: any) =>
         <><br/>
             <InputNumber
                 id={field.name}

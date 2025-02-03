@@ -2,18 +2,53 @@ using FormCMS.Utils.ResultExt;
 using FormCMS.Core.Descriptors;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.RecordExt;
 using Humanizer;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
-using QueryBuilder_Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.CoreKit.Test;
 
-public record EntityData(string EntityName, string TableName, Record[] Records);
+public enum TestFieldNames
+{
+    Name,
+    Description,
+    Image,
+    Post,
+    
+    Title,
+    Abstract,
+    Body,
+    Attachments,
+    Tags,
+    Category,
+    Authors,
+}
+
+public enum TestEntityNames
+{
+    TestPost,
+    TestAuthor,
+    TestTag,
+    TestCategory,
+    TestAttachment
+}
+
+public enum TestTableNames
+{
+    TestPosts,
+    TestAuthors,
+    TestTags,
+    TestCategories,
+    TestAttachments
+}
+
+public record EntityData(TestEntityNames EntityName, TestTableNames TableName, Record[] Records);
 public record JunctionData(string EntityName,  string Attribute,string JunctionTableName, string SourceField, string TargetField, int SourceId, int[] TargetIds);
 
-/// a set of blog entities to test query
+/// a set of blog entities to test queries
 public static class BlogsTestData
 {
+    private static Attribute CreateAttr(this TestFieldNames fieldName) => new Attribute(fieldName.ToString().Camelize(), fieldName.ToString().Camelize());
     public static async Task EnsureBlogEntities(SchemaApiClient client)
     {
         await EnsureBlogEntities(x => client.EnsureEntity(x).Ok());
@@ -32,7 +67,7 @@ public static class BlogsTestData
         {
             foreach (var dataRecord in data.Records)
             {
-                await client.Insert(data.EntityName, dataRecord).Ok();
+                await client.Insert(data.EntityName.ToString().Camelize(), dataRecord).Ok();
             }
         }, async data =>
         {
@@ -59,131 +94,149 @@ public static class BlogsTestData
             tagsIds.Add(i);
             authorsIds.Add(i);
             
-            tags.Add(GetObject(["name", "description", "image"], i));
-            authors.Add(GetObject(["name", "description", "image"], i));
-            categories.Add(GetObject(["name", "description", "image"], i));
+            tags.Add(GetObject([TestFieldNames.Name, TestFieldNames.Description, TestFieldNames.Image], i));
+            authors.Add(GetObject([TestFieldNames.Name, TestFieldNames.Description, TestFieldNames.Image], i));
+            categories.Add(GetObject([TestFieldNames.Name, TestFieldNames.Description, TestFieldNames.Image], i));
             
-            var post = GetObject(["title", "abstract","body","image"], i);
-            post["category"] = i;
+            var post = GetObject([TestFieldNames.Title, TestFieldNames.Abstract, TestFieldNames.Body, TestFieldNames.Image], i);
+            post[TestFieldNames.Category.ToString().Camelize()] = i;
             posts.Add(post);
             
-            var attachment = GetObject(["name","description", "image"], i);
+            var attachment = GetObject([TestFieldNames.Name, TestFieldNames.Description, TestFieldNames.Image], i);
             attachment["post"] = startId;
             attachments.Add(attachment);
         }
 
-        await insertEntity(new EntityData("tag", "tags", tags.ToArray()));
-        await insertEntity(new EntityData("author", "authors", authors.ToArray()));
-        await insertEntity(new EntityData("category", "categories", categories.ToArray()));
-        await insertEntity(new EntityData("post", "posts", posts.ToArray()));
-        await insertEntity(new EntityData("attachment", "attachments", attachments.ToArray()));
+        await insertEntity(new EntityData(TestEntityNames.TestTag, TestTableNames.TestTags, tags.ToArray()));
+        await insertEntity(new EntityData(TestEntityNames.TestAuthor, TestTableNames.TestAuthors, authors.ToArray()));
+        await insertEntity(new EntityData(TestEntityNames.TestCategory, TestTableNames.TestCategories, categories.ToArray()));
+        await insertEntity(new EntityData(TestEntityNames.TestPost, TestTableNames.TestPosts, posts.ToArray()));
+        await insertEntity(new EntityData(TestEntityNames.TestAttachment, TestTableNames.TestAttachments, attachments.ToArray()));
 
-        await insertJunction(new JunctionData("post", "tags", 
-            "post_tag", "post_id", "tag_id", startId, tagsIds.ToArray()));
-        await insertJunction(new JunctionData("post","authors",
-            "author_post","post_id","author_id",startId,authorsIds.ToArray()));
+        await insertJunction(new JunctionData(
+                TestEntityNames.TestPost.ToString().Camelize(),
+                TestFieldNames.Tags.ToString().Camelize(),
+                $"{TestEntityNames.TestPost.ToString().Camelize()}_{TestEntityNames.TestTag.ToString().Camelize()}",
+                $"{TestEntityNames.TestPost.ToString().Camelize()}Id",
+                $"{TestEntityNames.TestTag.ToString().Camelize()}Id",
+                startId,
+                tagsIds.ToArray()
+            )
+        );
+        await insertJunction(new JunctionData(
+                TestEntityNames.TestPost.ToString().Camelize(),
+                TestFieldNames.Authors.ToString().Camelize(),
+                $"{TestEntityNames.TestAuthor.ToString().Camelize()}_{TestEntityNames.TestPost.ToString().Camelize()}",
+                $"{TestEntityNames.TestPost.ToString().Camelize()}Id",
+                $"{TestEntityNames.TestAuthor.ToString().Camelize()}Id",
+                startId,
+                authorsIds.ToArray()
+            )
+        );
     }
-    private static Dictionary<string,object> GetObject(string[] fields, int i)
+    
+    private static Dictionary<string,object> GetObject(TestFieldNames[] fields, int i)
     {
         var returnValue = new Dictionary<string, object>();
         foreach (var field in fields)
         {
-            returnValue.Add(field, $"{field}-{i}");
+            returnValue.Add(field.ToString().Camelize(), $"{field}-{i}");
         }
+        returnValue.SetCamelKeyCamelValue(DefaultAttributeNames.PublicationStatus,PublicationStatus.Published);
+        returnValue.SetCamelKey(DefaultAttributeNames.PublishedAt,DateTime.Now);
         return returnValue; 
 
     }
 
+    
     private static readonly Entity[] Entities =
     [
         new(
+            PrimaryKey:DefaultAttributeNames.Id.ToString().Camelize(),
             Attributes:
             [
-                new Attribute(Field: "name", Header: "Name"),
-                new Attribute(Field: "description", Header: "Description"),
-                new Attribute(Field: "image", Header: "Image", DisplayType: DisplayType.Image),
+                TestFieldNames.Name.CreateAttr(),
+                TestFieldNames.Description.CreateAttr(),
+                TestFieldNames.Image.CreateAttr() with{DisplayType = DisplayType.Image},
             ],
-            DefaultPageSize: 50,
-            LabelAttributeName: "name",
-            TableName: "tags",
-            DisplayName: "Tag",
-            Name: "tag",
-            PrimaryKey:DefaultAttributeNames.Id.ToString().Camelize(),
+            TableName: TestTableNames.TestTags.ToString().Camelize(),
+            DisplayName: TestEntityNames.TestTag.ToString(),
+            Name: TestEntityNames.TestTag.ToString().Camelize(),
+            
+            LabelAttributeName: TestFieldNames.Name.ToString().Camelize(),
+            DefaultPageSize: EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published
         ),
         new(
             PrimaryKey:DefaultAttributeNames.Id.ToString().Camelize(),
             Attributes:
             [
-                new Attribute(Field: "name", Header: "Name"),
-                new Attribute(Field: "description", Header: "Description"),
-                new Attribute(Field: "image", Header: "Image", DisplayType: DisplayType.Image),
-                new Attribute(Field: "post", Header: "Post", DataType:DataType.Int, DisplayType: DisplayType.Number),
+                TestFieldNames.Name.CreateAttr(),
+                TestFieldNames.Description.CreateAttr(),
+                TestFieldNames.Image.CreateAttr() with{DisplayType = DisplayType.Image},
+                TestFieldNames.Post.CreateAttr() with{DataType = DataType.Int, DisplayType = DisplayType.Number}
+                
             ],
-            DefaultPageSize: 50,
-            LabelAttributeName: "name",
-            TableName: "attachments",
-            DisplayName: "Attachment",
-            Name: "attachment",
+            TableName: TestTableNames.TestAttachments.ToString().Camelize(),
+            DisplayName: TestEntityNames.TestAttachment.ToString(),
+            Name: TestEntityNames.TestAttachment.ToString().Camelize(),
+            
+            LabelAttributeName: TestFieldNames.Name.ToString().Camelize(),
+            DefaultPageSize: EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published
         ),
         new(
             PrimaryKey:DefaultAttributeNames.Id.ToString().Camelize(),
             Attributes:
             [
-                new Attribute(Field: "name", Header: "Name"),
-                new Attribute(Field: "description", Header: "Description"),
-                new Attribute(Field: "image", Header: "Image", DisplayType: DisplayType.Image),
+                TestFieldNames.Name.CreateAttr(),
+                TestFieldNames.Description.CreateAttr(),
+                TestFieldNames.Image.CreateAttr() with{DisplayType = DisplayType.Image},
             ],
-            LabelAttributeName: "name",
-            TableName: "authors",
-            DefaultPageSize: 50,
-            DisplayName: "Author",
-            Name: "author",
+            TableName: TestTableNames.TestAuthors.ToString().Camelize(),
+            DisplayName: TestEntityNames.TestAuthor.ToString(),
+            Name: TestEntityNames.TestAuthor.ToString().Camelize(),
+            LabelAttributeName: TestFieldNames.Name.ToString().Camelize(),
+            DefaultPageSize: EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published
         ),
         new (
             PrimaryKey:DefaultAttributeNames.Id.ToString().Camelize(),
             Attributes:
             [
-                new Attribute(Field: "name", Header: "Name"),
-                new Attribute(Field: "description", Header: "Description"),
-                new Attribute(Field: "image", Header: "Image", DisplayType: DisplayType.Image),
+                TestFieldNames.Name.CreateAttr(),
+                TestFieldNames.Description.CreateAttr(),
+                TestFieldNames.Image.CreateAttr() with{DisplayType = DisplayType.Image},
             ],
-            LabelAttributeName: "name",
-            TableName: "categories",
-            DisplayName: "Category",
-            DefaultPageSize: 50,
-            Name: "category",
+            TableName: TestTableNames.TestCategories.ToString().Camelize(),
+            DisplayName: TestEntityNames.TestCategory.ToString(),
+            Name: TestEntityNames.TestCategory.ToString().Camelize(),
+            
+            LabelAttributeName: TestFieldNames.Name.ToString().Camelize(),
+            DefaultPageSize: EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published
         ),
         new (
             PrimaryKey:DefaultAttributeNames.Id.ToString().Camelize(),
             Attributes:
             [
-                new Attribute(Field: "title", Header: "Title"),
-                new Attribute(Field: "abstract", Header: "Abstract"),
-                new Attribute(Field: "body", Header: "Body"),
-                new Attribute(Field: "image", Header: "Image", DisplayType: DisplayType.Image),
-                
-                new Attribute(Field: "attachments", Header: "Attachments", DataType: DataType.Collection,
-                    DisplayType: DisplayType.EditTable,
-                    Options: "attachment.post"),
-                
-                new Attribute(Field: "tags", Header: "Tag", DataType: DataType.Junction,
-                    DisplayType: DisplayType.Picklist,
-                    Options: "tag"),
-                new Attribute(Field: "authors", Header: "Author", DataType: DataType.Junction,
-                    DisplayType: DisplayType.Picklist,
-                    Options: "author"),
-                new Attribute(Field: "category", Header: "Category", DataType: DataType.Lookup,
-                    DisplayType: DisplayType.Lookup, Options: "category"),
+                TestFieldNames.Title.CreateAttr(),
+                TestFieldNames.Abstract.CreateAttr(),
+                TestFieldNames.Body.CreateAttr(),
+                TestFieldNames.Image.CreateAttr() with{DisplayType = DisplayType.Image},
+
+                TestFieldNames.Attachments.CreateAttr() with{DisplayType = DisplayType.EditTable, DataType = DataType.Collection,
+                    Options = $"{TestEntityNames.TestAttachment.ToString().Camelize()}.{TestFieldNames.Post.ToString().Camelize()}"},
+                TestFieldNames.Tags.CreateAttr() with{DisplayType = DisplayType.Picklist, DataType = DataType.Junction, Options = TestEntityNames.TestTag.ToString().Camelize() },
+                TestFieldNames.Authors.CreateAttr() with{DisplayType = DisplayType.Picklist, DataType = DataType.Junction, Options = TestEntityNames.TestAuthor.ToString().Camelize() },
+                TestFieldNames.Category.CreateAttr() with{DataType = DataType.Lookup, DisplayType = DisplayType.Lookup, Options = TestEntityNames.TestCategory.ToString().Camelize() },
             ],
-            LabelAttributeName: "title",
-            TableName: "posts",
-            DisplayName: "Post",
-            DefaultPageSize: 50,
-            Name: "post",
+            Name: TestEntityNames.TestPost.ToString().Camelize(),
+            DisplayName: TestEntityNames.TestPost.ToString(),
+            TableName: TestTableNames.TestPosts.ToString().Camelize(),
+            
+            LabelAttributeName: TestFieldNames.Title.ToString().Camelize(),
+            DefaultPageSize: EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published
         )
     ];

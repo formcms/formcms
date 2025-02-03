@@ -9,16 +9,18 @@ public static class DocDbLinkerBuilder
 {
     public static IServiceCollection AddNatsMongoLink(
         IServiceCollection services,
-        ApiLinks[] apiLinksArray)
+        ApiLinks[] apiLinksArray
+    )
     {
 
+        var arr = string.Join(",", [..apiLinksArray]);
         Console.WriteLine(
             $"""
-            *********************************************************
-            Adding Nats Mongo Link 
-            apiLinksArray = {apiLinksArray}
-            *********************************************************
-            """);
+             *********************************************************
+             Adding Nats Mongo Link 
+             apiLinksArray = {arr}
+             *********************************************************
+             """);
         services.AddSingleton<IStringMessageConsumer, NatsConsumer>();
         services.AddSingleton<IDocumentDbDao, MongoDao>();
 

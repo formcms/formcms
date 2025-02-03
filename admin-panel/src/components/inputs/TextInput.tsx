@@ -11,7 +11,7 @@ export function TextInput(
         control: any
         id: any
     }) {
-    return <InputPanel  {...props} component={(field: any) =>
+    return <InputPanel  {...props} childComponent={(field: any) =>
         <InputText
             id={field.name}
             value={field.value ?? ''}

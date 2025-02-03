@@ -10,34 +10,45 @@ using FormCMS.Infrastructure.DocumentDbDao;
 namespace FormCMS.DataLink.Workers;
 
 
-public class MigrateWorker( IDocumentDbDao dao,
-    ILogger<SyncWorker> logger,
-    ApiLinks[] linksArray):   BackgroundService
+public class MigrateWorker(
+    IDocumentDbDao dao,
+    ILogger<MigrateWorker> logger,
+    ApiLinks[] linksArray
+) : BackgroundService
 {
-
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+
         const string coll = "Progress";
-        while (stoppingToken.IsCancellationRequested == false)
+        while (!stoppingToken.IsCancellationRequested)
         {
+            logger.LogInformation("Wakeup migrate worker...");
             var progresses = await dao.All(coll);
             foreach (var link in linksArray)
             {
                 if (progresses.FirstOrDefault(x => x["collection"] is string s && s == link.Collection) is not null)
                 {
+                    logger.LogInformation("[{collection}] is migrated, ignoring...", link.Collection);
                     continue;
                 }
-                await BatchSaveData(link);
-                await dao.Upsert(coll, "collection", link.Collection, new { collection = link.Collection });
+
+                var res = await BatchSaveData(link);
+                if (res.IsSuccess)
+                {
+                    logger.LogInformation("Sync [{collection}] is finished...", link.Collection);
+                    await dao.Upsert(coll, "collection", link.Collection, new { collection = link.Collection });
+                }
             }
 
-            Thread.Sleep(TimeSpan.FromMinutes(1));
+            Thread.Sleep(TimeSpan.FromSeconds(30));
         }
+
+        logger.LogInformation("Exiting migrate worker...");
     }
 
-    private async Task BatchSaveData(ApiLinks links)
+    private async Task<Result> BatchSaveData(ApiLinks links)
     {
-        var res = await FetchAndSave(links,"");
+        var res = await FetchAndSave(links, "");
         while (res.IsSuccess)
         {
             var (curr, next) = res.Value;
@@ -46,38 +57,43 @@ public class MigrateWorker( IDocumentDbDao dao,
             {
                 break;
             }
+
             res = await FetchAndSave(links, next);
         }
+
         if (res.IsFailed)
         {
             var msg = string.Join(",", res.Errors.Select(x => x.Message));
-            logger.LogError("Failed to execute Batch save data, links ={},err={msg}", links,msg);
+            logger.LogError("Failed to execute Batch save data, links ={links},err={msg}", links, msg);
+            return Result.Fail(res.Errors);
         }
 
-        logger.LogInformation("Finished executing batch save for {links}",links);
+        logger.LogInformation("Finished executing batch save for {links}", links);
+        return Result.Ok();
     }
 
-    private async Task<Result<(string curosr,string next)>> FetchAndSave(ApiLinks links,string cursor)
+    private async Task<Result<(string curosr, string next)>> FetchAndSave(ApiLinks links, string cursor)
     {
         var url = links.Api + $"?last={cursor}";
         if (!(await new HttpClient().GetStringResult(url)).Try(out var s, out var err))
         {
             return Result.Fail(err).WithError("Failed to fetch data");
         }
-        
+
         var elements = JsonSerializer.Deserialize<JsonElement[]>(s);
         if (elements is null || elements.Length == 0)
         {
-            return (cursor,"");
+            return (cursor, "");
         }
 
         var items = elements.Select(x => x.ToDictionary()).ToArray();
         var nextCursor = SpanHelper.HasNext(items) ? SpanHelper.LastCursor(items) : "";
-        
+
         foreach (var item in items)
         {
-            SpanHelper.Clean(item);
+            SpanHelper.RemoveCursorTags(item);
         }
+
         try
         {
             await dao.BatchInsert(links.Collection, items);
@@ -86,6 +102,7 @@ public class MigrateWorker( IDocumentDbDao dao,
         {
             return Result.Fail(e.Message);
         }
-        return (cursor,nextCursor);
+
+        return (cursor, nextCursor);
     }
 }

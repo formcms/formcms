@@ -5,7 +5,7 @@
   "required": ["name","displayName","tableName", 
     "primaryKey","labelAttributeName",
     "defaultPageSize","defaultPublicationStatus",
-    "attributes"],
+    "attributes","previewUrl"],
   "properties": {
     "name": {
       "type": "string",
@@ -53,6 +53,11 @@
       "enum": ["draft", "published"],
       "description": "Default Publication Status"
     },
+    "previewUrl": {
+      "type": "string",
+      "title": "Preview URL"
+    },
+    
     
     "attributes": {
       "title": "Attributes",

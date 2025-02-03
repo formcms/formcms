@@ -12,10 +12,10 @@ public static class CollectionHelper
         ValidSpan? span,
         IEnumerable<LoadedAttribute> attrs,
         IEnumerable<ValidValue> parentsIds,
-        bool onlyPublished
+        PublicationStatus? status
     )
     {
-        var query = c.TargetEntity.GetCommonListQuery(filters, sorts, pagination,span, attrs,onlyPublished);
+        var query = c.TargetEntity.GetCommonListQuery(filters, sorts, pagination,span, attrs,status);
         query.WhereIn(c.LinkAttribute.Field, parentsIds.GetValues());
         return query;
     }

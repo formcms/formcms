@@ -1,10 +1,15 @@
 using System.Text;
+using FormCMS.Core.Descriptors;
+using Humanizer;
 using Microsoft.Extensions.Primitives;
 
 namespace FormCMS.Utils.StrArgsExt;
 
 public static class StrArgsExtensions
 {
+    public static bool ContainsEnumKey(this StrArgs args, Enum key)
+        => args.ContainsKey(key.ToString().Camelize());
+    
     public static string ToQueryString(this StrArgs? args)
     {
         if (args == null || args.Count == 0)

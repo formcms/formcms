@@ -95,7 +95,9 @@ public static class SchemaHandler
             PrimaryKey: entity.PrimaryKey,
             DisplayName: entity.DisplayName,
             LabelAttributeName: entity.LabelAttributeName,
-            DefaultPageSize: entity.DefaultPageSize
+            DefaultPageSize: entity.DefaultPageSize,
+            PreviewUrl:entity.PreviewUrl
+            
         );
 
     private static XAttr ToXAttr(this LoadedAttribute attribute)

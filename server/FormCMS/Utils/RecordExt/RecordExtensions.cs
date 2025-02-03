@@ -2,7 +2,9 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentResults;
+using FormCMS.Utils.jsonElementExt;
 using Humanizer;
+using Microsoft.IdentityModel.Tokens;
 
 namespace FormCMS.Utils.RecordExt;
 
@@ -49,18 +51,29 @@ public static class RecordExtensions
     public static bool RemoveCamelKey(this Record r, Enum field, out object? val)
         => r.Remove(field.ToString().Camelize(), out val);
     
-    public static void AddCamelKeyCamelValue(this Record record, Enum field, Enum value)
+    public static void SetCamelKeyCamelValue(this Record record, Enum field, Enum value)
     {
-        record.Add(field.ToString().Camelize(), value.ToString().Camelize());
+        record[field.ToString().Camelize()]= value.ToString().Camelize();
     }
 
-    public static void AddCamelKey(this Record record, Enum field, object value)
+    public static void SetCamelKey(this Record record, Enum field, object value)
     {
-        record.Add(field.ToString().Camelize(), value);
+        record[field.ToString().Camelize()] = value;
     }
 
     public static string StrOrEmpty(this Record r, string field)
         =>r.TryGetValue(field, out var o)?o.ToString() ?? string.Empty:string.Empty;
+
+
+    public static string ToToken(this Record r)
+        => Base64UrlEncoder.Encode(JsonSerializer.Serialize(r, JsonSerializerOptions));
+
+    public static Record FromToken(string token)
+    {
+        var recordStr = Base64UrlEncoder.Decode(token);
+        var item = JsonSerializer.Deserialize<JsonElement>(recordStr,JsonSerializerOptions);
+        return item.ToDictionary();
+    }
     
     public static Result<T> ToObject<T>(this Record r) 
     {

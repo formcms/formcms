@@ -11,7 +11,7 @@ export function TextAreaInput(
     control:any
         id:any
 }) {
-    return <InputPanel  {...props} component={ (field:any) =>
+    return <InputPanel  {...props} childComponent={ (field:any) =>
         <InputTextarea rows={4} id={field.name} value={field.value} className={' w-full'} onChange={(e) => field.onChange(e.target.value)} />
     }/>
 }

@@ -32,7 +32,7 @@ export function GalleryInput(props: {
     getFullAssetsURL : (arg:string) =>string
 
 }) {
-    return <InputPanel  {...props} component={(field: any) => {
+    return <InputPanel  {...props} childComponent={(field: any) => {
         const urls = field.value??[];
         const items = urls.map((x:any) =>({
             itemImageSrc:props.getFullAssetsURL(x), thumbnailImageSrc:props.getFullAssetsURL(x)

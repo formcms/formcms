@@ -1,6 +1,6 @@
 import {useLookupData, getLookupData} from "../services/entity";
 import {LookupInput} from "../../components/inputs/LookupInput";
-import {XAttr} from "../types/schemaExt";
+import {XAttr} from "../types/xEntity";
 
 export function LookupContainer(
     {
@@ -19,6 +19,17 @@ export function LookupContainer(
         return data?.items;
     };
 
-    return <LookupInput search={search} hasMore={data?.hasMore ?? false} items={data?.items ?? []} data={item}
-                        column={column} control={control} className={className} register={register} id={id}/>
+    return <LookupInput
+        idField={column.lookup!.primaryKey}
+        labelField={column.lookup!.labelAttributeName}
+        id={id}
+        search={search}
+        hasMore={data?.hasMore ?? false} 
+        items={data?.items ?? []} 
+        data={item}
+        column={column} 
+        control={control} 
+        className={className} 
+        register={register} 
+    />
 }

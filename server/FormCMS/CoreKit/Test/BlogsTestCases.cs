@@ -30,7 +30,7 @@ public class BlogsTestCases(QueryApiClient client, string queryName)
         await RunAllMethodsAsync(Sort);
         await RunAllMethodsAsync(Variable);
         await RunAllMethodsAsync(SavedQuery);
-        await RunAllMethodsAsync(SavedQuery);
+        await RunAllMethodsAsync(RealtimeQueryTest);
     }
     private static async Task RunAllMethodsAsync(object instance)
     {

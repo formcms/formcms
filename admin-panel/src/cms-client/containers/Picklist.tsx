@@ -6,17 +6,16 @@ import {usePicklist} from "./usePicklist";
 import {useDialogState} from "../../components/dialogs/useDialogState";
 import {SelectDataTable} from "../../components/dataTable/SelectDataTable";
 import {SaveDialog} from "../../components/dialogs/SaveDialog";
-import { XAttr } from "../types/schemaExt";
+import { XAttr } from "../types/xEntity";
 import { useDataTableStateManager } from "../../components/dataTable/useDataTableStateManager";
 import { encodeDataTableState } from "../../components/dataTable/dataTableStateUtil";
 import { createColumn } from "../../components/dataTable/columns/createColumn";
 
-export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
+export function Picklist({column, data, schema, getFullAssetsURL}: {
     data: any,
     column: XAttr,
     schema: any
     getFullAssetsURL : (arg:string) =>string
-    baseRouter:string
 }) {
     const {visible, showDialog, hideDialog} = useDialogState()
     const {
@@ -28,10 +27,12 @@ export function Picklist({baseRouter,column, data, schema, getFullAssetsURL}: {
     const tableColumns = listColumns.map(x=>createColumn(x,getFullAssetsURL));
     
     const existingStateManager= useDataTableStateManager(10, listColumns,"");
-    const {data: subgridData, mutate: subgridMutate} = useJunctionData(schema.name, id, column.field, false, encodeDataTableState(existingStateManager.state));
+    const {data: subgridData, mutate: subgridMutate} = useJunctionData(schema.name, id, column.field, false, 
+        encodeDataTableState(existingStateManager.state));
 
     const excludedStateManager= useDataTableStateManager(10, listColumns,"");
-    const {data: excludedSubgridData, mutate: execMutate} = useJunctionData(schema.name, id, column.field, true,encodeDataTableState(excludedStateManager.state));
+    const {data: excludedSubgridData, mutate: execMutate} = useJunctionData(schema.name, id, column.field, true,
+        encodeDataTableState(excludedStateManager.state));
     
     const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
     const {confirm,Confirm} = useConfirm("picklist" +column.field);

@@ -9,7 +9,8 @@ public record XEntity(
     
     string PrimaryKey ,
     string LabelAttributeName,
-    int DefaultPageSize 
+    int DefaultPageSize ,
+    string PreviewUrl
 );
 
 public static class XEntityExtensions
@@ -21,6 +22,6 @@ public static class XEntityExtensions
     {
         var name = typeof(T).Name;
         displayName ??= name.Humanize();
-        return new XEntity(attributes, name, displayName, primaryKey, labelAttribute.Camelize(),defaultPageSize);
+        return new XEntity(attributes, name, displayName, primaryKey, labelAttribute.Camelize(),defaultPageSize,"");
     }
 }

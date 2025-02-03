@@ -113,8 +113,8 @@ public static class AttributeHelper
                 TargetEntity: lookup.TargetEntity,
                 TargetAttribute: lookup.TargetEntity.PrimaryKeyAttribute,
                 IsCollective: false,
-                GetQuery: (fields, ids, _) => 
-                    lookup.TargetEntity.ByIdsQuery(fields.Select(x=>x.AddTableModifier()), ids,true)
+                GetQuery: (fields, ids, _, publicationStatus) => 
+                    lookup.TargetEntity.ByIdsQuery(fields.Select(x=>x.AddTableModifier()), ids,publicationStatus)
             ),
         DataType.Junction when attribute.Junction is { } junction =>
             new EntityLinkDesc(
@@ -122,16 +122,16 @@ public static class AttributeHelper
                 TargetEntity: junction.TargetEntity,
                 TargetAttribute: junction.SourceAttribute,
                 IsCollective: true,
-                GetQuery: (fields, ids, args) =>
-                    junction.GetRelatedItems(args!.Filters, args.Sorts, args.Pagination, args.Span, fields, ids,true)),
+                GetQuery: (fields, ids, args,publicationStatus) =>
+                    junction.GetRelatedItems(args!.Filters, args.Sorts, args.Pagination, args.Span, fields, ids,publicationStatus)),
         DataType.Collection when attribute.Collection is { } collection =>
             new EntityLinkDesc(
                 SourceAttribute: collection.SourceEntity.PrimaryKeyAttribute,
                 TargetEntity: collection.TargetEntity,
                 TargetAttribute: collection.LinkAttribute,
                 IsCollective: true,
-                GetQuery: (fields, ids, args) =>
-                    collection.List(args!.Filters, args.Sorts, args.Pagination, args.Span, fields, ids,true)
+                GetQuery: (fields, ids, args, publicationStatus) =>
+                    collection.List(args!.Filters, args.Sorts, args.Pagination, args.Span, fields, ids,publicationStatus)
             ),
         _ => Result.Fail($"Cannot get entity link desc for attribute [{attribute.Field}]")
     };

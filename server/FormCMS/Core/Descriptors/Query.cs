@@ -16,10 +16,13 @@ public sealed record Query(
     Pagination? Pagination= null
 );
 
+public enum SpecialQueryKeys
+{
+    Preview
+}
 
 public sealed record LoadedQuery(
     string Name,
-    string EntityName,
     string Source,
     LoadedEntity Entity,
     Pagination? Pagination,
@@ -46,7 +49,6 @@ public static class QueryHelper
         return new LoadedQuery(
             Name: query.Name,
             Source: query.Source,
-            EntityName: query.EntityName,
             Pagination: query.Pagination,
             ReqVariables: query.ReqVariables,
             Entity: entity,

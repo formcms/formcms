@@ -8,7 +8,7 @@
         
         
         <link rel="shortcut icon" href="img/favicon.ico">
-        <title>FluentCMS - built with Asp.net Core(c#) and React, featuring Rest APIs, GraphQL and drag-and-drop page designer.</title>
+        <title>FormCMS - Opensource Headless CMS powered with Asp.net Core(c#) and React, featuring Rest APIs, GraphQL and GraphJS page designer.</title>
         <link href="css/bootstrap.min.css" rel="stylesheet">
         <link href="css/fontawesome.min.css" rel="stylesheet">
         <link href="css/brands.min.css" rel="stylesheet">
@@ -24,7 +24,7 @@
     <body class="homepage">
         <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
             <div class="container">
-                <a class="navbar-brand" href=".">FluentCMS - built with Asp.net Core(c#) and React, featuring Rest APIs, GraphQL and drag-and-drop page designer.</a>
+                <a class="navbar-brand" href=".">FormCMS - Opensource Headless CMS powered with Asp.net Core(c#) and React, featuring Rest APIs, GraphQL and GraphJS page designer.</a>
 
                 <!-- Expanded navigation -->
                 <div id="navbar-collapse" class="navbar-collapse collapse">
@@ -63,7 +63,7 @@
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#new-cms-solving-graphql-issues" class="nav-link">New CMS? — Solving GraphQL Issues</a>
+            <li class="nav-item" data-bs-level="2"><a href="#new-cms-graphql-issues" class="nav-link">New CMS? — GraphQL Issues</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -83,7 +83,7 @@
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#publish-content" class="nav-link">Publish Content</a>
+            <li class="nav-item" data-bs-level="2"><a href="#publish-preview-content" class="nav-link">Publish / Preview Content</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -200,7 +200,7 @@ Have suggestions? Connect with us on Reddit! https://www.reddit.com/r/FormCMS/</
 <li><strong>Support for Relationships</strong>: FormCMS enables complex relationships (many-to-one, one-to-many, many-to-many), making it easy to provide GraphQL Query out of the box and provide more advanced querying capabilities.</li>
 </ol>
 <hr />
-<h2 id="new-cms-solving-graphql-issues">New CMS? — Solving GraphQL Issues</h2>
+<h2 id="new-cms-graphql-issues">New CMS? — GraphQL Issues</h2>
 <h3 id="key-challenges">Key Challenges</h3>
 <ol>
 <li><strong>Security &amp; Over-Fetching</strong> – Complex or poorly optimized queries can overload the backend, exposing vulnerabilities and impacting performance.</li>
@@ -776,6 +776,8 @@ Have suggestions? Connect with us on Reddit! https://www.reddit.com/r/FormCMS/</
 <li><a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&amp;limit=20&amp;created_at[dateIs]=2024-09-07&amp;sort[created_at]=1">Filter by Created At (2024-09-07)</a></li>
 <li><a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&amp;limit=20&amp;name[operator]=or&amp;name[startsWith]=A&amp;name[startsWith]=C&amp;sort[created_at]=1">Filter by Course Name (Starts with A or C)</a></li>
 </ul>
+<h4 id="duplicate"><strong>Duplicate</strong></h4>
+<p>Clicking the duplicate button opens the "Add New Data" page with prefilled values from the selected record for quick entry.</p>
 <hr />
 <h3 id="detail-page"><strong>Detail Page</strong></h3>
 <p>Detail page provides an interface to manage single record.  </p>
@@ -784,7 +786,7 @@ Have suggestions? Connect with us on Reddit! https://www.reddit.com/r/FormCMS/</
 <h4 id="example-of-lookuppicklistedittable">Example of <code>lookup</code>,<code>picklist</code>,<code>edittable</code></h4>
 <p><a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course/22">Course Detail Page</a></p>
 <hr />
-<h2 id="publish-content">Publish Content</h2>
+<h2 id="publish-preview-content">Publish / Preview Content</h2>
 <p>This feature allows content creators to plan and organize their work, saving drafts for later completion.</p>
 <h3 id="content-publication-status">Content Publication Status</h3>
 <p>Content can have one of the following publication statuses:
@@ -802,6 +804,14 @@ Have suggestions? Connect with us on Reddit! https://www.reddit.com/r/FormCMS/</
 - <strong>Publish</strong>: Make content immediately available.
 - <strong>Unpublish</strong>: Remove content from public view.
 - <strong>Schedule</strong>: Set a specific date and time for the content to be published.</p>
+<hr />
+<h3 id="preview-draftscheduledunpublished-content">Preview Draft/Scheduled/Unpublished Content</h3>
+<p>By default, only published content appears in query results. 
+If you want to preview how the content looks on a page before publishing, you can add the query parameter <code>preview=1</code> to the page URL.</p>
+<p>For a more convenient approach, you can set the <strong>Preview URL</strong> in the <strong>Entity Settings</strong> page. 
+<a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&amp;id=27">Example Entity Settings Page</a></p>
+<p>Once set, you can navigate to the <strong>Entity Management</strong> page and simply click the <strong>Preview</strong> button to view the content in preview mode.
+<a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course/3?ref=https%3A%2F%2Ffluent-cms-admin.azurewebsites.net%2F_content%2FFormCMS%2Fadmin%2Fentities%2Fcourse%3Foffset%3D0%26limit%3D20#">Example Content Manage Page</a></p>
 <hr />
 <h3 id="publication-worker">Publication Worker</h3>
 <p>The <strong>Publication Worker</strong> automates the process of updating scheduled items in batches, transitioning them to the <strong><code>published</code></strong> status at the appropriate time.</p>
@@ -1960,5 +1970,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-01-30 18:55:17.188957+00:00
+Build Date UTC : 2025-02-03 16:40:06.888326+00:00
 -->

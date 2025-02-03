@@ -50,7 +50,7 @@ public sealed class EntityService(
         var fields = ctx.Entity.Attributes
             .Where(x => x.IsLocal() && attributes.Contains(x.Field))
             .Select(x=>x.AddTableModifier());
-        var query = ctx.Entity.ByIdsQuery( fields,[ctx.Id],false);
+        var query = ctx.Entity.ByIdsQuery( fields,[ctx.Id],null);
         return await queryExecutor.Single(query, ct) ??
                throw new ResultException($"not find record by [{id}]");
     }
@@ -68,18 +68,20 @@ public sealed class EntityService(
         var attr = ctx.Entity.Attributes
             .Where(x =>
                 x.Field == ctx.Entity.PrimaryKey
-                || Enum.TryParse<DefaultAttributeNames>(x.Field, true, out var e) &&
-                e is DefaultAttributeNames.UpdatedAt 
+                || Enum.TryParse<DefaultAttributeNames>(x.Field, true, out var e) && 
+                    e is DefaultAttributeNames.UpdatedAt
                     or DefaultAttributeNames.PublicationStatus
                     or DefaultAttributeNames.PublishedAt
                 || x.InDetail && x.IsLocal())
             .ToArray();
         
-        var query = ctx.Entity.ByIdsQuery(attr.Select(x=>x.AddTableModifier()), [ctx.Id],false);
+        var query = ctx.Entity.ByIdsQuery(
+            attr.Select(x=>x.AddTableModifier()), [ctx.Id],null);
         var record = await queryExecutor.Single(query, ct) ??
                      throw new ResultException($"not find record by [{id}]");
 
         await LoadItems(attr, [record], ct);
+        
         return record;
     }
 
@@ -122,7 +124,7 @@ public sealed class EntityService(
         if (count < entity.DefaultPageSize)
         {
             //not enough for one page, search in a client
-            var query = entity.ListQuery([], sorts, pagination, null, attributes,false);
+            var query = entity.ListQuery([], sorts, pagination, null, attributes,null);
             var items = await queryExecutor.Many(query, ct);
             return new LookupListResponse(false, items);
         }
@@ -135,7 +137,7 @@ public sealed class EntityService(
             filters = (await FilterHelper.ToValidFilters([filter], entity, entitySchemaSvc, entitySchemaSvc)).Ok();
         }
 
-        var queryWithFilters = entity.ListQuery(filters, sorts, pagination, null, attributes,false);
+        var queryWithFilters = entity.ListQuery(filters, sorts, pagination, null, attributes,null);
         var filteredItems = await queryExecutor.Many(queryWithFilters, ct);
         return new LookupListResponse(true, filteredItems);
     }
@@ -193,7 +195,7 @@ public sealed class EntityService(
 
         var listQuery = exclude
             ? junction.GetNotRelatedItems(attrs, filters, sorts, validPagination, [id])
-            : junction.GetRelatedItems(filters, [..sorts], validPagination, null, attrs, [id],false);
+            : junction.GetRelatedItems(filters, [..sorts], validPagination, null, attrs, [id],null);
 
         var countQuery = exclude
             ? junction.GetNotRelatedItemsCount(filters, [id])
@@ -222,7 +224,7 @@ public sealed class EntityService(
             . Where(x=> x.Field == collection.TargetEntity.PrimaryKey || x.IsLocal() && x.InList)
             .ToArray();    
         
-        var listQuery = collection.List(filters,sorts,validPagination,null,attributes,[id],false);
+        var listQuery = collection.List(filters,sorts,validPagination,null,attributes,[id],null);
         var items = await queryExecutor.Many(listQuery, ct);
         await LoadItems( attributes, items, ct);
       
@@ -252,7 +254,7 @@ public sealed class EntityService(
             .Where(x=>x.Field ==entity.PrimaryKey || x.InList && x.IsLocal())
             .ToArray();
 
-        var countQuery = entity.CountQuery([..res.RefFilters],false);
+        var countQuery = entity.CountQuery([..res.RefFilters],null);
         return mode switch
         {
             ListResponseMode.Count => new ListResponse([], await queryExecutor.Count(countQuery, ct)),
@@ -263,7 +265,7 @@ public sealed class EntityService(
 
         async Task<Record[]> RetrieveItems()
         {
-            var listQuery = entity.ListQuery([..res.RefFilters], [..res.RefSorts], res.RefPagination, null, attributes,false);
+            var listQuery = entity.ListQuery([..res.RefFilters], [..res.RefSorts], res.RefPagination, null, attributes,null);
             var items =  await queryExecutor.Many(listQuery, ct);
             await LoadItems(attributes, items, ct);
             return items;

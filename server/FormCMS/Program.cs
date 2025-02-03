@@ -15,6 +15,7 @@ TsGenerator.GenerateCode<ListResponseMode>("../../admin-panel/src/cms-client/typ
 TsGenerator.GenerateCode<LookupListResponse>("../../admin-panel/src/cms-client/types/lookupListResponse.ts");
 TsGenerator.GenerateCode<DefaultAttributeNames>("../../admin-panel/src/cms-client/types/defaultAttributeNames.ts");
 TsGenerator.GenerateCode<PublicationStatus>("../../admin-panel/src/cms-client/types/publicationStatus.ts");
+TsGenerator.GenerateCode<SpecialQueryKeys>("../../admin-panel/src/cms-client/types/specialQueryKeys.ts");
 
 TsGenerator.GenerateCode<RoleDto>("../../admin-panel/src/auth/types/roleDto.ts");
 TsGenerator.GenerateCode<UserDto>("../../admin-panel/src/auth/types/userDto.ts");

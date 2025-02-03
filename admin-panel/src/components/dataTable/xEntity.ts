@@ -49,4 +49,5 @@ export interface XEntity {
     primaryKey: string;
     labelAttributeName: string;
     defaultPageSize: number;
+    previewUrl: string;
 }

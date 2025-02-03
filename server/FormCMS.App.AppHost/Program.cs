@@ -29,5 +29,6 @@ builder.AddProject<Projects.FormCMS_App>("worker")
     .WithArgs(args)
     .WithReference(nats).WaitFor(nats)
     .WithReference(mongoCmsDb).WaitFor(mongoCmsDb);
+    
 
 builder.Build().Run();

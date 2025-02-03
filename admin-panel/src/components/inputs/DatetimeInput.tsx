@@ -12,7 +12,7 @@ export function DatetimeInput(
         id: any
         inline:boolean
     }) {
-    return <InputPanel  {...props} component={(field: any) => {
+    return <InputPanel  {...props} childComponent={(field: any) => {
         let d = null
         
         if (field.value) {

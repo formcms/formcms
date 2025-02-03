@@ -9,7 +9,7 @@ import {Message} from "primereact/message";
 import {Toast} from "primereact/toast";
 import {useRef, useState} from "react";
 import { EditDataTable } from "../../components/dataTable/EditDataTable";
-import { XAttr, XEntity } from "../types/schemaExt";
+import { XAttr, XEntity } from "../types/xEntity";
 import { useDataTableStateManager } from "../../components/dataTable/useDataTableStateManager";
 import { encodeDataTableState } from "../../components/dataTable/dataTableStateUtil";
 import { createColumn } from "../../components/dataTable/columns/createColumn";

@@ -6,7 +6,7 @@ import {PageLayout} from "./PageLayout";
 import {FetchingStatus} from "../../components/FetchingStatus";
 import {EditDataTable} from "../../components/dataTable/EditDataTable";
 import {useEffect} from "react";
-import {XEntity} from "../types/schemaExt";
+import {XEntity} from "../types/xEntity";
 import { useDataTableStateManager } from "../../components/dataTable/useDataTableStateManager";
 import { encodeDataTableState } from "../../components/dataTable/dataTableStateUtil";
 import { createColumn } from "../../components/dataTable/columns/createColumn";

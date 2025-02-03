@@ -5,7 +5,7 @@ import {fileUploadURL, getFullCmsAssetUrl} from "../configs";
 import {useCheckError} from "../../components/useCheckError";
 import {useParams} from "react-router-dom";
 import {PageLayout} from "./PageLayout";
-import { XEntity } from "../types/schemaExt";
+import { XEntity } from "../types/xEntity";
 
 export function NewDataItemPage({baseRouter}:{baseRouter:string}) {
     const {schemaName} = useParams()

@@ -4,6 +4,7 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Utils.ResultExt;
 using FormCMS.CoreKit.Test;
 using FormCMS.Utils.jsonElementExt;
+using Humanizer;
 using IdGen;
 using Microsoft.Extensions.Primitives;
 
@@ -11,8 +12,9 @@ namespace FormCMS.Course.Tests;
 
 public class QueryApiTest
 {
-    private readonly string _post = "post" + new IdGenerator(0).CreateId();
+    private readonly string _queryName = "query" + new IdGenerator(0).CreateId();
     private readonly QueryApiClient _query;
+    private readonly EntityApiClient _entity;
     private readonly BlogsTestCases _commonTestCases;
 
 
@@ -22,17 +24,16 @@ public class QueryApiTest
 
         WebAppClient<Program> webAppClient = new();
         new AuthApiClient(webAppClient.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
-        
-        var entityClient = new EntityApiClient(webAppClient.GetHttpClient());
         var schemaClient = new SchemaApiClient(webAppClient.GetHttpClient());
 
+        _entity= new EntityApiClient(webAppClient.GetHttpClient());
         _query = new QueryApiClient(webAppClient.GetHttpClient());
-        _commonTestCases = new BlogsTestCases(_query, _post);
+        _commonTestCases = new BlogsTestCases(_query, _queryName);
 
 
-        if (schemaClient.ExistsEntity("post").GetAwaiter().GetResult()) return;
+        if (schemaClient.ExistsEntity(TestEntityNames.TestPost.ToString().Camelize()).GetAwaiter().GetResult()) return;
         BlogsTestData.EnsureBlogEntities(schemaClient).GetAwaiter().GetResult();
-        BlogsTestData.PopulateData(entityClient).Wait();
+        BlogsTestData.PopulateData(_entity).Wait();
     }
 
     [Fact]
@@ -89,14 +90,43 @@ public class QueryApiTest
     [Fact]
     public Task VariablePagination() => _commonTestCases.Variable.Pagination();
     
-    
-    
-    
     [Fact]
     public Task CollectionPart() => QueryParts("attachments", ["id", "post"]);
 
     [Fact]
     public Task JunctionPart() => QueryParts("tags", ["id"]);
+
+    [Fact]
+    public async Task TestPreviewUnPublished()
+    {
+        const int id = 99;
+        var payload = new Dictionary<string, object>
+        {
+            { DefaultAttributeNames.Id.ToString().Camelize(), id },
+            { DefaultAttributeNames.PublicationStatus.ToString().Camelize(), PublicationStatus.Unpublished.ToString().Camelize() },
+        };
+        
+        await _entity.SavePublicationSettings(TestEntityNames.TestPost.ToString().Camelize(), payload).Ok();
+        await $$"""
+                query {{_queryName}}{
+                   {{TestEntityNames.TestPost.ToString().Camelize()}}List(idSet:{{id}}){ id }
+                }
+                """.GraphQlQuery(_query).Ok();
+        var items = (await _query.List(_queryName)).Ok();
+        Assert.Empty(items);
+        
+        //add preview=1
+        await _query.SinglePreview(_queryName,id).Ok();
+        
+        payload = new Dictionary<string, object>
+        {
+            { DefaultAttributeNames.Id.ToString().Camelize(), id },
+            { DefaultAttributeNames.PublicationStatus.ToString().Camelize(), PublicationStatus.Published.ToString().Camelize() },
+            { DefaultAttributeNames.PublishedAt.ToString().Camelize(), DateTime.Now },
+        };
+        await _entity.SavePublicationSettings(TestEntityNames.TestPost.ToString().Camelize(), payload).Ok();
+
+    }
     
 
 
@@ -104,8 +134,8 @@ public class QueryApiTest
     {
         const int limit = 4;
         await $$"""
-                query {{_post}}{
-                   postList{
+                query {{_queryName}}{
+                   {{TestEntityNames.TestPost.ToString().Camelize()}}List{
                       id
                       {{attrName}}{
                           {{string.Join(",", attrs)}}
@@ -114,7 +144,7 @@ public class QueryApiTest
                 }
                 """.GraphQlQuery(_query).Ok();
 
-        var posts = (await _query.ListArgs(_post, new Dictionary<string, StringValues>
+        var posts = (await _query.ListArgs(_queryName, new Dictionary<string, StringValues>
         {
             [$"{attrName}.limit"] = limit.ToString(),
             [$"limit"] = "1",
@@ -127,7 +157,7 @@ public class QueryApiTest
         {
 
             var cursor = SpanHelper.Cursor(last);
-            var items = (await _query.Part(query: _post, attr: attrName, last: cursor, limit: limit)).Ok();
+            var items = (await _query.Part(query: _queryName, attr: attrName, last: cursor, limit: limit)).Ok();
             Assert.Equal(limit, items.Length);
         }
         else

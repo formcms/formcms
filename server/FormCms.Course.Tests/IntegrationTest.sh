@@ -47,8 +47,8 @@ set -e
 export Logging__LogLevel__Default=Warning
 export Logging__LogLevel__Microsoft_AspNetCore=Warning
 
-#Sqlite With Default Data 
-db_path=$(pwd)/default.db && rm -f "$db_path" && cp ../FormCMS.Blog/cms.db "$db_path" && test_sqlite "$db_path"
+#Sqlite With Data 
+db_path=$(pwd)/_cms_integration_tests.db && rm -f "$db_path" && cp ../FormCMS.Course/cms.db "$db_path" && test_sqlite "$db_path"
 
 #Sqlite With Empty Data 
 db_path=$(pwd)/temp.db && rm -f "$db_path" && test_sqlite "$db_path"

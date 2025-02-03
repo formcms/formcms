@@ -37,10 +37,19 @@ public static class WebApp
         app.MapDefaultEndpoints();
         await app.UseCmsAsync();
 
-        if (builder.Configuration.GetValue<bool>("add-schema")) await app.AddSchema();
-        if (builder.Configuration.GetValue<bool>("add-data")) await app.AddData();
-        if (builder.Configuration.GetValue<bool>("add-query")) await app.AddQuery();
-
+        //commandline args,  --load-example-data true
+        if (builder.Configuration.GetValue<bool>("load-example-data"))
+        {
+            using var scope = app.Services.CreateScope();
+            var entitySchemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
+            var post = await entitySchemaService.LoadEntity("post");
+            if (post.IsFailed)
+            {
+                await BlogsTestData.EnsureBlogEntities(x => entitySchemaService.SaveTableDefine(x));
+                await app.AddQuery();
+                await app.AddData();
+            }
+        }
         return app;
     }
 
@@ -122,7 +131,6 @@ public static class WebApp
                 await service.BatchInsert(data.TableName, data.Records);
             }, async data =>
             {
-                string[] cols = [data.SourceField, data.TargetField];
                 var objs = data.TargetIds.Select(x => new Dictionary<string, object>
                 {
                     {data.SourceField, data.SourceId },
@@ -131,12 +139,5 @@ public static class WebApp
                 await service.BatchInsert(data.JunctionTableName, [..objs]);
             });
         }
-    }
-
-    private static async Task AddSchema(this WebApplication app)
-    {
-        using var scope = app.Services.CreateScope();
-        var entitySchemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
-        await BlogsTestData.EnsureBlogEntities(x => entitySchemaService.SaveTableDefine(x));
     }
 }

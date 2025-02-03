@@ -1,5 +1,5 @@
 import {useState} from "react";
-import {XAttr, XEntity } from "../types/schemaExt";
+import {XAttr, XEntity } from "../types/xEntity";
 
 export function useEditTable(data :any, schema:XEntity, column: XAttr )
 {

@@ -11,7 +11,7 @@ export function DateInput(
         control:any
         id:any
     }) {
-    return <InputPanel  {...props} component={ (field:any) =>{
+    return <InputPanel  {...props} childComponent={ (field:any) =>{
         let d:any = new Date(field.value)
         // @ts-ignore
         if (isNaN(d)){

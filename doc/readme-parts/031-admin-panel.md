@@ -73,6 +73,7 @@ Below is a mapping of valid `DataType` and `DisplayType` combinations:
 
 The **List Page** displays entities in a tabular format, supporting sorting, searching, and pagination for efficient browsing or locating of specific records.
 
+
 #### **Sorting**
 Sort records by clicking the `↑` or `↓` icon in the table header.
 - [Order by Created At Example](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&sort[created_at]=-1)
@@ -84,6 +85,9 @@ Apply filters by clicking the Funnel icon in the table header.
 - [Filter by Created At (2024-09-07)](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&created_at[dateIs]=2024-09-07&sort[created_at]=1)
 - [Filter by Course Name (Starts with A or C)](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&name[operator]=or&name[startsWith]=A&name[startsWith]=C&sort[created_at]=1)
 
+#### **Duplicate**
+Clicking the duplicate button opens the "Add New Data" page with prefilled values from the selected record for quick entry.
+ 
 ---
 
 ### **Detail Page**  

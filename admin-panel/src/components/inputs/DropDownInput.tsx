@@ -11,7 +11,7 @@ export function DropDownInput(props: {
     register: any
     id:any
 }) {
-    return <InputPanel  {...props} component={ (field:any) =>
+    return <InputPanel  {...props} childComponent={ (field:any) =>
         <Dropdown
             id={field.name}
             value={field.value}

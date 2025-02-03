@@ -14,7 +14,7 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
 {
     public async Task<string> GetDetail(string name, string param, StrArgs strArgs, CancellationToken token)
     {
-        //detail page format <pageName>/{<routerName>}, not know the exact page name now, match with prefix '/{'. 
+        //detail page format <pageName>/{<routerName>}, match with prefix '/{'. 
         var ctx = (await GetContext(name+ "/{" , true,token)).Ok().ToPageContext();
         strArgs = GetLocalPaginationArgs(ctx, strArgs); 
         
@@ -24,7 +24,7 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
         var data = string.IsNullOrWhiteSpace(ctx.Page.Query)
             ? new Dictionary<string, object>()
             : await querySvc.SingleWithAction(ctx.Page.Query, strArgs, token)
-              ?? throw new ResultException($"not find data by of {param}");
+              ?? throw new ResultException($"Could not data with {routerName} [{param}]");
         
         return await RenderPage(ctx, data, strArgs, token);
     }

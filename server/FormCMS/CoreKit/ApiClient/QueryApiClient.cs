@@ -1,11 +1,13 @@
 using System.Text.Json;
 using FormCMS.Utils.HttpClientExt;
 using FluentResults;
+using FormCMS.Core.Descriptors;
 using FormCMS.Utils.StrArgsExt;
 using GraphQL;
 using GraphQL.Client.Http;
 
 using GraphQL.Client.Serializer.SystemTextJson;
+using Humanizer;
 
 namespace FormCMS.CoreKit.ApiClient;
 
@@ -34,6 +36,9 @@ public class QueryApiClient(HttpClient client)
         string query, object id
     ) => client.GetResult<JsonElement>($"/{query}/single?id={id}".ToQueryApi());
 
+    public Task<Result<JsonElement>> SinglePreview(
+        string query, object id
+    ) => client.GetResult<JsonElement>($"/{query}/single?id={id}&{SpecialQueryKeys.Preview.ToString().Camelize()}=1".ToQueryApi());
 
     public Task<Result<JsonElement[]>> Part(
         string query, string attr, string? first = null, string? last = null, int limit = 0

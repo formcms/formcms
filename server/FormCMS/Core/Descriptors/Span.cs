@@ -22,14 +22,14 @@ public static class SpanConstants
 
 public static class SpanHelper
 {
-    public static void Clean(Record item)
+    public static void RemoveCursorTags(Record item)
     {
         item.Remove(SpanConstants.HasNextPage);
         item.Remove(SpanConstants.HasPreviousPage);
         item.Remove(SpanConstants.Cursor);
     }
 
-    public static bool HasNext(Record item)
+    private static bool HasNext(Record item)
         => item.TryGetValue(SpanConstants.HasNextPage, out var v) && v is true;
 
     public static bool HasNext(IEnumerable<Record> items)
@@ -85,9 +85,9 @@ public static class SpanHelper
 
         var (pre, next) = (hasMore, c.First ?? "", c.Last ?? "") switch
         {
-            (true, "", "") => (false, true), // home page, should not have previous
+            (true, "", "") => (false, true), // home page should not have previous
             (false, "", "") => (false, false), // home page
-            (true, _, _) => (true, true), // no matter click next or previous, show both
+            (true, _, _) => (true, true), // no matter, click next or previous, show both
             (false, _, "") => (false, true), // click preview, should have next
             (false, "", _) => (true, false), // click next, should nave previous
             _ => (false, false)
@@ -137,8 +137,7 @@ public static class SpanHelper
             dict[SpanConstants.SourceId] = sourceId;
         }
 
-        var cursor = JsonSerializer.Serialize(dict);
-        item[SpanConstants.Cursor] = Base64UrlEncoder.Encode(cursor);
+        item[SpanConstants.Cursor] = dict.ToToken();
     }
 
     public static Result<ValidSpan> ToValid(this Span c, IEnumerable<LoadedAttribute> attrs, IAttributeValueResolver resolver)
@@ -149,29 +148,16 @@ public static class SpanHelper
         try
         {
             var recordStr = IsForward(c) ? c.Last : c.First;
-            recordStr = Base64UrlEncoder.Decode(recordStr);
-            var item = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(recordStr);
-            var dict = new Dictionary<string, object>();
-            foreach (var (key, value) in item!)
+            var dict = RecordExtensions.FromToken(recordStr!);
+            foreach (var (key, value) in dict)
             {
-                var val = value.ToPrimitive();
-                if (val is string s)
+                if (value is not string s || arr.FirstOrDefault(x => x.Field == key) is not { } attr) continue;
+                if (!resolver.ResolveVal(attr, s, out var result))
                 {
-                    var field = arr.FirstOrDefault(x=>x.Field==key);
-                    if (field is not null)
-                    {
-                        if (!resolver.ResolveVal(field, s, out var result))
-                        {
-                            return Result.Fail($"Fail to cast s to {field.DataType}");
-                        }
-
-                        val = result!.Value;
-                    }
+                    return Result.Fail($"Fail to cast s to {attr.DataType}");
                 }
-
-                dict[key] = val;
+                dict[key] = result!.Value;
             }
-
             return new ValidSpan(c, dict.ToImmutableDictionary());
         }
         catch (Exception e)

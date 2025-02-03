@@ -13,6 +13,13 @@ public static class WorkerApp
             return null;
         }
         
+        Console.WriteLine($"""
+                          ************************************************************
+                          Start worker App
+                          Nats: {AppConstants.Nats}
+                          MongoCms: {AppConstants.MongoCms}
+                          ************************************************************
+                          """);
         builder.AddNatsClient(AppConstants.Nats);
         builder.AddMongoDBClient(AppConstants.MongoCms);
         

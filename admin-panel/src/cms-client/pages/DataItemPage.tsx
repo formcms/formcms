@@ -3,6 +3,8 @@ import {ItemForm} from "../containers/ItemForm";
 import {deleteItem, updateItem, useItemData,savePublicationSettings} from "../services/entity";
 import {Divider} from "primereact/divider";
 import {Button} from "primereact/button";
+import { ButtonGroup } from 'primereact/buttongroup';
+
 import {Picklist} from "../containers/Picklist";
 import {useCheckError} from "../../components/useCheckError";
 import {useConfirm} from "../../components/useConfirm";
@@ -11,12 +13,13 @@ import {PageLayout} from "./PageLayout";
 import {FetchingStatus} from "../../components/FetchingStatus";
 import {EditTable} from "../containers/EditTable";
 import {TreeContainer} from "../containers/TreeContainer";
-import {DisplayType, XEntity} from "../types/schemaExt";
+import {DisplayType, XEntity} from "../types/xEntity";
 import { SaveDialog } from "../../components/dialogs/SaveDialog";
 import { useDialogState } from "../../components/dialogs/useDialogState";
 import { PublicationSettings } from "../containers/PublicationSettings";
 import { DefaultAttributeNames } from "../types/defaultAttributeNames";
 import { PublicationStatus } from "../types/publicationStatus";
+import { SpecialQueryKeys } from "../types/specialQueryKeys";
 
 export function DataItemPage({baseRouter}: { baseRouter: string }) {
     const {schemaName} = useParams()
@@ -54,12 +57,27 @@ export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, b
         || attr.displayType == DisplayType.EditTable) ?? []
     
     const trees = schema.attributes.filter(x => x.displayType == DisplayType.Tree);
+    const previewUrl = getPreviewUrl();
 
+    const showUnpublish = data && (data[DefaultAttributeNames.PublicationStatus] === PublicationStatus.Published
+            || data[DefaultAttributeNames.PublicationStatus] === PublicationStatus.Scheduled );
+
+
+    if (isLoading || useItemError) {
+        return <FetchingStatus isLoading={isLoading} error={useItemError}/>
+    }
+
+    function getPreviewUrl()  {
+        if (!schema.previewUrl) return null;
+        const connChar = schema.previewUrl.indexOf("?") > 0 ? "&" : "?";
+        return `${schema.previewUrl}${id}${connChar}${SpecialQueryKeys.Preview}=1`;
+    }
+    
 
     const onSubmit = async (formData: any) => {
         formData[schema.primaryKey] = id
         formData[DefaultAttributeNames.UpdatedAt] = data[DefaultAttributeNames.UpdatedAt];
-        
+
         const {error} = await updateItem(schema.name, formData)
         await handlePageErrorOrSucess(error, 'Save Succeed', mutate)
     }
@@ -76,23 +94,23 @@ export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, b
     const onPublish = async (formData:any) => {
         formData[schema.primaryKey] = data[schema.primaryKey];
         formData[DefaultAttributeNames.PublicationStatus] = PublicationStatus.Published;
-        
+
         const {error} = await savePublicationSettings(schema.name, formData)
         await handlePublish(error, 'Publish Succeed', ()=>{
             mutate();
             hidePublish();
         })
     }
-    
+
     const onUnpublish = async () => {
         var formData:any = {}
         formData[schema.primaryKey] = data[schema.primaryKey];
         formData[DefaultAttributeNames.PublicationStatus] = PublicationStatus.Unpublished;
-        
+
         const {error} = await savePublicationSettings(schema.name, formData)
         await handlePageErrorOrSucess(error, 'Publish Succeed',mutate)
     }
-    
+
     const onSchedule = async (formData:any) =>{
         formData[schema.primaryKey] = data[schema.primaryKey];
         formData[DefaultAttributeNames.PublicationStatus] = PublicationStatus.Scheduled;
@@ -103,25 +121,20 @@ export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, b
         })
     }
     
-    if (isLoading || useItemError) {
-        return <FetchingStatus isLoading={isLoading} error={useItemError}/>
-    }
     return <>
-        <Button type={'submit'} label={"Save " + schema.displayName} icon="pi pi-check" form={itemEditFormId}/>
-        {' '}
-        {
-            data 
-            && (data[DefaultAttributeNames.PublicationStatus] === PublicationStatus.Published 
-                || data[DefaultAttributeNames.PublicationStatus] === PublicationStatus.Scheduled )
-            && <><Button type={'button'} label={"Unpublish"}  onClick={onUnpublish}/>{' '}</>
-        }
-        <Button type={'button'} label={"Publish/Change Publish Time"}  onClick={showPublish}/>
-        {' '}
-        <Button type={'button'} label={"Schdule/Reschdule"}  onClick={showSchedule}/>
-        {' '}
-        <Button type={'button'} label={"Delete " + schema.displayName} severity="danger" onClick={onDelete}/>
-        {' '}
-        {referingUrl &&<Button type={'button'} label={"Back"}  onClick={()=>window.location.href = referingUrl}/>}
+        <ButtonGroup>
+            <Button type={'submit'} label={`Save ${schema.displayName}`} icon="pi pi-check" form={itemEditFormId}/>
+            <Button type={'button'} label={`Delete ${schema.displayName}`} icon="pi pi-trash" severity="danger" onClick={onDelete}/>
+            {referingUrl &&<Button type={'button'} label={"Back"} icon="pi pi-chevron-left"  onClick={()=>window.location.href = referingUrl}/>}
+        </ButtonGroup>
+        &nbsp;
+        <ButtonGroup>
+            <Button type={'button'} label={"Publish / Update Publish Time"} icon="pi pi-cloud"  onClick={showPublish}/>
+            <Button type={'button'} label={"Schedule / Reschedule"} icon = "pi pi-calendar"  onClick={showSchedule}/>
+            {showUnpublish && <Button type={'button'} label={"Unpublish"} icon="pi pi-ban"  onClick={onUnpublish}/>}
+        </ButtonGroup>
+        &nbsp;
+        {previewUrl && <Button type={'button'} label={"Preview"}  onClick={()=>window.location.href = previewUrl}/>}
         <div>
             <PageErrorStatus/>
         </div>

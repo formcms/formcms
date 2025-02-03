@@ -5,6 +5,7 @@ using FormCMS.CoreKit.ApiClient;
 using FormCMS.CoreKit.Test;
 using FormCMS.Utils.ResultExt;
 using HtmlAgilityPack;
+using Humanizer;
 using IdGen;
 
 namespace FormCMS.Course.Tests;
@@ -70,7 +71,7 @@ public class PageApiTest
 
     private async Task PrepareData()
     {
-        if (!_schemaApiClient.ExistsEntity("post").GetAwaiter().GetResult())
+        if (!_schemaApiClient.ExistsEntity(TestEntityNames.TestPost.ToString().Camelize()).GetAwaiter().GetResult())
         {
             await BlogsTestData.EnsureBlogEntities(_schemaApiClient);
             await BlogsTestData.PopulateData(_entityApiClient);
@@ -78,7 +79,7 @@ public class PageApiTest
 
         await $$"""
                 query {{_post}}($id:Int){
-                   postList(sort:id, idSet:[$id]){
+                   {{TestEntityNames.TestPost.ToString().Camelize()}}List(sort:id, idSet:[$id]){
                         id
                         tags {id, name}
                    }

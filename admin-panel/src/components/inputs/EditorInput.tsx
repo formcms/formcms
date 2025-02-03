@@ -48,7 +48,7 @@ export function EditorInput(props: {
     id: any
 
 }) {
-    return <InputPanel  {...props} component={ (field:any) =>
+    return <InputPanel  {...props} childComponent={ (field:any) =>
         <Editor id={field.name} name={props.column.field} value={field.value}
                 headerTemplate={renderHeader()}
                 onTextChange={(e) => field.onChange(e.htmlValue)}

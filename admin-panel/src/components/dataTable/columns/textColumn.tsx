@@ -1,5 +1,5 @@
 import {Column} from "primereact/column";
-import {XAttr} from "../../../cms-client/types/schemaExt";
+import { XAttr } from "../xEntity";
 
 export function textColumn(
     column: XAttr,

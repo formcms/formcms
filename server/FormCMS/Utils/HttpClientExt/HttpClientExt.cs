@@ -13,10 +13,18 @@ public static class HttpClientExt
         PropertyNameCaseInsensitive = true,
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
+
     public static async Task<Result<string>> GetStringResult(this HttpClient client, string uri)
     {
-        var res = await client.GetAsync(uri);
-        return await res.ParseString();
+        try
+        {
+            var res = await client.GetAsync(uri);
+            return await res.ParseString();
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail(ex.Message);
+        }
     }
 
     public static async Task<Result<T>> GetResult<T>(this HttpClient client, string uri)

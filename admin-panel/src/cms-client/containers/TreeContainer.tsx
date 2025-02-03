@@ -1,4 +1,4 @@
-import { XAttr, XEntity} from "../../cms-client/types/schemaExt";
+import { XAttr, XEntity} from "../../cms-client/types/xEntity";
 import {Tree, TreeCheckboxSelectionKeys, TreeSelectionEvent} from 'primereact/tree';
 import {useTree} from "./useTree";
 import {deleteJunctionItems, saveJunctionItems, useJunctionIds} from "../services/entity";

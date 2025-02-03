@@ -1,5 +1,5 @@
 import {TreeSelectInput} from "../../components/inputs/TreeSelectInput";
-import {XAttr} from "../types/schemaExt";
+import {XAttr} from "../types/xEntity";
 import { useTree } from "./useTree";
 
 export function TreeSelectContainer(

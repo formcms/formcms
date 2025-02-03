@@ -8,30 +8,30 @@ public sealed class MongoDao(ILogger<MongoDao> logger, IMongoDatabase db):IDocum
 {
     private static readonly FilterDefinitionBuilder<BsonDocument> Filter =  Builders<BsonDocument>.Filter;
     private IMongoCollection<BsonDocument> GetCollection(string name) => db.GetCollection<BsonDocument>(name);
-    public Task Upsert(string collection, string primaryKey, object primaryKeyValue, object document)
+    public Task Upsert(string collection, string keyField, object primaryKeyValue, object document)
     {
-        logger.LogInformation("Upsert document {collection}.{primaryKey}",collection,primaryKey);
+        logger.LogInformation("Upsert document {collection}.{primaryKey}",collection,keyField);
         var doc = document.ToBsonDocument();
         return GetCollection(collection).ReplaceOneAsync(
-            Filter.Eq(primaryKey, primaryKeyValue),
+            Filter.Eq(keyField, primaryKeyValue),
             doc,
             new ReplaceOptions { IsUpsert = true }
         );
     }
 
-    public Task Upsert(string collection, string primaryKey, Record record)
+    public Task Upsert(string collection, string keyField, Record record)
     {
-        logger.LogInformation("Upsert document {collection}.{primaryKey}",collection,primaryKey);
+        logger.LogInformation("Upsert document {collection}.{primaryKey}",collection,keyField);
         var doc = new BsonDocument(record);
         return GetCollection(collection).ReplaceOneAsync(
-            Filter.Eq(primaryKey, doc[primaryKey]),
+            Filter.Eq(keyField, doc[keyField]),
             doc,
             new ReplaceOptions { IsUpsert = true });
     }
 
     public async Task<Record[]> All(string collection)
     {
-        logger.LogInformation("Querying collection {collection}",collection);
+        logger.LogInformation("Querying collection [{collection}]",collection);
         var records = await GetCollection(collection).Find(Filter.Empty).ToListAsync();
         return records.Select(x=>x.ToRecord()).ToArray();
     }
