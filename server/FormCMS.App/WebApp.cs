@@ -3,6 +3,7 @@ using FormCMS.Core.Descriptors;
 using FormCMS.CoreKit.Test;
 using FormCMS.Cms.Builders;
 using FormCMS.Utils.DataModels;
+using Humanizer;
 
 namespace FormCMS.App;
 
@@ -128,7 +129,7 @@ public static class WebApp
         {
             await BlogsTestData.PopulateData(i * 100 + 1, 100, async data =>
             {
-                await service.BatchInsert(data.TableName, data.Records);
+                await service.BatchInsert(data.TableName.ToString().Camelize(), data.Records);
             }, async data =>
             {
                 var objs = data.TargetIds.Select(x => new Dictionary<string, object>
