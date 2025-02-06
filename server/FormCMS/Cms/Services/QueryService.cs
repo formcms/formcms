@@ -33,7 +33,7 @@ public sealed class QueryService(
     {
         if (span.IsEmpty()) throw new ResultException("cursor is empty, can not partially execute query");
 
-        var query = await schemaSvc.ByNameAndCache(name, token);
+        var query = await schemaSvc.ByNameAndCache(name, PublicationStatusHelper.GetSchemaStatus(args), token);
         var attribute = query.Selection.RecursiveFind(attr)?? throw new ResultException("can not find attribute");
         var desc = attribute.GetEntityLinkDesc().Ok();
         
@@ -45,10 +45,10 @@ public sealed class QueryService(
         var validSpan = span.ToValid(fields, resolver).Ok();
 
         var filters = FilterHelper.ReplaceVariables(attribute.Filters,args, resolver).Ok();
-        var sorts = (await SortHelper.ReplaceVariables(attribute.Sorts, args, desc.TargetEntity, resolver)).Ok();
+        var sorts = (await SortHelper.ReplaceVariables(attribute.Sorts, args, desc.TargetEntity, resolver, PublicationStatusHelper.GetSchemaStatus(args))).Ok();
 
         var kateQuery = desc.GetQuery(fields, [validSpan.SourceId()],
-            new CollectiveQueryArgs(filters, sorts, pagination.PlusLimitOne(), validSpan), GetPubStatus(args));
+            new CollectiveQueryArgs(filters, sorts, pagination.PlusLimitOne(), validSpan), PublicationStatusHelper.GetDataStatus(args));
         var records = await executor.Many(kateQuery, token);
 
         records = span.ToPage(records, pagination.Limit);
@@ -61,8 +61,6 @@ public sealed class QueryService(
         return records;
     }
 
-    private PublicationStatus? GetPubStatus(StrArgs args) =>
-        args.ContainsEnumKey(SpecialQueryKeys.Preview) ? null : PublicationStatus.Published;
     private async Task<Record[]> ListWithAction(QueryContext ctx, Span span, StrArgs args, CancellationToken ct = default)
     {
         var (query, filters, sorts, pagination) = ctx;
@@ -81,7 +79,7 @@ public sealed class QueryService(
         {
             var fields = query.Selection.Where(x => x.IsLocal());
             var kateQuery = query.Entity.ListQuery(
-                filters, sorts, pagination.PlusLimitOne(), validSpan,fields ,GetPubStatus(args));
+                filters, sorts, pagination.PlusLimitOne(), validSpan,fields ,PublicationStatusHelper.GetDataStatus(args));
             items = await executor.Many(kateQuery, ct);
             items = span.ToPage(items, pagination.Limit);
             if (items.Length > 0)
@@ -149,7 +147,7 @@ public sealed class QueryService(
         if (desc.IsCollective)
         {
             var filters = FilterHelper.ReplaceVariables(attr.Filters, args, resolver).Ok();
-            var sorts = (await SortHelper.ReplaceVariables(attr.Sorts, args, desc.TargetEntity, resolver)).Ok();
+            var sorts = await SortHelper.ReplaceVariables(attr.Sorts, args, desc.TargetEntity, resolver,PublicationStatusHelper.GetSchemaStatus(args)).Ok();
             var fly = PaginationHelper.ResolvePagination(attr, args) ?? attr.Pagination;
             var validPagination = fly.IsEmpty()
                 ? null
@@ -160,7 +158,8 @@ public sealed class QueryService(
         if (collectionArgs?.Pagination is null)
         {
             //get all items and no pagination
-            var query = desc.GetQuery(attr.Selection.Where(x=>x.IsLocal()) ,ids, collectionArgs, GetPubStatus(args));
+            var query = desc.GetQuery(attr.Selection.Where(x=>x.IsLocal()) ,ids, collectionArgs, 
+                PublicationStatusHelper.GetDataStatus(args));
             var targetRecords = await executor.Many(query, ct);
             
             if (targetRecords.Length > 0)
@@ -182,7 +181,7 @@ public sealed class QueryService(
         else
         {
             var fields = attr.Selection.Where(x => x.IsLocal()).ToArray();
-            var pubStatus = GetPubStatus(args);
+            var pubStatus = PublicationStatusHelper.GetDataStatus(args);
             var plusOneArgs = collectionArgs with { Pagination = collectionArgs.Pagination.PlusLimitOne() };
             foreach (var id in ids)
             {
@@ -209,21 +208,21 @@ public sealed class QueryService(
     private async Task<QueryContext> FromSavedQuery(
         string name, Pagination? pagination,  bool haveCursor, StrArgs args, CancellationToken token =default)
     {
-        var query = await schemaSvc.ByNameAndCache(name, token);
+        var query = await schemaSvc.ByNameAndCache(name, PublicationStatusHelper.GetSchemaStatus(args),token);
         ResultExt.Ensure(query.VerifyVariable(args));
         return await GetQueryContext(query, pagination,haveCursor,args);
     }
 
     private async Task<QueryContext> FromGraphQlRequest(GraphQlRequestDto dto, StrArgs args)
     {
-         var loadedQuery = await schemaSvc.ByGraphQlRequest(dto.Query,dto.Fields);
+         var loadedQuery = await schemaSvc.ByGraphQlRequest(dto.Query,dto.Fields, PublicationStatusHelper.GetSchemaStatus(args));
          return await GetQueryContext(loadedQuery, null,false,args);
     }
 
     private async Task<QueryContext> GetQueryContext(LoadedQuery query, Pagination? fly, bool haveCursor, StrArgs args)
     {
         var validPagination = PaginationHelper.ToValid(fly, query.Pagination, query.Entity.DefaultPageSize, haveCursor,args);
-        var sort =(await SortHelper.ReplaceVariables(query.Sorts,args, query.Entity, resolver)).Ok();
+        var sort =(await SortHelper.ReplaceVariables(query.Sorts,args, query.Entity, resolver,PublicationStatusHelper.GetSchemaStatus(args))).Ok();
         var filters = FilterHelper.ReplaceVariables(query.Filters,args, resolver).Ok();
         return new QueryContext(query, filters, sort,validPagination);
     }

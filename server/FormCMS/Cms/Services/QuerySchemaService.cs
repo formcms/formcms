@@ -18,53 +18,50 @@ public sealed class QuerySchemaService(
     SystemSettings systemSettings
 ) : IQuerySchemaService
 {
-    public async Task<LoadedQuery> ByGraphQlRequest(Query query, GraphQLField[] fields)
+    public async Task<LoadedQuery> ByGraphQlRequest(Query query, GraphQLField[] fields, PublicationStatus? status)
     {
         if (string.IsNullOrWhiteSpace(query.Name))
         {
-            return await ToLoadedQuery(query, fields);
+            return await ToLoadedQuery(query, fields,status);
         }
 
-        var loadedQuery = await queryCache.GetOrSet(query.Name, SaveToDbAndCache);
-        if (loadedQuery.Source != query.Source)
+        var schema = await schemaSvc.GetByNameDefault(query.Name, SchemaType.Query, status);
+        if (schema == null || schema.Settings.Query != null && schema.Settings.Query.Source != query.Source)
         {
-            await queryCache.Remove(query.Name);
-            loadedQuery = await queryCache.GetOrSet(query.Name, SaveToDbAndCache);
+            await SaveQuery(query, status);
         }
-
-        return loadedQuery;
-
-        async ValueTask<LoadedQuery> SaveToDbAndCache(CancellationToken ct)
-        {
-            await SaveQuery(query, ct);
-            return await ToLoadedQuery(query, fields, ct);
-        }
+        return await ToLoadedQuery(query, fields,status);
     }
 
-    public async Task<LoadedQuery> ByNameAndCache(string name, CancellationToken ct = default)
+    public async Task<LoadedQuery> ByNameAndCache(string name, PublicationStatus? status, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new ResultException("Query name should not be empty");
-        var query = await queryCache.GetOrSet(name, async (token) =>
-        {
-            var schema = await schemaSvc.GetByNameDefault(name, SchemaType.Query, token) ??
-                         throw new ResultException($"Cannot find query by name [{name}]");
-            var query = schema.Settings.Query ??
-                        throw new ResultException($"Query [{name}] has invalid query format");
-            var fields = Converter.GetRootGraphQlFields(query.Source).Ok();
-            return await ToLoadedQuery(query, fields, token);
-        }, ct);
+        var query = status == PublicationStatus.Published
+            ? await queryCache.GetOrSet(name, GetQuery, ct)
+            : await GetQuery(ct);
+        
         return query ?? throw new ResultException($"Cannot find query [{name}]");
+
+        async ValueTask<LoadedQuery> GetQuery(CancellationToken token)
+        {
+            var schema = await schemaSvc.GetByNameDefault(name, SchemaType.Query, status, token) ??
+                         throw new ResultException($"Cannot find query by name [{name}]");
+            var settingsQuery = schema.Settings.Query ??
+                                throw new ResultException($"Query [{name}] has invalid query format");
+            var fields = Converter.GetRootGraphQlFields(settingsQuery.Source).Ok();
+            return await ToLoadedQuery(settingsQuery, fields, status, token);
+        }
     }
 
 
-    public async Task SaveQuery(Query query, CancellationToken ct = default)
+    public async Task SaveQuery(Query query, PublicationStatus?status, CancellationToken ct = default)
     {
         query = query with
         {
             IdeUrl =
             $"{systemSettings.GraphQlPath}?query={Uri.EscapeDataString(query.Source)}&operationName={query.Name}"
         };
-        await VerifyQuery(query, ct);
+        await VerifyQuery(query, status, ct);
         var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query));
         await schemaSvc.AddOrUpdateByNameWithAction(schema, ct);
 
@@ -84,29 +81,32 @@ public sealed class QuerySchemaService(
         return systemSettings.GraphQlPath;
     }
 
-    private async Task<LoadedQuery> ToLoadedQuery(Query query, IEnumerable<GraphQLField> fields,
+    private async Task<LoadedQuery> ToLoadedQuery(
+        Query query, 
+        IEnumerable<GraphQLField> fields,
+        PublicationStatus? status,
         CancellationToken ct = default)
     {
-        var entity = (await entitySchemaSvc.LoadEntity(query.EntityName, ct)).Ok();
-        var selection = (await ParseGraphFields("", entity, fields, null, ct)).Ok();
-        var sorts = (await query.Sorts.ToValidSorts(entity, entitySchemaSvc)).Ok();
-        var validFilter = (await query.Filters.ToValidFilters(entity, entitySchemaSvc, entitySchemaSvc)).Ok();
+        var entity = (await entitySchemaSvc.LoadEntity(query.EntityName,status, ct)).Ok();
+        var selection = (await ParseGraphFields("", entity, fields, null, status, ct)).Ok();
+        var sorts = (await query.Sorts.ToValidSorts(entity, entitySchemaSvc,status)).Ok();
+        var validFilter = (await query.Filters.ToValidFilters(entity,status, entitySchemaSvc, entitySchemaSvc)).Ok();
         return query.ToLoadedQuery(entity, selection, sorts, validFilter);
     }
 
-    private async Task VerifyQuery(Query? query, CancellationToken ct = default)
+    private async Task VerifyQuery(Query? query, PublicationStatus? status, CancellationToken ct = default)
     {
         if (query is null)
         {
             throw new ResultException("query is null");
         }
 
-        var entity = (await entitySchemaSvc.LoadEntity(query.EntityName, ct)).Ok();
-        (await query.Filters.ToValidFilters(entity, entitySchemaSvc, entitySchemaSvc)).Ok();
+        var entity = (await entitySchemaSvc.LoadEntity(query.EntityName,status, ct)).Ok();
+        await query.Filters.ToValidFilters(entity, status, entitySchemaSvc, entitySchemaSvc).Ok();
 
         var fields = Converter.GetRootGraphQlFields(query.Source).Ok();
-        (await ParseGraphFields("", entity, fields,null, ct)).Ok();
-        (await SortHelper.ToValidSorts(query.Sorts, entity, entitySchemaSvc)).Ok();
+        await ParseGraphFields("", entity, fields,null,status, ct).Ok();
+        await query.Sorts.ToValidSorts(entity, entitySchemaSvc,status).Ok();
     }
 
     private Task<Result<GraphAttribute[]>> ParseGraphFields(
@@ -114,17 +114,16 @@ public sealed class QuerySchemaService(
         LoadedEntity entity,
         IEnumerable<GraphQLField> fields,
         GraphAttribute? parent,
+        PublicationStatus? status,
         CancellationToken ct = default)
     {
         return fields.ShortcutMap(async field => await entitySchemaSvc
-                .LoadSingleAttrByName(entity, field.Name.StringValue, ct)
+                .LoadSingleAttrByName(entity, field.Name.StringValue, status,ct)
                 .Map(attr => attr.ToGraph())
                 .Map(attr => attr with { Prefix = prefix })
                 .Bind(async attr =>
                     attr.IsCompound()
-                        ? await LoadChildren(
-                            string.IsNullOrEmpty(prefix) ? attr.Field : $"{prefix}.{attr.Field}", attr, field
-                        )
+                        ? await LoadChildren( string.IsNullOrEmpty(prefix) ? attr.Field : $"{prefix}.{attr.Field}", attr, field)
                         : attr)
                 .Bind(async attr => attr.DataType is DataType.Junction or DataType.Collection
                     ? await LoadArgs(field, attr)
@@ -136,7 +135,7 @@ public sealed class QuerySchemaService(
                         $"Primary key [{entity.PrimaryKey}] not in selection list for entity [{entity.Name}]");
                 if (parent?.DataType == DataType.Collection &&
                     parent.GetEntityLinkDesc().Value.TargetAttribute.Field is { } field &&
-                    x.FirstOrDefault(x => x.Field == field) is null)
+                    x.FirstOrDefault(attribute => attribute.Field == field) is null)
                     return Result.Fail($"Referencing Field [{field}] not in selection list for entity [{entity.Name}]");
                 return Result.Ok(x);
             });
@@ -148,18 +147,18 @@ public sealed class QuerySchemaService(
             var inputs = field.Arguments?.Select(x => new GraphArgument(x)) ?? [];
             if (!QueryHelper.ParseSimpleArguments(inputs).Try( out var res, out  err)) 
                 return Result.Fail(err);
-            if (!(await SortHelper.ToValidSorts(res.sorts, desc.TargetEntity, entitySchemaSvc)).Try(out var sorts, out err))
+            if (!(await res.sorts.ToValidSorts(desc.TargetEntity, entitySchemaSvc,status)).Try(out var sorts, out err))
                 return Result.Fail(err);
-            if (!(await res.filters.ToValidFilters(desc.TargetEntity!, entitySchemaSvc, entitySchemaSvc)).Try(
+            if (!(await res.filters.ToValidFilters(desc.TargetEntity,status, entitySchemaSvc, entitySchemaSvc)).Try(
                     out var filters, out err)) return Result.Fail(err);
             return graphAttr with { Pagination = res.pagination, Filters = [..filters], Sorts = [..sorts] };
         }
         
 
         Task<Result<GraphAttribute>> LoadChildren(
-            string newPrefix, GraphAttribute attr, GraphQLField field
+            string newPrefix, GraphAttribute attr, GraphQLField field 
         ) => attr.GetEntityLinkDesc()
-            .Bind(desc => ParseGraphFields(newPrefix, desc.TargetEntity, field.SelectionSet!.Selections.OfType<GraphQLField>(),attr, ct))
+            .Bind(desc => ParseGraphFields(newPrefix, desc.TargetEntity, field.SelectionSet!.Selections.OfType<GraphQLField>(),attr,status, ct))
             .Map(sub => attr with { Selection = [..sub] });
     }
 }

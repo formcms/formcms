@@ -1,48 +1,52 @@
 const apiPrefix = "/api";
 axios.defaults.withCredentials = true
 
-
-function getUserInfo() {
-    return tryFetch(async ()=> await axios.get(apiPrefix + `/profile/info`));
+export async function getUserInfo() {
+    return await tryFetch(async ()=> await axios.get(apiPrefix + `/profile/info`));
 }
 
-async function logout() {
-    return tryFetch(async () => await axios.get(apiPrefix + `/logout`));
+export async function logout() {
+    return await tryFetch(async () => await axios.get(apiPrefix + `/logout`));
 }
 
-async function save(data) {
-    return tryFetch(async ()=>await axios.post(apiPrefix + "/schemas", encode(data)))
-}
-async function list(type){
+export async function list(type){
     return  await tryFetch(async ()=>await  axios.get(apiPrefix + `/schemas?type=${type??''}`))
 }
-async function saveDefine(data){
-    return await tryFetch(async ()=>await  axios.post(apiPrefix + `/schemas/entity/define`, encode(data)))
+
+export async function oneByName(name, type){
+    const url = `/schemas/name/${name}?type=menu`;
+    return  await tryFetch(async ()=>await  axios.get(apiPrefix + url))
 }
 
-async function define(name){
+export async function getHistory(schemaId){
+    return await tryFetch(async ()=> await  axios.get(apiPrefix + `/schemas/history/${schemaId}`))
+}
+
+export async function one(id){
+    const url = `/schemas/${id}`;
+    return  await tryFetch(async ()=>await  axios.get(apiPrefix + url))
+}
+
+export async function save(data) {
+    return await tryFetch(async ()=>await axios.post(apiPrefix + "/schemas", data))
+}
+
+export async function saveDefine(data){
+    return await tryFetch(async ()=>await  axios.post(apiPrefix + `/schemas/entity/define`, data))
+}
+
+export async function publish(data){
+    return await tryFetch(async ()=>await  axios.post(apiPrefix + `/schemas/publish`, data))
+}
+
+export async function define(name){
     return await tryFetch(async ()=> await  axios.get(apiPrefix + `/schemas/entity/${name}/define`))
 }
 
-async function one(id){
-    let url = `/schemas/${id}`;
-    if (id === 'top-menu-bar'){
-        url = `/schemas/name/${id}?type=menu`;
-    }
-    
-    const {data, err} = await tryFetch(async ()=>await  axios.get(apiPrefix + url))
-    if (err){
-        return {err}
-    }
-    
-    data.settings[data.type].name = data.name;
-    data.settings[data.type].id = data.id;
-    return {data: data.settings[data.type]}
+export async function del(id){
+    return await tryFetch(async ()=> await axios.delete(apiPrefix + `/schemas/${id}`));
 }
 
-async function del(id){
-    return tryFetch(async ()=> await axios.delete(apiPrefix + `/schemas/${id}`));
-}
 async function tryFetch(cb){
     try {
         const res = await cb()
@@ -50,32 +54,4 @@ async function tryFetch(cb){
     }catch (err){
         return {error: err.response.data.title??'An error has occurred. Please try again.'}
     }
-}
-function encode(data){
-    data = removeEmptyProperties(data);
-    return {
-        id : data.id,
-        name: data.name,
-        type: data.type,
-        settings: {
-            [data.type]: data,
-        },
-    }
-}
-function removeEmptyProperties(obj) {
-    for (let key in obj) {
-        if (obj.hasOwnProperty(key)) {
-            if (typeof obj[key] === 'object') {
-                removeEmptyProperties(obj[key]);
-                if (Object.keys(obj[key]).length === 0) {
-                    delete obj[key];
-                }
-            } else if (obj[key] === '') {
-                delete obj[key];
-            }else if (obj[key] === null|| obj[key] === undefined){
-                delete obj[key];
-            }
-        }
-    }
-    return obj;
 }

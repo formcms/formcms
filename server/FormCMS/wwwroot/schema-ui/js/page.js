@@ -1,16 +1,14 @@
 import {loadEditor} from "../grapes-components/grapes.js";
+import {checkUser} from "./checkUser.js";
+import {loadNavBar} from "./nav-bar.js";
+import {one, save} from "./repo.js";
 
 let id = new URLSearchParams(window.location.search).get("id");
+let schema;
+let editor;
+
 $(document).ready(function() {
-    let editor
-    getUserInfo().then(({data,error})=>
-    {
-        if (error){
-            window.location.href = "/admin?ref=" + encodeURIComponent(window.location.href);
-            return;
-        }
-        editor = loadEditor("#gjs", loadData);
-    });
+    loadNavBar();
 
     $('#visitPage').on('click', function () {
         const name = $(`#name`).val();
@@ -19,63 +17,72 @@ $(document).ready(function() {
         }
     });
     
-    $('#savePage').on('click', async function() {
-        
-        const payload = {
-            html: editor.getHtml(),
-            css: editor.getCss(),
-            components:JSON.stringify(editor.getComponents()),
-            styles: JSON.stringify(editor.getStyle()),
-            type: 'page',
-        };
-        
-        if (id) {
-            payload.id = +id;
-        }
-        if (!collectFormData(payload)){
-            return false;
-        }
-        
-        $.LoadingOverlay("show");
-        const {data, error} = await save(payload);
-        if (data) {
-            $.toast({
-                heading: 'Success',
-                text: 'submit succeed!',
-                showHideTransition: 'slide',
-                icon: 'success'
-            })
-            if (!id) {
-                window.location.href = `page.html?id=${data.id}`;
-            }
-            $('#errorPanel').text('').hide();
-        } else {
-            $('#errorPanel').text(error).show();
-        }
-        $.LoadingOverlay("hide"); 
+    $('#savePage').on('click', handleSave);
+    
+    checkUser(()=>{
+        editor = loadEditor("#gjs", loadData);
     });
 });
 
-const controls = ['name','title', 'query', 'queryString'];
 
-async function loadData(editor)  {
-   
-    if (id) {
-        $.LoadingOverlay("show");
-        const {data, error} = await one(id);
-        $.LoadingOverlay("hide");
-        if (data){
-            $('title').text(`🏠${data.name} - page setting - Fluent CMS Schema Builder`);
-            id = data.id;
-            restoreFormData(data);
-            editor.setComponents(JSON.parse(data.components));
-            editor.setStyle(JSON.parse(data.styles));
-        }else {
-            $('#errorPanel').text(error).show();
-        }
+async function handleSave() {
+
+    const payload = {
+        html: editor.getHtml(),
+        css: editor.getCss(),
+        components:JSON.stringify(editor.getComponents()),
+        styles: JSON.stringify(editor.getStyle()),
+        type: 'page',
+    };
+    if (!collectFormData(payload)){
+        return false;
+    }
+    
+    schema = schema ||{type:'page'};
+    schema.settings = {page:payload};
+
+    $.LoadingOverlay("show");
+    const {data, error} = await save(schema);
+    $.LoadingOverlay("hide");
+
+    if (data) {
+        $.toast({
+            heading: 'Success',
+            text: 'submit succeed!',
+            showHideTransition: 'slide',
+            icon: 'success'
+        })
+        window.location.href = `page.html?id=${data.id}`;
+        $('#errorPanel').text('').hide();
+    } else {
+        $('#errorPanel').text(error).show();
     }
 }
+async function loadData(editor) {
+    if (!id) {
+        return;
+    }
+    
+    $.LoadingOverlay("show");
+    const {data: schemaData, error} = await one(id);
+    $.LoadingOverlay("hide");
 
+    if (error) {
+        $('#errorPanel').text(error).show();
+        return;
+    }
+    schema = schemaData;
+
+    $('title').text(`🏠${schemaData.name} - page setting - Fluent CMS Schema Builder`);
+    id = schemaData.id;
+    const pageData = schemaData.settings['page'];
+    restoreFormData(pageData);
+    editor.setComponents(JSON.parse(pageData.components));
+    editor.setStyle(JSON.parse(pageData.styles));
+}
+
+
+const controls = ['name','title', 'query', 'queryString'];
 function restoreFormData(payload){
     for (const ctl of controls){
        $(`#${ctl}`).val(payload[ctl]);

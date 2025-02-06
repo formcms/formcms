@@ -9,16 +9,21 @@ public static class SchemaName
 
 public interface ISchemaService
 {
-    Task<Schema[]> All(SchemaType? type, IEnumerable<string>? names, CancellationToken ct = default);
-    Task<Schema[]> AllWithAction(SchemaType? type, CancellationToken ct = default);
+    Task<Schema[]> All(SchemaType? type, IEnumerable<string>? names, PublicationStatus? publicationStatus, CancellationToken ct = default);
+    Task<Schema[]> AllWithAction(SchemaType? type, PublicationStatus? publicationStatus, CancellationToken ct = default);
 
     Task<Schema?> ByIdWithAction(int id, CancellationToken ct = default);
     Task<Schema?> ById(int id, CancellationToken ct = default);
 
+    Task<Schema[]> History(string schemaId, CancellationToken ct = default);
+    
+    
     Task<Result> NameNotTakenByOther(Schema schema, CancellationToken ct);
-    Task<Schema?> GetByNameDefault(string name, SchemaType type, CancellationToken ct = default);
-    Task<Schema?> GetByNamePrefixDefault(string name, SchemaType type, CancellationToken ct = default);
+    Task<Schema?> GetByNameDefault(string name, SchemaType type,PublicationStatus?status, CancellationToken ct = default);
+    Task<Schema?> GetByNamePrefixDefault(string name, SchemaType type,PublicationStatus?status, CancellationToken ct = default);
 
+    Task Publish(Schema schema,CancellationToken ct  = default);
+    
     Task<Schema> SaveWithAction(Schema schema, CancellationToken ct=default);
     Task<Schema> Save(Schema schema,CancellationToken ct  = default);
     

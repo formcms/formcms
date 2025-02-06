@@ -189,7 +189,9 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         {
             var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
             apiGroup.MapGroup("/entities").MapEntityHandlers();
-            apiGroup.MapGroup("/schemas").MapSchemaHandlers();
+            apiGroup.MapGroup("/schemas")
+                .MapSchemaBuilderSchemaHandlers()
+                .MapAdminPanelSchemaHandlers();
             apiGroup.MapGroup("/files").MapFileHandlers();
             apiGroup.MapGroup("/queries").MapQueryHandlers().CacheOutput(options.QueryCachePolicy);
 

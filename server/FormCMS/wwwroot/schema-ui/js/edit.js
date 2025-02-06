@@ -1,28 +1,57 @@
+import {checkUser} from "./checkUser.js";
+import {one, oneByName} from "./repo.js";
+import {loadNavBar} from "./nav-bar.js";
 
 const searchParams = new URLSearchParams(window.location.search);
-const schema = searchParams.get("schema");
+const type = searchParams.get("type");
+const name = searchParams.get("name");
+
 let id = searchParams.get("id");
+let schema;
 let editor ;
 
 $(document).ready(function() {
-    $("#entityActions").prop('hidden', schema !=="entity");
-    $("#menuActions").prop('hidden', schema !=="menu");
-
-    getUserInfo().then(({data,error})=>
-    {
-        if (error){
-            window.location.href = "/admin?ref=" + encodeURIComponent(window.location.href);
-            return;
-        }
-        editor = loadEditor();
-    });    
+    loadNavBar();
+    $("#entityActions").prop('hidden', type !=="entity");
+    $("#menuActions").prop('hidden', type !=="menu");
+    
+    
+    $('#saveMenu').on('click', ()=> submit(save));
+    $('#saveEntity').on('click', ()=> submit(save));
+    $('#define').on('click',getDefine);
+    $('#saveDefine').on('click', ()=> submit(saveDefine));
+    $('#editContent').on('click', function() {
+        const val = editor.getValue();
+        window.open(`../admin/entities/${val.name}`,'_blank');
+    });
+    $('#showAdvancedActions').change(function() {
+        $("#advancedEntityActions").prop('hidden',!$(this).is(':checked'));
+    });
+    
+    checkUser(loadEditor);
 });
+
+async function getDefine(){
+    const oldValue = editor.getValue();
+    const tableName = oldValue.tableName;
+
+    $.LoadingOverlay("show");
+    const {data, error} = await define(tableName);
+    $.LoadingOverlay("hide");
+
+    if (data){
+        oldValue.attributes = data.attributes;
+        editor.setValue(oldValue);
+    }else {
+        $('#errorPanel').text(error).show();
+    }   
+}
 
 function loadEditor() {
     let editor = new JSONEditor($('#editor_holder')[0], {
         ajax: true,
         schema: {
-            "$ref": `json/${schema}.json`,
+            "$ref": `json/${type}.json`,
         },
         compact: true,
         disable_collapse: true,
@@ -36,18 +65,19 @@ function loadEditor() {
     });
 
     editor.on('ready',async function() {
-        if (id) {
+        if (id || name) {
+            
             $.LoadingOverlay("show");
-            const {data, error} = await one(id);
-            if (data){
-                $('title').text(`${data.name} - ${schema} setting - Fluent CMS Schema Builder`);
-                id = data.id;
-                delete (data.id); //prevent json-edit add extra property
-                editor.setValue(data);
+            const {data:schemaData, error} = id ? await one(id):await oneByName(name, type);
+            $.LoadingOverlay("hide");
+            
+            if (schemaData){
+                $('title').text(`${schemaData.name} - ${type} setting - FormCMS Schema Builder`);
+                schema = schemaData;
+                editor.setValue(schemaData.settings[type]);
             }else {
                 $('#errorPanel').text(error).show();
             }
-            $.LoadingOverlay("hide");
         } else {
             editor.setValue(null);
         }
@@ -70,15 +100,13 @@ async function submit(callback) {
         return;
     }
 
-    const val = editor.getValue();
-    val.type = schema;
-
-    if (id) {
-        val.id = +id;
-    }
-
+    schema = schema ||{type}
+    schema.settings = {[type]:editor.getValue()};
+    
     $.LoadingOverlay("show");
-    const {data, error} = await callback(val);
+    const {data, error} = await callback(schema);
+    $.LoadingOverlay("hide");
+    
     if (data) {
         $.toast({
             heading: 'Success',
@@ -86,12 +114,9 @@ async function submit(callback) {
             showHideTransition: 'slide',
             icon: 'success'
         })
-        if (!id) {
-            window.location.href = `edit.html?schema=${schema}&id=${data.id}`;
-        }
         $('#errorPanel').text('').hide();
+        window.location.href = `edit.html?type=${type}&id=${data.id}`;
     } else {
         $('#errorPanel').text(error).show();
     }
-    $.LoadingOverlay("hide");
 }

@@ -5,13 +5,6 @@ namespace FormCMS.Cms.Handlers;
 
 internal static class Util
 {
-    
-    internal static T MustToEnum<T>(this string s)
-    where T : struct, Enum
-    {
-        var v = s.ToEnum<T>();
-        return v ?? throw new ResultException($"Cannot resolve '{typeof(T).Name}'");
-    }
     internal static T? ToEnum<T>(this string s)
     where T : struct, Enum
     {

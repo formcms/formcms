@@ -116,6 +116,7 @@ public static class FilterHelper
     public static async Task<Result<ValidFilter[]>> ToValidFilters(
         this IEnumerable<Filter> filters,
         LoadedEntity entity,
+        PublicationStatus? schemaStatus,
         IEntityVectorResolver vectorResolver,
         IAttributeValueResolver valueResolver
     )
@@ -123,7 +124,7 @@ public static class FilterHelper
         var ret = new List<ValidFilter>();
         foreach (var filter in filters)
         {
-            if (!(await vectorResolver.ResolveVector(entity, filter.FieldName))
+            if (!(await vectorResolver.ResolveVector(entity, filter.FieldName,schemaStatus))
                 .Try(out var vector, out var resolveErr))
             {
                 return Result.Fail(resolveErr);

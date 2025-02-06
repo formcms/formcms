@@ -12,10 +12,11 @@ namespace FormCMS.Cms.Services;
 
 public sealed class PageService(ILogger<PageService> logger,ISchemaService schemaSvc, IQueryService querySvc, PageTemplate template) : IPageService
 {
-    public async Task<string> GetDetail(string name, string param, StrArgs strArgs, CancellationToken token)
+    public async Task<string> GetDetail(string name, string param, StrArgs strArgs, CancellationToken ct)
     {
         //detail page format <pageName>/{<routerName>}, match with prefix '/{'. 
-        var ctx = (await GetContext(name+ "/{" , true,token)).Ok().ToPageContext();
+        var prefix = name + "/{";
+        var ctx = (await GetContext(prefix , true, strArgs,ct)).Ok().ToPageContext();
         strArgs = GetLocalPaginationArgs(ctx, strArgs); 
         
         var routerName =ctx.Page.Name.Split("/").Last()[1..^1]; // remove '{' and '}'
@@ -23,15 +24,15 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
 
         var data = string.IsNullOrWhiteSpace(ctx.Page.Query)
             ? new Dictionary<string, object>()
-            : await querySvc.SingleWithAction(ctx.Page.Query, strArgs, token)
+            : await querySvc.SingleWithAction(ctx.Page.Query, strArgs, ct)
               ?? throw new ResultException($"Could not data with {routerName} [{param}]");
         
-        return await RenderPage(ctx, data, strArgs, token);
+        return await RenderPage(ctx, data, strArgs, ct);
     }
 
     public async Task<string> Get(string name, StrArgs strArgs, CancellationToken token)
     {
-        if ((await GetContext(name, false, token)).Try(out var ctx, out var error))
+        if ((await GetContext(name, false, strArgs,token)).Try(out var ctx, out var error))
         {
             return await RenderPage(ctx.ToPageContext(), new Dictionary<string, object>(), strArgs, token);
         }
@@ -52,10 +53,10 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
     public async Task<string> GetPart(string partStr, CancellationToken token)
     {
         var part = PagePartHelper.Parse(partStr) ?? throw new ResultException("Invalid Partial Part");
-        var ctx = (await GetContext(part.Page, false, token)).Ok().ToPartialContext(part.NodeId);
-
         var cursor = new Span(part.First, part.Last);
+        
         var args = QueryHelpers.ParseQuery(part.DataSource.QueryString);
+        var ctx = (await GetContext(part.Page, false,args, token)).Ok().ToPartialContext(part.NodeId);
 
         Record[] items;
         if (!string.IsNullOrWhiteSpace(part.DataSource.Query))
@@ -158,11 +159,12 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
     
     record PartialContext(Page Page, HtmlNode Node);
     
-    private async Task<Result<Context>> GetContext(string name, bool matchPrefix, CancellationToken token)
+    private async Task<Result<Context>> GetContext(string name, bool matchPrefix,StrArgs args, CancellationToken token)
     {
+        var publicationStatus= PublicationStatusHelper.GetDataStatus(args);
         var schema = matchPrefix
-            ? await schemaSvc.GetByNamePrefixDefault(name, SchemaType.Page, token)
-            : await schemaSvc.GetByNameDefault(name, SchemaType.Page, token);
+            ? await schemaSvc.GetByNamePrefixDefault(name, SchemaType.Page,publicationStatus, token)
+            : await schemaSvc.GetByNameDefault(name, SchemaType.Page,publicationStatus, token);
         
         if (schema == null) { return Result.Fail($"Cannot find schema [{name}], matching prefix= {matchPrefix}"); }
 

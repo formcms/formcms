@@ -10,22 +10,23 @@ namespace FormCMS.Infrastructure.RelationDbDao;
 public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger ) : IRelationDbDao
 {
     private readonly Compiler _compiler = new SqlServerCompiler();
-    private  SqlTransaction? _transaction = null;
+    private TransactionManager? _transaction;
 
     public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
     {
         var db = new QueryFactory(connection, _compiler);
         db.Logger = result => logger.LogInformation(result.ToString());
-        return await queryFunc(db,_transaction);
+        return await queryFunc(db,_transaction?.Transaction());
     }
 
-    public async ValueTask<IDbTransaction> BeginTransaction()
+    public async ValueTask<TransactionManager> BeginTransaction()
     {
-        _transaction= await connection.BeginTransactionAsync() as SqlTransaction;
-        return _transaction!;
+        var ret = new TransactionManager(await connection.BeginTransactionAsync());
+        _transaction = ret;
+        return ret;
     }
-
-    public void EndTransaction() => _transaction = null;
+    
+    public bool InTransaction() => _transaction?.Transaction() != null;
 
     public bool TryResolveDatabaseValue(string s, ColumnType type, out DatabaseTypeValue? result)
     {
@@ -164,7 +165,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
     {
         logger.LogInformation(sql);
         await using var command = new SqlCommand(sql, connection);
-        command.Transaction = _transaction as SqlTransaction;
+        command.Transaction = _transaction?.Transaction() as SqlTransaction;
 
         foreach (var (paramName, paramValue) in parameters)
         {

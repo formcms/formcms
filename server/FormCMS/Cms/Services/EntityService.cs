@@ -25,14 +25,14 @@ public sealed class EntityService(
         StrArgs args, 
         CancellationToken ct)
     {
-        var entity = (await entitySchemaSvc.LoadEntity(name, ct)).Ok();
+        var entity = (await entitySchemaSvc.LoadEntity(name, null, ct)).Ok();
         var (filters, sorts,validPagination) = await GetListArgs(entity, args,pagination);
         return await ListWithAction(entity,mode, filters, sorts, validPagination, ct);
     }
 
     public async Task<Record[]> ListAsTree(string name, CancellationToken ct)
     {
-        var entity = await entitySchemaSvc.LoadEntity(name, ct).Ok();
+        var entity = await entitySchemaSvc.LoadEntity(name,null, ct).Ok();
         var parentField = entity.Attributes.FirstOrDefault(x =>
             x.DataType == DataType.Collection && x.GetCollectionTarget(out var entityName, out _) && entityName == name
         )?? throw new ResultException("Can not compose list result as tree, not find an collection attribute whose target is the entity.");
@@ -97,24 +97,28 @@ public sealed class EntityService(
         var cols = items[0].Select(x => x.Key);
         var values = items.Select(item => item.Select(kv => kv.Value));
         var query = new SqlKata.Query(tableName).AsInsert(cols, values);
-        await queryExecutor.ExecInt(query);
+        await queryExecutor.ExecAndGetAffected(query);
     }
 
     public async Task<Record> UpdateWithAction(string name, JsonElement ele, CancellationToken ct)
     {
-        return await UpdateWithAction(await GetRecordIdCtx(name, ele, ct), ct);
+        return await UpdateWithAction(await GetRecordCtx(name, ele, ct), ct);
     }
 
     public async Task<Record> DeleteWithAction(string name, JsonElement ele, CancellationToken ct)
     {
-        return await Delete(await GetRecordIdCtx(name, ele, ct), ct);
+        return await Delete(await GetRecordCtx(name, ele, ct), ct);
     }
 
     public async Task SavePublicationSettings(string name, JsonElement ele, CancellationToken ct)
     {
-        var (entity, _, id,_) = await GetRecordIdCtx(name, ele, ct);
+        var (entity, record) = await GetRecordCtx(name, ele, ct);
+        if (!record.TryGetValue(entity.PrimaryKey, out  var id) && id is null)
+        {
+            throw new ResultException($"Failed to get Record Id, cannot find [{name}]");
+        }
         var query = entity.SavePublicationStatus(id, ele.ToDictionary() ).Ok();
-        await queryExecutor.ExecInt(query, ct);
+        await queryExecutor.ExecAndGetAffected(query, ct);
     }
 
     public async Task<LookupListResponse> LookupList(string name, string startsVal, CancellationToken ct = default)
@@ -134,7 +138,7 @@ public sealed class EntityService(
         {
             var constraint = new Constraint(Matches.StartsWith, [startsVal]);
             var filter = new Filter(entity.LabelAttributeName, MatchTypes.MatchAll, [constraint]);
-            filters = (await FilterHelper.ToValidFilters([filter], entity, entitySchemaSvc, entitySchemaSvc)).Ok();
+            filters = (await FilterHelper.ToValidFilters([filter], entity,null, entitySchemaSvc, entitySchemaSvc)).Ok();
         }
 
         var queryWithFilters = entity.ListQuery(filters, sorts, pagination, null, attributes,null);
@@ -153,7 +157,7 @@ public sealed class EntityService(
             new JunctionPreDelArgs(ctx.Entity, id, ctx.Attribute, items));
 
         var query = ctx.Junction.Delete(ctx.Id, res.RefItems);
-        var ret = await queryExecutor.ExecInt(query, ct);
+        var ret = await queryExecutor.ExecAndGetAffected(query, ct);
         return ret;
     }
 
@@ -168,7 +172,7 @@ public sealed class EntityService(
             new JunctionPreAddArgs(ctx.Entity, id, ctx.Attribute, items));
         var query = ctx.Junction.Insert(ctx.Id, res.RefItems);
 
-        var ret = await queryExecutor.ExecInt(query, ct);
+        var ret = await queryExecutor.ExeAndGetId(query, ct);
         return ret;
     }
 
@@ -211,7 +215,6 @@ public sealed class EntityService(
         var (collection,id) = await GetCollectionCtx(name, sid, attr, ct);
         var item = collection.TargetEntity.Parse(element, entitySchemaSvc).Ok();
         item[collection.LinkAttribute.Field] = id.ObjectValue!;
-        var label = item.TryGetValue(collection.TargetEntity.LabelAttributeName, out var labelValue)  && labelValue is string strLabel? strLabel : "";
         return await InsertWithAction(new RecordContext(collection.TargetEntity, item), ct);
     }
 
@@ -309,9 +312,9 @@ public sealed class EntityService(
         }
     }
 
-    private async Task<Record> UpdateWithAction(RecordIdContext ctx, CancellationToken token)
+    private async Task<Record> UpdateWithAction(RecordContext ctx, CancellationToken token)
     {
-        var (entity, record,id,label) = ctx;
+        var (entity, record) = ctx;
 
         ResultExt.Ensure(entity.ValidateLocalAttributes(record));
         ResultExt.Ensure(entity.ValidateTitleAttributes(record));
@@ -322,7 +325,7 @@ public sealed class EntityService(
         record = res.RefRecord;
         var query = entity.UpdateQuery(record).Ok();
         
-        var affected = await queryExecutor.ExecAffected(query, token);
+        var affected = await queryExecutor.ExecAndGetAffected(query, token);
         if (affected == 0)
         {
             throw new ResultException("Error: Concurrent Update Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
@@ -342,7 +345,7 @@ public sealed class EntityService(
         record = res.RefRecord;
         
         var query = entity.Insert(record);
-        var id = await queryExecutor.ExecInt(query, token);
+        var id = await queryExecutor.ExeAndGetId(query, token);
         record[entity.PrimaryKey] = id;
 
         await hookRegistry.EntityPostAdd.Trigger(provider,
@@ -350,9 +353,9 @@ public sealed class EntityService(
         return record;
     }
 
-    private async Task<Record> Delete(RecordIdContext ctx, CancellationToken token)
+    private async Task<Record> Delete(RecordContext ctx, CancellationToken token)
     {
-        var (entity, record,id,label) = ctx;
+        var (entity, record) = ctx;
 
         var res = await hookRegistry.EntityPreDel.Trigger(provider,
             new EntityPreDelArgs(entity, record));
@@ -360,7 +363,7 @@ public sealed class EntityService(
 
 
         var query = entity.DeleteQuery(record).Ok();
-        var affected = await queryExecutor.ExecAffected(query, token);
+        var affected = await queryExecutor.ExecAndGetAffected(query, token);
         if (affected == 0)
         {
             throw new ResultException("Error: Concurrent Write Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
@@ -374,7 +377,7 @@ public sealed class EntityService(
 
     private async Task<IdContext> GetIdCtx(string entityName, string id, CancellationToken token)
     {
-        var entity = (await entitySchemaSvc.LoadEntity(entityName, token)).Ok();
+        var entity = (await entitySchemaSvc.LoadEntity(entityName, null, token)).Ok();
         if (!entitySchemaSvc.ResolveVal(entity.PrimaryKeyAttribute, id, out var idValue))
         {
             throw new ResultException($"Failed to cast {id} to {entity.PrimaryKeyAttribute.DataType}");
@@ -387,7 +390,7 @@ public sealed class EntityService(
 
     private async Task<CollectionContext> GetCollectionCtx(string entity, string sid, string attr, CancellationToken ct)
     {
-        var loadedEntity = (await entitySchemaSvc.LoadEntity(entity, ct)).Ok();
+        var loadedEntity = (await entitySchemaSvc.LoadEntity(entity, null, ct)).Ok();
         var collection = loadedEntity.Attributes.FirstOrDefault(x=>x.Field ==attr)?.Collection ??
                         throw new ResultException($"Failed to get Collection Context, cannot find [{attr}] in [{entity}]");
 
@@ -405,7 +408,7 @@ public sealed class EntityService(
 
     private async Task<JunctionContext> GetJunctionCtx(string entity, string sid, string attr, CancellationToken ct)
     {
-        var loadedEntity = (await entitySchemaSvc.LoadEntity(entity, ct)).Ok();
+        var loadedEntity = (await entitySchemaSvc.LoadEntity(entity, null, ct)).Ok();
         var errMessage = $"Failed to Get Junction Context, cannot find [{attr}] in [{entity}]";
         var attribute = loadedEntity.Attributes.FirstOrDefault(x=>x.Field == attr) ??
                         throw new ResultException(errMessage);
@@ -419,26 +422,10 @@ public sealed class EntityService(
         return new JunctionContext(loadedEntity,attribute, junction, id!.Value);
     }
 
-    private record RecordIdContext(LoadedEntity Entity, Record Record, object Id, string Label);
-
-    private async Task<RecordIdContext> GetRecordIdCtx(string name, JsonElement ele, CancellationToken token)
-    {
-        var entity = (await entitySchemaSvc.LoadEntity(name, token)).Ok();
-        var record = entity.Parse(ele, entitySchemaSvc).Ok();
-        if (!record.TryGetValue(entity.PrimaryKey, out  var id) && id is null)
-        {
-            throw new ResultException($"Failed to get Record Id, cannot find [{name}]");
-        }
-        var label = record.TryGetValue(entity.LabelAttributeName,out var val) && val is not null ? val.ToString() : "";
-        return new RecordIdContext(entity, record,id, label??"");
-    }
-
-
-
     private record RecordContext(LoadedEntity Entity, Record Record);
     private async Task<RecordContext> GetRecordCtx(string name, JsonElement ele, CancellationToken token)
     {
-        var entity = (await entitySchemaSvc.LoadEntity(name, token)).Ok();
+        var entity = (await entitySchemaSvc.LoadEntity(name, null, token)).Ok();
         var record = entity.Parse(ele, entitySchemaSvc).Ok();
         return new RecordContext(entity, record);
     }
@@ -447,9 +434,9 @@ public sealed class EntityService(
 
     private async Task<LookupContext> GetLookupContext(string name, CancellationToken ct = default)
     {
-        var entity = (await entitySchemaSvc.LoadEntity(name, ct)).Ok();
+        var entity = (await entitySchemaSvc.LoadEntity(name, null, ct)).Ok();
         var sort = new Sort(entity.LabelAttributeName, SortOrder.Asc);
-        var validSort = (await SortHelper.ToValidSorts([sort], entity, entitySchemaSvc)).Ok();
+        var validSort = (await SortHelper.ToValidSorts([sort], entity, entitySchemaSvc,null)).Ok();
         var pagination = PaginationHelper.ToValid(new Pagination(), entity.DefaultPageSize);
         return new LookupContext(entity, validSort, pagination,[entity.PrimaryKeyAttribute,entity.LabelAttribute]);
     }
@@ -458,8 +445,8 @@ public sealed class EntityService(
     private async Task<ListArgs> GetListArgs(LoadedEntity entity,  StrArgs args,Pagination pagination)
     {
         var (filters,sorts) = QueryStringParser.Parse(args);
-        var validFilters = await filters.ToValidFilters(entity, entitySchemaSvc,entitySchemaSvc).Ok(); 
-        var validSort = await sorts.ToValidSorts( entity, entitySchemaSvc).Ok();
+        var validFilters = await filters.ToValidFilters(entity,null, entitySchemaSvc,entitySchemaSvc).Ok(); 
+        var validSort = await sorts.ToValidSorts( entity, entitySchemaSvc,null).Ok();
         
         var validPagination = PaginationHelper.ToValid(pagination, entity.DefaultPageSize);
         return new ListArgs(validFilters, validSort, validPagination);

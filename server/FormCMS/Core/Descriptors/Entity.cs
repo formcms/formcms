@@ -14,14 +14,6 @@ using Humanizer;
 
 namespace FormCMS.Core.Descriptors;
 
-public enum PublicationStatus
-{
-    Draft,
-    Published,
-    Unpublished,
-    Scheduled
-}
-
 public record Entity(
     ImmutableArray<Attribute> Attributes,
     string Name ,
@@ -221,7 +213,7 @@ public static class EntityHelper
     => new SqlKata.Query(e.TableName)
         .WhereCamelEnum(DefaultAttributeNames.PublicationStatus, PublicationStatus.Scheduled)
         .WhereDate(DefaultAttributeNames.PublishedAt, "<", DateTime.Now)
-        .AsUpdateCamelEnum([DefaultAttributeNames.PublicationStatus], [PublicationStatus.Published]) ;
+        .AsCamelFieldValueUpdate([DefaultAttributeNames.PublicationStatus], [PublicationStatus.Published]) ;
     
     public static Result<SqlKata.Query> UpdateQuery(this LoadedEntity e, Record item)
     {
@@ -263,7 +255,7 @@ public static class EntityHelper
         return new SqlKata.Query(e.TableName)
             .Where(e.PrimaryKey, id)
             .Where(DefaultAttributeNames.UpdatedAt, updatedAt!)
-            .AsUpdate([DefaultAttributeNames.Deleted], [true]);
+            .AsCamelFieldUpdate([DefaultAttributeNames.Deleted], [true]);
     }
 
     public static SqlKata.Query Basic(this LoadedEntity e)

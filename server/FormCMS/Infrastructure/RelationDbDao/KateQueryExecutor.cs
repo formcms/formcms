@@ -8,7 +8,7 @@ namespace FormCMS.Infrastructure.RelationDbDao;
 public record KateQueryExecutorOption(int? TimeoutSeconds);
 public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutorOption option)
 {
-   public Task<int> ExecInt(
+   public Task<int> ExeAndGetId(
       Query query,  CancellationToken ct = default
    ) => provider.ExecuteKateQuery((db,tx)
       => db.ExecuteScalarAsync<int>(
@@ -17,8 +17,8 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
          timeout: option.TimeoutSeconds,
          cancellationToken: ct)
    );
-
-   public Task<int> ExecAffected(
+   
+   public Task<int> ExecAndGetAffected(
       Query query, CancellationToken ct = default
    ) => provider.ExecuteKateQuery((db, tx)
       => db.ExecuteAsync(
@@ -27,6 +27,50 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
          timeout: option.TimeoutSeconds,
          cancellationToken: ct)
    );
+
+   public async Task<int> ExecBatch(
+      Query[] queries, bool getIdFromLastQuery, CancellationToken ct = default
+   )
+   {
+      //already in transaction, let outer code handle transaction 
+      if (provider.InTransaction())
+      {
+         return await Exec();
+      }
+
+      var tx = await provider.BeginTransaction();
+      try
+      {
+         var ret = await Exec();
+         tx.Commit();
+         return ret;
+      }
+      catch
+      {
+         tx.Rollback();
+         throw;
+      }
+
+      async Task<int> Exec()
+      {
+         var ret = 0;
+         for (var i = 0; i < queries.Length; i++)
+         {
+            var query = queries[i];
+            ret = await provider.ExecuteKateQuery((db, t) =>
+               i == queries.Length - 1 && getIdFromLastQuery
+                  ? db.ExecuteScalarAsync<int>(query: query, transaction: t, timeout: option.TimeoutSeconds,
+                     cancellationToken: ct)
+                  : db.ExecuteAsync(query: query, transaction: t, timeout: option.TimeoutSeconds,
+                     cancellationToken: ct)
+            );
+         }
+
+         return ret;
+      }
+   }
+
+
 
    public async Task<Record?> Single(
       Query query, CancellationToken ct

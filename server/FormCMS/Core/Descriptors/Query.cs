@@ -16,10 +16,6 @@ public sealed record Query(
     Pagination? Pagination= null
 );
 
-public enum SpecialQueryKeys
-{
-    Preview
-}
 
 public sealed record LoadedQuery(
     string Name,

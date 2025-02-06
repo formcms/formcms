@@ -47,7 +47,7 @@ public class AuditLogService(
             Payload: record,
             CreatedAt: DateTime.Now
         );
-        return executor.ExecInt(log.Insert());
+        return executor.ExeAndGetId(log.Insert());
     }
 
     public  Task EnsureAuditLogTable()

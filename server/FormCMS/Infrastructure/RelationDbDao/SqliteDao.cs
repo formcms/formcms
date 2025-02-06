@@ -10,22 +10,23 @@ namespace FormCMS.Infrastructure.RelationDbDao;
 public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> logger) : IRelationDbDao
 {
     private readonly Compiler _compiler = new SqliteCompiler();
-    private SqliteTransaction? _transaction;
+    private TransactionManager? _transaction;
 
     public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory,IDbTransaction?, Task<T>> queryFunc)
     {
         var db = new QueryFactory(connection, _compiler);
         db.Logger = result => logger.LogInformation(result.ToString());
-        return await queryFunc(db, _transaction);
+        return await queryFunc(db, _transaction?.Transaction());
     }
 
-    public async ValueTask<IDbTransaction> BeginTransaction()
+    public async ValueTask<TransactionManager> BeginTransaction()
     {
-        _transaction = await connection.BeginTransactionAsync() as SqliteTransaction;
-        return _transaction!;
+        var ret = new TransactionManager(await connection.BeginTransactionAsync());
+        _transaction = ret;
+        return ret;
     }
     
-    public void EndTransaction() => _transaction = null;
+    public bool InTransaction() => _transaction?.Transaction() != null;
 
     public bool TryResolveDatabaseValue(string s, ColumnType type, out DatabaseTypeValue? result)
     {
@@ -101,7 +102,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
          var columnDefinitions = new List<Column>();
          while (await reader.ReadAsync(ct))
          {
-            /*cid, name, type, notnull, dflt_value, pk */
+            /*cid, name, type, notnull, default_value, pk */
             columnDefinitions.Add(new Column
            ( 
                 Name : reader.GetString(1),
@@ -137,7 +138,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
     {
         logger.LogInformation(sql);
         await using var command = new SqliteCommand(sql, connection);
-        command.Transaction = _transaction;
+        command.Transaction = _transaction?.Transaction() as SqliteTransaction;
 
         foreach (var (paramName, paramValue) in parameters)
         {

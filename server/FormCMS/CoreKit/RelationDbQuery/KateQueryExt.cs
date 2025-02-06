@@ -47,7 +47,8 @@ public static class KateQueryExt
         }
     }
 
-    private static SqlKata.Query ApplyJoin(SqlKata.Query query, EntityLinkDesc desc, string prefix, string nextPrefix, PublicationStatus? publicationStatus)
+    private static SqlKata.Query ApplyJoin(SqlKata.Query query, EntityLinkDesc desc, string prefix, string nextPrefix, 
+        PublicationStatus? publicationStatus)
     {
         query.LeftJoin($"{desc.TargetEntity.TableName} as {nextPrefix}",
                 desc.SourceAttribute.AddTableModifier(prefix),

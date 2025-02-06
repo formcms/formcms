@@ -33,11 +33,18 @@ public static class KateQueryExtensions
     public static SqlKata.Query WhereDate(this SqlKata.Query query, Enum enumField, string op, object value)
         => query.WhereDate(enumField.ToString().Camelize(), op,value);
     
-    public static SqlKata.Query AsUpdate(this SqlKata.Query query, IEnumerable<Enum> fields, IEnumerable<object> values)
+    public static SqlKata.Query AsCamelFieldUpdate(this SqlKata.Query query, IEnumerable<string> fields, IEnumerable<object> values)
+        => query.AsUpdate(fields.Select(x=>x.Camelize()), values);
+    
+    public static SqlKata.Query AsCamelFieldUpdate(this SqlKata.Query query, IEnumerable<Enum> fields, IEnumerable<object> values)
         => query.AsUpdate(fields.Select(x=>x.ToString().Camelize()), values);
 
-    public static SqlKata.Query AsUpdateCamelEnum(this SqlKata.Query query, IEnumerable<Enum> fields, IEnumerable<Enum> values)
+    public static SqlKata.Query AsCamelFieldValueUpdate(this SqlKata.Query query, IEnumerable<Enum> fields, IEnumerable<Enum> values)
         => query.AsUpdate(
             fields.Select(x=>x.ToString().Camelize()), 
             values.Select(x=>x.ToString().Camelize()));
+    public static SqlKata.Query AsCamelFieldValueUpdate(this SqlKata.Query query, IEnumerable<string> fields, IEnumerable<Enum> values)
+            => query.AsUpdate(
+                fields.Select(x=>x.Camelize()), 
+                values.Select(x=>x.ToString().Camelize()));
 }

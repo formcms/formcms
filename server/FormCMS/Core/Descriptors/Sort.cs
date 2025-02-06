@@ -72,7 +72,13 @@ public static class SortHelper
         }
     }
     
-    public static async Task<Result<ValidSort[]>> ReplaceVariables(IEnumerable<ValidSort> sorts,StrArgs args, LoadedEntity entity, IEntityVectorResolver vectorResolver)
+    public static async Task<Result<ValidSort[]>> ReplaceVariables(
+        IEnumerable<ValidSort> sorts,
+        StrArgs args, 
+        LoadedEntity entity, 
+        IEntityVectorResolver vectorResolver,
+        PublicationStatus? schemaStatus
+        )
     {
         var ret = new List<ValidSort>();
         foreach (var sort in sorts)
@@ -99,7 +105,7 @@ public static class SortHelper
                             current with { Field = f }
                     };
                     
-                    if (!(await vectorResolver.ResolveVector(entity, current.Field))
+                    if (!(await vectorResolver.ResolveVector(entity, current.Field,schemaStatus))
                         .Try(out var vector, out var err))
                     {
                         return Result.Fail(err);
@@ -130,7 +136,9 @@ public static class SortHelper
     public static async Task<Result<ValidSort[]>> ToValidSorts(
         this IEnumerable<Sort> list, 
         LoadedEntity entity,
-        IEntityVectorResolver vectorResolver)
+        IEntityVectorResolver vectorResolver,
+        PublicationStatus? schemaStatus
+        )
     {
         var sorts = list.ToArray();
         if (sorts.Length == 0)
@@ -148,7 +156,7 @@ public static class SortHelper
             }
             else
             {
-                if (!(await vectorResolver.ResolveVector(entity, sort.Field))
+                if (!(await vectorResolver.ResolveVector(entity, sort.Field,schemaStatus))
                     .Try(out var attr, out var err))
                 {
                     return Result.Fail(err);

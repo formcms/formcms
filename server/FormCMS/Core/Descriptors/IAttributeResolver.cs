@@ -9,5 +9,5 @@ public interface IAttributeValueResolver
 
 public interface IEntityVectorResolver
 {
-    public Task<Result<AttributeVector>> ResolveVector(LoadedEntity entity, string fieldName);
+    public Task<Result<AttributeVector>> ResolveVector(LoadedEntity entity, string fieldName, PublicationStatus? status);
 }

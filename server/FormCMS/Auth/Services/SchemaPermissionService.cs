@@ -49,15 +49,13 @@ public class SchemaPermissionService<TUser>(
         {
             throw new ResultException($"You are not logged in, can not save schema {schema.Type} [{schema.Name}]");
         }
+
         await EnsureWritePermissionAsync(schema);
 
-        if (schema.Id == 0)
+        schema = schema with { CreatedBy = userId };
+        if (schema.Type == SchemaType.Entity)
         {
-            schema = schema with { CreatedBy = userId };
-            if (schema.Type == SchemaType.Entity)
-            {
-                schema = EnsureSchemaHaveCreatedByField(schema).Ok();
-            }
+            schema = EnsureSchemaHaveCreatedByField(schema).Ok();
         }
 
         return schema;

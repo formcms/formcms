@@ -9,16 +9,16 @@ namespace FormCMS.Infrastructure.RelationDbDao;
 
 public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connection):IRelationDbDao
 {
-    private NpgsqlTransaction? _transaction;
+    private TransactionManager? _transaction;
     private readonly Compiler _compiler = new PostgresCompiler();
 
-    public async ValueTask<IDbTransaction> BeginTransaction()
+    public async ValueTask<TransactionManager> BeginTransaction()
     {
-        _transaction = await connection.BeginTransactionAsync();   
-        return _transaction!;
+        var ret = new TransactionManager(await connection.BeginTransactionAsync());
+        _transaction = ret;
+        return ret;
     }
-
-    public void EndTransaction()=> _transaction = null;
+    public bool InTransaction() => _transaction?.Transaction() != null;
 
     public bool TryResolveDatabaseValue(string s, ColumnType type, out DatabaseTypeValue? result)
     {
@@ -37,7 +37,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         var db = new QueryFactory(connection, _compiler);
         db.Logger = result => logger.LogInformation(result.ToString());
             
-        return queryFunc(db,_transaction);
+        return queryFunc(db,_transaction?.Transaction());
     }
 
     public async Task CreateTable(string table, IEnumerable<Column> cols,CancellationToken ct)
@@ -173,7 +173,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         logger.LogInformation(sql);
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
-        command.Transaction = _transaction;
+        command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
        
         foreach (var (paramName, paramValue) in parameters)
         {

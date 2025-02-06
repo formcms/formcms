@@ -26,7 +26,8 @@ public class AccountService<TUser, TRole,TCtx>(
 {
     public async Task<string[]> GetEntities(CancellationToken ct)
     {
-        var records= await queryExecutor.Many(SchemaHelper.ByNameAndType(SchemaType.Entity,null),ct);
+        var query = SchemaHelper.ByNameAndType(SchemaType.Entity, null, null);
+        var records= await queryExecutor.Many(query,ct);
         return records.Select(x => x.CamelKeyStr(nameof(Entity.Name))).ToArray();
     }
     
@@ -283,7 +284,6 @@ public class AccountService<TUser, TRole,TCtx>(
  
     private async Task<Result> AddClaimsToRole(TRole role,  IList<Claim> claims, string type, string[] values )
     {
-        values ??= [];
         var currentValues = claims.Where(x => x.Type == type).Select(x => x.Value).ToArray();
         // Calculate roles to be removed and added
         var toRemove = currentValues.Except(values).ToArray();
