@@ -41,19 +41,19 @@ public static class SchemaHelper
 
     public static readonly Column[] Columns =
     [
-        ColumnHelper.CreateCamelColumn<Schema, int>(x => x.Id),
+        ColumnHelper.CreateCamelColumn<Schema>(x => x.Id, ColumnType.Id),
         ColumnHelper.CreateCamelColumn<Schema,string>(x => x.SchemaId),
-        ColumnHelper.CreateCamelColumn<Schema>(x => x.PublicationStatus, ColumnType.String),
-        ColumnHelper.CreateCamelColumn<Schema>(x => x.IsLatest, ColumnType.Int),
-        
+        ColumnHelper.CreateCamelColumn<Schema,Enum>(x => x.Type),
         ColumnHelper.CreateCamelColumn<Schema, string>(x => x.Name),
-        ColumnHelper.CreateCamelColumn<Schema>(x => x.Type, ColumnType.String),
+        ColumnHelper.CreateCamelColumn<Schema,Enum>(x => x.PublicationStatus),
+        ColumnHelper.CreateCamelColumn<Schema,bool>(x => x.IsLatest),
         ColumnHelper.CreateCamelColumn<Schema, string>(x => x.CreatedBy),
+        
         ColumnHelper.CreateCamelColumn<Schema>(x => x.Settings, ColumnType.Text),
 
-        DefaultAttributeNames.Deleted.CreateCamelColumn(ColumnType.Int),
-        DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.Datetime),
-        DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.Datetime),
+        DefaultAttributeNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
+        DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
+        DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
 
     ];  
     

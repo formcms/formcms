@@ -78,8 +78,8 @@ public sealed class QueryService(
         else
         {
             var fields = query.Selection.Where(x => x.IsLocal());
-            var kateQuery = query.Entity.ListQuery(
-                filters, sorts, pagination.PlusLimitOne(), validSpan,fields ,PublicationStatusHelper.GetDataStatus(args));
+            var status = PublicationStatusHelper.GetDataStatus(args);
+            var kateQuery = query.Entity.ListQuery( filters, sorts, pagination.PlusLimitOne(), validSpan, fields, status);
             items = await executor.Many(kateQuery, ct);
             items = span.ToPage(items, pagination.Limit);
             if (items.Length > 0)

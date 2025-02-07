@@ -1,7 +1,7 @@
 using System.Text.Json;
 using FormCMS.Utils.ResultExt;
 using FormCMS.CoreKit.ApiClient;
-using Humanizer;
+using FormCMS.Utils.EnumExt;
 
 namespace FormCMS.CoreKit.Test;
 
@@ -11,7 +11,7 @@ public class VariableTest(QueryApiClient client, string queryName)
     {
         var e = await $$"""
                         query {{queryName}}($id: Int){
-                           {{TestEntityNames.TestPost.ToString().Camelize()}}(idSet:[$id]){
+                           {{TestEntityNames.TestPost.Camelize()}}(idSet:[$id]){
                                id
                            }
                         }
@@ -23,7 +23,7 @@ public class VariableTest(QueryApiClient client, string queryName)
     {
         var e = await $$"""
                         query {{queryName}}($title: String){
-                           {{TestEntityNames.TestPost.ToString().Camelize()}}(title:{startsWith:$title}){
+                           {{TestEntityNames.TestPost.Camelize()}}(title:{startsWith:$title}){
                                id,title
                            }
                         }
@@ -35,7 +35,7 @@ public class VariableTest(QueryApiClient client, string queryName)
     {
         var e = await $$"""
                         query {{queryName}}($title: String){
-                           {{TestEntityNames.TestPost.ToString().Camelize()}}(filterExpr:{field:"title",clause:{equals:$title} }){
+                           {{TestEntityNames.TestPost.Camelize()}}(filterExpr:{field:"title",clause:{equals:$title} }){
                                id,title
                            }
                         }
@@ -46,7 +46,7 @@ public class VariableTest(QueryApiClient client, string queryName)
     {
         var e = await $$"""
                         query {{queryName}}($sort_field: TestpostSortEnum){
-                           {{TestEntityNames.TestPost.ToString().Camelize()}}List(sort:[$sort_field]){
+                           {{TestEntityNames.TestPost.Camelize()}}List(sort:[$sort_field]){
                                id,title
                            }
                         }
@@ -58,7 +58,7 @@ public class VariableTest(QueryApiClient client, string queryName)
     {
         var e = await $$"""
                         query {{queryName}}($sort_order: SortOrderEnum){
-                           {{TestEntityNames.TestPost.ToString().Camelize()}}List(sortExpr:{field:"id", order:$sort_order}){
+                           {{TestEntityNames.TestPost.Camelize()}}List(sortExpr:{field:"id", order:$sort_order}){
                                id,title
                            }
                         }
@@ -70,7 +70,7 @@ public class VariableTest(QueryApiClient client, string queryName)
     {
         var e = await $$"""
                         query {{queryName}}($offset: Int){
-                           {{TestEntityNames.TestPost.ToString().Camelize()}}List(offset:$offset,sort:id){
+                           {{TestEntityNames.TestPost.Camelize()}}List(offset:$offset,sort:id){
                                id,title
                            }
                         }

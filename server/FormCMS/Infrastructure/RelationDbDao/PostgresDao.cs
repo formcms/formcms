@@ -24,9 +24,11 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     {
         result = type switch
         {
-            ColumnType.String or ColumnType.Text  => new DatabaseTypeValue(s),
-            ColumnType.Int when int.TryParse(s, out var resultInt) => new DatabaseTypeValue(I: resultInt),
-            ColumnType.Datetime when DateTime.TryParse(s, out var resultDateTime) => new DatabaseTypeValue(D: resultDateTime),
+            ColumnType.String or ColumnType.Text => new DatabaseTypeValue(s),
+            ColumnType.Int or ColumnType.Id when int.TryParse(s, out var resultInt) => new DatabaseTypeValue(
+                I: resultInt),
+            ColumnType.Datetime or ColumnType.CreatedTime or ColumnType.UpdatedTime when DateTime.TryParse(s,
+                out var resultDateTime) => new DatabaseTypeValue(D: resultDateTime),
             _ => null
         };
         return result != null;
@@ -43,53 +45,39 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     public async Task CreateTable(string table, IEnumerable<Column> cols,CancellationToken ct)
     {
         var parts = new List<string>();
-        bool haveUpdatedAt = false;
+        var updateAtField = "";
+        
         foreach (var column in cols)
         {
-            if (column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize())
+            if (column.Type == ColumnType.UpdatedTime)
             {
-                haveUpdatedAt = true;
+                updateAtField = column.Name;
             }
 
-            var part = column switch
-            {
-                _ when column.Name == DefaultColumnNames.Id.ToString().Camelize() => $"""
-                     "{DefaultColumnNames.Id.ToString().Camelize()}" SERIAL PRIMARY KEY
-                     """,
-                _ when column.Name == DefaultColumnNames.Deleted.ToString().Camelize() => $"""
-                     "{DefaultColumnNames.Deleted.ToString().Camelize()}" BOOLEAN DEFAULT FALSE
-                     """,
-                _ when column.Name == DefaultColumnNames.CreatedAt.ToString().Camelize() => $"""
-                     "{DefaultColumnNames.CreatedAt.ToString().Camelize()}"  TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                     """,
-                _ when column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize() => $"""
-                     "{DefaultColumnNames.UpdatedAt.ToString().Camelize()}" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-                     """,
-                _ => $"""
-                      "{column.Name}" {ColTypeToString(column.Type)}
-                      """
-            };
-            parts.Add(part);
+            //double quota " is necessary, otherwise postgres will change the field name to lowercase
+            parts.Add($"""
+                       "{column.Name}" {ColTypeToString(column.Type)}
+                       """);
         }
         var sql = $"""
-            CREATE TABLE {table} ({string.Join(", ", parts)});
+            CREATE TABLE "{table}" ({string.Join(", ", parts)});
         """;
         
-        if (haveUpdatedAt)
+        if (updateAtField != "")
         {
             sql += $"""
-                    CREATE OR REPLACE FUNCTION __update_updatedAt_column()
+                    CREATE OR REPLACE FUNCTION __update_{updateAtField}_column()
                         RETURNS TRIGGER AS $$
                     BEGIN
-                        NEW."{DefaultColumnNames.UpdatedAt.ToString().Camelize()}" = NOW();
+                        NEW."{updateAtField}" = NOW();
                         RETURN NEW;
                     END;
                     $$ LANGUAGE plpgsql;
 
-                    CREATE TRIGGER update_{table}_updatedAt 
-                                    BEFORE UPDATE ON {table} 
+                    CREATE TRIGGER update_{table}_{updateAtField} 
+                                    BEFORE UPDATE ON "{table}"
                                     FOR EACH ROW
-                    EXECUTE FUNCTION __update_updatedAt_column();
+                    EXECUTE FUNCTION __update_{updateAtField}_column();
                     """;
         }
         await ExecuteQuery(sql, cmd => cmd.ExecuteNonQueryAsync(ct));
@@ -98,7 +86,9 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct)
     {
         var parts = cols.Select(x =>
-            $"Alter Table {table} ADD COLUMN \"{x.Name}\" {ColTypeToString(x.Type)}"
+            $"""
+                Alter Table "{table}" ADD COLUMN "{x.Name}" {ColTypeToString(x.Type)}
+            """
         );
         var sql = string.Join(";", parts.ToArray());
         await ExecuteQuery(sql, cmd => cmd.ExecuteNonQueryAsync(ct));
@@ -115,7 +105,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                                 WHERE constraint_name = 'fk_{table}_{col}'
                                 AND table_name = '{table}'
                             ) THEN
-                               ALTER TABLE {table} ADD CONSTRAINT fk_{table}_{col} FOREIGN KEY ("{col}") REFERENCES {refTable} ("{refCol}");
+                               ALTER TABLE "{table}" ADD CONSTRAINT "fk_{table}_{col}" FOREIGN KEY ("{col}") REFERENCES "{refTable}" ("{refCol}");
                            END IF;
                         END 
                    $$
@@ -147,10 +137,15 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     {
         return t switch
         {
+            ColumnType.Id => "SERIAL PRIMARY KEY",
             ColumnType.Int => "INTEGER",
+            ColumnType.Boolean => "BOOLEAN DEFAULT FALSE",
+            
             ColumnType.Text => "TEXT",
-            ColumnType.Datetime => "TIMESTAMP",
             ColumnType.String => "varchar(255)",
+            
+            ColumnType.Datetime => "TIMESTAMP",
+            ColumnType.CreatedTime or ColumnType.UpdatedTime=> "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
             _ => throw new NotSupportedException($"Type {t} is not supported")
         };
     }
@@ -167,7 +162,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         };
     }
 
-    //use callback  instead of return QueryFactory to ensure proper disposing connection
+    //use callback instead of return QueryFactory to ensure proper disposing connection
     private async Task<T> ExecuteQuery<T>(string sql, Func<NpgsqlCommand, Task<T>> executeFunc, params (string, object)[] parameters)
     {
         logger.LogInformation(sql);

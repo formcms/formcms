@@ -1,7 +1,7 @@
 using System.Text.Json;
 using FormCMS.Utils.ResultExt;
 using FormCMS.CoreKit.ApiClient;
-using Humanizer;
+using FormCMS.Utils.EnumExt;
 
 namespace FormCMS.CoreKit.Test;
 
@@ -12,7 +12,7 @@ public class RealtimeQueryTest(QueryApiClient client, string queryName)
     {
         var item = await $$"""
                            query {{queryName}}{
-                              {{TestEntityNames.TestPost.ToString().Camelize()}}{id}
+                              {{TestEntityNames.TestPost.Camelize()}}{id}
                            }
                            """.GraphQlQuery<JsonElement>(client).Ok();
         SimpleAssert.IsTrue(item.HasId());
@@ -22,7 +22,7 @@ public class RealtimeQueryTest(QueryApiClient client, string queryName)
     {
         var items = await $$"""
                             query {{queryName}}{
-                              {{TestEntityNames.TestPost.ToString().Camelize()}}List{
+                              {{TestEntityNames.TestPost.Camelize()}}List{
                                   id
                                   title
                                   abstract
@@ -58,7 +58,7 @@ public class RealtimeQueryTest(QueryApiClient client, string queryName)
     {
         var items = await $$"""
                           query {{queryName}}{
-                           {{TestEntityNames.TestPost.ToString().Camelize()}}List(offset:2, limit:3){
+                           {{TestEntityNames.TestPost.Camelize()}}List(offset:2, limit:3){
                                 id
                             }
                           }

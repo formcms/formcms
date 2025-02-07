@@ -12,13 +12,6 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
     private readonly Compiler _compiler = new SqlServerCompiler();
     private TransactionManager? _transaction;
 
-    public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
-    {
-        var db = new QueryFactory(connection, _compiler);
-        db.Logger = result => logger.LogInformation(result.ToString());
-        return await queryFunc(db,_transaction?.Transaction());
-    }
-
     public async ValueTask<TransactionManager> BeginTransaction()
     {
         var ret = new TransactionManager(await connection.BeginTransactionAsync());
@@ -39,48 +32,40 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
         return result != null;
     }
 
+    public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
+    {
+        var db = new QueryFactory(connection, _compiler);
+        db.Logger = result => logger.LogInformation(result.ToString());
+        return await queryFunc(db, _transaction?.Transaction());
+    }
+
     public async Task CreateTable(string table, IEnumerable<Column> cols,  CancellationToken ct)
     {
         var parts = new List<string>();
-        bool haveUpdatedAt = false;
+        var updateAtField = "";
         foreach (var column in cols)
         {
-            if (column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize())
+            if (column.Type ==  ColumnType.UpdatedTime)
             {
-                haveUpdatedAt = true;
+                updateAtField = column.Name;
             }
-
-            var part = column switch
-            {
-                _ when column.Name == DefaultColumnNames.Id.ToString().Camelize() =>
-                    $"[{DefaultColumnNames.Id.ToString().Camelize()}] INT IDENTITY(1,1) PRIMARY KEY",
-                _ when column.Name == DefaultColumnNames.Deleted.ToString().Camelize() =>
-                    $"[{DefaultColumnNames.Deleted.ToString().Camelize()}] BIT DEFAULT 0",
-
-                _ when column.Name == DefaultColumnNames.CreatedAt.ToString().Camelize() =>
-                    $"[{DefaultColumnNames.CreatedAt.ToString().Camelize()}] DATETIME DEFAULT GETDATE()",
-                _ when column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize() =>
-                    $"[{DefaultColumnNames.UpdatedAt.ToString().Camelize()}] DATETIME DEFAULT GETDATE()",
-
-                _ => $"[{column.Name}] {DataTypeToString(column.Type)}"
-            };
-            parts.Add(part);
+            parts.Add($"[{column.Name}] {ColumnTypeToString(column.Type)}");
         }
 
         var sql = $"CREATE TABLE [{table}] ({string.Join(", ", parts)});";
         
         await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
-        if (haveUpdatedAt)
+        if (updateAtField != "")
         {
             sql = $"""
-                   CREATE TRIGGER trg_{table}_updatedAt 
+                   CREATE TRIGGER trg_{table}_{updateAtField} 
                    ON [{table}] 
                    AFTER UPDATE
                    AS 
                    BEGIN
                        SET NOCOUNT ON;
                        UPDATE [{table}]
-                       SET [{DefaultColumnNames.UpdatedAt.ToString().Camelize()}] = GETDATE()
+                       SET [{updateAtField}] = GETDATE()
                        FROM inserted i
                        WHERE [{table}].[id] = i.[id];
                    END;
@@ -93,7 +78,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
     public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct)
     {
         var parts = cols.Select(x =>
-            $"ALTER TABLE [{table}] ADD [{x.Name}] {DataTypeToString(x.Type)}"
+            $"ALTER TABLE [{table}] ADD [{x.Name}] {ColumnTypeToString(x.Type)}"
         );
         var sql = string.Join(";", parts);
         await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
@@ -135,13 +120,18 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
         }, ("tableName", table));
     }
 
-    private static string DataTypeToString(ColumnType dataType)
+    private static string ColumnTypeToString(ColumnType dataType)
         => dataType switch
         {
+            ColumnType.Id => "INT IDENTITY(1,1) PRIMARY KEY",
             ColumnType.Int => "INT",
+            ColumnType.Boolean => "BIT DEFAULT 0",
+
             ColumnType.Text => "TEXT",
-            ColumnType.Datetime => "DATETIME",
             ColumnType.String => "NVARCHAR(255)",
+
+            ColumnType.Datetime => "DATETIME",
+            ColumnType.CreatedTime or ColumnType.UpdatedTime=> "DATETIME DEFAULT GETDATE()",
             _ => throw new NotSupportedException($"Type {dataType} is not supported")
         };
 

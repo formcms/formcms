@@ -2,6 +2,7 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FluentResults;
+using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.jsonElementExt;
 using Humanizer;
 using Microsoft.IdentityModel.Tokens;
@@ -25,7 +26,7 @@ public static class RecordExtensions
         out DateTime e)
     {
         e = default;
-        if (!record.TryGetValue(field.ToString().Camelize(), out var o) || o is not string s)
+        if (!record.TryGetValue(field.Camelize(), out var o) || o is not string s)
         {
             return false;
         }
@@ -40,7 +41,7 @@ public static class RecordExtensions
         where TEnum : struct
     {
         e = default;
-        if (!record.TryGetValue(field.ToString().Camelize(), out var o) || o is not string s)
+        if (!record.TryGetValue(field.Camelize(), out var o) || o is not string s)
         {
             return false;
         }
@@ -49,16 +50,16 @@ public static class RecordExtensions
     }
 
     public static bool RemoveCamelKey(this Record r, Enum field, out object? val)
-        => r.Remove(field.ToString().Camelize(), out val);
+        => r.Remove(field.Camelize(), out val);
     
     public static void SetCamelKeyCamelValue(this Record record, Enum field, Enum value)
     {
-        record[field.ToString().Camelize()]= value.ToString().Camelize();
+        record[field.Camelize()]= value.Camelize();
     }
 
     public static void SetCamelKey(this Record record, Enum field, object value)
     {
-        record[field.ToString().Camelize()] = value;
+        record[field.Camelize()] = value;
     }
 
     public static string StrOrEmpty(this Record r, string field)
@@ -117,7 +118,7 @@ public static class RecordExtensions
             dict[property.Name.Camelize()] = value switch
             {
                 null => null!,
-                Enum valueEnum => valueEnum.ToString().Camelize(),
+                Enum valueEnum => valueEnum.Camelize(),
                 _ when typeof(Record).IsAssignableFrom(property.PropertyType) || 
                        property.PropertyType.IsClass && property.PropertyType != typeof(string)
                     => JsonSerializer.Serialize(value, JsonSerializerOptions),

@@ -3,7 +3,7 @@ using FormCMS.Utils.HttpClientExt;
 using FluentResults;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.DisplayModels;
-using Humanizer;
+using FormCMS.Utils.EnumExt;
 
 namespace FormCMS.CoreKit.ApiClient;
 
@@ -53,8 +53,8 @@ public class EntityApiClient(HttpClient client)
         string entity, int id, string field, string val, string updatedAt
     ) => Update(entity, new Dictionary<string,object>
     {
-        { DefaultAttributeNames.Id.ToString().Camelize(), id },
-        { DefaultAttributeNames.UpdatedAt.ToString().Camelize(),  updatedAt},
+        { DefaultAttributeNames.Id.Camelize(), id },
+        { DefaultAttributeNames.UpdatedAt.Camelize(),  updatedAt},
         { field, val },
         
     });

@@ -9,5 +9,4 @@ public enum DefaultAttributeNames
     UpdatedAt ,
     PublishedAt,
     PublicationStatus,
-    PreviewToken
 }

@@ -3,7 +3,7 @@ using FormCMS.Core.Descriptors;
 using FormCMS.CoreKit.Test;
 using FormCMS.Cms.Builders;
 using FormCMS.Utils.DataModels;
-using Humanizer;
+using FormCMS.Utils.EnumExt;
 
 namespace FormCMS.App;
 
@@ -43,7 +43,7 @@ public static class WebApp
         {
             using var scope = app.Services.CreateScope();
             var entitySchemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
-            var post = await entitySchemaService.LoadEntity("post");
+            var post = await entitySchemaService.LoadEntity("post",null);
             if (post.IsFailed)
             {
                 await BlogsTestData.EnsureBlogEntities(x => entitySchemaService.SaveTableDefine(x));
@@ -118,7 +118,7 @@ public static class WebApp
             }
             """
         );
-        await service.SaveQuery(query);
+        await service.SaveQuery(query,null);
     }
 
     private static async Task AddData(this WebApplication app)
@@ -129,7 +129,7 @@ public static class WebApp
         {
             await BlogsTestData.PopulateData(i * 100 + 1, 100, async data =>
             {
-                await service.BatchInsert(data.TableName.ToString().Camelize(), data.Records);
+                await service.BatchInsert(data.TableName.Camelize(), data.Records);
             }, async data =>
             {
                 var objs = data.TargetIds.Select(x => new Dictionary<string, object>

@@ -1,9 +1,8 @@
 using System.Collections.Immutable;
-using System.Globalization;
 using System.Text.Json;
 using FluentResults;
 using FormCMS.Utils.DisplayModels;
-using Humanizer;
+using FormCMS.Utils.EnumExt;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -101,7 +100,7 @@ public static class AttributeHelper
 {
 
     public static LoadedAttribute CreateLoadedAttribute(this Enum enumValue, string tableName, DataType dataType , DisplayType displayType )
-        => new (tableName, enumValue.ToString().Camelize(), DataType:dataType,DisplayType: displayType);
+        => new (tableName, enumValue.Camelize(), DataType:dataType,DisplayType: displayType);
     
     public static Result<EntityLinkDesc> GetEntityLinkDesc(
         this LoadedAttribute attribute
@@ -192,11 +191,11 @@ public static class AttributeHelper
     public static Attribute[] WithDefaultAttr(this Attribute[] attributes)
     {
         var ret = new List<Attribute>();
-        if (attributes.FirstOrDefault(x=>x.Field ==DefaultAttributeNames.Id.ToString().Camelize()) is null)
+        if (attributes.FirstOrDefault(x=>x.Field ==DefaultAttributeNames.Id.Camelize()) is null)
         {
             ret.Add(new Attribute
             ( 
-                Field : DefaultAttributeNames.Id.ToString().Camelize(), Header : "id",
+                Field : DefaultAttributeNames.Id.Camelize(), Header : "id",
                 IsDefault : true, InDetail:true, InList:true,
                 DataType : DataType.Int, 
                 DisplayType : DisplayType.Number
@@ -205,28 +204,28 @@ public static class AttributeHelper
 
         ret.AddRange(attributes);
         
-        if (attributes.FirstOrDefault(x => x.Field == DefaultAttributeNames.PublicationStatus.ToString().Camelize()) is null)
+        if (attributes.FirstOrDefault(x => x.Field == DefaultAttributeNames.PublicationStatus.Camelize()) is null)
         {
             ret.Add(new Attribute
             (
-                Field: DefaultAttributeNames.PublicationStatus.ToString().Camelize(), Header: "Publication Status",
+                Field: DefaultAttributeNames.PublicationStatus.Camelize(), Header: "Publication Status",
                 IsDefault: true, InDetail: true, InList: true,
                 DataType: DataType.String,
                 DisplayType: DisplayType.Dropdown,
                 Options: string.Join(",", new []
                 {
-                    PublicationStatus.Draft.ToString().Camelize(), 
-                    PublicationStatus.Published.ToString().Camelize(),
-                    PublicationStatus.Scheduled.ToString().Camelize()
+                    PublicationStatus.Draft.Camelize(), 
+                    PublicationStatus.Published.Camelize(),
+                    PublicationStatus.Scheduled.Camelize()
                 })
             ));
         }
 
         string[] timeAttrs =
         [
-            DefaultAttributeNames.CreatedAt.ToString().Camelize(), 
-            DefaultAttributeNames.UpdatedAt.ToString().Camelize(),
-            DefaultAttributeNames.PublishedAt.ToString().Camelize()
+            DefaultAttributeNames.CreatedAt.Camelize(), 
+            DefaultAttributeNames.UpdatedAt.Camelize(),
+            DefaultAttributeNames.PublishedAt.Camelize()
         ];
 
         ret.AddRange(from attr in timeAttrs

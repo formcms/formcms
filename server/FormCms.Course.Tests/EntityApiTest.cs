@@ -3,9 +3,9 @@ using FormCMS.Auth.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.jsonElementExt;
 using FormCMS.Utils.ResultExt;
-using Humanizer;
 using IdGen;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
@@ -26,7 +26,7 @@ public class EntityApiTest
 
     public EntityApiTest()
     {
-        // Util.SetTestConnectionString();
+        Util.SetTestConnectionString();
 
         WebAppClient<Program> webAppClient = new();
         _entityApiClient = new EntityApiClient(webAppClient.GetHttpClient());
@@ -40,45 +40,45 @@ public class EntityApiTest
         await _schemaApiClient.EnsureSimpleEntity(_post, Name, true).Ok();
         await _entityApiClient.Insert(_post, Name, "name1").Ok();
         var ele = await _entityApiClient.Single(_post, 1).Ok();
-        Assert.Equal(PublicationStatus.Draft.ToString().Camelize(), ele.GetProperty(DefaultAttributeNames.PublicationStatus.ToString().Camelize()).GetString());
+        Assert.Equal(PublicationStatus.Draft.Camelize(), ele.GetProperty(DefaultAttributeNames.PublicationStatus.Camelize()).GetString());
 
         //publish
         var payload = new Dictionary<string, object>
         {
-            { DefaultAttributeNames.Id.ToString().Camelize(), 1 },
-            { DefaultAttributeNames.PublicationStatus.ToString().Camelize(), PublicationStatus.Published.ToString().Camelize() },
-            { DefaultAttributeNames.PublishedAt.ToString().Camelize(), new DateTime(2025, 1, 1) }
+            { DefaultAttributeNames.Id.Camelize(), 1 },
+            { DefaultAttributeNames.PublicationStatus.Camelize(), PublicationStatus.Published.Camelize() },
+            { DefaultAttributeNames.PublishedAt.Camelize(), new DateTime(2025, 1, 1) }
         };
         await _entityApiClient.SavePublicationSettings(_post,payload).Ok();
         ele = await _entityApiClient.Single(_post, 1).Ok();
-        Assert.Equal(PublicationStatus.Published.ToString().Camelize(), ele.GetProperty(DefaultAttributeNames.PublicationStatus.ToString().Camelize()).GetString());
+        Assert.Equal(PublicationStatus.Published.Camelize(), ele.GetProperty(DefaultAttributeNames.PublicationStatus.Camelize()).GetString());
 
         //unpublish
         payload = new Dictionary<string, object>
         {
-            { DefaultAttributeNames.Id.ToString().Camelize(), 1 },
-            { DefaultAttributeNames.PublicationStatus.ToString().Camelize(), PublicationStatus.Unpublished.ToString().Camelize() },
+            { DefaultAttributeNames.Id.Camelize(), 1 },
+            { DefaultAttributeNames.PublicationStatus.Camelize(), PublicationStatus.Unpublished.Camelize() },
         };
         await _entityApiClient.SavePublicationSettings(_post,payload).Ok();
         ele = await _entityApiClient.Single(_post, 1).Ok();
         Assert.Equal(
-            PublicationStatus.Unpublished.ToString().Camelize(), 
-            ele.GetProperty(DefaultAttributeNames.PublicationStatus.ToString().Camelize()).GetString());
+            PublicationStatus.Unpublished.Camelize(), 
+            ele.GetProperty(DefaultAttributeNames.PublicationStatus.Camelize()).GetString());
 
         //scheduled
         payload = new Dictionary<string,object>
         {
-            { DefaultAttributeNames.Id.ToString().Camelize(), 1 },
-            { DefaultAttributeNames.PublicationStatus.ToString().Camelize(), PublicationStatus.Scheduled.ToString().Camelize()},
-            { DefaultAttributeNames.PublishedAt.ToString().Camelize(), new DateTime(2025,1,1)}
+            { DefaultAttributeNames.Id.Camelize(), 1 },
+            { DefaultAttributeNames.PublicationStatus.Camelize(), PublicationStatus.Scheduled.Camelize()},
+            { DefaultAttributeNames.PublishedAt.Camelize(), new DateTime(2025,1,1)}
         };
         
         await _entityApiClient.SavePublicationSettings(_post,payload).Ok();
         ele = await _entityApiClient.Single(_post, 1).Ok();
         
-        Assert.Equal(PublicationStatus.Scheduled.ToString().Camelize(), ele.GetProperty(DefaultAttributeNames.PublicationStatus.ToString().Camelize()).GetString());
+        Assert.Equal(PublicationStatus.Scheduled.Camelize(), ele.GetProperty(DefaultAttributeNames.PublicationStatus.Camelize()).GetString());
         Assert.True(
-            ele.TryGetProperty(DefaultAttributeNames.PublishedAt.ToString().Camelize(), out var publishEle) 
+            ele.TryGetProperty(DefaultAttributeNames.PublishedAt.Camelize(), out var publishEle) 
             && DateTime.TryParse(publishEle.GetString(), out var publishedAt)
             && publishedAt.Equals(new DateTime(2025,1,1))
         );
@@ -188,12 +188,12 @@ public class EntityApiTest
 
         //make sure get the latest data
         var item = await _entityApiClient.Single(_post, 1).Ok();
-        var updatedAt = item.GetProperty(DefaultAttributeNames.UpdatedAt.ToString().Camelize()).GetString()!;
+        var updatedAt = item.GetProperty(DefaultAttributeNames.UpdatedAt.Camelize()).GetString()!;
 
-        System.Threading.Thread.Sleep(TimeSpan.FromSeconds(1));
+        Thread.Sleep(TimeSpan.FromSeconds(1));
         await _entityApiClient.Update(_post, 1, Name, "post2", updatedAt).Ok();
         var newItem = await _entityApiClient.Single(_post, 1).Ok();
-        Assert.True(newItem.GetProperty(DefaultAttributeNames.UpdatedAt.ToString().Camelize()).GetString() != updatedAt);
+        Assert.True(newItem.GetProperty(DefaultAttributeNames.UpdatedAt.Camelize()).GetString() != updatedAt);
 
         //now updatedAt has changed, any dirty writing should fail
         var res = await _entityApiClient.Delete(_post, item);
@@ -229,7 +229,7 @@ public class EntityApiTest
         Assert.Equal(1, element);
         
         item = await _entityApiClient.Single(_post, 1).Ok();
-        var updatedAt = item.GetProperty(DefaultAttributeNames.UpdatedAt.ToString().Camelize()).GetString()!;
+        var updatedAt = item.GetProperty(DefaultAttributeNames.UpdatedAt.Camelize()).GetString()!;
 
         await _entityApiClient.Update(_post, 1, Name, "post2", updatedAt).Ok();
 

@@ -1,7 +1,7 @@
 using System.Text.Json;
 using FormCMS.Utils.ResultExt;
 using FormCMS.CoreKit.ApiClient;
-using Humanizer;
+using FormCMS.Utils.EnumExt;
 
 namespace FormCMS.CoreKit.Test;
 
@@ -11,14 +11,14 @@ public class SortTest(QueryApiClient client, string queryName)
     {
         var items = await $$"""
                             query {{queryName}}{
-                                {{TestEntityNames.TestPost.ToString().Camelize()}}List(sort:idDesc){id}
+                                {{TestEntityNames.TestPost.Camelize()}}List(sort:idDesc){id}
                             }
                             """.GraphQlQuery<JsonElement[]>(client).Ok();
         SimpleAssert.IsTrue(items[0].Id() > items[1].Id(), "Test descending Fail");
 
         items = await $$"""
                         query {{queryName}}{
-                            {{TestEntityNames.TestPost.ToString().Camelize()}}List(sort:id){id}
+                            {{TestEntityNames.TestPost.Camelize()}}List(sort:id){id}
                         }
                         """.GraphQlQuery<JsonElement[]>(client).Ok();
         SimpleAssert.IsTrue(items[0].Id() < items[1].Id(), "Test ascending Fail");
@@ -30,7 +30,7 @@ public class SortTest(QueryApiClient client, string queryName)
     {
         var items = await $$"""
                             query {{queryName}}{
-                              {{TestEntityNames.TestPost.ToString().Camelize()}}List(
+                              {{TestEntityNames.TestPost.Camelize()}}List(
                                 sortExpr:[
                                   {
                                     field:"id",order:Desc

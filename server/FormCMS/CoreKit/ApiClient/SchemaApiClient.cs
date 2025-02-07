@@ -3,6 +3,7 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Utils.HttpClientExt;
 using FluentResults;
 using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.EnumExt;
 using Humanizer;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
@@ -10,7 +11,7 @@ namespace FormCMS.CoreKit.ApiClient;
 
 public class SchemaApiClient (HttpClient client)
 {
-    public Task<Result<Schema[]>> All(SchemaType? type) => client.GetResult<Schema[]>($"/?type={type?.ToString().Camelize()}".ToSchemaApi());
+    public Task<Result<Schema[]>> All(SchemaType? type) => client.GetResult<Schema[]>($"/?type={type?.Camelize()}".ToSchemaApi());
 
     public Task<Result> Save(Schema schema) => client.PostResult("/".ToSchemaApi(), schema);
 
@@ -105,7 +106,7 @@ public class SchemaApiClient (HttpClient client)
     public Task<Result<Schema>> EnsureEntity(string entityName, string labelAttribute, bool needPublish,params Attribute[] attributes)
     {
         var entity = new Entity(
-            PrimaryKey: DefaultAttributeNames.Id.ToString().Camelize(),
+            PrimaryKey: DefaultAttributeNames.Id.Camelize(),
             Attributes:[..attributes],
             Name: entityName,
             TableName: entityName,

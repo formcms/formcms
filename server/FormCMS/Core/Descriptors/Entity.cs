@@ -7,10 +7,10 @@ using FormCMS.CoreKit.RelationDbQuery;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
 using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.KateQueryExt;
 using FormCMS.Utils.RecordExt;
 using GraphQL.Client.Abstractions.Utilities;
-using Humanizer;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -58,10 +58,10 @@ public static class EntityHelper
         var attributes = entity.Attributes.Select(x => x.ToLoaded(entity.TableName)).ToArray();
         var primaryKey = attributes.First(x=>x.Field == entity.PrimaryKey);
         var labelAttribute = attributes.First(x => x.Field == entity.LabelAttributeName);
-        var publicationStatusAttribute  = attributes.First(x=>x.Field == DefaultAttributeNames.PublicationStatus.ToString().Camelize());
+        var publicationStatusAttribute  = attributes.First(x=>x.Field == DefaultAttributeNames.PublicationStatus.Camelize());
         
         var deletedAttribute = DefaultAttributeNames.Deleted.CreateLoadedAttribute(entity.TableName, DataType.Int, DisplayType.Number);
-        var updatedAtAttribute =  attributes.First(x=>x.Field == DefaultAttributeNames.UpdatedAt.ToString().Camelize());
+        var updatedAtAttribute =  attributes.First(x=>x.Field == DefaultAttributeNames.UpdatedAt.Camelize());
         
         return new LoadedEntity(
             [..attributes],

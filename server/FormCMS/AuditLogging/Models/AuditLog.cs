@@ -50,14 +50,14 @@ public static class AuditLogHelper
         ]);
 
     public static readonly Column[] Columns =  [
-        ColumnHelper.CreateCamelColumn<AuditLog,int>(x=>x.Id),
+        ColumnHelper.CreateCamelColumn<AuditLog>(x=>x.Id,ColumnType.Id),
         ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.RecordId),
         ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.RecordLabel),
         ColumnHelper.CreateCamelColumn<AuditLog>(x=>x.Action,ColumnType.String),
         ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.EntityName),
         ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.UserName),
         ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.UserId),
-        ColumnHelper.CreateCamelColumn<AuditLog,DateTime>(x=>x.CreatedAt),
+        ColumnHelper.CreateCamelColumn<AuditLog>(x=>x.CreatedAt,ColumnType.CreatedTime),
         ColumnHelper.CreateCamelColumn<AuditLog>(x=>x.Payload,ColumnType.Text),
     ];
 

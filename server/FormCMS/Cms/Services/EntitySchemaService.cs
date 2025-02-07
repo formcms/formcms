@@ -7,6 +7,7 @@ using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
 using Descriptors_Attribute = FormCMS.Core.Descriptors.Attribute;
 
@@ -71,15 +72,7 @@ public sealed class EntitySchemaService(
         DataType.Collection => await LoadCollection(entity, attr,status,ct),
         _ => attr
     };
-    private ColumnType DataTypeToColumnType(DataType t)
-        => t switch
-        {
-            DataType.Int => ColumnType.Int,
-            DataType.String => ColumnType.String,
-            DataType.Text => ColumnType.Text,
-            DataType.Datetime => ColumnType.Datetime,
-            _ => throw new ArgumentOutOfRangeException()
-        };
+
    
     private DataType ColumnTypeToDataType(ColumnType columnType)
         => columnType switch
@@ -163,8 +156,16 @@ public sealed class EntitySchemaService(
     public bool ResolveVal(LoadedAttribute attr, string v, out ValidValue? result)
     {
         var dataType = attr.DataType == DataType.Lookup ? attr.Lookup!.TargetEntity.PrimaryKeyAttribute.DataType : attr.DataType;
+        var colType = dataType switch
+        {
+            DataType.Int => ColumnType.Int,
+            DataType.String => ColumnType.String,
+            DataType.Datetime => ColumnType.Datetime,
+            DataType.Text => ColumnType.Text,
+            _ => throw new ArgumentOutOfRangeException()
+        };
         
-        result = dao.TryResolveDatabaseValue(v, DataTypeToColumnType(dataType), out var val) switch
+        result = dao.TryResolveDatabaseValue(v, colType, out var val) switch
         {
             true => new ValidValue(S: val!.S, I: val.I, D: val.D),
             _ => null
@@ -247,7 +248,7 @@ public sealed class EntitySchemaService(
         else
         {
             var newColumns = await ToColumns(entity.Attributes.Where(x=>x.IsLocal()));
-            await dao.CreateTable(entity.TableName, newColumns.EnsureColumn(DefaultAttributeNames.Deleted), ct);
+            await dao.CreateTable(entity.TableName, newColumns.EnsureColumn(DefaultAttributeNames.Deleted,ColumnType.Boolean), ct);
         }
     }
 
@@ -277,7 +278,7 @@ public sealed class EntitySchemaService(
             if (columns.Length == 0)
             {
                 var cols = await ToColumns(junction.JunctionEntity.Attributes);
-                await dao.CreateTable(junction.JunctionEntity.TableName, cols.EnsureColumn(DefaultAttributeNames.Deleted), ct);
+                await dao.CreateTable(junction.JunctionEntity.TableName, cols.EnsureColumn(DefaultAttributeNames.Deleted,ColumnType.Boolean), ct);
                 await dao.CreateForeignKey(
                     table: junction.JunctionEntity.TableName,
                     col: junction.SourceAttribute.Field,
@@ -434,12 +435,36 @@ public sealed class EntitySchemaService(
         {
             var dataType = attribute.DataType switch
             {
-                DataType.Junction or DataType.Collection=> throw new Exception("Junction/Collection don't need to map to database"),
-                DataType.Lookup => (await GetLookupEntity(attribute,null)
-                    .Map(x => x.Attributes.FirstOrDefault(a=>a.Field == x.PrimaryKey)!.DataType)).Ok(),
+                DataType.Junction or DataType.Collection => throw new Exception(
+                    "Junction/Collection don't need to map to database"),
+                DataType.Lookup => (await GetLookupEntity(attribute, null)
+                    .Map(x => x.Attributes.FirstOrDefault(a => a.Field == x.PrimaryKey)!.DataType)).Ok(),
                 _ => attribute.DataType
             };
-            return new Column(attribute.Field, DataTypeToColumnType(dataType));
+
+            var colType = dataType switch
+            {
+                DataType.Int => IntColType(),
+                DataType.String => ColumnType.String,
+                DataType.Text => ColumnType.Text,
+                DataType.Datetime => DatetimeColType(),
+                _ => throw new ArgumentOutOfRangeException()
+            };
+            
+            return new Column(attribute.Field, colType);
+
+            ColumnType IntColType() => attribute switch
+            {
+                _ when DefaultAttributeNames.Id.EqualsStr(attribute.Field) => ColumnType.Id,
+                _ => ColumnType.Int
+            };
+            
+            ColumnType DatetimeColType() => attribute.Field switch
+            {
+                _ when DefaultAttributeNames.CreatedAt.EqualsStr(attribute.Field) => ColumnType.CreatedTime,
+                _ when DefaultAttributeNames.UpdatedAt.EqualsStr(attribute.Field) => ColumnType.UpdatedTime,
+                _ => ColumnType.Datetime
+            };
         }
     }
 }

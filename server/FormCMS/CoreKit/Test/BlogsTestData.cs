@@ -2,8 +2,8 @@ using FormCMS.Utils.ResultExt;
 using FormCMS.Core.Descriptors;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
-using Humanizer;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.CoreKit.Test;
@@ -48,7 +48,7 @@ public record JunctionData(string EntityName,  string Attribute,string JunctionT
 /// a set of blog entities to test queries
 public static class BlogsTestData
 {
-    private static Attribute CreateAttr(this TestFieldNames fieldName) => new Attribute(fieldName.ToString().Camelize(), fieldName.ToString().Camelize());
+    private static Attribute CreateAttr(this TestFieldNames fieldName) => new Attribute(fieldName.Camelize(), fieldName.Camelize());
     public static async Task EnsureBlogEntities(SchemaApiClient client)
     {
         await EnsureBlogEntities(x => client.EnsureEntity(x).Ok());
@@ -67,7 +67,7 @@ public static class BlogsTestData
         {
             foreach (var dataRecord in data.Records)
             {
-                await client.Insert(data.EntityName.ToString().Camelize(), dataRecord).Ok();
+                await client.Insert(data.EntityName.Camelize(), dataRecord).Ok();
             }
         }, async data =>
         {
@@ -99,7 +99,7 @@ public static class BlogsTestData
             categories.Add(GetObject([TestFieldNames.Name, TestFieldNames.Description, TestFieldNames.Image], i));
             
             var post = GetObject([TestFieldNames.Title, TestFieldNames.Abstract, TestFieldNames.Body, TestFieldNames.Image], i);
-            post[TestFieldNames.Category.ToString().Camelize()] = i;
+            post[TestFieldNames.Category.Camelize()] = i;
             posts.Add(post);
             
             var attachment = GetObject([TestFieldNames.Name, TestFieldNames.Description, TestFieldNames.Image], i);
@@ -114,21 +114,21 @@ public static class BlogsTestData
         await insertEntity(new EntityData(TestEntityNames.TestAttachment, TestTableNames.TestAttachments, attachments.ToArray()));
 
         await insertJunction(new JunctionData(
-                TestEntityNames.TestPost.ToString().Camelize(),
-                TestFieldNames.Tags.ToString().Camelize(),
-                $"{TestEntityNames.TestPost.ToString().Camelize()}_{TestEntityNames.TestTag.ToString().Camelize()}",
-                $"{TestEntityNames.TestPost.ToString().Camelize()}Id",
-                $"{TestEntityNames.TestTag.ToString().Camelize()}Id",
+                TestEntityNames.TestPost.Camelize(),
+                TestFieldNames.Tags.Camelize(),
+                $"{TestEntityNames.TestPost.Camelize()}_{TestEntityNames.TestTag.Camelize()}",
+                $"{TestEntityNames.TestPost.Camelize()}Id",
+                $"{TestEntityNames.TestTag.Camelize()}Id",
                 startId,
                 tagsIds.ToArray()
             )
         );
         await insertJunction(new JunctionData(
-                TestEntityNames.TestPost.ToString().Camelize(),
-                TestFieldNames.Authors.ToString().Camelize(),
-                $"{TestEntityNames.TestAuthor.ToString().Camelize()}_{TestEntityNames.TestPost.ToString().Camelize()}",
-                $"{TestEntityNames.TestPost.ToString().Camelize()}Id",
-                $"{TestEntityNames.TestAuthor.ToString().Camelize()}Id",
+                TestEntityNames.TestPost.Camelize(),
+                TestFieldNames.Authors.Camelize(),
+                $"{TestEntityNames.TestAuthor.Camelize()}_{TestEntityNames.TestPost.Camelize()}",
+                $"{TestEntityNames.TestPost.Camelize()}Id",
+                $"{TestEntityNames.TestAuthor.Camelize()}Id",
                 startId,
                 authorsIds.ToArray()
             )
@@ -140,7 +140,7 @@ public static class BlogsTestData
         var returnValue = new Dictionary<string, object>();
         foreach (var field in fields)
         {
-            returnValue.Add(field.ToString().Camelize(), $"{field}-{i}");
+            returnValue.Add(field.Camelize(), $"{field}-{i}");
         }
         returnValue.SetCamelKeyCamelValue(DefaultAttributeNames.PublicationStatus,PublicationStatus.Published);
         returnValue.SetCamelKey(DefaultAttributeNames.PublishedAt,DateTime.Now);
@@ -152,23 +152,23 @@ public static class BlogsTestData
     private static readonly Entity[] Entities =
     [
         new(
-            PrimaryKey:DefaultAttributeNames.Id.ToString().Camelize(),
+            PrimaryKey:DefaultAttributeNames.Id.Camelize(),
             Attributes:
             [
                 TestFieldNames.Name.CreateAttr(),
                 TestFieldNames.Description.CreateAttr(),
                 TestFieldNames.Image.CreateAttr() with{DisplayType = DisplayType.Image},
             ],
-            TableName: TestTableNames.TestTags.ToString().Camelize(),
+            TableName: TestTableNames.TestTags.Camelize(),
             DisplayName: TestEntityNames.TestTag.ToString(),
-            Name: TestEntityNames.TestTag.ToString().Camelize(),
+            Name: TestEntityNames.TestTag.Camelize(),
             
-            LabelAttributeName: TestFieldNames.Name.ToString().Camelize(),
+            LabelAttributeName: TestFieldNames.Name.Camelize(),
             DefaultPageSize: EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published
         ),
         new(
-            PrimaryKey:DefaultAttributeNames.Id.ToString().Camelize(),
+            PrimaryKey:DefaultAttributeNames.Id.Camelize(),
             Attributes:
             [
                 TestFieldNames.Name.CreateAttr(),
@@ -177,47 +177,47 @@ public static class BlogsTestData
                 TestFieldNames.Post.CreateAttr() with{DataType = DataType.Int, DisplayType = DisplayType.Number}
                 
             ],
-            TableName: TestTableNames.TestAttachments.ToString().Camelize(),
+            TableName: TestTableNames.TestAttachments.Camelize(),
             DisplayName: TestEntityNames.TestAttachment.ToString(),
-            Name: TestEntityNames.TestAttachment.ToString().Camelize(),
+            Name: TestEntityNames.TestAttachment.Camelize(),
             
-            LabelAttributeName: TestFieldNames.Name.ToString().Camelize(),
+            LabelAttributeName: TestFieldNames.Name.Camelize(),
             DefaultPageSize: EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published
         ),
         new(
-            PrimaryKey:DefaultAttributeNames.Id.ToString().Camelize(),
+            PrimaryKey:DefaultAttributeNames.Id.Camelize(),
             Attributes:
             [
                 TestFieldNames.Name.CreateAttr(),
                 TestFieldNames.Description.CreateAttr(),
                 TestFieldNames.Image.CreateAttr() with{DisplayType = DisplayType.Image},
             ],
-            TableName: TestTableNames.TestAuthors.ToString().Camelize(),
+            TableName: TestTableNames.TestAuthors.Camelize(),
             DisplayName: TestEntityNames.TestAuthor.ToString(),
-            Name: TestEntityNames.TestAuthor.ToString().Camelize(),
-            LabelAttributeName: TestFieldNames.Name.ToString().Camelize(),
+            Name: TestEntityNames.TestAuthor.Camelize(),
+            LabelAttributeName: TestFieldNames.Name.Camelize(),
             DefaultPageSize: EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published
         ),
         new (
-            PrimaryKey:DefaultAttributeNames.Id.ToString().Camelize(),
+            PrimaryKey:DefaultAttributeNames.Id.Camelize(),
             Attributes:
             [
                 TestFieldNames.Name.CreateAttr(),
                 TestFieldNames.Description.CreateAttr(),
                 TestFieldNames.Image.CreateAttr() with{DisplayType = DisplayType.Image},
             ],
-            TableName: TestTableNames.TestCategories.ToString().Camelize(),
+            TableName: TestTableNames.TestCategories.Camelize(),
             DisplayName: TestEntityNames.TestCategory.ToString(),
-            Name: TestEntityNames.TestCategory.ToString().Camelize(),
+            Name: TestEntityNames.TestCategory.Camelize(),
             
-            LabelAttributeName: TestFieldNames.Name.ToString().Camelize(),
+            LabelAttributeName: TestFieldNames.Name.Camelize(),
             DefaultPageSize: EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published
         ),
         new (
-            PrimaryKey:DefaultAttributeNames.Id.ToString().Camelize(),
+            PrimaryKey:DefaultAttributeNames.Id.Camelize(),
             Attributes:
             [
                 TestFieldNames.Title.CreateAttr(),
@@ -226,16 +226,16 @@ public static class BlogsTestData
                 TestFieldNames.Image.CreateAttr() with{DisplayType = DisplayType.Image},
 
                 TestFieldNames.Attachments.CreateAttr() with{DisplayType = DisplayType.EditTable, DataType = DataType.Collection,
-                    Options = $"{TestEntityNames.TestAttachment.ToString().Camelize()}.{TestFieldNames.Post.ToString().Camelize()}"},
-                TestFieldNames.Tags.CreateAttr() with{DisplayType = DisplayType.Picklist, DataType = DataType.Junction, Options = TestEntityNames.TestTag.ToString().Camelize() },
-                TestFieldNames.Authors.CreateAttr() with{DisplayType = DisplayType.Picklist, DataType = DataType.Junction, Options = TestEntityNames.TestAuthor.ToString().Camelize() },
-                TestFieldNames.Category.CreateAttr() with{DataType = DataType.Lookup, DisplayType = DisplayType.Lookup, Options = TestEntityNames.TestCategory.ToString().Camelize() },
+                    Options = $"{TestEntityNames.TestAttachment.Camelize()}.{TestFieldNames.Post.Camelize()}"},
+                TestFieldNames.Tags.CreateAttr() with{DisplayType = DisplayType.Picklist, DataType = DataType.Junction, Options = TestEntityNames.TestTag.Camelize() },
+                TestFieldNames.Authors.CreateAttr() with{DisplayType = DisplayType.Picklist, DataType = DataType.Junction, Options = TestEntityNames.TestAuthor.Camelize() },
+                TestFieldNames.Category.CreateAttr() with{DataType = DataType.Lookup, DisplayType = DisplayType.Lookup, Options = TestEntityNames.TestCategory.Camelize() },
             ],
-            Name: TestEntityNames.TestPost.ToString().Camelize(),
+            Name: TestEntityNames.TestPost.Camelize(),
             DisplayName: TestEntityNames.TestPost.ToString(),
-            TableName: TestTableNames.TestPosts.ToString().Camelize(),
+            TableName: TestTableNames.TestPosts.Camelize(),
             
-            LabelAttributeName: TestFieldNames.Title.ToString().Camelize(),
+            LabelAttributeName: TestFieldNames.Title.Camelize(),
             DefaultPageSize: EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published
         )

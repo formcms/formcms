@@ -12,13 +12,6 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
     private readonly Compiler _compiler = new SqliteCompiler();
     private TransactionManager? _transaction;
 
-    public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory,IDbTransaction?, Task<T>> queryFunc)
-    {
-        var db = new QueryFactory(connection, _compiler);
-        db.Logger = result => logger.LogInformation(result.ToString());
-        return await queryFunc(db, _transaction?.Transaction());
-    }
-
     public async ValueTask<TransactionManager> BeginTransaction()
     {
         var ret = new TransactionManager(await connection.BeginTransactionAsync());
@@ -32,48 +25,44 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
     {
         result = type switch
         {
-            ColumnType.Datetime or ColumnType.String or ColumnType.Text  => new DatabaseTypeValue(s),
-            ColumnType.Int when int.TryParse(s, out var resultInt) => new DatabaseTypeValue(I: resultInt),
+            ColumnType.Datetime or ColumnType.String or ColumnType.Text  or ColumnType.CreatedTime => new DatabaseTypeValue(s),
+            ColumnType.Int or ColumnType.Id when int.TryParse(s, out var resultInt) => new DatabaseTypeValue(I: resultInt),
             _ => null
         };
         return result != null;
     }
-
+    
+    public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory,IDbTransaction?, Task<T>> queryFunc)
+    {
+        var db = new QueryFactory(connection, _compiler);
+        db.Logger = result => logger.LogInformation(result.ToString());
+        return await queryFunc(db, _transaction?.Transaction());
+    }
+    
    public async Task CreateTable(string tableName, IEnumerable<Column> cols, CancellationToken ct)
    {
        var parts = new List<string>();
-       bool haveUpdatedAt = false;
+       var updateAtField = "";
+
        foreach (var column in cols)
        {
-           if (column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize())
+           if (column.Type ==  ColumnType.UpdatedTime)
            {
-               haveUpdatedAt = true;
+               updateAtField = column.Name;
            }
 
-           var part = column switch
-           {
-               _ when column.Name == DefaultColumnNames.Id.ToString().Camelize() =>
-                   $"{DefaultColumnNames.Id.ToString().Camelize()} INTEGER  primary key autoincrement",
-               _ when column.Name == DefaultColumnNames.Deleted.ToString().Camelize() =>
-                   $"{DefaultColumnNames.Deleted.ToString().Camelize()} INTEGER   default 0",
-               _ when column.Name == DefaultColumnNames.CreatedAt.ToString().Camelize() =>
-                   $"{DefaultColumnNames.CreatedAt.ToString().Camelize()} integer default (datetime('now','localtime'))",
-               _ when column.Name == DefaultColumnNames.UpdatedAt.ToString().Camelize() =>
-                   $"{DefaultColumnNames.UpdatedAt.ToString().Camelize()} integer default (datetime('now','localtime'))",
-               _ => $"{column.Name} {DataTypeToString(column.Type)}"
-           };
-           parts.Add(part);
+           parts.Add($"{column.Name} {ColumnTypeToString(column.Type)}");
        }
        
        var sql= $"CREATE TABLE {tableName} ({string.Join(", ", parts)});";
-       if (haveUpdatedAt)
+       if (updateAtField != "")
        {
            sql += $@"
-            CREATE TRIGGER update_{tableName}_updatedAt 
+            CREATE TRIGGER update_{tableName}_{updateAtField} 
                 BEFORE UPDATE ON {tableName} 
                 FOR EACH ROW
             BEGIN 
-                UPDATE {tableName} SET {DefaultColumnNames.UpdatedAt.ToString().Camelize()} = (datetime('now','localtime')) WHERE id = OLD.id; 
+                UPDATE {tableName} SET {updateAtField} = (datetime('now','localtime')) WHERE id = OLD.id; 
             END;";
        }
        await ExecuteQuery(sql,async cmd => await cmd.ExecuteNonQueryAsync(ct));
@@ -82,7 +71,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
    public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct)
    {
        var parts = cols.Select(x =>
-           $"Alter Table {table} ADD COLUMN {x.Name} {DataTypeToString(x.Type)}"
+           $"Alter Table {table} ADD COLUMN {x.Name} {ColumnTypeToString(x.Type)}"
        );
        var sql = string.Join(";", parts.ToArray());
        await ExecuteQuery(sql,async cmd => await cmd.ExecuteNonQueryAsync(ct));
@@ -113,13 +102,19 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
       });
    }
 
-   private static string DataTypeToString(ColumnType dataType)
+   private static string ColumnTypeToString(ColumnType dataType)
        => dataType switch
        {
+           ColumnType.Id => "INTEGER primary key autoincrement",
            ColumnType.Int => "INTEGER",
+           ColumnType.Boolean => "INTEGER default 0",
+           
            ColumnType.Text => "TEXT",
-           ColumnType.Datetime => "INTEGER",
            ColumnType.String => "TEXT",
+           
+           ColumnType.Datetime => "INTEGER",
+           ColumnType.CreatedTime or ColumnType.UpdatedTime=> "integer default (datetime('now','localtime'))",
+           
            _ => throw new NotSupportedException($"Type {dataType} is not supported")
        };
 
