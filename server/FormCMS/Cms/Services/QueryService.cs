@@ -208,14 +208,27 @@ public sealed class QueryService(
     private async Task<QueryContext> FromSavedQuery(
         string name, Pagination? pagination,  bool haveCursor, StrArgs args, CancellationToken token =default)
     {
-        var query = await schemaSvc.ByNameAndCache(name, PublicationStatusHelper.GetSchemaStatus(args),token);
+        var status = PublicationStatusHelper.GetSchemaStatus(args);
+        var query = await schemaSvc.ByNameAndCache(name, status,token);
         ResultExt.Ensure(query.VerifyVariable(args));
+        
+        if (status != PublicationStatus.Published)
+        {
+            //remove preview variables
+            foreach (var (key, value) in args)
+            {
+                if ("{" + key + "}" == value)
+                {
+                    args.Remove(key);
+                }
+            }
+        }
         return await GetQueryContext(query, pagination,haveCursor,args);
     }
 
     private async Task<QueryContext> FromGraphQlRequest(GraphQlRequestDto dto, StrArgs args)
     {
-         var loadedQuery = await schemaSvc.ByGraphQlRequest(dto.Query,dto.Fields, PublicationStatusHelper.GetSchemaStatus(args));
+         var loadedQuery = await schemaSvc.ByGraphQlRequest(dto.Query,dto.Fields);
          return await GetQueryContext(loadedQuery, null,false,args);
     }
 

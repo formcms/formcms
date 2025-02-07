@@ -1,9 +1,9 @@
 import {del, publish} from "./repo.js";
 
-async function handleDelete(e) {
-    if (confirm("Do you want to delete schema: " + e.getAttribute('data-name'))) {
+async function handleDelete() {
+    if (confirm("Do you want to delete schema: " + this.getAttribute('data-name'))) {
         $.LoadingOverlay("show");
-        const { error} =await del(e.id);
+        const { error} =await del(this.id);
         $.LoadingOverlay("hide");
         if (error){
             $('#errorPanel').text(error).show();
@@ -13,9 +13,9 @@ async function handleDelete(e) {
     }
 }
 
-async function handlePublish(e) {
-    const id = e.id;
-    const schemaId = e.getAttribute('data-schema-id')
+async function handlePublish() {
+    const id = this.id;
+    const schemaId = this.getAttribute('data-schema-id')
     const {error} = await publish({id, schemaId});
     if (error){
         $('#errorPanel').text(error).show();
@@ -40,7 +40,6 @@ export async function renderSchemaTable(elementId, loadData, actions) {
         <tbody id="table-body">
         <tr>
             <td>ID</td>
-            <td>SchemaId</td>
             <td>Type</td>
             <td>Name</td>
             <td>Status</td>
@@ -66,17 +65,10 @@ export async function renderSchemaTable(elementId, loadData, actions) {
 
         const publishButton = item.publicationStatus === 'published'
             ? ''
-            : `<button
-                    class="btn badge btn-primary btn-sm delete-btn"
-                    id="${item.id}"
-                    onclick="handlePublish(this)"
-                    data-schema-id="${item.schemaId}">Publish
-                </button>`
+            : `<button class="btn badge btn-primary btn-sm publish-schema" id="${item.id}" data-schema-id="${item.schemaId}">Publish </button>`
 
         const deleteButton = showDelete
-            ? `<button class="btn badge btn-danger btn-sm delete-btn" id="${item.id}" onclick="handleDelete(this)"
-                      data-name="${item.name}">Delete
-                </button>`
+            ? `<button class="btn badge btn-danger btn-sm delete-schema" id="${item.id}" data-name="${item.name}">Delete </button>`
             : '';
 
         const historyButton = showViewHistory 
@@ -88,7 +80,6 @@ export async function renderSchemaTable(elementId, loadData, actions) {
         const row = 
             `<tr>
                         <td>${item.id}</td>
-                        <td>${item.schemaId}</td>
                         <td>${item.type}</td>
                         <td><a href="${url}">${item.name}</a></td>
                         <td>${item.publicationStatus}</td>
@@ -98,4 +89,6 @@ export async function renderSchemaTable(elementId, loadData, actions) {
             `;
         $('#table-body').append(row);
     });
+    $('.delete-schema').on('click',handleDelete);
+    $('.publish-schema').on('click',handlePublish);
 }

@@ -13,7 +13,7 @@ $(document).ready(function() {
     $('#visitPage').on('click', function () {
         const name = $(`#name`).val();
         if (name){
-            window.open(`/${name}`, '_blank'); // Opens in a new tab
+            window.open(`/${name}/?sandbox=1`, '_blank'); // Opens in a new tab
         }
     });
     
@@ -23,7 +23,6 @@ $(document).ready(function() {
         editor = loadEditor("#gjs", loadData);
     });
 });
-
 
 async function handleSave() {
 

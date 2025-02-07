@@ -14,7 +14,7 @@ export async function list(type){
 }
 
 export async function oneByName(name, type){
-    const url = `/schemas/name/${name}?type=menu`;
+    const url = `/schemas/name/${name}?type=${type}`;
     return  await tryFetch(async ()=>await  axios.get(apiPrefix + url))
 }
 

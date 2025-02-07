@@ -111,6 +111,7 @@ public sealed class EntitySchemaService(
 
     public async Task<Schema> SaveTableDefine(Schema schema, CancellationToken ct = default)
     {
+        schema = schema with { Name = schema.Settings.Entity!.Name };
         
         //hook function might change the schema
         schema = (await hook.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(schema))).RefSchema;

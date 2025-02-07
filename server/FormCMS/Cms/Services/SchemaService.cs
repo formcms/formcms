@@ -72,6 +72,24 @@ public sealed class SchemaService(
         return res.IsSuccess ? res.Value : null;
     }
 
+    public async Task<Result> NameNotTakenByOther(Schema schema, CancellationToken ct)
+    {
+        var query = SchemaHelper.ByNameAndTypeAndNotId(schema.Name, schema.Type, schema.SchemaId);
+        var count = await queryExecutor.Count(query, ct);
+        return count == 0 ? Result.Ok() : Result.Fail($"the schema name {schema.Name} was taken by other schema");
+    }
+
+    public async Task<Schema> Save(Schema schema, CancellationToken ct)
+    {
+        var (statusQuery, insertQuery,schemaId) = schema.Save();
+        var id = await queryExecutor.ExecBatch([statusQuery, insertQuery], true, ct);
+        
+        schema = schema with { Id = id ,SchemaId = schemaId };
+        return schema;
+    }
+
+    
+
     public async Task<Schema> SaveWithAction(Schema schema, CancellationToken ct)
     {
         schema = schema with
@@ -183,19 +201,5 @@ public sealed class SchemaService(
         }
     }
 
-    public async Task<Schema> Save(Schema schema, CancellationToken ct)
-    {
-        var (statusQuery, insertQuery,schemaId) = schema.Save();
-        var id = await queryExecutor.ExecBatch([statusQuery, insertQuery], true, ct);
-        
-        schema = schema with { Id = id ,SchemaId = schemaId };
-        return schema;
-    }
-
-    public async Task<Result> NameNotTakenByOther(Schema schema, CancellationToken ct)
-    {
-        var query = SchemaHelper.ByNameAndTypeAndNotId(schema.Name, schema.Type, schema.SchemaId);
-        var count = await queryExecutor.Count(query, ct);
-        return count == 0 ? Result.Ok() : Result.Fail($"the schema name {schema.Name} was taken by other schema");
-    }
+   
 }

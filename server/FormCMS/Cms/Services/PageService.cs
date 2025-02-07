@@ -161,7 +161,7 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
     
     private async Task<Result<Context>> GetContext(string name, bool matchPrefix,StrArgs args, CancellationToken token)
     {
-        var publicationStatus= PublicationStatusHelper.GetDataStatus(args);
+        var publicationStatus= PublicationStatusHelper.GetSchemaStatus(args);
         var schema = matchPrefix
             ? await schemaSvc.GetByNamePrefixDefault(name, SchemaType.Page,publicationStatus, token)
             : await schemaSvc.GetByNameDefault(name, SchemaType.Page,publicationStatus, token);

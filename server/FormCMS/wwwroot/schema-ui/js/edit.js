@@ -1,5 +1,5 @@
 import {checkUser} from "./checkUser.js";
-import {one, oneByName} from "./repo.js";
+import {one, oneByName, save, saveDefine} from "./repo.js";
 import {loadNavBar} from "./nav-bar.js";
 
 const searchParams = new URLSearchParams(window.location.search);
@@ -48,7 +48,7 @@ async function getDefine(){
 }
 
 function loadEditor() {
-    let editor = new JSONEditor($('#editor_holder')[0], {
+    editor = new JSONEditor($('#editor_holder')[0], {
         ajax: true,
         schema: {
             "$ref": `json/${type}.json`,

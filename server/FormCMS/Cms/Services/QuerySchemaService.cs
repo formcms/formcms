@@ -18,19 +18,19 @@ public sealed class QuerySchemaService(
     SystemSettings systemSettings
 ) : IQuerySchemaService
 {
-    public async Task<LoadedQuery> ByGraphQlRequest(Query query, GraphQLField[] fields, PublicationStatus? status)
+    public async Task<LoadedQuery> ByGraphQlRequest(Query query, GraphQLField[] fields)
     {
         if (string.IsNullOrWhiteSpace(query.Name))
         {
-            return await ToLoadedQuery(query, fields,status);
+            return await ToLoadedQuery(query, fields,null);
         }
 
-        var schema = await schemaSvc.GetByNameDefault(query.Name, SchemaType.Query, status);
+        var schema = await schemaSvc.GetByNameDefault(query.Name, SchemaType.Query, null);
         if (schema == null || schema.Settings.Query != null && schema.Settings.Query.Source != query.Source)
         {
-            await SaveQuery(query, status);
+            await SaveQuery(query, null);
         }
-        return await ToLoadedQuery(query, fields,status);
+        return await ToLoadedQuery(query, fields,null);
     }
 
     public async Task<LoadedQuery> ByNameAndCache(string name, PublicationStatus? status, CancellationToken ct = default)
