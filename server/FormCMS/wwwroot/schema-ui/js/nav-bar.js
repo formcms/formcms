@@ -1,10 +1,5 @@
 import {logout} from "./repo.js";
 
-function exit(e){
-    e.preventDefault();
-    logout().then(()=>window.location.href='/');
-}
-
 export function loadNavBar(){
     $('#navbar-container').html(`
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
@@ -18,8 +13,11 @@ export function loadNavBar(){
             <a class="nav-item nav-link border-item" href="./list.html?type=page">Pages</a>
             <a class="nav-item nav-link border-item" href="./edit.html?type=menu&name=top-menu-bar">MenuItems</a>
             <a class="nav-item nav-link border-item" href="../admin">Admin Panel</a>
-            <a onclick="exit" id="nav-item-exit" class="nav-item nav-link border-item" href="#">Exit</a>
+            <a id="nav-item-exit" class="nav-item nav-link border-item" href="#">Exit</a>
         </div>
-    </nav> 
-    `);
+    </nav>`);
+    $("#nav-item-exit").on('click', function(e){
+        e.preventDefault();
+        logout().then(()=>window.location.href='/');
+    })
 }

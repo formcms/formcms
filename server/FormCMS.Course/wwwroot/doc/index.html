@@ -108,6 +108,11 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-bs-level="2"><a href="#schema-version-control" class="nav-link">Schema Version Control</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#online-course-system-frontend" class="nav-link">Online Course System Frontend</a>
               <ul class="nav flex-column">
               </ul>
@@ -1384,6 +1389,22 @@ The URL <code>/</code> will be resolved to <code>/pages/home</code> unless expli
 </tbody>
 </table>
 <hr />
+<h2 id="schema-version-control">Schema Version Control</h2>
+<p>FormCMS saves each version of schemas, allowing users to roll back to earlier versions. Admins can freely test draft versions, while only published versions take effect.  </p>
+<h3 id="requirements">Requirements</h3>
+<p>To illustrate this feature, let's take a <code>Page</code> as an example. Once a page is published, it becomes publicly accessible. You may need version control for two main reasons:</p>
+<ul>
+<li>You want to make changes but ensure they do not take effect until thoroughly tested.</li>
+<li>If issues arise in the latest version, you need the ability to roll back to a previous version.</li>
+</ul>
+<h3 id="choosing-a-version">Choosing a Version</h3>
+<p>After making changes, the latest version's status changes to <code>draft</code> in the <a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/list.html?type=page">Page List Page</a>.<br />
+To manage versions, click the <code>View History</code> button to navigate to the <a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/history.html?schemaId=01JKKB85KWA651945N5W0T6PJR">History Version List Page</a>.<br />
+Here, you can select any version and set it to <code>published</code> status.</p>
+<h3 id="testing-a-draft-version">Testing a <code>Draft</code> Version</h3>
+<p>To preview a draft version, append <code>sandbox=1</code> as a query parameter in the URL: <a href="https://fluent-cms-admin.azurewebsites.net/story/?sandbox=1">Preview Draft Version Page</a>.<br />
+Alternatively, click the <code>View Page</code> button on the <code>Page Design</code> page.</p>
+<hr />
 <h2 id="online-course-system-frontend">Online Course System Frontend</h2>
 <p>Having established our understanding of FormCMS essentials like Entity, Query, and Page, we're ready to build a frontend for an online course website.</p>
 <hr />
@@ -1970,5 +1991,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-02-03 16:40:06.888326+00:00
+Build Date UTC : 2025-02-08 18:29:26.646703+00:00
 -->

@@ -59,8 +59,8 @@ public class EntityApiClient(HttpClient client)
         
     });
 
-    private Task<Result> Update(
-        string entity, Dictionary<string, object> payload
+    public Task<Result> Update(
+        string entity, IDictionary<string, object> payload
     ) => client.PostResult( $"/{entity}/update".ToEntityApi(),payload);
 
     public Task<Result> Delete(

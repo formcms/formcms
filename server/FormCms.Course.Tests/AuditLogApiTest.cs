@@ -3,6 +3,7 @@ using FormCMS.AuditLogging.ApiClient;
 using FormCMS.AuditLogging.Models;
 using FormCMS.Auth.ApiClient;
 using FormCMS.CoreKit.ApiClient;
+using FormCMS.Utils.jsonElementExt;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
 using NUlid;
@@ -38,7 +39,30 @@ public class AuditLogApiTest
     }
 
     [Fact]
-    public async Task EnsureAuditLogAdded()
+    public async Task EnsureOptionAddUpdateDelete()
+    {
+        var res = await _auditLogApiClient.List("sort[id]=-1").Ok();
+        var logId = res.Items[0].GetInt("id");
+        
+        
+        await _schemaApiClient.EnsureSimpleEntity(_post,"name",false).Ok();
+        var item = await _entityApiClient.Insert(_post,"name","test").Ok();
+        var log = await _auditLogApiClient.Single(++logId).Ok();
+        Assert.Equal(ActionType.Create,log.Action);
+
+        item = await _entityApiClient.Single(_post, item.GetProperty("id").GetInt32()).Ok();
+        await _entityApiClient.Update(_post, item.ToDictionary());
+        log = await _auditLogApiClient.Single(++logId).Ok();
+        Assert.Equal(ActionType.Update,log.Action);
+
+        item = await _entityApiClient.Single(_post, item.GetProperty("id").GetInt32()).Ok();
+        await _entityApiClient.Delete(_post, item.ToDictionary());
+        log = await _auditLogApiClient.Single(++logId).Ok();
+        Assert.Equal(ActionType.Delete,log.Action);
+    }
+    
+    [Fact]
+    public async Task EnsureAuditLogAddListSingle()
     {
         await _schemaApiClient.EnsureSimpleEntity(_post,"name",false).Ok();
         await _entityApiClient.Insert(_post,"name","test").Ok();
@@ -51,7 +75,7 @@ public class AuditLogApiTest
         var log = await _auditLogApiClient.Single(id.GetInt32()).Ok();
         var name = (JsonElement)log.Payload["name"];
         Assert.Equal("test", name.GetString());
-        
-
     }
+    
+    
 }

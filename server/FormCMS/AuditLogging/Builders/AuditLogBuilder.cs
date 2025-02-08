@@ -72,7 +72,7 @@ public sealed class AuditLogBuilder(ILogger<AuditLogBuilder> logger )
             async (IAuditLogService service, EntityPostUpdateArgs args) =>
             {
                 await service.AddLog(
-                    ActionType.Delete,
+                    ActionType.Update,
                     args.Entity.Name,
                     args.Record.StrOrEmpty(args.Entity.PrimaryKey),
                     args.Record.StrOrEmpty(args.Entity.LabelAttributeName),

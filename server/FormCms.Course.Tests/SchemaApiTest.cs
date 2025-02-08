@@ -12,9 +12,10 @@ public class SchemaApiTest
 {
     private readonly SchemaApiClient _schema;
 
-    private static string PostEntity() => "schema_api_test_post" + new IdGenerator(0).CreateId();
     private const string Name = "name";
 
+    private readonly Schema _testSchema;
+    
     public SchemaApiTest()
     {
         Util.SetTestConnectionString();
@@ -22,6 +23,29 @@ public class SchemaApiTest
         WebAppClient<Program> webAppClient = new();
         _schema = new SchemaApiClient(webAppClient.GetHttpClient());
         new AuthApiClient(webAppClient.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
+        var post = "schema_api_test_post" + new IdGenerator(0).CreateId();
+        _testSchema = new(
+            Name: post,
+            Type: SchemaType.Entity,
+            Settings: new Settings
+            {
+                Entity = new Entity(
+                    Name: post,
+                    PrimaryKey: "id",
+                    DisplayName: post,
+                    TableName: post,
+                    LabelAttributeName: Name,
+                    Attributes:
+                    [
+                        new Attribute
+                        (
+                            Field: Name,
+                            DataType: DataType.String
+                        )
+                    ]
+                )
+            }
+        );
     }
 
   
@@ -30,9 +54,8 @@ public class SchemaApiTest
     {
         var items = await _schema.All(null).Ok();
         var len = items.Length;
-        var schema = TestSchema();
-        await _schema.SaveEntityDefine(schema);
-        items = (await _schema.All(null)).Ok();
+        await _schema.SaveEntityDefine(_testSchema);
+        items = await _schema.All(null).Ok();
         Assert.Equal(len + 1, items.Length);
     }
 
@@ -49,8 +72,7 @@ public class SchemaApiTest
     [Fact]
     public async Task SaveSchemaAndOneAndGetLoaded()
     {
-        var schema = TestSchema();
-        schema = (await _schema.SaveEntityDefine(schema)).Ok();
+        var schema = (await _schema.SaveEntityDefine(_testSchema)).Ok();
         (await _schema.GetLoadedEntity(schema.Name)).Ok();
         (await _schema.One(schema.Id)).Ok();
     }
@@ -58,16 +80,14 @@ public class SchemaApiTest
     [Fact]
     public async Task SaveSchemaTwice()
     {
-        var schema = TestSchema();
-        var res = (await _schema.SaveEntityDefine(schema)).Ok();
+        var res = (await _schema.SaveEntityDefine(_testSchema)).Ok();
         (await _schema.SaveEntityDefine(res)).Ok();
     }
 
     [Fact]
     public async Task SaveSchema_Update()
     {
-        var schema = TestSchema();
-        schema = (await _schema.SaveEntityDefine(schema)).Ok();
+        var schema = await _schema.SaveEntityDefine(_testSchema).Ok();
         schema = schema with { Settings = new Settings(Entity: schema.Settings.Entity! with { DefaultPageSize = 10 }) };
         await _schema.SaveEntityDefine(schema).Ok();
         var entity = (await _schema.GetLoadedEntity(schema.Name)).Ok();
@@ -77,8 +97,7 @@ public class SchemaApiTest
     [Fact]
     public async Task Delete_Success()
     {
-        var schema = TestSchema();
-        schema = (await _schema.SaveEntityDefine(schema)).Ok();
+        var schema = (await _schema.SaveEntityDefine(_testSchema)).Ok();
         await _schema.Delete(schema.Id).Ok();
         Assert.True((await _schema.GetLoadedEntity(schema.Name)).IsFailed);
     }
@@ -86,42 +105,13 @@ public class SchemaApiTest
     [Fact]
     public async Task GetTableDefinitions_Success()
     {
-        var schema = TestSchema();
-        (await _schema.GetTableDefine(schema.Name)).Ok();
+        var schema = await _schema.SaveEntityDefine(_testSchema).Ok();
+        await _schema.GetTableDefine(schema.Name).Ok();
     }
 
     [Fact]
     public async Task GetGraphQlClientUrlOk()
     {
         await _schema.GraphQlClientUrl().Ok();
-    }
-
-    private static Schema TestSchema()
-    {
-        var name = PostEntity();
-        return new Schema
-        (
-            Id: 0,
-            Name: name,
-            Type: SchemaType.Entity,
-            Settings: new Settings
-            {
-                Entity = new Entity(
-                    Name: name,
-                    PrimaryKey: "id",
-                    DisplayName:name,
-                    TableName: name,
-                    LabelAttributeName: Name,
-                    Attributes:
-                    [
-                        new Attribute
-                        (
-                            Field: Name,
-                            DataType: DataType.String
-                        )
-                    ]
-                )
-            }
-        );
     }
 }
