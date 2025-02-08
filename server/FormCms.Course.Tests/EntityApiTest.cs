@@ -6,7 +6,7 @@ using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.jsonElementExt;
 using FormCMS.Utils.ResultExt;
-using IdGen;
+using NUlid;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Course.Tests;
@@ -14,11 +14,11 @@ namespace FormCMS.Course.Tests;
 public class EntityApiTest
 {
     private const string Name = "name";
-    private readonly  string _post = "entity_api_test_post" + new IdGenerator(0).CreateId();
-    private readonly string _author = "entity_api_test_author" + new IdGenerator(0).CreateId();
-    private readonly string _tag = "entity_api_test_tag" + new IdGenerator(0).CreateId();
-    private readonly string _attachment = "entity_api_test_attachment" + new IdGenerator(0).CreateId();
-    private readonly string _category = "entity_api_test_category" + new IdGenerator(0).CreateId();
+    private readonly string _post = "entity_api_test_post_" + Ulid.NewUlid();
+    private readonly string _author = "entity_api_test_author_" + Ulid.NewUlid();
+    private readonly string _tag = "entity_api_test_tag_" + Ulid.NewUlid();
+    private readonly string _attachment = "entity_api_test_attachment_" + Ulid.NewUlid();
+    private readonly string _category = "entity_api_test_category_" + Ulid.NewUlid();
 
     private readonly EntityApiClient _entityApiClient;
     private readonly SchemaApiClient _schemaApiClient;

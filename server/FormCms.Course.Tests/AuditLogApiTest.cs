@@ -5,7 +5,7 @@ using FormCMS.Auth.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
-using IdGen;
+using NUlid;
 using Xunit.Abstractions;
 
 namespace FormCMS.Course.Tests;
@@ -16,7 +16,7 @@ public class AuditLogApiTest
     private readonly EntityApiClient _entityApiClient;
     private readonly AuditLogApiClient _auditLogApiClient;
 
-    private readonly string _post = "entity_api_test_post" + new IdGenerator(0).CreateId();
+    private readonly string _post = "audit_log_api_test_post_" + Ulid.NewUlid();
 
     public AuditLogApiTest(ITestOutputHelper testOutputHelper)
     {

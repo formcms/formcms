@@ -20,11 +20,11 @@ public class QueryApiClient(HttpClient client)
 
     // the json decoder will decode an unknown object as JsonRecord
     public Task<Result<JsonElement[]>> List(
-        string query, string? first = null, string? last = null, StrArgs? args = null, int offset = 0, int limit = 0)
+        string query, string? first = null, string? last = null, int offset = 0, int limit = 0)
         => client.GetResult<JsonElement[]>(
             $"/{query}?first={first ?? ""}&last={last ?? ""}&offset={offset}&limit={limit}".ToQueryApi());
 
-    public Task<Result<JsonElement[]>> ListArgs(
+    public Task<Result<JsonElement[]>> List(
         string query, StrArgs args
     ) => client.GetResult<JsonElement[]>($"/{query}?{args.ToQueryString()}".ToQueryApi());
 
@@ -37,9 +37,6 @@ public class QueryApiClient(HttpClient client)
         string query, object id
     ) => client.GetResult<JsonElement>($"/{query}/single?id={id}".ToQueryApi());
 
-    public Task<Result<JsonElement>> SinglePreview(
-        string query, object id
-    ) => client.GetResult<JsonElement>($"/{query}/single?id={id}&{SpecialQueryKeys.Preview.Camelize()}=1".ToQueryApi());
 
     public Task<Result<JsonElement[]>> Part(
         string query, string attr, string? first = null, string? last = null, int limit = 0

@@ -2,7 +2,7 @@ using FormCMS.Auth.ApiClient;
 using FormCMS.Auth.DTO;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.ResultExt;
-using IdGen;
+using NUlid;
 using Xunit.Abstractions;
 
 namespace FormCMS.Course.Tests;
@@ -15,9 +15,9 @@ public class AccountApiTest
     private readonly SchemaApiClient _schemaApiClient;
     private readonly EntityApiClient _entityApiClient;
 
-    private readonly string _post = "entity_api_test_post" + new IdGenerator(0).CreateId();
-    private readonly string _email = $"test1{new IdGenerator(0).CreateId()}@cms.com";
-    private readonly string _role = $"test_role_{new IdGenerator(0).CreateId()}";
+    private readonly string _post = "account_api_test_post_" + Ulid.NewUlid();
+    private readonly string _email = $"test1_{Ulid.NewUlid()}@cms.com";
+    private readonly string _role = $"test_role_{Ulid.NewUlid()}";
 
     public AccountApiTest(ITestOutputHelper testOutputHelper)
     {

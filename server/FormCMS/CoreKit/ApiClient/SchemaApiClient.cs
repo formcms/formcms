@@ -39,7 +39,8 @@ public class SchemaApiClient (HttpClient client)
     public Task<Result<Schema>> EnsureSimpleEntity(string entityName, string field, bool needPublish,
         string lookup = "",
         string junction = "",
-        string collection = "", string linkAttribute = "")
+        string collection = "", 
+        string linkAttribute = "")
     {
         var attr = new List<Attribute>([
             new Attribute

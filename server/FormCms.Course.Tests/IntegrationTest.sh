@@ -1,7 +1,7 @@
 test_sqlite(){
   local db_name=$1
   export DatabaseProvider=Sqlite
-  export Sqlite="Data Source=${db_name}"
+  export ConnectionStrings__Sqlite="Data Source=${db_name}"
   sleep 1
   dotnet test 
 }
@@ -19,13 +19,13 @@ test_postgres_container() {
   local container_name="FormCMS-db-postgres"
   
   remove_container $container_name
-  local docker_run_command="docker run -d --name $container_name -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_DB=FormCMS -p 5432:5432"
+  local docker_run_command="docker run -d --name $container_name -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_DB=cms_integration_tests -p 5432:5432"
 
   docker_run_command+=" postgres:latest"
   eval "$docker_run_command"
   
   export DatabaseProvider=Postgres
-  export Postgres="Host=localhost;Database=FormCMS;Username=postgres;Password=mysecretpassword"
+  export ConnectionStrings__Postgres="Host=localhost;Database=cms_integration_tests;Username=postgres;Password=mysecretpassword"
   dotnet test
 }
 
@@ -38,7 +38,7 @@ test_sqlserver_container(){
   sleep 10
   
   export DatabaseProvider=SqlServer
-  export SqlServer="Server=localhost;Database=cms;User Id=sa;Password=Admin12345678!;TrustServerCertificate=True"
+  export ConnectionStrings__SqlServer="Server=localhost;Database=cms_integration_tests;User Id=sa;Password=Admin12345678!;TrustServerCertificate=True"
   dotnet test  
 }
 

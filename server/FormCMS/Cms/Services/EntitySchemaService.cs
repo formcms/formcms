@@ -128,17 +128,14 @@ public sealed class EntitySchemaService(
             await CreateCollectionForeignKey(loadedEntity, ct);
             await CreateJunctions(loadedEntity, ct);
             tx.Commit();
+            await entityCache.Remove("", ct);
+            await hook.SchemaPostSave.Trigger(provider, new SchemaPostSaveArgs(schema));
             return schema;
         }
         catch
         {
             tx.Rollback();
             throw;
-        }
-        finally
-        {
-            await entityCache.Remove("", ct);
-            await hook.SchemaPostSave.Trigger(provider, new SchemaPostSaveArgs(schema));
         }
 
         Schema WithDefaultAttr(Schema s)

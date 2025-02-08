@@ -3,20 +3,24 @@ using FormCMS.CoreKit.ApiClient;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.ResultExt;
 using FormCMS.CoreKit.Test;
+using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.jsonElementExt;
-using Humanizer;
-using IdGen;
 using Microsoft.Extensions.Primitives;
+using NUlid;
+using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Course.Tests;
 
 public class QueryApiTest
 {
-    private readonly string _queryName = "query" + new IdGenerator(0).CreateId();
+    private readonly string _queryName = "query_api_test_query_" + Ulid.NewUlid();
+    private readonly  string _post = "query_api_test_post_" + Ulid.NewUlid();
+    
     private readonly QueryApiClient _query;
     private readonly EntityApiClient _entity;
+    private readonly SchemaApiClient _schema;
     private readonly BlogsTestCases _commonTestCases;
-
 
     public QueryApiTest()
     {
@@ -24,17 +28,83 @@ public class QueryApiTest
 
         WebAppClient<Program> webAppClient = new();
         new AuthApiClient(webAppClient.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
-        var schemaClient = new SchemaApiClient(webAppClient.GetHttpClient());
+        _schema = new SchemaApiClient(webAppClient.GetHttpClient());
 
         _entity= new EntityApiClient(webAppClient.GetHttpClient());
         _query = new QueryApiClient(webAppClient.GetHttpClient());
         _commonTestCases = new BlogsTestCases(_query, _queryName);
 
 
-        if (schemaClient.ExistsEntity(TestEntityNames.TestPost.ToString().Camelize()).GetAwaiter().GetResult()) return;
-        BlogsTestData.EnsureBlogEntities(schemaClient).GetAwaiter().GetResult();
+        if (_schema.ExistsEntity(TestEntityNames.TestPost.Camelize()).GetAwaiter().GetResult()) return;
+        BlogsTestData.EnsureBlogEntities(_schema).GetAwaiter().GetResult();
         BlogsTestData.PopulateData(_entity).Wait();
     }
+    
+    [Fact]
+    public async Task EnsureDraftEntitySchemaNotAffectQuery()
+    {
+        //the first entity is published
+        Attribute[] attrs = [
+            new ("name", "Name", DisplayType: DisplayType.Text),
+            new ("name1", "Name1", DisplayType: DisplayType.Text)
+        ];
+        await _schema.EnsureEntity(_post, "name", false, attrs).Ok();
+        
+        var payload = new Dictionary<string, object>
+        {
+            {"name","post21"},
+            {"name1","post22"},
+        };
+        await _entity.Insert(_post, payload);
+
+        await $$"""
+                query {{_queryName}}{
+                   {{_post}}List{id, name, name1}
+                }
+                """.GraphQlQuery(_query).Ok();
+
+
+        
+        // remove name1 this latest version is draft
+        await _schema.EnsureSimpleEntity(_post, "name", false).Ok();
+        await _entity.Insert(_post, "name", "post1").Ok();// should be draft now
+        
+       
+        //query use published schema, so it is still working
+        var items = await _query.List(_queryName).Ok();
+        Assert.Equal(2,items.Length);
+        
+        //use draft post, so should fail
+        var args = new Dictionary<string, StringValues>
+        {
+            {"sandbox","1"}
+        };
+        var res =await _query.List(_queryName, args);
+        Assert.True(res.IsFailed);
+    }
+    
+    [Fact]
+    public async Task EnsureDaftDataNotAffectQuery()
+    {
+        await _schema.EnsureSimpleEntity(_post, "name", true).Ok();
+        await _entity.Insert(_post, "name", "post1");// should be draft now
+        
+        await $$"""
+                query {{_queryName}}{
+                   {{_post}}List{id }
+                }
+                """.GraphQlQuery(_query).Ok();
+        var items = (await _query.List(_queryName)).Ok();
+        Assert.Empty(items);
+        
+        var args = new Dictionary<string, StringValues>
+        {
+            {"preview","1"}
+        };
+        items = await _query.List(_queryName, args).Ok();
+        Assert.Single(items);
+    }
+
 
     [Fact]
     public Task VerifyValueSetMatch() => _commonTestCases.Filter.ValueSetMatch();
@@ -96,46 +166,12 @@ public class QueryApiTest
     [Fact]
     public Task JunctionPart() => QueryParts("tags", ["id"]);
 
-    [Fact]
-    public async Task TestPreviewUnPublished()
-    {
-        const int id = 99;
-        var payload = new Dictionary<string, object>
-        {
-            { DefaultAttributeNames.Id.ToString().Camelize(), id },
-            { DefaultAttributeNames.PublicationStatus.ToString().Camelize(), PublicationStatus.Unpublished.ToString().Camelize() },
-        };
-        
-        await _entity.SavePublicationSettings(TestEntityNames.TestPost.ToString().Camelize(), payload).Ok();
-        await $$"""
-                query {{_queryName}}{
-                   {{TestEntityNames.TestPost.ToString().Camelize()}}List(idSet:{{id}}){ id }
-                }
-                """.GraphQlQuery(_query).Ok();
-        var items = (await _query.List(_queryName)).Ok();
-        Assert.Empty(items);
-        
-        //add preview=1
-        await _query.SinglePreview(_queryName,id).Ok();
-        
-        payload = new Dictionary<string, object>
-        {
-            { DefaultAttributeNames.Id.ToString().Camelize(), id },
-            { DefaultAttributeNames.PublicationStatus.ToString().Camelize(), PublicationStatus.Published.ToString().Camelize() },
-            { DefaultAttributeNames.PublishedAt.ToString().Camelize(), DateTime.Now },
-        };
-        await _entity.SavePublicationSettings(TestEntityNames.TestPost.ToString().Camelize(), payload).Ok();
-
-    }
-    
-
-
     private async Task QueryParts(string attrName, string[] attrs)
     {
         const int limit = 4;
         await $$"""
                 query {{_queryName}}{
-                   {{TestEntityNames.TestPost.ToString().Camelize()}}List{
+                   {{TestEntityNames.TestPost.Camelize()}}List{
                       id
                       {{attrName}}{
                           {{string.Join(",", attrs)}}
@@ -144,7 +180,7 @@ public class QueryApiTest
                 }
                 """.GraphQlQuery(_query).Ok();
 
-        var posts = (await _query.ListArgs(_queryName, new Dictionary<string, StringValues>
+        var posts = (await _query.List(_queryName, new Dictionary<string, StringValues>
         {
             [$"{attrName}.limit"] = limit.ToString(),
             [$"limit"] = "1",
