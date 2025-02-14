@@ -1,6 +1,5 @@
 using System.Data;
 using FormCMS.Utils.DataModels;
-using Humanizer;
 using Microsoft.Data.SqlClient;
 using SqlKata.Compilers;
 using SqlKata.Execution;
@@ -21,16 +20,8 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
     
     public bool InTransaction() => _transaction?.Transaction() != null;
 
-    public bool TryResolveDatabaseValue(string s, ColumnType type, out DatabaseTypeValue? result)
-    {
-        result = type switch
-        {
-            ColumnType.Datetime or ColumnType.String or ColumnType.Text => new DatabaseTypeValue(s),
-            ColumnType.Int when int.TryParse(s, out var resultInt) => new DatabaseTypeValue(I: resultInt),
-            _ => null
-        };
-        return result != null;
-    }
+    public ConvertOptions GetConvertOptions()
+        => new (ParseInt: true, ParseDate: true, ReturnDateAsString: false);
 
     public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
     {

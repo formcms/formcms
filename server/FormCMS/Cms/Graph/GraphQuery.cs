@@ -1,5 +1,6 @@
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
+using FormCMS.Infrastructure.RelationDbDao;
 using GraphQL.Types;
 
 namespace FormCMS.Cms.Graph;
@@ -7,14 +8,14 @@ namespace FormCMS.Cms.Graph;
 public record GraphInfo(Entity Entity, ObjectGraphType SingleType, ListGraphType ListType);
 public sealed class GraphQuery : ObjectGraphType
 {
-    public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService)
+    public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService, IRelationDbDao dao)
     {
         var entities = entitySchemaService.AllEntities().GetAwaiter().GetResult();
         var graphMap = new Dictionary<string, GraphInfo>();
         
         foreach (var entity in entities)
         {
-            var t = FieldTypes.PlainType(entity);
+            var t = FieldTypes.PlainType(entity, dao.GetConvertOptions().ReturnDateAsString);
             graphMap[entity.Name] = new GraphInfo(entity, t, new ListGraphType(t));
         }
         

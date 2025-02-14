@@ -129,13 +129,16 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
    {
       if (s == null)
          return null;
-      
-      if (!provider.TryResolveDatabaseValue(s, column.Type, out var dbValue))
+      var options = provider.GetConvertOptions();
+      return column.Type switch
       {
-         throw new ResultException("Can not resolve database value");
-      }
-
-      return dbValue!.ObjectValue;
+         ColumnType.Text or ColumnType.String => s,
+         ColumnType.Int or ColumnType.Id => !options.ParseInt ? s : 
+            int.TryParse(s, out var i) ? i : throw new ResultException("Can not resolve database value"),
+         ColumnType.Datetime or ColumnType.CreatedTime or ColumnType.UpdatedTime => !options.ParseDate ? s :
+            DateTime.TryParse(s, out var d) ? d : throw new ResultException("Can not resolve database value"),
+         _=>throw new ResultException("Can not resolve database value")
+      };
    }
 
    public Task<int> Count( Query query, Column[] columns,Filter[] filters, CancellationToken ct )

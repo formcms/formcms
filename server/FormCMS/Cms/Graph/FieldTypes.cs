@@ -6,7 +6,7 @@ namespace FormCMS.Cms.Graph;
 
 public static class FieldTypes
 {
-    public static ObjectGraphType PlainType(Entity entity)
+    public static ObjectGraphType PlainType(Entity entity, bool dateAsStr)
     {
         var entityType = new ObjectGraphType
         {
@@ -18,7 +18,7 @@ public static class FieldTypes
             entityType.AddField(new FieldType
             {
                 Name = attr.Field,
-                ResolvedType = PlainGraphType(attr),
+                ResolvedType = PlainGraphType(attr,dateAsStr),
                 Resolver = Resolvers.ValueResolver
             });
         }
@@ -50,12 +50,12 @@ public static class FieldTypes
         }
     }
 
-    private static IGraphType PlainGraphType( Attribute attribute)
+    private static IGraphType PlainGraphType( Attribute attribute, bool dateAsStr)
     {
         return attribute.DataType switch
         {
             DataType.Int => new IntGraphType(),
-            DataType.Datetime => new DateTimeGraphType(),
+            DataType.Datetime => dateAsStr ? new StringGraphType(): new DateTimeGraphType(),
             _ => attribute.IsCsv()? new ListGraphType(new StringGraphType()): new StringGraphType()
         };
     }

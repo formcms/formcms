@@ -4,12 +4,14 @@ using SqlKata.Execution;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
+public record ConvertOptions(bool ParseInt = false, bool ParseDate = false, bool ReturnDateAsString=false);
+
 public interface IRelationDbDao
 {
     ValueTask<TransactionManager> BeginTransaction();
     bool InTransaction();
-    
-    bool TryResolveDatabaseValue(string s, ColumnType type, out DatabaseTypeValue? data);
+    ConvertOptions GetConvertOptions();
+   
     internal Task<T> ExecuteKateQuery<T>(Func<QueryFactory,IDbTransaction?, Task<T>> queryFunc);
     Task CreateTable(string table, IEnumerable<Column> cols, CancellationToken ct = default);
     Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct = default);

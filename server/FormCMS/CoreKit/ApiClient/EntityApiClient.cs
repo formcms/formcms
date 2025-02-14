@@ -1,9 +1,11 @@
 using System.Text.Json;
+using Amazon.Runtime;
 using FormCMS.Utils.HttpClientExt;
 using FluentResults;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
+using FormCMS.Utils.StrArgsExt;
 
 namespace FormCMS.CoreKit.ApiClient;
 
@@ -12,9 +14,17 @@ public class EntityApiClient(HttpClient client)
 {
     public Task<Result<ListResponse>> List(
         string entity, int offset, int limit, string listMode = "all"
-    ) => client.GetResult<ListResponse>(
-        $"/{entity}?offset={offset}&limit={limit}&mode={listMode}".ToEntityApi()
-    );
+    ) => List(entity, new StrArgs
+    {
+        {"offset", offset.ToString()},
+        {"limit", limit.ToString()},
+        {"mode", listMode}
+    });
+
+    public Task<Result<ListResponse>> List(
+        string entity, StrArgs args
+    ) => client.GetResult<ListResponse>($"/{entity}?{args.ToQueryString()}".ToEntityApi());
+
 
     public Task<Result<JsonElement[]>> ListAsTree(
         string entity

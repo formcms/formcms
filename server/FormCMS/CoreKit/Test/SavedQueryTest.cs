@@ -8,6 +8,20 @@ namespace FormCMS.CoreKit.Test;
 
 public class SavedQueryTest(QueryApiClient client, string queryName)
 {
+    public async Task FilterByPublishedAt()
+    {
+        await $$"""
+                            query {{queryName}}{
+                                 {{TestEntityNames.TestPost.Camelize()}}List(publishedAt:{dateAfter:"2226-01-01"}){
+                                     id, publishedAt
+                                 }
+                            }
+                            """.GraphQlQuery<JsonElement[]>(client).Ok();
+        
+        var items = await client.List(queryName).Ok();
+        SimpleAssert.IsTrue(items.Length == 0);    
+    }
+    
     public async Task PaginationByCursor()
     {
         await $$"""
@@ -16,7 +30,7 @@ public class SavedQueryTest(QueryApiClient client, string queryName)
                 }
                 """.GraphQlQuery<JsonElement[]>(client).Ok();
 
-        var items = (await client.List(queryName)).Ok();
+        var items = await client.List(queryName).Ok();
         var firstId = items.First().Id();
 
         items = (await client.List(queryName, last: SpanHelper.Cursor(items.Last()))).Ok();

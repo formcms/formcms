@@ -7,8 +7,29 @@ namespace FormCMS.CoreKit.Test;
 
 public class RealtimeQueryTest(QueryApiClient client, string queryName)
 {
-    
-     public async Task SingleGraphQlQuery()
+    public async Task FilterByPublishedAt()
+    {
+        var items = await $$"""
+                           query {
+                                {{TestEntityNames.TestPost.Camelize()}}List(publishedAt:{dateAfter:"2025-01-01"}){
+                                    id, publishedAt
+                                }
+                           }
+                           """.GraphQlQuery<JsonElement[]>(client).Ok();
+        SimpleAssert.IsTrue(items.Length > 0);
+        
+        
+        items = await $$"""
+                           query {
+                                {{TestEntityNames.TestPost.Camelize()}}List(publishedAt:{dateAfter:"2226-01-01"}){
+                                    id, publishedAt
+                                }
+                           }
+                           """.GraphQlQuery<JsonElement[]>(client).Ok();
+        SimpleAssert.IsTrue(items.Length == 0);    
+    }
+
+    public async Task SingleGraphQlQuery()
     {
         var item = await $$"""
                            query {{queryName}}{
@@ -57,14 +78,13 @@ public class RealtimeQueryTest(QueryApiClient client, string queryName)
     public async Task RealtimeQueryPagination()
     {
         var items = await $$"""
-                          query {{queryName}}{
-                           {{TestEntityNames.TestPost.Camelize()}}List(offset:2, limit:3){
-                                id
+                            query {{queryName}}{
+                             {{TestEntityNames.TestPost.Camelize()}}List(offset:2, limit:3){
+                                  id
+                              }
                             }
-                          }
-                          """.GraphQlQuery<JsonElement[]>(client).Ok();
+                            """.GraphQlQuery<JsonElement[]>(client).Ok();
         SimpleAssert.AreEqual(3, items[0].Id());
         SimpleAssert.AreEqual(5, items[2].Id());
     }
-
 }

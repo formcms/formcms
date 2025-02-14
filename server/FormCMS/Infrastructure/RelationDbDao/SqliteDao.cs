@@ -21,16 +21,8 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
     
     public bool InTransaction() => _transaction?.Transaction() != null;
 
-    public bool TryResolveDatabaseValue(string s, ColumnType type, out DatabaseTypeValue? result)
-    {
-        result = type switch
-        {
-            ColumnType.Datetime or ColumnType.String or ColumnType.Text  or ColumnType.CreatedTime => new DatabaseTypeValue(s),
-            ColumnType.Int or ColumnType.Id when int.TryParse(s, out var resultInt) => new DatabaseTypeValue(I: resultInt),
-            _ => null
-        };
-        return result != null;
-    }
+    public ConvertOptions GetConvertOptions()
+        => new (ParseInt: true, ParseDate: false, ReturnDateAsString: true);
     
     public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory,IDbTransaction?, Task<T>> queryFunc)
     {

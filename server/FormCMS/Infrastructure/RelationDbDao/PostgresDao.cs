@@ -19,20 +19,8 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         return ret;
     }
     public bool InTransaction() => _transaction?.Transaction() != null;
-
-    public bool TryResolveDatabaseValue(string s, ColumnType type, out DatabaseTypeValue? result)
-    {
-        result = type switch
-        {
-            ColumnType.String or ColumnType.Text => new DatabaseTypeValue(s),
-            ColumnType.Int or ColumnType.Id when int.TryParse(s, out var resultInt) => new DatabaseTypeValue(
-                I: resultInt),
-            ColumnType.Datetime or ColumnType.CreatedTime or ColumnType.UpdatedTime when DateTime.TryParse(s,
-                out var resultDateTime) => new DatabaseTypeValue(D: resultDateTime),
-            _ => null
-        };
-        return result != null;
-    }
+    public ConvertOptions GetConvertOptions()
+        => new (ParseInt: true, ParseDate: true, ReturnDateAsString: false);
 
     public Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
     {

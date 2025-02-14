@@ -7,6 +7,24 @@ namespace FormCMS.CoreKit.Test;
 
 public class VariableTest(QueryApiClient client, string queryName)
 {
+    public async Task FilterByPublishedAt()
+    {
+        var items = await $$"""
+                query {{queryName}}($d:Date){
+                     {{TestEntityNames.TestPost.Camelize()}}List(publishedAt:{dateAfter:$d}){
+                         id, publishedAt
+                     }
+                }
+                """.GraphQlQuery<JsonElement[]>(client, new {d ="2025-01-01"}).Ok();
+        
+        SimpleAssert.IsTrue(items.Length > 0);
+        items = await client.List(queryName, new StrArgs
+        {
+            { "d", "2225-01-01" }
+        }).Ok();
+        SimpleAssert.IsTrue(items.Length == 0);    
+    }
+    
     public async Task ValueInSet()
     {
         var e = await $$"""

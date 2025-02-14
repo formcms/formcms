@@ -152,19 +152,17 @@ public sealed class EntitySchemaService(
 
     public bool ResolveVal(LoadedAttribute attr, string v, out ValidValue? result)
     {
-        var dataType = attr.DataType == DataType.Lookup ? attr.Lookup!.TargetEntity.PrimaryKeyAttribute.DataType : attr.DataType;
-        var colType = dataType switch
+        var dataType = attr.DataType == DataType.Lookup
+            ? attr.Lookup!.TargetEntity.PrimaryKeyAttribute.DataType
+            : attr.DataType;
+        var options = dao.GetConvertOptions();
+        result = new ValidValue(S: v);
+        result = dataType switch
         {
-            DataType.Int => ColumnType.Int,
-            DataType.String => ColumnType.String,
-            DataType.Datetime => ColumnType.Datetime,
-            DataType.Text => ColumnType.Text,
-            _ => throw new ArgumentOutOfRangeException()
-        };
-        
-        result = dao.TryResolveDatabaseValue(v, colType, out var val) switch
-        {
-            true => new ValidValue(S: val!.S, I: val.I, D: val.D),
+            DataType.Text or DataType.String => result,
+            DataType.Int => !options.ParseInt ? result : int.TryParse(v, out var i) ? new ValidValue(I: i) : null,
+            DataType.Datetime => !options.ParseDate ? result :
+                DateTime.TryParse(v, out var d) ? new ValidValue(D: d) : null,
             _ => null
         };
         return result != null;
