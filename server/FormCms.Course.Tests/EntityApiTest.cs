@@ -6,6 +6,7 @@ using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.jsonElementExt;
 using FormCMS.Utils.ResultExt;
+using Microsoft.Extensions.Primitives;
 using NUlid;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
@@ -14,11 +15,11 @@ namespace FormCMS.Course.Tests;
 public class EntityApiTest
 {
     private const string Name = "name";
-    private readonly string _post = "entity_api_test_post_" + Ulid.NewUlid();
-    private readonly string _author = "entity_api_test_author_" + Ulid.NewUlid();
-    private readonly string _tag = "entity_api_test_tag_" + Ulid.NewUlid();
-    private readonly string _attachment = "entity_api_test_attachment_" + Ulid.NewUlid();
-    private readonly string _category = "entity_api_test_category_" + Ulid.NewUlid();
+    private readonly string _post = "et_post_" + Ulid.NewUlid();
+    private readonly string _author = "et_auth_" + Ulid.NewUlid();
+    private readonly string _tag = "et_tag_" + Ulid.NewUlid();
+    private readonly string _attachment = "et_att_" + Ulid.NewUlid();
+    private readonly string _category = "et_cat_" + Ulid.NewUlid();
 
     private readonly EntityApiClient _entityApiClient;
     private readonly SchemaApiClient _schemaApiClient;
@@ -27,11 +28,30 @@ public class EntityApiTest
     public EntityApiTest()
     {
         Util.SetTestConnectionString();
-
         WebAppClient<Program> webAppClient = new();
         _entityApiClient = new EntityApiClient(webAppClient.GetHttpClient());
         _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());
         new AuthApiClient(webAppClient.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
+    }
+
+    [Fact]
+    public async Task InsertAndQueryDateField()
+    {
+        await _schemaApiClient.EnsureEntity(_post, Name, false,
+            new Attribute(Name,Name),
+            new Attribute("start","start", DataType: DataType.Datetime, DisplayType: DisplayType.Date)
+            ).Ok();
+        await _entityApiClient.Insert(_post, new {name ="post1", start = "2025-01-01"}).Ok();
+        await _entityApiClient.Insert(_post, new {name="post2", start = "2025-01-02"}).Ok();
+        await _entityApiClient.Insert(_post, new {name="post3", start = "2025-01-03"}).Ok();
+        
+        var res = await _entityApiClient.List(_post, new Dictionary<string, StringValues>
+        {
+            {"offset","0"},
+            {"limit","100"},
+            {"start[dateAfter]","2025-01-01"}
+        }).Ok();
+        Assert.Equal(2, res.TotalRecords);
     }
 
     [Fact]
@@ -258,7 +278,7 @@ public class EntityApiTest
     }
 
     [Fact]
-    public async Task InsertWithLookupWithWrongData()
+    public async Task InsertLookupWithWrongData()
     {
         await _schemaApiClient.EnsureSimpleEntity(_author, Name,false).Ok();
         await _schemaApiClient.EnsureSimpleEntity(_post, Name,false,lookup: _author).Ok();

@@ -160,11 +160,21 @@ public class QueryApiTest
     [Fact]
     public Task VariablePagination() => _commonTestCases.Variable.Pagination();
     
+    [Fact] 
+    public Task FilterByPublishedAtRealTime() => _commonTestCases.RealtimeQueryTest.FilterByPublishedAt();
+    
+    [Fact] 
+    public Task FilterByPublishedAtSaved() => _commonTestCases.SavedQuery.FilterByPublishedAt();
+
+    [Fact]
+    public Task FilterByPublishedVariable() => _commonTestCases.Variable.FilterByPublishedAt();
+    
     [Fact]
     public Task CollectionPart() => QueryParts("attachments", ["id", "post"]);
 
     [Fact]
     public Task JunctionPart() => QueryParts("tags", ["id"]);
+
 
     private async Task QueryParts(string attrName, string[] attrs)
     {
