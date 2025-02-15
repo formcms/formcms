@@ -77,11 +77,13 @@ export async function renderSchemaTable(tblContainer,errContainer, loadData, act
             : '';
 
         const historyButton = showViewHistory
-            ? `<a href="history.html?schemaId=${item.schemaId}"  class="btn btn-secondary btn-sm badge">View History</a>`
+            ? `<a href="history.html?${queryKeys.schemaId}=${item.schemaId}&${queryKeys.type}=${item.type}"  
+                    class="btn btn-secondary btn-sm badge">View History</a>`
             : '';
 
         const diffButton = showDiff && i > 0
-            ? `<a href="diff.html?id1=${item.id}&id2=${data[0].id}" class="btn btn-secondary btn-sm badge">Diff</a>`
+            ? `<a href="diff.html?${queryKeys.schemaId}=${item.schemaId}&${queryKeys.type}=${item.type}&${queryKeys.oldId}=${item.id}&${queryKeys.newId}=${data[0].id}" 
+                    class="btn btn-secondary btn-sm badge">Diff</a>`
             : '';
 
         const duplicateButton = item.type !== schemaTypes.menu 

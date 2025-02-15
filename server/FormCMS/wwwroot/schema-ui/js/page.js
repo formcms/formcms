@@ -3,32 +3,37 @@ import {checkUser} from "./checkUser.js";
 import {loadNavBar} from "./nav-bar.js";
 import {single, save} from "./repo.js";
 import {queryKeys, schemaTypes} from "./types.js";
+import {getParams} from "./searchParamUtil.js";
 
 let schema;
 let editor;
 
+//immutable, suitable to put to global scope
 const [navBox, headerBox,inputsBox,grapesBox, errorBox] = 
     ['#nav-box','#header-box','#inputs-box','#grapes-box','#error-box'];
 
 $(document).ready(function() {
-    const search = new URLSearchParams(window.location.search);
-    let id = search.get(queryKeys.id);
-    let refId = search.get(queryKeys.refId);
-    
+    // as small scope as possible
+    const [id,refId] = getParams([queryKeys.id,queryKeys.refId]);
     loadNavBar(navBox);
     addActionButtons();
     addInputs();
-    checkUser(()=>init(id, refId));
+    checkUser(()=>init(id,refId));
 });
 
 async function init(id, refId) {
+    if (!id && !refId) {
+        editor = loadEditor(grapesBox);
+        return
+    }
+    
     const schemaData = await loadSchema(id || refId);
     if (schemaData) {
         const pageData = schemaData.settings[schemaTypes.page];
-        if (id){
+        if (id) {
             schema = schemaData;
-        }else{
-            schema = {type:schemaTypes.page,settings:{[schemaTypes.page]: pageData}};
+        } else {
+            schema = {type: schemaTypes.page, settings: {[schemaTypes.page]: pageData}};
         }
         restoreFormData(pageData);
         editor = loadEditor(grapesBox, JSON.parse(pageData.components), JSON.parse(pageData.styles));
@@ -71,12 +76,12 @@ async function handleSave() {
     }
 }
 
-async function loadSchema(id){
-    if (!id){
-        return {};
+async function loadSchema(idVal){
+    if (!idVal){
+        return null;
     }
     $.LoadingOverlay("show");
-    const {data: schemaData, error} = await single(id);
+    const {data: schemaData, error} = await single(idVal);
     $.LoadingOverlay("hide");
 
     if (error) {
@@ -140,4 +145,3 @@ function addActionButtons() {
     
     $('#savePage').on('click', handleSave);
 }
-

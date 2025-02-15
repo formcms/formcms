@@ -1076,6 +1076,12 @@ Here, you can select any version and set it to `published` status.
 To preview a draft version, append `sandbox=1` as a query parameter in the URL: [Preview Draft Version Page](https://fluent-cms-admin.azurewebsites.net/story/?sandbox=1).  
 Alternatively, click the `View Page` button on the `Page Design` page.
 
+### Compare schema Changes
+You can compare the difference between different versions, use the [Schema Diff Tool](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/diff.html?schemaId=01JKKA93AJG2HNY648H9PC16PN&type=query&oldId=126&newId=138).
+
+### Duplicate
+You can duplicate any schema version and save it as a new schema.
+
 </details>  
 
 ---

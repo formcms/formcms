@@ -3,12 +3,16 @@ import {getHistory} from "./repo.js";
 import {renderSchemaTable} from "./listUtil.js";
 import {loadNavBar} from "./nav-bar.js";
 import {queryKeys} from "./types.js";
+import {getParams} from "./searchParamUtil.js";
 
-const [navBox, tableBox, errorBox] = ['#nav-box','#table-box','#error-box'];
+const [navBox, headerBox, tableBox, errorBox] 
+    = ['#nav-box','#header-box','#table-box','#error-box'];
+
 $(document).ready( function() {
-    const searchParams = new URLSearchParams(window.location.search);
-    const schemaId = searchParams.get(queryKeys.schemaId);
+    const [schemaId, type] = getParams([queryKeys.schemaId, queryKeys.type]);
     loadNavBar(navBox);
+    AddActionButton(type);
+    
     checkUser(async ()=>        
         renderSchemaTable(
             tableBox,
@@ -18,3 +22,7 @@ $(document).ready( function() {
         )
     );
 });
+
+function AddActionButton(type) {
+    $(headerBox).html(`<a href="list.html?${queryKeys.type}=${type}"  class="btn btn-secondary btn-sm badge">Back</a>`);
+}

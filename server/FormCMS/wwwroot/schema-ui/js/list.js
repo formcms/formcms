@@ -3,12 +3,13 @@ import {renderSchemaTable} from "./listUtil.js";
 import {list} from "./repo.js";
 import {loadNavBar} from "./nav-bar.js";
 import {queryKeys, schemaTypes} from "./types.js";
+import {getParams} from "./searchParamUtil.js";
 
 const [navBox, headerBox,tableBox, errorBox] = ['#nav-box','#header-box','#table-box','#error-box'];
 
 $(document).ready(function() {
-    const searchParams = new URLSearchParams(window.location.search);
-    const type = searchParams.get(queryKeys.type);
+    const [type] = getParams([queryKeys.type]);
+    
     loadNavBar(navBox);
     loadHeaderBar(type);
     checkUser(async ()=>{

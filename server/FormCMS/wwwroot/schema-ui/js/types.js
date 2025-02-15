@@ -12,4 +12,6 @@ export const queryKeys = {
     schemaId:'schemaId',
     sandbox:'sandbox',
     refId:'refId',
+    oldId:'oldId',
+    newId:'newId',
 }

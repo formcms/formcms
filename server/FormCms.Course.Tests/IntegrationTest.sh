@@ -38,7 +38,7 @@ test_sqlserver_container(){
   sleep 10
   
   export DatabaseProvider=SqlServer
-  export ConnectionStrings__SqlServer="Server=localhost;Database=cms_integration_tests;User Id=sa;Password=Admin12345678!;TrustServerCertificate=True"
+  export ConnectionStrings__SqlServer="Server=localhost;Database=cms_integration_tests;User Id=sa;Password=Admin12345678!;TrustServerCertificate=True;MultipleActiveResultSets=True;"
   dotnet test  
 }
 

@@ -1,34 +1,28 @@
 import {checkUser} from "./checkUser.js";
 import {single, singleByName, save, saveDefine, define} from "./repo.js";
 import {loadNavBar} from "./nav-bar.js";
-import {queryKeys} from "./types.js";
+import {queryKeys, schemaTypes} from "./types.js";
+import {getParams} from "./searchParamUtil.js";
+
+const [navBox, headerBox,editorBox, errorBox] = ['#nav-box','#header-box','#editor-box','#error-box'];
 
 let schema;
 let editor ;
-const [navBox, headerBox,editorBox, errorBox] = ['#nav-box','#header-box','#editor-box','#error-box'];
 
 $(document).ready(function() {
-    const searchParams = new URLSearchParams(window.location.search);
-    const type = searchParams.get(queryKeys.type);
-    const name = searchParams.get(queryKeys.name);
-    const refId = searchParams.get(queryKeys.refId);
-    let id = searchParams.get(queryKeys.id);
-    
-    
+    const [type,name,refId,id] = getParams([queryKeys.type,queryKeys.name,queryKeys.refId,queryKeys.id]);
     loadNavBar(navBox);
-    if (type === "entity"){
+    if (type === schemaTypes.entity){
         addEntityActionsButtons();
-    }else if(type === "menu"){
+    }else if(type === schemaTypes.menu){
         addMenuActionsButtons();
     }
-    checkUser(()=>loadEditor(id,name,type,refId));
+    checkUser(()=>loadEditor(id,type,name, refId));
 });
 
 function addMenuActionsButtons() {
-    $(headerBox).html(`
-    <button id='saveMenu' class="btn btn-primary">Save Menu</button>
-    `);
-    $('#saveMenu').on('click', ()=> submit('menu',save));
+    $(headerBox).html(` <button id='saveMenu' class="btn btn-primary">Save Menu</button>`);
+    $('#saveMenu').on('click', ()=> submit(schemaTypes.menu,save));
 }
 
 function addEntityActionsButtons() {
@@ -45,7 +39,7 @@ function addEntityActionsButtons() {
     </span>`
     );
 
-    $('#saveDefine').on('click', ()=> submit('entity',saveDefine));
+    $('#saveDefine').on('click', ()=> submit(schemaTypes.entity,saveDefine));
     $('#editContent').on('click', function() {
         const val = editor.getValue();
         window.open(`../admin/entities/${val.name}`,'_blank');
@@ -55,7 +49,6 @@ function addEntityActionsButtons() {
     });
     $('#define').on('click',getDefine);
     $('#saveEntity').on('click', ()=> submit('entity',save));
-
 }
 
 async function getDefine(){
@@ -74,7 +67,7 @@ async function getDefine(){
     }   
 }
 
-function loadEditor(id, name, type, refId) {
+function loadEditor(id, type,name,refId) {
     editor = new JSONEditor($(editorBox)[0], {
         ajax: true,
         schema: {
@@ -154,6 +147,7 @@ async function submit(type, callback) {
         })
         $(errorBox).text('').hide();
         schema = data;
+        editor.setValue(data.settings[type]);
         history.pushState(null, "", `edit.html?${queryKeys.type}=${type}&${queryKeys.id}=${data.id}`);
     } else {
         $(errorBox).text(error).show();

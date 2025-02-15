@@ -113,7 +113,7 @@ public static class EntityHelper
         PublicationStatus? publicationStatus
     )
     {
-        var query = e.Basic().WhereIn(e.PrimaryKey, ids.GetValues()).Select(fields);
+        var query = e.Basic().WhereIn(e.PrimaryKeyAttribute.AddTableModifier(), ids.GetValues()).Select(fields);
         if (publicationStatus.HasValue)
         {
             query.WhereCamelEnum(e.PublicationStatusAttribute.AddTableModifier(), publicationStatus.Value);

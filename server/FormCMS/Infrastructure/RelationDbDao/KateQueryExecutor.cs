@@ -70,12 +70,10 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
       }
    }
 
-
-
-   public async Task<Record?> Single(
+   public Task<Record?> Single(
       Query query, CancellationToken ct
-   ) => await provider.ExecuteKateQuery((db,tx)
-      => db.FirstOrDefaultAsync(query: query, transaction:tx, timeout: option.TimeoutSeconds, cancellationToken: ct)
+   ) => provider.ExecuteKateQuery(async (db,tx)
+      => await db.FirstOrDefaultAsync(query: query, transaction:tx, timeout: option.TimeoutSeconds, cancellationToken: ct) as Record
    );
 
    public Task<Record[]> Many(
