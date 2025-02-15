@@ -1,8 +1,7 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="utf-8" />
+    <meta charset="utf-8"/>
     <title>Fluent CMS Schema Builder - Page</title>
 
     <script src="//code.jquery.com/jquery.min.js"></script>
@@ -10,61 +9,41 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js"></script>
 
-    <link href="toast/jquery.toast.min.css" rel="stylesheet" >
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"  crossorigin="anonymous">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet"   crossorigin="anonymous">
- 
+    <link href="toast/jquery.toast.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+          crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet"
+          crossorigin="anonymous">
+
     <!--download from graphs.js-->
     <link rel="stylesheet" href="css/grapes.min.css?v0.21.10">
     <link rel="stylesheet" href="css/grapes-demo.css">
     <link rel="stylesheet" href="css/grapesjs-preset-webpage.min.css">
 
     <script src="https://unpkg.com/grapesjs@0.21.13"></script>
-     <script src="https://unpkg.com/grapesjs-preset-webpage@1.0.2"></script>
-     <script src="https://unpkg.com/grapesjs-blocks-basic@1.0.1"></script>
-     <script src="https://unpkg.com/grapesjs-plugin-forms@2.0.5"></script>
-     <script src="https://unpkg.com/grapesjs-component-countdown@1.0.1"></script>
-     <script src="https://unpkg.com/grapesjs-plugin-export@1.0.11"></script>
-     <script src="https://unpkg.com/grapesjs-tabs@1.0.6"></script>
-     <script src="https://unpkg.com/grapesjs-custom-code@1.0.1"></script>
-     <script src="https://unpkg.com/grapesjs-touch@0.1.1"></script>
-     <script src="https://unpkg.com/grapesjs-parser-postcss@1.0.1"></script>
-     <script src="https://unpkg.com/grapesjs-tooltip@0.1.7"></script>
-     <script src="https://unpkg.com/grapesjs-tui-image-editor@0.1.3"></script>
-     <script src="https://unpkg.com/grapesjs-typed@1.0.5"></script>
-     <script src="https://unpkg.com/grapesjs-style-bg@2.0.1"></script>
+    <script src="https://unpkg.com/grapesjs-preset-webpage@1.0.2"></script>
+    <script src="https://unpkg.com/grapesjs-blocks-basic@1.0.1"></script>
+    <script src="https://unpkg.com/grapesjs-plugin-forms@2.0.5"></script>
+    <script src="https://unpkg.com/grapesjs-component-countdown@1.0.1"></script>
+    <script src="https://unpkg.com/grapesjs-plugin-export@1.0.11"></script>
+    <script src="https://unpkg.com/grapesjs-tabs@1.0.6"></script>
+    <script src="https://unpkg.com/grapesjs-custom-code@1.0.1"></script>
+    <script src="https://unpkg.com/grapesjs-touch@0.1.1"></script>
+    <script src="https://unpkg.com/grapesjs-parser-postcss@1.0.1"></script>
+    <script src="https://unpkg.com/grapesjs-tooltip@0.1.7"></script>
+    <script src="https://unpkg.com/grapesjs-tui-image-editor@0.1.3"></script>
+    <script src="https://unpkg.com/grapesjs-typed@1.0.5"></script>
+    <script src="https://unpkg.com/grapesjs-style-bg@2.0.1"></script>
 
- 
-     <link rel="stylesheet" href="css/styles.css">
-     <script src="js/page.js" type="module"></script>
+
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="js/page.js" type="module"></script>
 </head>
- <body>
-    <div id="navbar-container"></div>
-     <div class="header">
-         <button id='savePage' class="btn btn-primary">Save Page</button>
-         <button id='visitPage' class="btn btn-primary">View Page</button>
-         <div id="errorPanel" class="alert alert-danger" role="alert" style="display: none;">
-             An error has occurred. Please try again.
-         </div>
-     </div>
-     <div class="mt-4">
-         <div class="row">
-             <div class="col-md-4 mb-3">
-                 <label for="name" class="form-label">Page Name</label>
-                 <input id="name" type="text" class="form-control" required>
-             </div>
-             
-             <div class="col-md-4 mb-3">
-                 <label for="title" class="form-label">Page Title</label>
-                 <input id="title" type="text" class="form-control" required>
-             </div>
-
-             <div class="col-md-4 mb-3">
-                 <label for="query" class="form-label">Query</label>
-                 <input id="query" type="text" class="form-control">
-             </div>
-         </div>
-     </div>
-     <div id='gjs'></div>
- </body>
- </html>
+<body>
+    <div id="nav-box"></div>
+    <div id="header-box" class="header"></div>
+    <div id="error-box" class="alert alert-danger" role="alert" style="display: none;"></div>
+    <div id="inputs-box" class="mt-4"></div>
+    <div id='grapes-box'></div>
+</body>
+</html>

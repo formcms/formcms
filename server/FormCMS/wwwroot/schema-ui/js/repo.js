@@ -13,7 +13,7 @@ export async function list(type){
     return  await tryFetch(async ()=>await  axios.get(apiPrefix + `/schemas?type=${type??''}`))
 }
 
-export async function oneByName(name, type){
+export async function singleByName(name, type){
     const url = `/schemas/name/${name}?type=${type}`;
     return  await tryFetch(async ()=>await  axios.get(apiPrefix + url))
 }
@@ -22,7 +22,7 @@ export async function getHistory(schemaId){
     return await tryFetch(async ()=> await  axios.get(apiPrefix + `/schemas/history/${schemaId}`))
 }
 
-export async function one(id){
+export async function single(id){
     const url = `/schemas/${id}`;
     return  await tryFetch(async ()=>await  axios.get(apiPrefix + url))
 }

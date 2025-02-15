@@ -24,28 +24,9 @@
     </script>
 </head>
 <body>
-    <div id="navbar-container"></div>
-    <div class="header">
-        <span id="entityActions" hidden>
-            <button id='saveDefine' class="btn btn-primary">Save Schema</button>
-            <button id='editContent' class="btn btn-primary">Edit Content</button>
-            <span >
-                <input type="checkbox" class="form-check-input" id="showAdvancedActions">
-                <label for="showAdvancedActions">Advanced Actions</label>
-            </span>
-            <span id="advancedEntityActions" hidden>
-                <button id='define' class="btn btn-primary">Get Columns Definition from Database</button>
-                <button id='saveEntity' class="btn btn-primary">Save Schema Not Update Database</button>
-            </span>
-        </span>
-        <span id="menuActions" hidden>
-            <button id='saveMenu' class="btn btn-primary">Save Menu</button>
-        </span>
-        <div id="errorPanel" class="alert alert-danger" role="alert" style="display: none;">
-            An error has occurred. Please try again.
-        </div>
-    </div>
-  
-    <div class='column col-md-12' id='editor_holder'></div>
+    <div id="nav-box"></div>
+    <div id="header-box" class="header" > </div>
+    <div id="error-box" class="alert alert-danger" role="alert" style="display: none;"></div>
+    <div id='editor-box' class='column col-md-12'>  </div>
 </body>
 </html>

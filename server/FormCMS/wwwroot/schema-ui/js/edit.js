@@ -1,25 +1,51 @@
 import {checkUser} from "./checkUser.js";
-import {one, oneByName, save, saveDefine} from "./repo.js";
+import {single, singleByName, save, saveDefine, define} from "./repo.js";
 import {loadNavBar} from "./nav-bar.js";
+import {queryKeys} from "./types.js";
 
-const searchParams = new URLSearchParams(window.location.search);
-const type = searchParams.get("type");
-const name = searchParams.get("name");
-
-let id = searchParams.get("id");
 let schema;
 let editor ;
+const [navBox, headerBox,editorBox, errorBox] = ['#nav-box','#header-box','#editor-box','#error-box'];
 
 $(document).ready(function() {
-    loadNavBar();
-    $("#entityActions").prop('hidden', type !=="entity");
-    $("#menuActions").prop('hidden', type !=="menu");
+    const searchParams = new URLSearchParams(window.location.search);
+    const type = searchParams.get(queryKeys.type);
+    const name = searchParams.get(queryKeys.name);
+    const refId = searchParams.get(queryKeys.refId);
+    let id = searchParams.get(queryKeys.id);
     
     
-    $('#saveMenu').on('click', ()=> submit(save));
-    $('#saveEntity').on('click', ()=> submit(save));
-    $('#define').on('click',getDefine);
-    $('#saveDefine').on('click', ()=> submit(saveDefine));
+    loadNavBar(navBox);
+    if (type === "entity"){
+        addEntityActionsButtons();
+    }else if(type === "menu"){
+        addMenuActionsButtons();
+    }
+    checkUser(()=>loadEditor(id,name,type,refId));
+});
+
+function addMenuActionsButtons() {
+    $(headerBox).html(`
+    <button id='saveMenu' class="btn btn-primary">Save Menu</button>
+    `);
+    $('#saveMenu').on('click', ()=> submit('menu',save));
+}
+
+function addEntityActionsButtons() {
+    $(headerBox).html(`
+    <button id='saveDefine' class="btn btn-primary">Save Schema</button>
+    <button id='editContent' class="btn btn-primary">Edit Content</button>
+    <span >
+        <input type="checkbox" class="form-check-input" id="showAdvancedActions">
+        <label for="showAdvancedActions">Advanced Actions</label>
+    </span>
+    <span id="advancedEntityActions" hidden>
+        <button id='define' class="btn btn-primary">Get Columns Definition from Database</button>
+        <button id='saveEntity' class="btn btn-primary">Save Schema Not Update Database</button>
+    </span>`
+    );
+
+    $('#saveDefine').on('click', ()=> submit('entity',saveDefine));
     $('#editContent').on('click', function() {
         const val = editor.getValue();
         window.open(`../admin/entities/${val.name}`,'_blank');
@@ -27,9 +53,10 @@ $(document).ready(function() {
     $('#showAdvancedActions').change(function() {
         $("#advancedEntityActions").prop('hidden',!$(this).is(':checked'));
     });
-    
-    checkUser(loadEditor);
-});
+    $('#define').on('click',getDefine);
+    $('#saveEntity').on('click', ()=> submit('entity',save));
+
+}
 
 async function getDefine(){
     const oldValue = editor.getValue();
@@ -43,12 +70,12 @@ async function getDefine(){
         oldValue.attributes = data.attributes;
         editor.setValue(oldValue);
     }else {
-        $('#errorPanel').text(error).show();
+        $(errorBox).text(error).show();
     }   
 }
 
-function loadEditor() {
-    editor = new JSONEditor($('#editor_holder')[0], {
+function loadEditor(id, name, type, refId) {
+    editor = new JSONEditor($(editorBox)[0], {
         ajax: true,
         schema: {
             "$ref": `json/${type}.json`,
@@ -65,18 +92,29 @@ function loadEditor() {
     });
 
     editor.on('ready',async function() {
-        if (id || name) {
+        if (id || name || refId) {
             
             $.LoadingOverlay("show");
-            const {data:schemaData, error} = id ? await one(id):await oneByName(name, type);
+            const {data:schemaData, error} = id 
+                ?await single(id)
+                : refId ? 
+                    await single(refId):
+                    await singleByName(name, type);
+            
             $.LoadingOverlay("hide");
             
             if (schemaData){
                 $('title').text(`${schemaData.name} - ${type} setting - FormCMS Schema Builder`);
-                schema = schemaData;
+                if (refId){
+                    //create a new schema
+                    schema = {type,settings:{[type]: schemaData.settings[type]}};
+                }else {
+                    schema = schemaData;
+                    
+                }
                 editor.setValue(schemaData.settings[type]);
             }else {
-                $('#errorPanel').text(error).show();
+                $(errorBox).text(error).show();
             }
         } else {
             editor.setValue(null);
@@ -94,7 +132,7 @@ function loadEditor() {
     });
     return editor;
 }
-async function submit(callback) {
+async function submit(type, callback) {
     const errors = editor.validate();
     if (errors.length) {
         return;
@@ -114,9 +152,10 @@ async function submit(callback) {
             showHideTransition: 'slide',
             icon: 'success'
         })
-        $('#errorPanel').text('').hide();
-        window.location.href = `edit.html?type=${type}&id=${data.id}`;
+        $(errorBox).text('').hide();
+        schema = data;
+        history.pushState(null, "", `edit.html?${queryKeys.type}=${type}&${queryKeys.id}=${data.id}`);
     } else {
-        $('#errorPanel').text(error).show();
+        $(errorBox).text(error).show();
     }
 }

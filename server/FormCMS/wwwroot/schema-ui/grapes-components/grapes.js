@@ -40,7 +40,7 @@ function addCustomTypes(editor){
 }
 
 //copy from grapes.js demo
-export function loadEditor(container, loadData) {
+export function loadEditor(container,  components,styles) {
     let editor = grapesjs.init({
         storageManager: false,
         container: container,
@@ -90,11 +90,11 @@ export function loadEditor(container, loadData) {
         .forEach(function(item) {
             pn.getButton('views', item[0]).set('attributes', {title: item[1], 'data-tooltip-pos': 'bottom'});
         });
-    var titles = document.querySelectorAll('*[title]');
+    const titles = document.querySelectorAll('*[title]');
 
-    for (var i = 0; i < titles.length; i++) {
-        var el = titles[i];
-        var title = el.getAttribute('title');
+    for (let i = 0; i < titles.length; i++) {
+        const el = titles[i];
+        let title = el.getAttribute('title');
         title = title ? title.trim(): '';
         if(!title)
             break;
@@ -108,7 +108,8 @@ export function loadEditor(container, loadData) {
             command: 'core:component-outline',
             'active': true,
         });
-        loadData(editor);
+        editor.setComponents(components);
+        editor.setStyle(styles);
     });
     
     addCustomTypes(editor);

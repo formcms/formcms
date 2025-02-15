@@ -59,7 +59,7 @@ public sealed class QuerySchemaService(
         query = query with
         {
             IdeUrl =
-            $"{systemSettings.GraphQlPath}?query={Uri.EscapeDataString(query.Source)}&operationName={query.Name}"
+            $"{systemSettings.GraphQlPath}?query={Uri.EscapeDataString(query.Source)}"
         };
         await VerifyQuery(query, status, ct);
         var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query));

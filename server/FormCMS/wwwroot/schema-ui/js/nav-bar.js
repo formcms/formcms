@@ -1,7 +1,8 @@
 import {logout} from "./repo.js";
 
-export function loadNavBar(){
-    $('#navbar-container').html(`
+export function loadNavBar(container){
+    
+    $(container).html(`
     <nav class="navbar navbar-expand-lg navbar-light bg-light">
         <a class="navbar-brand" href="/">
             <img alt="logo" src="img/fluent-cms.png" height="40" class="mr-2">

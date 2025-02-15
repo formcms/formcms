@@ -1,28 +1,39 @@
 import {loadEditor} from "../grapes-components/grapes.js";
 import {checkUser} from "./checkUser.js";
 import {loadNavBar} from "./nav-bar.js";
-import {one, save} from "./repo.js";
+import {single, save} from "./repo.js";
+import {queryKeys, schemaTypes} from "./types.js";
 
-let id = new URLSearchParams(window.location.search).get("id");
 let schema;
 let editor;
 
-$(document).ready(function() {
-    loadNavBar();
+const [navBox, headerBox,inputsBox,grapesBox, errorBox] = 
+    ['#nav-box','#header-box','#inputs-box','#grapes-box','#error-box'];
 
-    $('#visitPage').on('click', function () {
-        const name = $(`#name`).val();
-        if (name){
-            window.open(`/${name}/?sandbox=1`, '_blank'); // Opens in a new tab
-        }
-    });
+$(document).ready(function() {
+    const search = new URLSearchParams(window.location.search);
+    let id = search.get(queryKeys.id);
+    let refId = search.get(queryKeys.refId);
     
-    $('#savePage').on('click', handleSave);
-    
-    checkUser(()=>{
-        editor = loadEditor("#gjs", loadData);
-    });
+    loadNavBar(navBox);
+    addActionButtons();
+    addInputs();
+    checkUser(()=>init(id, refId));
 });
+
+async function init(id, refId) {
+    const schemaData = await loadSchema(id || refId);
+    if (schemaData) {
+        const pageData = schemaData.settings[schemaTypes.page];
+        if (id){
+            schema = schemaData;
+        }else{
+            schema = {type:schemaTypes.page,settings:{[schemaTypes.page]: pageData}};
+        }
+        restoreFormData(pageData);
+        editor = loadEditor(grapesBox, JSON.parse(pageData.components), JSON.parse(pageData.styles));
+    }
+}
 
 async function handleSave() {
 
@@ -31,13 +42,13 @@ async function handleSave() {
         css: editor.getCss(),
         components:JSON.stringify(editor.getComponents()),
         styles: JSON.stringify(editor.getStyle()),
-        type: 'page',
+        type: schemaTypes.page,
     };
-    if (!collectFormData(payload)){
+    if (!attachFormData(payload)){
         return false;
     }
-    
-    schema = schema ||{type:'page'};
+
+    schema = schema ||{type:schemaTypes.page};
     schema.settings = {page:payload};
 
     $.LoadingOverlay("show");
@@ -51,51 +62,82 @@ async function handleSave() {
             showHideTransition: 'slide',
             icon: 'success'
         })
-        window.location.href = `page.html?id=${data.id}`;
-        $('#errorPanel').text('').hide();
+
+        schema = data;
+        history.pushState(null, "", `page.html?${queryKeys.id}=${data.id}`);
+        $(errorBox).text('').hide();
     } else {
-        $('#errorPanel').text(error).show();
+        $(errorBox).text(error).show();
     }
 }
-async function loadData(editor) {
-    if (!id) {
-        return;
+
+async function loadSchema(id){
+    if (!id){
+        return {};
     }
-    
     $.LoadingOverlay("show");
-    const {data: schemaData, error} = await one(id);
+    const {data: schemaData, error} = await single(id);
     $.LoadingOverlay("hide");
 
     if (error) {
-        $('#errorPanel').text(error).show();
-        return;
+        $(errorBox).text(error).show();
+        return null;
     }
-    schema = schemaData;
-
-    $('title').text(`🏠${schemaData.name} - page setting - Fluent CMS Schema Builder`);
-    id = schemaData.id;
-    const pageData = schemaData.settings['page'];
-    restoreFormData(pageData);
-    editor.setComponents(JSON.parse(pageData.components));
-    editor.setStyle(JSON.parse(pageData.styles));
+    return schemaData;
 }
 
+function addInputs(){
+    $(inputsBox).html(`
+          <div class="row">
+             <div class="col-md-4 mb-3">
+                 <label for="name" class="form-label">Page Name</label>
+                 <input id="name" type="text" class="form-control" required>
+             </div>
+             
+             <div class="col-md-4 mb-3">
+                 <label for="title" class="form-label">Page Title</label>
+                 <input id="title" type="text" class="form-control" required>
+             </div>
 
-const controls = ['name','title', 'query', 'queryString'];
+             <div class="col-md-4 mb-3">
+                 <label for="query" class="form-label">Query</label>
+                 <input id="query" type="text" class="form-control">
+             </div>
+         </div>
+    `);
+}
+const controls = ['name','title', 'query'];
 function restoreFormData(payload){
     for (const ctl of controls){
-       $(`#${ctl}`).val(payload[ctl]);
+        $(`#${ctl}`).val(payload[ctl]);
     }
 }
 
-function collectFormData(payload){
+function attachFormData(payload){
     for (const ctlName of controls){
         const ctl = $(`#${ctlName}`);
         if (ctl.prop('required') && !ctl.val()){
-            $('#errorPanel').text(`${ctlName} can not be empty`).show();
+            $(errorBox).text(`${ctlName} can not be empty`).show();
             return false;
         }
         payload[ctlName] = ctl.val();
     }
     return true;
 }
+
+function addActionButtons() {
+    $(headerBox).html(`
+     <button id='savePage' class="btn btn-primary">Save Page</button>
+     <button id='visitPage' class="btn btn-primary">View Page</button>
+    `);
+
+    $('#visitPage').on('click', function () {
+        const name = $(`#name`).val();
+        if (name){
+            window.open(`/${name}/?${queryKeys.sandbox}=1`, '_blank'); // Opens in a new tab
+        }
+    });
+    
+    $('#savePage').on('click', handleSave);
+}
+
