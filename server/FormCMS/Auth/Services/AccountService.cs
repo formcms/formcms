@@ -1,10 +1,10 @@
 using System.Security.Claims;
-using FormCMS.Auth.DTO;
 using FluentResults;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using FormCMS.Core.Descriptors;
+using FormCMS.Core.Identities;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.HttpContextExt;
 using FormCMS.Utils.RecordExt;
@@ -33,15 +33,15 @@ public class AccountService<TUser, TRole,TCtx>(
     
     public async Task<string[]> GetRoles(CancellationToken ct)
     {
-        if (!accessor.HttpContext.HasRole(RoleConstants.Admin) && !accessor.HttpContext.HasRole(RoleConstants.Sa))
+        if (!accessor.HttpContext.HasRole(Roles.Admin) && !accessor.HttpContext.HasRole(Roles.Sa))
             throw new UnauthorizedAccessException();
         var roles = await context.Roles.Select(x => x.Name??"").ToArrayAsync(ct);
         return roles;
     }
 
-    public async Task<UserDto> GetSingleUser(string id, CancellationToken ct)
+    public async Task<UserAccess> GetSingleUser(string id, CancellationToken ct)
     {
-        if (!accessor.HttpContext.HasRole(RoleConstants.Admin) && !accessor.HttpContext.HasRole(RoleConstants.Sa))
+        if (!accessor.HttpContext.HasRole(Roles.Admin) && !accessor.HttpContext.HasRole(Roles.Sa))
             throw new UnauthorizedAccessException();
         var query = from user in context.Users
             where user.Id == id 
@@ -61,7 +61,7 @@ public class AccountService<TUser, TRole,TCtx>(
         // use client calculation to support Sqlite
         var item = await query.FirstOrDefaultAsync(ct)
             ?? throw new ResultException($"Cannot find user by id [{id}]");
-        return new UserDto
+        return new UserAccess
         (
             Email: item.Key.Email!,
             Id: item.Key.Id,
@@ -91,9 +91,9 @@ public class AccountService<TUser, TRole,TCtx>(
         );
     }
 
-    public async Task<UserDto[]> GetUsers(CancellationToken ct)
+    public async Task<UserAccess[]> GetUsers(CancellationToken ct)
     {
-        if (!accessor.HttpContext.HasRole(RoleConstants.Admin) && !accessor.HttpContext.HasRole(RoleConstants.Sa))
+        if (!accessor.HttpContext.HasRole(Roles.Admin) && !accessor.HttpContext.HasRole(Roles.Sa))
             throw new UnauthorizedAccessException();
 
         var query = from user in context.Users
@@ -108,7 +108,7 @@ public class AccountService<TUser, TRole,TCtx>(
             select new {userGroup.Key, Roles =userGroup.ToArray()};
         var items = await query.ToArrayAsync(ct);
         // use client calculation to support Sqlite
-        return [..items.Select(x => new UserDto
+        return [..items.Select(x => new UserAccess
         (
             Email : x.Key.Email!,
             Id : x.Key.Id,
@@ -155,7 +155,7 @@ public class AccountService<TUser, TRole,TCtx>(
 
     public async Task DeleteUser(string id)
     {
-        if(!accessor.HttpContext.HasRole(RoleConstants.Sa)) throw new ResultException("Only supper admin have permission");
+        if(!accessor.HttpContext.HasRole(Roles.Sa)) throw new ResultException("Only supper admin have permission");
         var user = await userManager.Users.FirstOrDefaultAsync(x => x.Id == id)
             ?? throw new ResultException($"Fail to Delete User, Cannot find user by id [{id}]");
         Assure(await userManager.DeleteAsync(user));
@@ -163,23 +163,23 @@ public class AccountService<TUser, TRole,TCtx>(
     
    
 
-    public async Task SaveUser(UserDto dto)
+    public async Task SaveUser(UserAccess access)
     {
-        if (!accessor.HttpContext.HasRole(RoleConstants.Sa)) throw new ResultException("Only supper admin have permission");
-        var user = await MustFindUser(dto.Id);
+        if (!accessor.HttpContext.HasRole(Roles.Sa)) throw new ResultException("Only supper admin have permission");
+        var user = await MustFindUser(access.Id);
         var claims = await userManager.GetClaimsAsync(user);
-        await AssignRole(user, dto.Roles).Ok();
-        await AssignClaim(user, claims, AccessScope.FullAccess, dto.ReadWriteEntities).Ok();
-        await AssignClaim(user, claims, AccessScope.RestrictedAccess, dto.RestrictedReadWriteEntities).Ok();
-        await AssignClaim(user, claims, AccessScope.FullRead, dto.ReadonlyEntities).Ok();
-        await AssignClaim(user, claims, AccessScope.RestrictedRead, dto.RestrictedReadonlyEntities).Ok();
+        await AssignRole(user, access.Roles).Ok();
+        await AssignClaim(user, claims, AccessScope.FullAccess, access.ReadWriteEntities).Ok();
+        await AssignClaim(user, claims, AccessScope.RestrictedAccess, access.RestrictedReadWriteEntities).Ok();
+        await AssignClaim(user, claims, AccessScope.FullRead, access.ReadonlyEntities).Ok();
+        await AssignClaim(user, claims, AccessScope.RestrictedRead, access.RestrictedReadonlyEntities).Ok();
     }
     
-    public async Task<RoleDto> GetSingleRole(string name)
+    public async Task<RoleAccess> GetSingleRole(string name)
     {
         var role = await roleManager.FindByNameAsync(name) ?? throw new ResultException($"Cannot find role by name [{name}]");
         var claims = await roleManager.GetClaimsAsync(role);
-        return new RoleDto
+        return new RoleAccess
         (
             Name: name,
             ReadWriteEntities: [..claims.Where(x => x.Type == AccessScope.FullAccess).Select(x => x.Value)],
@@ -191,26 +191,26 @@ public class AccountService<TUser, TRole,TCtx>(
     }
     public async Task DeleteRole(string name)
     {
-        if (name is RoleConstants.Admin or RoleConstants.Sa) throw new ResultException($"Cannot delete System Build-in Role [{name}]");
-        if (!accessor.HttpContext.HasRole(RoleConstants.Sa)) throw new ResultException("Only supper admin have permission");
+        if (name is Roles.Admin or Roles.Sa) throw new ResultException($"Cannot delete System Build-in Role [{name}]");
+        if (!accessor.HttpContext.HasRole(Roles.Sa)) throw new ResultException("Only supper admin have permission");
         var role = await roleManager.FindByNameAsync(name)?? throw new ResultException($"Cannot find role by name [{name}]");
         Assure(await roleManager.DeleteAsync(role));
     }
 
-    public async Task SaveRole(RoleDto roleDto)
+    public async Task SaveRole(RoleAccess roleAccess)
     {
-        if (!accessor.HttpContext.HasRole(RoleConstants.Sa)) throw new ResultException("Only supper admin have permission");
-        if (string.IsNullOrWhiteSpace(roleDto.Name))
+        if (!accessor.HttpContext.HasRole(Roles.Sa)) throw new ResultException("Only supper admin have permission");
+        if (string.IsNullOrWhiteSpace(roleAccess.Name))
         {
             throw new ResultException("Role name can not be null");
         }
-        await EnsureRoles([roleDto.Name]).Ok();
-        var role = await roleManager.FindByNameAsync(roleDto.Name);
+        await EnsureRoles([roleAccess.Name]).Ok();
+        var role = await roleManager.FindByNameAsync(roleAccess.Name);
         var claims =await roleManager.GetClaimsAsync(role!);
-        await AddClaimsToRole(role!, claims, AccessScope.FullAccess, roleDto.ReadWriteEntities).Ok();
-        await AddClaimsToRole(role!, claims, AccessScope.RestrictedAccess, roleDto.RestrictedReadWriteEntities).Ok();
-        await AddClaimsToRole(role!, claims, AccessScope.FullRead, roleDto.ReadonlyEntities).Ok();
-        await AddClaimsToRole(role!, claims, AccessScope.RestrictedRead, roleDto.RestrictedReadonlyEntities).Ok();
+        await AddClaimsToRole(role!, claims, AccessScope.FullAccess, roleAccess.ReadWriteEntities).Ok();
+        await AddClaimsToRole(role!, claims, AccessScope.RestrictedAccess, roleAccess.RestrictedReadWriteEntities).Ok();
+        await AddClaimsToRole(role!, claims, AccessScope.FullRead, roleAccess.ReadonlyEntities).Ok();
+        await AddClaimsToRole(role!, claims, AccessScope.RestrictedRead, roleAccess.RestrictedReadonlyEntities).Ok();
     }
 
 

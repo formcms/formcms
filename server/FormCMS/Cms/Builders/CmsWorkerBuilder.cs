@@ -1,4 +1,5 @@
 using FormCMS.Cms.Workers;
+using FormCMS.Infrastructure.LocalFileStore;
 using FormCMS.Infrastructure.RelationDbDao;
 
 namespace FormCMS.Cms.Builders;
@@ -16,19 +17,25 @@ public static class CmsWorkerBuilder
         Console.WriteLine(
             $"""
              *********************************************************
-             Adding CMS Publishing Worker
+             Adding CMS Workers
              Delay Seconds: {delaySeconds}
              Query Timeout: {queryTimeoutSeconds}
              *********************************************************
              """);
 
-        services.AddDao(databaseProvider, connectionString );
+        services.AddSingleton(new LocalFileStoreOptions(
+            Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/files"), "/files",0, 0));
+        services.AddSingleton<IFileStore,LocalFileStore>();
         
+        //scoped services
+        services.AddDao(databaseProvider, connectionString );
         services.AddSingleton(new KateQueryExecutorOption(queryTimeoutSeconds));
         services.AddScoped<KateQueryExecutor>();
+        services.AddScoped<DatabaseMigrator>();
         
-        services.AddSingleton(new DataPublishingWorkerOptions(delaySeconds));
+        services.AddHostedService<ExportWorker>();
         services.AddHostedService<DataPublishingWorker>();
+        
         return services;
     }
     

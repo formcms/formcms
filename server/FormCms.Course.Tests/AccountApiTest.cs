@@ -1,5 +1,5 @@
 using FormCMS.Auth.ApiClient;
-using FormCMS.Auth.DTO;
+using FormCMS.Core.Identities;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.ResultExt;
 using NUlid;
@@ -111,7 +111,7 @@ public class AccountApiTest
     {
         await _authApiClient.EnsureSaLogin().Ok();
 
-        var role = new RoleDto(_role, [], [], [], []);
+        var role = new RoleAccess(_role, [], [], [], []);
         await _accountApiClient.SaveRole(role).Ok();
 
         role = await _accountApiClient.GetRole(_role).Ok();
@@ -134,7 +134,7 @@ public class AccountApiTest
         await _schemaApiClient.EnsureSimpleEntity(_post, "name", false).Ok();
         
         //create a role with permission for `_post`
-        var role = new RoleDto(_role, [_post], [], [], []);
+        var role = new RoleAccess(_role, [_post], [], [], []);
         await _accountApiClient.SaveRole(role).Ok();
 
         var users = await _accountApiClient.GetUsers().Ok();

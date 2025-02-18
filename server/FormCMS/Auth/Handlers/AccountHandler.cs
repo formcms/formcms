@@ -1,5 +1,5 @@
-using FormCMS.Auth.DTO;
 using FormCMS.Auth.Services;
+using FormCMS.Core.Identities;
 
 namespace FormCMS.Auth.Handlers;
 
@@ -13,13 +13,13 @@ public static class AccountHandlers
 
         app.MapDelete("/users/{id}", (IAccountService svc, string id) => svc.DeleteUser(id));
 
-        app.MapPost("/users", (IAccountService svc, UserDto dto) => svc.SaveUser(dto));
+        app.MapPost("/users", (IAccountService svc, UserAccess dto) => svc.SaveUser(dto));
 
         app.MapGet("/roles", (IAccountService svc, CancellationToken ct) => svc.GetRoles(ct));
 
         app.MapGet("/roles/{name}", (IAccountService svc, string name) => svc.GetSingleRole(name));
 
-        app.MapPost("/roles", (IAccountService svc, RoleDto dto) => svc.SaveRole(dto));
+        app.MapPost("/roles", (IAccountService svc, RoleAccess dto) => svc.SaveRole(dto));
 
         app.MapDelete("/roles/{name}", (IAccountService svc, string name) => svc.DeleteRole(name));
         

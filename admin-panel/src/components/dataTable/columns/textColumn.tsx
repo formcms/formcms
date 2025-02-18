@@ -1,5 +1,5 @@
 import {Column} from "primereact/column";
-import { XAttr } from "../xEntity";
+import { XAttr } from "../../xEntity";
 
 export function textColumn(
     column: XAttr,

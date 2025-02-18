@@ -1,24 +1,27 @@
 using FormCMS.Core.Descriptors;
+using FormCMS.Infrastructure.LocalFileStore;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.ResultExt;
 
 namespace FormCMS.Cms.Workers;
 
-public record DataPublishingWorkerOptions(int DelaySeconds);
 public sealed class DataPublishingWorker(
-    ILogger<DataPublishingWorker> logger,
-    KateQueryExecutor queryExecutor,
-    DataPublishingWorkerOptions options
+    IServiceScopeFactory serviceScopeFactory,
+    ILogger<DataPublishingWorker> logger
 ) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
         while (!ct.IsCancellationRequested)
         {
+            logger.LogInformation("Wakeup Publishing Worker...");
+
+            using var scope = serviceScopeFactory.CreateScope();
+            var queryExecutor = scope.ServiceProvider.GetRequiredService<KateQueryExecutor>();
             try
             {
-                var query = SchemaHelper.ByNameAndType(SchemaType.Entity, null,PublicationStatus.Published);
-                var items = await queryExecutor.Many(query,ct);
+                var query = SchemaHelper.ByNameAndType(SchemaType.Entity, null, PublicationStatus.Published);
+                var items = await queryExecutor.Many(query, ct);
                 var count = 0;
                 foreach (var item in items)
                 {
@@ -33,7 +36,8 @@ public sealed class DataPublishingWorker(
                     {
                         try
                         {
-                            count += await queryExecutor.ExecAndGetAffected(entity.Settings.Entity!.PublishAllScheduled(), ct);
+                            count += await queryExecutor.ExecAndGetAffected(
+                                entity.Settings.Entity!.PublishAllScheduled(), ct);
                         }
                         catch (Exception e)
                         {
@@ -43,13 +47,14 @@ public sealed class DataPublishingWorker(
                         }
                     }
                 }
+
                 logger.LogInformation($"{count} records published");
             }
             catch (Exception e)
             {
                 logger.LogError("Fail to publish, error = {error}", e.Message);
             }
-            Thread.Sleep(TimeSpan.FromSeconds(options.DelaySeconds));
+            await Task.Delay(1000 * 30, ct); // ✅ Prevents blocking
         }
     }
 }

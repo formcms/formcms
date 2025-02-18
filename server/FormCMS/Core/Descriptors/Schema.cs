@@ -110,7 +110,8 @@ public static class SchemaHelper
                 nameof(Schema.Type),
                 nameof(Schema.Settings),
                 nameof(DefaultAttributeNames.CreatedAt),
-                nameof(Schema.CreatedBy)
+                nameof(Schema.CreatedBy),
+                nameof(Schema.IsLatest)
             ])
             .Where(DefaultAttributeNames.Deleted, false);
 
@@ -135,8 +136,8 @@ public static class SchemaHelper
                 .AsCamelFieldValueUpdate([nameof(Schema.PublicationStatus)], [PublicationStatus.Published]),
         ];
     }
-    
-    public static (SqlKata.Query,SqlKata.Query, string) Save(this Schema schema)
+
+    public static Schema Init(this Schema schema)
     {
         if (string.IsNullOrEmpty(schema.SchemaId))
         {
@@ -152,10 +153,21 @@ public static class SchemaHelper
             schema = schema with
             {
                 IsLatest = true,
-                PublicationStatus = PublicationStatus.Draft 
+                PublicationStatus = PublicationStatus.Draft
             };
         }
-        
+        return schema;
+    }
+
+    public static SqlKata.Query ResetLatest(this Schema schema)
+        => new SqlKata.Query(TableName)
+            .WhereCamelField(nameof(Schema.SchemaId), schema.SchemaId)
+            .WhereCamelField(nameof(Schema.IsLatest), true)
+            .AsCamelFieldUpdate([nameof(Schema.IsLatest)], [false]);
+    
+    
+    public static SqlKata.Query Save(this Schema schema)
+    {
         HashSet<string> fields =
         [
             nameof(Schema.SchemaId),
@@ -167,16 +179,10 @@ public static class SchemaHelper
             nameof(Schema.CreatedBy),
         ];
         var record = RecordExtensions.FormObject(schema, whiteList: fields);
-        return
-        (
-            new SqlKata.Query(TableName)
-                .WhereCamelField(nameof(Schema.SchemaId), schema.SchemaId)
-                .WhereCamelField(nameof(Schema.IsLatest), true)
-                .AsCamelFieldUpdate([nameof(Schema.IsLatest)], [false]),
-            new SqlKata.Query(TableName).AsInsert(record, true),
-            schema.SchemaId
-        );
+        return new SqlKata.Query(TableName).AsInsert(record, true);
     }
+    
+    
 
     public static Result<Schema> RecordToSchema(Record? record)
         => record is null ? Result.Fail("Can not parse schema, input record is null") : record.ToObject<Schema>();

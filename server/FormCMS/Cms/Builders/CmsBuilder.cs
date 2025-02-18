@@ -2,15 +2,14 @@ using System.Collections.Immutable;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using FormCMS.AuditLogging.Models;
 using FormCMS.Auth.Handlers;
-using FormCMS.Auth.Services;
 using FormCMS.Cms.Handlers;
 using FormCMS.Cms.Services;
 using FormCMS.Cms.Graph;
 using FormCMS.Core.HookFactory;
 using FormCMS.Utils.PageRender;
 using FormCMS.Core.Descriptors;
+using FormCMS.Core.Identities;
 using FormCMS.Infrastructure.Cache;
 using FormCMS.Infrastructure.LocalFileStore;
 using FormCMS.Infrastructure.RelationDbDao;
@@ -43,8 +42,6 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         string connectionString,
         Action<SystemSettings>? optionsAction = null)
     {
-        var systemSettings = new SystemSettings();
-        optionsAction?.Invoke(systemSettings);
 
         //only set options to FormCMS enum types.
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<DataType>);
@@ -53,7 +50,13 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<SchemaType>);
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<PublicationStatus>);
         
+        var systemSettings = new SystemSettings();
+        optionsAction?.Invoke(systemSettings);
         services.AddSingleton(systemSettings);
+
+        var systemResources = new RestrictedFeatures([Menus.MenuSchemaBuilder, Menus.MenuTasks]);
+        services.AddSingleton(systemResources);
+        
         services.AddSingleton(new DbOption(databaseProvider, connectionString));
         services.AddSingleton<CmsBuilder>();
         services.AddSingleton<HookRegistry>();
@@ -85,6 +88,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             services.AddScoped<IQueryService, QueryService>();
             services.AddScoped<IPageService, PageService>();
 
+            services.AddScoped<ITaskService, TaskService>();
         }
 
         void AddPageTemplateServices()
@@ -144,6 +148,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         {
             services.AddSingleton(new LocalFileStoreOptions(
                 Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/files"),
+                "/files",
                 systemSettings.ImageCompression.MaxWidth,
                 systemSettings.ImageCompression.Quality));
             services.AddSingleton<IFileStore,LocalFileStore>();
@@ -156,7 +161,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         var dbOptions = app.Services.GetRequiredService<DbOption>();
 
         PrintVersion();
-        await InitSchema();
+        await InitTables();
         if (options.EnableClient)
         {
             UseAdminPanel();
@@ -197,6 +202,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
 
             // if an auth component is not use, the handler will use fake profile service
             apiGroup.MapGroup("/profile").MapProfileHandlers();
+            apiGroup.MapGroup("/tasks").MapTasksHandler();
 
             app.MapGroup(options.RouteOptions.PageBaseUrl)
                 .MapPages("files", options.RouteOptions.ApiBaseUrl)
@@ -221,13 +227,16 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
                 });
         }
 
-        async Task InitSchema()
+        async Task InitTables()
         {
             using var serviceScope = app.Services.CreateScope();
 
             var schemaService = serviceScope.ServiceProvider.GetRequiredService<ISchemaService>();
             await schemaService.EnsureSchemaTable();
             await schemaService.EnsureTopMenuBar();
+            
+            await serviceScope.ServiceProvider.GetRequiredService<ITaskService>().EnsureTable();
+             
         }
 
         void UseExceptionHandler()

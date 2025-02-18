@@ -10,14 +10,10 @@
 
 
 
-export interface UserDto {
-    id: string;
-    email: string;
+export interface RoleAccess {
     name: string;
-    roles: string[];
     readWriteEntities: string[];
     restrictedReadWriteEntities: string[];
     readonlyEntities: string[];
     restrictedReadonlyEntities: string[];
-    allowedMenus: string[];
 }

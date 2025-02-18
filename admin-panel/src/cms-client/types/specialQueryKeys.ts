@@ -12,4 +12,5 @@
 
 export enum SpecialQueryKeys {
     Preview = "preview",
+    Sandbox = "sandbox",
 }

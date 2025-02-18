@@ -7,9 +7,9 @@ using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
-using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
-using Descriptors_Attribute = FormCMS.Core.Descriptors.Attribute;
+using Attribute = FormCMS.Core.Descriptors.Attribute;
+using SchemaType = FormCMS.Core.Descriptors.SchemaType;
 
 namespace FormCMS.Cms.Services;
 
@@ -230,19 +230,21 @@ public sealed class EntitySchemaService(
 
     private async Task CreateMainTable(Entity entity, Column[] columns, CancellationToken ct)
     {
+        var dict = await GetLookupEntityMap(entity.Attributes);
+ 
         if (columns.Length > 0) //if table exists, alter table adds columns
         {
             var set = columns.Select(x => x.Name).ToHashSet();
             var missing = entity.Attributes.Where(c => c.IsLocal()&& !set.Contains(c.Field)).ToArray();
             if (missing.Length > 0)
             {
-                var missingCols = await ToColumns(missing);
+                var missingCols = missing.ToColumns(dict);
                 await dao.AddColumns(entity.TableName, missingCols, ct);
             }
         }
         else
         {
-            var newColumns = await ToColumns(entity.Attributes.Where(x=>x.IsLocal()));
+            var newColumns = entity.Attributes.Where(x=>x.IsLocal()).ToColumns(dict);
             await dao.CreateTable(entity.TableName, newColumns.EnsureColumn(DefaultAttributeNames.Deleted,ColumnType.Boolean), ct);
         }
     }
@@ -266,13 +268,14 @@ public sealed class EntitySchemaService(
 
     private async Task CreateJunctions(LoadedEntity entity, CancellationToken ct)
     {
+        var dict = await GetLookupEntityMap(entity.Attributes);
         foreach (var attribute in entity.Attributes.Where(x => x.DataType == DataType.Junction))
         {
             var junction = attribute.Junction!;
             var columns = await dao.GetColumnDefinitions(junction.JunctionEntity.TableName, ct);
             if (columns.Length == 0)
             {
-                var cols = await ToColumns(junction.JunctionEntity.Attributes);
+                var cols =  junction.JunctionEntity.Attributes.ToColumns(dict);
                 await dao.CreateTable(junction.JunctionEntity.TableName, cols.EnsureColumn(DefaultAttributeNames.Deleted,ColumnType.Boolean), ct);
                 await dao.CreateForeignKey(
                     table: junction.JunctionEntity.TableName,
@@ -301,7 +304,7 @@ public sealed class EntitySchemaService(
             : Result.Ok();
     }
 
-    private async Task<Result<Entity>> GetLookupEntity(Descriptors_Attribute attribute, PublicationStatus?status, CancellationToken ct = default)
+    private async Task<Result<Entity>> GetLookupEntity(Attribute attribute, PublicationStatus?status, CancellationToken ct = default)
         => attribute.GetLookupTarget(out var entity)
             ? await GetEntity(entity, status, ct)
             : Result.Fail($"Lookup target was not set to Attribute [{attribute.Field}]");
@@ -340,6 +343,16 @@ public sealed class EntitySchemaService(
         }).Map(c => attr with{Collection = c});
     }
 
+    private async Task<Dictionary<string, Entity>> GetLookupEntityMap(IEnumerable<Attribute> attributes)
+    {
+        var ret = new Dictionary<string, Entity>();
+        foreach (var attribute in attributes.Where(x=>x.DataType == DataType.Lookup))
+        {
+            var lookup = await GetLookupEntity(attribute, null).Ok();
+            ret[lookup.Name] = lookup;
+        }
+        return ret;
+    }
     private Task<Result<LoadedEntity>> LoadLookups(LoadedEntity entity, PublicationStatus? status, CancellationToken ct = default)
         => entity.Attributes
             .ShortcutMap(async attr =>
@@ -358,7 +371,7 @@ public sealed class EntitySchemaService(
         return await GetEntity(targetName, status, ct)
             .Map(e => e.ToLoadedEntity())
             .Bind(e => LoadLookups(e,status, ct))
-            .Map(x => attr with { Junction = JunctionHelper.Junction(entity, x, attr) })
+            .Map(x => attr with { Junction = JunctionHelper.CreateJunction(entity, x, attr) })
             .OnFail($"Failed to load Junction for attribute {attr.Field}");
     }
 
@@ -415,51 +428,4 @@ public sealed class EntitySchemaService(
         ),
         CreatedBy: ""
     );
-
-    private async Task<Column[]> ToColumns(IEnumerable<Descriptors_Attribute> attributes)
-    {
-        var ret = new List<Column>();
-        foreach (var attribute in attributes)
-        {
-            ret.Add(await ToColumn(attribute));
-        }
-
-        return ret.ToArray();
-
-        async Task<Column> ToColumn(Descriptors_Attribute attribute)
-        {
-            var dataType = attribute.DataType switch
-            {
-                DataType.Junction or DataType.Collection => throw new Exception(
-                    "Junction/Collection don't need to map to database"),
-                DataType.Lookup => (await GetLookupEntity(attribute, null)
-                    .Map(x => x.Attributes.FirstOrDefault(a => a.Field == x.PrimaryKey)!.DataType)).Ok(),
-                _ => attribute.DataType
-            };
-
-            var colType = dataType switch
-            {
-                DataType.Int => IntColType(),
-                DataType.String => ColumnType.String,
-                DataType.Text => ColumnType.Text,
-                DataType.Datetime => DatetimeColType(),
-                _ => throw new ArgumentOutOfRangeException()
-            };
-            
-            return new Column(attribute.Field, colType);
-
-            ColumnType IntColType() => attribute switch
-            {
-                _ when DefaultAttributeNames.Id.EqualsStr(attribute.Field) => ColumnType.Id,
-                _ => ColumnType.Int
-            };
-            
-            ColumnType DatetimeColType() => attribute.Field switch
-            {
-                _ when DefaultAttributeNames.CreatedAt.EqualsStr(attribute.Field) => ColumnType.CreatedTime,
-                _ when DefaultAttributeNames.UpdatedAt.EqualsStr(attribute.Field) => ColumnType.UpdatedTime,
-                _ => ColumnType.Datetime
-            };
-        }
-    }
 }

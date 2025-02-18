@@ -11,17 +11,19 @@ namespace FormCMS.DataLink.Workers;
 
 
 public class MigrateWorker(
-    IDocumentDbDao dao,
+    IServiceScopeFactory serviceScopeFactory,
     ILogger<MigrateWorker> logger,
     ApiLinks[] linksArray
 ) : BackgroundService
 {
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken ct)
     {
 
         const string coll = "Progress";
-        while (!stoppingToken.IsCancellationRequested)
+        while (!ct.IsCancellationRequested)
         {
+            using var scope = serviceScopeFactory.CreateScope();
+            var dao = scope.ServiceProvider.GetRequiredService<IDocumentDbDao>();
             logger.LogInformation("Wakeup migrate worker...");
             var progresses = await dao.All(coll);
             foreach (var link in linksArray)
@@ -32,23 +34,22 @@ public class MigrateWorker(
                     continue;
                 }
 
-                var res = await BatchSaveData(link);
+                var res = await BatchSaveData(dao,link);
                 if (res.IsSuccess)
                 {
                     logger.LogInformation("Sync [{collection}] is finished...", link.Collection);
                     await dao.Upsert(coll, "collection", link.Collection, new { collection = link.Collection });
                 }
             }
-
-            Thread.Sleep(TimeSpan.FromSeconds(30));
+            await Task.Delay(1000 * 30, ct); // ✅ Prevents blocking
         }
 
         logger.LogInformation("Exiting migrate worker...");
     }
 
-    private async Task<Result> BatchSaveData(ApiLinks links)
+    private async Task<Result> BatchSaveData(IDocumentDbDao dao,ApiLinks links)
     {
-        var res = await FetchAndSave(links, "");
+        var res = await FetchAndSave(dao,links, "");
         while (res.IsSuccess)
         {
             var (curr, next) = res.Value;
@@ -58,7 +59,7 @@ public class MigrateWorker(
                 break;
             }
 
-            res = await FetchAndSave(links, next);
+            res = await FetchAndSave(dao,links, next);
         }
 
         if (res.IsFailed)
@@ -72,7 +73,7 @@ public class MigrateWorker(
         return Result.Ok();
     }
 
-    private async Task<Result<(string curosr, string next)>> FetchAndSave(ApiLinks links, string cursor)
+    private async Task<Result<(string curosr, string next)>> FetchAndSave(IDocumentDbDao dao,ApiLinks links, string cursor)
     {
         var url = links.Api + $"?last={cursor}";
         if (!(await new HttpClient().GetStringResult(url)).Try(out var s, out var err))

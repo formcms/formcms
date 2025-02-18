@@ -17,5 +17,4 @@ export enum DefaultAttributeNames {
     UpdatedAt = "updatedAt",
     PublishedAt = "publishedAt",
     PublicationStatus = "publicationStatus",
-    PreviewToken = "previewToken",
 }

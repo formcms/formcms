@@ -1,5 +1,5 @@
-using FormCMS.Auth.DTO;
 using FluentResults;
+using FormCMS.Core.Identities;
 
 namespace FormCMS.Auth.Services;
 
@@ -7,13 +7,13 @@ namespace FormCMS.Auth.Services;
 public interface IAccountService
 {
     Task<string[]> GetEntities(CancellationToken ct);
-    Task<UserDto> GetSingleUser(string id,CancellationToken ct);
-    Task<UserDto[]> GetUsers(CancellationToken ct);
+    Task<UserAccess> GetSingleUser(string id,CancellationToken ct);
+    Task<UserAccess[]> GetUsers(CancellationToken ct);
     Task<string[]> GetRoles(CancellationToken ct);
     Task<Result> EnsureUser(string email, string password, string[] roles);
     Task DeleteUser(string id);
-    Task SaveUser(UserDto userDto);
-    Task<RoleDto> GetSingleRole(string id);
-    Task SaveRole(RoleDto roleDto);
+    Task SaveUser(UserAccess userAccess);
+    Task<RoleAccess> GetSingleRole(string id);
+    Task SaveRole(RoleAccess roleAccess);
     Task DeleteRole(string name);
 }

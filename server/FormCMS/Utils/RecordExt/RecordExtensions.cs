@@ -20,6 +20,9 @@ public static class RecordExtensions
     public static string CamelKeyStr(this Record r, string field)
         => (string)r[field.Camelize()];
 
+    public static object CamelKey(this Record r, string field)
+        => r[field.Camelize()];
+    
     public static bool CamelKeyDateTime(
         this Record record,
         Enum field,
@@ -32,6 +35,21 @@ public static class RecordExtensions
         }
 
         return DateTime.TryParse(s, out e);
+    }
+    
+    public static bool CamelKeyEnum<TEnum>(
+        this Record record,
+        string field,
+        out TEnum e)
+        where TEnum : struct
+    {
+        e = default;
+        if (!record.TryGetValue(field.Camelize(), out var o) || o is not string s)
+        {
+            return false;
+        }
+
+        return Enum.TryParse(s, true, out e);
     }
 
     public static bool CamelKeyEnum<TEnum>(

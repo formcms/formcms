@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using System.Security.Claims;
-using FormCMS.Auth.DTO;
 using FluentResults;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
@@ -22,8 +21,8 @@ public class SchemaPermissionService<TUser>(
    
     public void GetAll()
     {
-        if (!contextAccessor.HttpContext.HasRole(RoleConstants.Sa) &&
-            !contextAccessor.HttpContext.HasRole(RoleConstants.Admin))
+        if (!contextAccessor.HttpContext.HasRole(Roles.Sa) &&
+            !contextAccessor.HttpContext.HasRole(Roles.Admin))
         {
             throw new ResultException($"Fail to get schema list, you don't have [Sa] or [Admin] role.");
         }
@@ -31,8 +30,8 @@ public class SchemaPermissionService<TUser>(
 
     public void GetOne(Schema schema)
     {
-        if (!contextAccessor.HttpContext.HasRole(RoleConstants.Sa) &&
-            !contextAccessor.HttpContext.HasRole(RoleConstants.Admin))
+        if (!contextAccessor.HttpContext.HasRole(Roles.Sa) &&
+            !contextAccessor.HttpContext.HasRole(Roles.Admin))
         {
             throw new ResultException($"You don't have permission to access {schema.Type}:{schema.Name}");
         }
@@ -74,12 +73,12 @@ public class SchemaPermissionService<TUser>(
         }
         var hasPermission = schema.Type switch
         {
-            SchemaType.Menu => contextAccessor.HttpContext.HasRole(RoleConstants.Sa),
+            SchemaType.Menu => contextAccessor.HttpContext.HasRole(Roles.Sa),
             _ when schema.Id is 0 => 
-                contextAccessor.HttpContext.HasRole(RoleConstants.Admin) || 
-                contextAccessor.HttpContext.HasRole(RoleConstants.Sa),
+                contextAccessor.HttpContext.HasRole(Roles.Admin) || 
+                contextAccessor.HttpContext.HasRole(Roles.Sa),
             _ => 
-                contextAccessor.HttpContext.HasRole(RoleConstants.Sa) || 
+                contextAccessor.HttpContext.HasRole(Roles.Sa) || 
                 await IsCreatedByCurrentUser(schema)
         };
 

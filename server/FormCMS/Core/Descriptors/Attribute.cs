@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text.Json;
 using FluentResults;
+using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 
@@ -99,9 +100,10 @@ public sealed record GraphAttribute(
 public static class AttributeHelper
 {
 
-    public static LoadedAttribute CreateLoadedAttribute(this Enum enumValue, string tableName, DataType dataType , DisplayType displayType )
-        => new (tableName, enumValue.Camelize(), DataType:dataType,DisplayType: displayType);
-    
+    public static LoadedAttribute CreateLoadedAttribute(this Enum enumValue, string tableName, DataType dataType,
+        DisplayType displayType)
+        => new(tableName, enumValue.Camelize(), DataType: dataType, DisplayType: displayType);
+
     public static Result<EntityLinkDesc> GetEntityLinkDesc(
         this LoadedAttribute attribute
     ) => attribute.DataType switch
@@ -112,8 +114,8 @@ public static class AttributeHelper
                 TargetEntity: lookup.TargetEntity,
                 TargetAttribute: lookup.TargetEntity.PrimaryKeyAttribute,
                 IsCollective: false,
-                GetQuery: (fields, ids, _, publicationStatus) => 
-                    lookup.TargetEntity.ByIdsQuery(fields.Select(x=>x.AddTableModifier()), ids,publicationStatus)
+                GetQuery: (fields, ids, _, publicationStatus) =>
+                    lookup.TargetEntity.ByIdsQuery(fields.Select(x => x.AddTableModifier()), ids, publicationStatus)
             ),
         DataType.Junction when attribute.Junction is { } junction =>
             new EntityLinkDesc(
@@ -121,8 +123,9 @@ public static class AttributeHelper
                 TargetEntity: junction.TargetEntity,
                 TargetAttribute: junction.SourceAttribute,
                 IsCollective: true,
-                GetQuery: (fields, ids, args,publicationStatus) =>
-                    junction.GetRelatedItems(args!.Filters, args.Sorts, args.Pagination, args.Span, fields, ids,publicationStatus)),
+                GetQuery: (fields, ids, args, publicationStatus) =>
+                    junction.GetRelatedItems(args!.Filters, args.Sorts, args.Pagination, args.Span, fields, ids,
+                        publicationStatus)),
         DataType.Collection when attribute.Collection is { } collection =>
             new EntityLinkDesc(
                 SourceAttribute: collection.SourceEntity.PrimaryKeyAttribute,
@@ -130,7 +133,8 @@ public static class AttributeHelper
                 TargetAttribute: collection.LinkAttribute,
                 IsCollective: true,
                 GetQuery: (fields, ids, args, publicationStatus) =>
-                    collection.List(args!.Filters, args.Sorts, args.Pagination, args.Span, fields, ids,publicationStatus)
+                    collection.List(args!.Filters, args.Sorts, args.Pagination, args.Span, fields, ids,
+                        publicationStatus)
             ),
         _ => Result.Fail($"Cannot get entity link desc for attribute [{attribute.Field}]")
     };
@@ -191,19 +195,19 @@ public static class AttributeHelper
     public static Attribute[] WithDefaultAttr(this Attribute[] attributes)
     {
         var ret = new List<Attribute>();
-        if (attributes.FirstOrDefault(x=>x.Field ==DefaultAttributeNames.Id.Camelize()) is null)
+        if (attributes.FirstOrDefault(x => x.Field == DefaultAttributeNames.Id.Camelize()) is null)
         {
             ret.Add(new Attribute
-            ( 
-                Field : DefaultAttributeNames.Id.Camelize(), Header : "id",
-                IsDefault : true, InDetail:true, InList:true,
-                DataType : DataType.Int, 
-                DisplayType : DisplayType.Number
+            (
+                Field: DefaultAttributeNames.Id.Camelize(), Header: "id",
+                IsDefault: true, InDetail: true, InList: true,
+                DataType: DataType.Int,
+                DisplayType: DisplayType.Number
             ));
         }
 
         ret.AddRange(attributes);
-        
+
         if (attributes.FirstOrDefault(x => x.Field == DefaultAttributeNames.PublicationStatus.Camelize()) is null)
         {
             ret.Add(new Attribute
@@ -212,9 +216,9 @@ public static class AttributeHelper
                 IsDefault: true, InDetail: true, InList: true,
                 DataType: DataType.String,
                 DisplayType: DisplayType.Dropdown,
-                Options: string.Join(",", new []
+                Options: string.Join(",", new[]
                 {
-                    PublicationStatus.Draft.Camelize(), 
+                    PublicationStatus.Draft.Camelize(),
                     PublicationStatus.Published.Camelize(),
                     PublicationStatus.Scheduled.Camelize()
                 })
@@ -223,7 +227,7 @@ public static class AttributeHelper
 
         string[] timeAttrs =
         [
-            DefaultAttributeNames.CreatedAt.Camelize(), 
+            DefaultAttributeNames.CreatedAt.Camelize(),
             DefaultAttributeNames.UpdatedAt.Camelize(),
             DefaultAttributeNames.PublishedAt.Camelize()
         ];
@@ -231,15 +235,15 @@ public static class AttributeHelper
         ret.AddRange(from attr in timeAttrs
             where attributes.FirstOrDefault(x => x.Field == attr) is null
             select new Attribute(
-                Field: attr, 
-                Header: attr, 
-                InList: true, 
-                InDetail: false, 
+                Field: attr,
+                Header: attr,
+                InList: true,
+                InDetail: false,
                 IsDefault: true,
-                DataType: DataType.Datetime, 
+                DataType: DataType.Datetime,
                 DisplayType: DisplayType.Datetime)
-            );
-        
+        );
+
         return ret.ToArray();
     }
 
@@ -281,6 +285,7 @@ public static class AttributeHelper
             arr = [];
             return false;
         }
+
         arr = a.Options.Split(',');
         return true;
     }
@@ -361,30 +366,35 @@ public static class AttributeHelper
                 record[attribute.Field] = stringValue.Split(",");
             }
         }
-        
-        
+
+
     }
 
-    public static Result<object> ParseJsonElement(this LoadedAttribute attribute, JsonElement value, IAttributeValueResolver resolver)
+    public static Result<object> ParseJsonElement(this LoadedAttribute attribute, JsonElement value,
+        IAttributeValueResolver resolver)
     {
         return attribute switch
         {
-            _ when attribute.IsCsv() && value.ValueKind is JsonValueKind.Array => string.Join(",", value.EnumerateArray().Select(x=>x.ToString())),
-            _ when attribute.DataType is DataType.Lookup && value.ValueKind is JsonValueKind.Object=> 
-                ResolveValue(value.GetProperty(attribute.Lookup!.TargetEntity.PrimaryKey), attribute.Lookup!.TargetEntity.PrimaryKeyAttribute),
-            _ =>ResolveValue(value, attribute)
+            _ when attribute.IsCsv() && value.ValueKind is JsonValueKind.Array => string.Join(",",
+                value.EnumerateArray().Select(x => x.ToString())),
+            _ when attribute.DataType is DataType.Lookup && value.ValueKind is JsonValueKind.Object =>
+                ResolveValue(value.GetProperty(attribute.Lookup!.TargetEntity.PrimaryKey),
+                    attribute.Lookup!.TargetEntity.PrimaryKeyAttribute),
+            _ => ResolveValue(value, attribute)
         };
-       
-        
-        Result<object> ResolveValue(JsonElement? ele ,LoadedAttribute attr)
+
+
+        Result<object> ResolveValue(JsonElement? ele, LoadedAttribute attr)
         {
             if (ele is null)
             {
                 return Result.Ok<object>(null!);
             }
+
             return ele.Value.ValueKind switch
             {
-                JsonValueKind.String when resolver.ResolveVal(attr, ele.Value.GetString()!,out var caseVal) => caseVal!.Value.ObjectValue!, 
+                JsonValueKind.String when resolver.ResolveVal(attr, ele.Value.GetString()!, out var caseVal) => caseVal!
+                    .Value.ObjectValue!,
                 JsonValueKind.Number when ele.Value.TryGetInt32(out var intValue) => intValue,
                 JsonValueKind.Number when ele.Value.TryGetInt64(out var longValue) => longValue,
                 JsonValueKind.Number when ele.Value.TryGetDouble(out var doubleValue) => doubleValue,
@@ -396,7 +406,7 @@ public static class AttributeHelper
                 _ => Result.Fail<object>($"Fail to convert [{attr.Field}], input valueKind is [{ele.Value.ValueKind}]")
             };
         }
-        
+
     }
 
     public static object GetValueOrLookup(this LoadedAttribute attribute, Record rec)
@@ -407,4 +417,62 @@ public static class AttributeHelper
             _ => rec[attribute.Field]
         };
 
-}
+    public static Column[] ToColumns(this IEnumerable<Attribute> attributes, Dictionary<string, Entity> dictEntity)
+    {
+        var ret = new List<Column>();
+        foreach (var attribute in attributes)
+        {
+            ret.Add(ToColumn(attribute));
+        }
+
+        return ret.ToArray();
+
+
+
+        Column ToColumn(Attribute attribute)
+        {
+            var dataType = attribute.DataType switch
+            {
+                DataType.Junction or DataType.Collection => throw new Exception(
+                    "Junction/Collection don't need to map to database"),
+                DataType.Lookup => GetLookupType(),
+                _ => attribute.DataType
+            };
+
+            var colType = dataType switch
+            {
+                DataType.Int => IntColType(),
+                DataType.String => ColumnType.String,
+                DataType.Text => ColumnType.Text,
+                DataType.Datetime => DatetimeColType(),
+                _ => throw new ArgumentOutOfRangeException()
+            };
+
+            return new Column(attribute.Field, colType);
+
+            ColumnType IntColType() => attribute switch
+            {
+                _ when DefaultAttributeNames.Id.EqualsStr(attribute.Field) => ColumnType.Id,
+                _ => ColumnType.Int
+            };
+
+            ColumnType DatetimeColType() => attribute.Field switch
+            {
+                _ when DefaultAttributeNames.CreatedAt.EqualsStr(attribute.Field) => ColumnType.CreatedTime,
+                _ when DefaultAttributeNames.UpdatedAt.EqualsStr(attribute.Field) => ColumnType.UpdatedTime,
+                _ => ColumnType.Datetime
+            };
+
+            DataType GetLookupType()
+            {
+                if (!attribute.GetLookupTarget(out var lookupTarget))
+                {
+                    return DataType.Int;
+                }
+
+                var entity = dictEntity[lookupTarget];
+                return entity.Attributes.First(x => x.Field == entity.PrimaryKey).DataType;
+            }
+        }
+    }
+} 

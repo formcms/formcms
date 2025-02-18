@@ -1,5 +1,4 @@
 using System.Collections.Immutable;
-using FormCMS.Auth.DTO;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.HttpContextExt;
@@ -20,7 +19,7 @@ public class EntityPermissionService(
         {
             throw new ResultException($"You don't have permission to read [{entityName}], not logged in");
         }
-        if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa))
+        if (contextAccessor.HttpContext.HasRole(Roles.Sa))
         {
             return filters;
         }
@@ -53,7 +52,7 @@ public class EntityPermissionService(
             throw new ResultException("You don't have permission to read [" + entityName + "]");
         }
         
-        if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa) ||
+        if (contextAccessor.HttpContext.HasRole(Roles.Sa) ||
             contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, entityName) ||
             contextAccessor.HttpContext.HasClaims(AccessScope.FullRead,entityName))
         {
@@ -79,7 +78,7 @@ public class EntityPermissionService(
 
     public void Create(string entityName)
     {
-        if (!(contextAccessor.HttpContext.HasRole(RoleConstants.Sa) || contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, entityName) ||
+        if (!(contextAccessor.HttpContext.HasRole(Roles.Sa) || contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, entityName) ||
             contextAccessor.HttpContext.HasClaims(AccessScope.RestrictedAccess, entityName)))
         {
             throw new ResultException($"You don't have permission to save [{entityName}]");
@@ -93,7 +92,7 @@ public class EntityPermissionService(
             throw new ResultException("You don't have permission to read [" + entityName + "]");
         }
 
-        if (contextAccessor.HttpContext.HasRole(RoleConstants.Sa) ||
+        if (contextAccessor.HttpContext.HasRole(Roles.Sa) ||
             contextAccessor.HttpContext.HasClaims(AccessScope.FullAccess, entityName))
         {
             return;

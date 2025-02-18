@@ -2,6 +2,7 @@ using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.CoreKit.Test;
 using FormCMS.Cms.Builders;
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.EnumExt;
 
@@ -124,7 +125,7 @@ public static class WebApp
     private static async Task AddData(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();
-        var service = scope.ServiceProvider.GetRequiredService<IEntityService>();
+        var service = scope.ServiceProvider.GetRequiredService<KateQueryExecutor>();
         for (var i = 0; i < 10000; i++)
         {
             await BlogsTestData.PopulateData(i * 100 + 1, 100, async data =>

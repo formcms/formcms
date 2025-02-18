@@ -1,18 +1,11 @@
 import { FetchingStatus } from "../../components/FetchingStatus"
 import { EditDataTable } from "../../components/dataTable/EditDataTable";
-import {useAuditLogs, useAuditLogsEntity} from "../services/auditLog"
+import {useAuditLogs} from "../services/auditLog"
 import { XEntity } from "../types/xEntity";
 import { useDataTableStateManager } from "../../components/dataTable/useDataTableStateManager";
 import { encodeDataTableState } from "../../components/dataTable/dataTableStateUtil";
 import { createColumn } from "../../components/dataTable/columns/createColumn";
 import { useNavigate } from "react-router-dom";
-export function AuditLogListWapper({baseRouter}: { baseRouter: string }) {
-    const {data:schema,error,isLoading} = useAuditLogsEntity()
-    return <>
-        <FetchingStatus isLoading={isLoading} error={error}/>
-        {schema&&<AuditLogList {...{baseRouter,schema}}/>}
-    </>
-}
 
 export function AuditLogList({baseRouter,schema}: { baseRouter: string,schema:XEntity }) {
     const navigate = useNavigate();    

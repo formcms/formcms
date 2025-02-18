@@ -10,10 +10,11 @@ using FormCMS.Infrastructure.EventStreaming;
 namespace FormCMS.DataLink.Workers;
 
 public sealed class SyncWorker(
+    IServiceScopeFactory serviceScopeFactory,
     IStringMessageConsumer consumer,
-    IDocumentDbDao dao,
     ILogger<SyncWorker> logger,
-    ApiLinks[] links) : BackgroundService
+    ApiLinks[] links
+    ) : BackgroundService
 {
     private readonly Dictionary<string, ApiLinks> _dict = links.ToDictionary(x => x.Entity, x => x);
 
@@ -22,6 +23,9 @@ public sealed class SyncWorker(
     {
         await consumer.Subscribe(async s =>
         {
+            using var scope = serviceScopeFactory.CreateScope();
+            var dao = scope.ServiceProvider.GetRequiredService<IDocumentDbDao>();
+            
             try
             {
                 var message = JsonSerializer.Deserialize<RecordMessage>(s);
@@ -41,7 +45,7 @@ public sealed class SyncWorker(
                 {
                     case Operations.Create:
                     case Operations.Update:
-                        if (!(await FetchSaveSingle(apiLinks!, message.Id)).Try(out var err))
+                        if (!(await FetchSaveSingle(apiLinks!, message.Id, dao)).Try(out var err))
                         {
                             logger.LogWarning("failed to fetch and save single item, err ={err}", err);
                         }
@@ -67,7 +71,7 @@ public sealed class SyncWorker(
         }, ct);
     }
 
-    private async Task<Result> FetchSaveSingle(ApiLinks links, string id )
+    private async Task<Result> FetchSaveSingle(ApiLinks links, string id, IDocumentDbDao dao )
     {
         if (!(await _httpClient.GetResult<JsonElement>($"{links.Api}/single?{links.PrimaryKey}={id}"))
             .Try(out var s, out var e))

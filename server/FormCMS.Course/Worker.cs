@@ -5,7 +5,7 @@ public static class Worker
     public static IHost? Build(string[] args)
     {
         var builder = Host.CreateApplicationBuilder(args);
-        if (builder.Configuration.GetValue<bool>("WorkerEnabled") is not true)
+        if (builder.Configuration.GetValue<bool>("enable-worker") is not true)
         {
             return null;
         }

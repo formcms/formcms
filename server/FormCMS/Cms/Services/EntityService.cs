@@ -8,6 +8,7 @@ using FormCMS.Utils.DataModels;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using DataType = FormCMS.Core.Descriptors.DataType;
+using Task = System.Threading.Tasks.Task;
 
 namespace FormCMS.Cms.Services;
 
@@ -18,6 +19,8 @@ public sealed class EntityService(
     HookRegistry hookRegistry
 ) : IEntityService
 {
+   
+
     public async Task<ListResponse?> ListWithAction(
         string name, 
         ListResponseMode mode, 
@@ -39,7 +42,7 @@ public sealed class EntityService(
         
         parentField.GetCollectionTarget(out _, out var linkField);
         var attributes = entity.Attributes.Where(x=>x.Field ==entity.PrimaryKey || x.InList && x.IsLocal());
-        var items = await queryExecutor.Many(entity.AllQuery(attributes),ct);
+        var items = await queryExecutor.Many(entity.AllQueryForTree(attributes),ct);
         return items.ToTree(entity.PrimaryKey, linkField);
     }
     
@@ -90,15 +93,6 @@ public sealed class EntityService(
         return await InsertWithAction(await GetRecordCtx(name, ele, ct), ct);
     }
 
-  
-
-    public async Task BatchInsert(string tableName, Record[] items)
-    {
-        var cols = items[0].Select(x => x.Key);
-        var values = items.Select(item => item.Select(kv => kv.Value));
-        var query = new SqlKata.Query(tableName).AsInsert(cols, values);
-        await queryExecutor.ExecAndGetAffected(query);
-    }
 
     public async Task<Record> UpdateWithAction(string name, JsonElement ele, CancellationToken ct)
     {

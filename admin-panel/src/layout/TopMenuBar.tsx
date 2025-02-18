@@ -4,7 +4,8 @@ import {useTopMenuBar} from "../auth/services/menu";
 import { useNavigate} from "react-router-dom";
 import {configs} from "../config";
 import {RoleRoute, UserRoute} from "../auth/AccountRouter";
-import { UserDto } from '../auth/types/userDto';
+import { UserAccess } from '../auth/types/userAccess';
+import { TasksRouter } from '../cms-client/EntityRouter';
 
 
 const entityPrefix = '/entities'
@@ -12,8 +13,9 @@ export const  MenuSchemaBuilder = "menu_schema_builder";
 export const  MenuUsers = "menu_users";
 export const  MenuRoles = "menu_roles";
 export const  MenuAuditLog = "menu_audit_log";
+export const  MenuTasks = "menu_tasks";
 
-export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: UserDto}) {
+export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: UserAccess}) {
     const navigate = useNavigate();
     const items = useTopMenuBar().filter(x=>{
         if (profile.roles.includes('sa')){
@@ -48,6 +50,15 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: U
 
     [
         {
+            key: MenuTasks,
+            icon: 'pi pi-cog',
+            label: 'Tasks',
+            command: () => {
+                navigate(`${configs.entityBaseRouter}${TasksRouter}`)
+            }
+        },
+        
+        {
             key: MenuRoles,
             icon: 'pi pi-sitemap',
             label: 'Roles',
@@ -71,13 +82,13 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: U
                 navigate(`${configs.auditLogBaseRouter}`)
             }
         },
+       
         {
             key: MenuSchemaBuilder,
             icon: 'pi pi-cog',
             label: 'Schema Builder',
             url: '/schema'
         },
-        
     ].forEach(x=>{
         if (profile?.allowedMenus?.includes(x.key)){
             links.push(x)

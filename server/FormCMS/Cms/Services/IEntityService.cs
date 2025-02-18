@@ -6,6 +6,7 @@ namespace FormCMS.Cms.Services;
 
 public interface IEntityService
 {
+    
     Task<ListResponse?> ListWithAction(string name,ListResponseMode mode, Pagination pagination,  StrArgs args,
         CancellationToken ct= default);
 
@@ -14,7 +15,6 @@ public interface IEntityService
     Task<Record> SingleByIdBasic(string entityName, string strId, string[]attributes, CancellationToken ct =default);
     
     Task<Record> InsertWithAction(string name, JsonElement item, CancellationToken ct = default);
-    Task BatchInsert(string tableName,Record[] items);
     Task<Record> UpdateWithAction(string name, JsonElement item, CancellationToken ct= default);
     Task<Record> DeleteWithAction(string name, JsonElement item, CancellationToken ct= default);
     

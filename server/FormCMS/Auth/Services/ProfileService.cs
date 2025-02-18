@@ -1,5 +1,6 @@
 using System.Security.Claims;
-using FormCMS.Auth.DTO;
+using FormCMS.Cms.Services;
+using FormCMS.Core.Identities;
 using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
 
@@ -11,19 +12,21 @@ public sealed record ProfileDto(string OldPassword, string Password);
 public class ProfileService<TUser>(
     UserManager<TUser> userManager,
     IHttpContextAccessor contextAccessor,
-    SystemResources systemResources
+    RestrictedFeatures restrictedFeatures
     ):IProfileService
 where TUser :IdentityUser, new()
 {
-    public UserDto? GetInfo()
+    public UserAccess? GetInfo()
     {
         
         var claimsPrincipal = contextAccessor.HttpContext?.User;
         if (claimsPrincipal?.Identity?.IsAuthenticated != true) return null;
 
         string[] roles = [..claimsPrincipal.FindAll(ClaimTypes.Role).Select(x => x.Value)];
+        
+        
 
-        return new UserDto
+        return new UserAccess
         (
             Id: claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "",
             Name: claimsPrincipal.Identity.Name??"",
@@ -33,9 +36,7 @@ where TUser :IdentityUser, new()
             RestrictedReadWriteEntities: [..claimsPrincipal.FindAll(AccessScope.RestrictedAccess).Select(x => x.Value)],
             ReadonlyEntities: [..claimsPrincipal.FindAll(AccessScope.FullRead).Select(x => x.Value)],
             RestrictedReadonlyEntities: [..claimsPrincipal.FindAll(AccessScope.RestrictedRead).Select(x => x.Value)],
-            AllowedMenus: roles.Contains(RoleConstants.Sa) || roles.Contains(RoleConstants.Admin)
-                ? systemResources.Menus.ToArray()
-                : []
+            AllowedMenus: roles.Contains(Roles.Sa) || roles.Contains(Roles.Admin) ? restrictedFeatures.Menus.ToArray() : []
         );
     }
     

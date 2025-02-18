@@ -44,6 +44,7 @@ public static class KateQueryExtensions
         => query.AsUpdate(
             fields.Select(x=>x.Camelize()), 
             values.Select(x=>x.Camelize()));
+    
     public static SqlKata.Query AsCamelFieldValueUpdate(this SqlKata.Query query, IEnumerable<string> fields, IEnumerable<Enum> values)
             => query.AsUpdate(
                 fields.Select(x=>x.Camelize()), 

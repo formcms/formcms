@@ -36,15 +36,15 @@ public record LoadedEntity(
     LoadedAttribute PublicationStatusAttribute,
     LoadedAttribute UpdatedAtAttribute,
     string Name,
-    string DisplayName , //needed by admin panel
+    string DisplayName, //needed by admin panel
     string TableName,
-    
+
     string PrimaryKey,
-    string LabelAttributeName, 
+    string LabelAttributeName,
     int DefaultPageSize,
-    PublicationStatus DefaultPublicationStatus ,
+    PublicationStatus DefaultPublicationStatus,
     string PreviewUrl
-    );
+); 
 
 public static class EntityConstants
 {
@@ -122,8 +122,10 @@ public static class EntityHelper
         return query;
     }
 
-    public static SqlKata.Query AllQuery(this LoadedEntity e, IEnumerable<LoadedAttribute> attributes)
+    //why not use listQuery? allQuery without default limitation
+    public static SqlKata.Query AllQueryForTree(this LoadedEntity e, IEnumerable<LoadedAttribute> attributes)
         => e.Basic().Select(attributes.Select(x => x.Field));
+    
     public static SqlKata.Query ListQuery(this LoadedEntity e,ValidFilter[] filters, ValidSort[] sorts, 
         ValidPagination? pagination, ValidSpan? cursor, IEnumerable<LoadedAttribute> attributes,PublicationStatus? publicationStatus)
     {

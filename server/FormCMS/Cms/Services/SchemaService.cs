@@ -81,13 +81,13 @@ public sealed class SchemaService(
 
     public async Task<Schema> Save(Schema schema, CancellationToken ct)
     {
-        var (statusQuery, insertQuery,schemaId) = schema.Save();
-        var id = await queryExecutor.ExecBatch([statusQuery, insertQuery], true, ct);
-        
-        schema = schema with { Id = id ,SchemaId = schemaId };
+        schema = schema.Init();
+        var resetQuery = schema.ResetLatest();
+        var save = schema.Save();
+        var id = await queryExecutor.ExecBatch([resetQuery, save], true, ct);
+        schema = schema with { Id = id};
         return schema;
     }
-
     
 
     public async Task<Schema> SaveWithAction(Schema schema, CancellationToken ct)

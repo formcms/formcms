@@ -2,12 +2,12 @@ import axios from "axios";
 import useSWR from "swr";
 import {catchResponse, fetcher, swrConfig} from "../../services/util";
 import {fullAuthApiUrl} from "../configs";
-import { UserDto } from "../types/userDto";
+import { UserAccess } from "../types/userAccess";
 import { ProfileDto } from "../types/profileDto";
 
 
 export function useUserInfo() {
-    return useSWR<UserDto>(fullAuthApiUrl(`/profile/info`), fetcher, swrConfig)
+    return useSWR<UserAccess>(fullAuthApiUrl(`/profile/info`), fetcher, swrConfig)
 }
 
 export async function login(item:any) {

@@ -3,9 +3,27 @@ using SkiaSharp;
 
 namespace FormCMS.Infrastructure.LocalFileStore;
 
-public record LocalFileStoreOptions(string PathPrefix, int MaxImageWith, int Quality);
+public record LocalFileStoreOptions(string PathPrefix, string UrlPrefix, int MaxImageWith, int Quality);
 public class LocalFileStore(LocalFileStoreOptions options):IFileStore
 {
+    public string GetDownloadPath(string file)=>$"{options.UrlPrefix}/{file}";
+    
+    public void Del(string file)
+    {
+        file = Path.Combine(options.PathPrefix, file);
+        File.Delete(file);
+    }
+    
+    public void Move(string fromPath, string toPath)
+    {
+        toPath = Path.Combine(options.PathPrefix, toPath);
+        if (File.Exists(toPath))
+        {
+            File.Delete(toPath);
+        }
+        File.Move(fromPath, toPath);
+    }
+    
     public async Task<Result<string[]>> Save(IEnumerable<IFormFile> files)
     {
         var dir = GetDirectoryName();

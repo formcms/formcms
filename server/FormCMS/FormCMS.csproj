@@ -52,6 +52,10 @@
         <None Include="../../doc/mkdoc/docs/index.md" Pack="true" PackagePath="\readme.md" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Auth\DTO\" />
+    </ItemGroup>
+
     <PropertyGroup>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net9.0</TargetFramework>

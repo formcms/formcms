@@ -1,7 +1,7 @@
 import {textColumn} from "./textColumn";
 import {imageColumn} from "./imageColumn";
 import {fileColumn} from "./fileColumn";
-import {XAttr} from "../xEntity";
+import {XAttr} from "../../xEntity";
 
 export function createColumn(
     column:XAttr, 

@@ -14,7 +14,12 @@ public record Junction(
 
 public static class JunctionHelper
 {
-    public static Junction Junction(LoadedEntity sourceEntity, LoadedEntity targetEntity,
+    public static Junction CreateJunction(Entity sourceEntity, Entity targetEntity, Attribute attr)
+    {
+        return CreateJunction(sourceEntity.ToLoadedEntity(), targetEntity.ToLoadedEntity(), attr.ToLoaded(sourceEntity.TableName));
+    }
+    
+    public static Junction CreateJunction(LoadedEntity sourceEntity, LoadedEntity targetEntity,
         LoadedAttribute crossAttribute)
     {
         var tableName = GetJunctionTableName(sourceEntity.Name, targetEntity.Name);
@@ -58,8 +63,8 @@ public static class JunctionHelper
             LabelAttributeName:"",
             DefaultPageSize:EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published,
-            UpdatedAtAttribute:updatedAtAttr,
             PublicationStatusAttribute: publicationStatusAttr,
+            UpdatedAtAttribute:updatedAtAttr,
             PreviewUrl:""
         );
         

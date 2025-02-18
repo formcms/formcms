@@ -10,10 +10,14 @@
 
 
 
-export interface RoleDto {
+export interface UserAccess {
+    id: string;
+    email: string;
     name: string;
+    roles: string[];
     readWriteEntities: string[];
     restrictedReadWriteEntities: string[];
     readonlyEntities: string[];
     restrictedReadonlyEntities: string[];
+    allowedMenus: string[];
 }

@@ -1,19 +1,20 @@
-using FormCMS.Auth.DTO;
+using FormCMS.Auth.Services;
+using FormCMS.Core.Identities;
 using FormCMS.Utils.ResultExt;
 
-namespace FormCMS.Auth.Services;
+namespace FormCMS.Cms.Services;
 
-public class DummyProfileService: IProfileService
+public class DummyProfileService(RestrictedFeatures restrictedFeatures): IProfileService
 {
-    public UserDto GetInfo()
+    public UserAccess GetInfo()
     {
-        return new UserDto
+        return new UserAccess
         (
             Id:"",
             Name:"admin",
             Email : "sadmin@cms.com",
-            Roles : [RoleConstants.Sa],
-            AllowedMenus : [SystemMenus.MenuSchemaBuilder],
+            Roles : [..restrictedFeatures.Menus],
+            AllowedMenus : [],
             ReadonlyEntities:[],
             RestrictedReadonlyEntities:[],
             ReadWriteEntities:[],

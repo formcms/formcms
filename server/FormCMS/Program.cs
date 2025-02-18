@@ -1,11 +1,12 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FormCMS.AuditLogging.Models;
-using FormCMS.Auth.DTO;
 using FormCMS.Auth.Services;
 using NJsonSchema;
 using NJsonSchema.CodeGeneration.TypeScript;
 using FormCMS.Core.Descriptors;
+using FormCMS.Core.Identities;
+using FormCMS.Core.Tasks;
 using FormCMS.Utils.DisplayModels;
 using NJsonSchema.Generation;
 
@@ -16,9 +17,11 @@ TsGenerator.GenerateCode<LookupListResponse>("../../admin-panel/src/cms-client/t
 TsGenerator.GenerateCode<DefaultAttributeNames>("../../admin-panel/src/cms-client/types/defaultAttributeNames.ts");
 TsGenerator.GenerateCode<PublicationStatus>("../../admin-panel/src/cms-client/types/publicationStatus.ts");
 TsGenerator.GenerateCode<SpecialQueryKeys>("../../admin-panel/src/cms-client/types/specialQueryKeys.ts");
+TsGenerator.GenerateCode<SystemTask>("../../admin-panel/src/cms-client/types/systemTask.ts");
 
-TsGenerator.GenerateCode<RoleDto>("../../admin-panel/src/auth/types/roleDto.ts");
-TsGenerator.GenerateCode<UserDto>("../../admin-panel/src/auth/types/userDto.ts");
+
+TsGenerator.GenerateCode<RoleAccess>("../../admin-panel/src/auth/types/roleAccess.ts");
+TsGenerator.GenerateCode<UserAccess>("../../admin-panel/src/auth/types/userAccess.ts");
 TsGenerator.GenerateCode<ProfileDto>("../../admin-panel/src/auth/types/profileDto.ts");
 TsGenerator.GenerateCode<Menu>("../../admin-panel/src/auth/types/menu.ts");
 

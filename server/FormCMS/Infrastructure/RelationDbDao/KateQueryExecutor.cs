@@ -8,6 +8,14 @@ namespace FormCMS.Infrastructure.RelationDbDao;
 public record KateQueryExecutorOption(int? TimeoutSeconds);
 public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutorOption option)
 {
+   public Task BatchInsert(string tableName, Record[] records)
+   {
+      var cols = records[0].Select(x => x.Key);
+      var values = records.Select(item => item.Select(kv => kv.Value));
+      var query = new SqlKata.Query(tableName).AsInsert(cols, values);
+      return ExecAndGetAffected(query);
+   }
+   
    public Task<int> ExeAndGetId(
       Query query,  CancellationToken ct = default
    ) => provider.ExecuteKateQuery((db,tx)

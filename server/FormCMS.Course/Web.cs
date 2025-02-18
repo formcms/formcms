@@ -1,5 +1,4 @@
-using FormCMS.Auth.DTO;
-using FormCMS.Cms;
+using FormCMS.Auth;
 using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -57,8 +56,8 @@ public static class Web
         await app.UseCmsAsync();
 
 
-        await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [RoleConstants.Sa]).Ok();
-        await app.EnsureCmsUser("admin@cms.com", "Admin1!", [RoleConstants.Admin]).Ok();
+        await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]).Ok();
+        await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
         return app;
     }
 
