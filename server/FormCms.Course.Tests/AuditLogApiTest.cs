@@ -42,7 +42,7 @@ public class AuditLogApiTest
     public async Task EnsureOptionAddUpdateDelete()
     {
         var res = await _auditLogApiClient.List("sort[id]=-1").Ok();
-        var logId = res.Items[0].GetInt("id");
+        var logId = res.Items.Length > 0 ? res.Items[0].GetInt("id"):0;
         
         
         await _schemaApiClient.EnsureSimpleEntity(_post,"name",false).Ok();

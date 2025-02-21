@@ -6,6 +6,8 @@ using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.jsonElementExt;
 using FormCMS.Utils.ResultExt;
+using FormCMS.Infrastructure.RelationDbDao;
+
 using Microsoft.Extensions.Primitives;
 using NUlid;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
@@ -208,12 +210,12 @@ public class EntityApiTest
 
         //make sure get the latest data
         var item = await _entityApiClient.Single(_post, 1).Ok();
-        var updatedAt = item.GetProperty(DefaultAttributeNames.UpdatedAt.Camelize()).GetString()!;
+        var updatedAt = item.GetProperty(DefaultColumnNames.UpdatedAt.Camelize()).GetString()!;
 
         Thread.Sleep(TimeSpan.FromSeconds(1));
         await _entityApiClient.Update(_post, 1, Name, "post2", updatedAt).Ok();
         var newItem = await _entityApiClient.Single(_post, 1).Ok();
-        Assert.True(newItem.GetProperty(DefaultAttributeNames.UpdatedAt.Camelize()).GetString() != updatedAt);
+        Assert.True(newItem.GetProperty(DefaultColumnNames.UpdatedAt.Camelize()).GetString() != updatedAt);
 
         //now updatedAt has changed, any dirty writing should fail
         var res = await _entityApiClient.Delete(_post, item);
@@ -249,7 +251,7 @@ public class EntityApiTest
         Assert.Equal(1, element);
         
         item = await _entityApiClient.Single(_post, 1).Ok();
-        var updatedAt = item.GetProperty(DefaultAttributeNames.UpdatedAt.Camelize()).GetString()!;
+        var updatedAt = item.GetProperty(DefaultColumnNames.UpdatedAt.Camelize()).GetString()!;
 
         await _entityApiClient.Update(_post, 1, Name, "post2", updatedAt).Ok();
 

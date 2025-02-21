@@ -11,7 +11,7 @@ namespace FormCMS.Course.Tests;
 
 public class PageApiTest
 {
-    private readonly string _query = "page_api_test_query_" + Ulid.NewUlid();
+    private readonly string _query = "pt_query_" + Ulid.NewUlid();
     private readonly SchemaApiClient _schemaApiClient;
     private readonly EntityApiClient _entityApiClient;
     private readonly QueryApiClient _queryApiClient;
