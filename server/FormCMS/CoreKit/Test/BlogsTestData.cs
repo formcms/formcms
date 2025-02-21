@@ -142,8 +142,8 @@ public static class BlogsTestData
         {
             returnValue.Add(field.Camelize(), $"{field}-{i}");
         }
-        returnValue.SetCamelKeyCamelValue(DefaultAttributeNames.PublicationStatus,PublicationStatus.Published);
-        returnValue.SetCamelKey(DefaultAttributeNames.PublishedAt,DateTime.Now);
+        returnValue[DefaultAttributeNames.PublicationStatus.Camelize()] =PublicationStatus.Published.Camelize();
+        returnValue[DefaultAttributeNames.PublishedAt.Camelize()] = DateTime.Now;
         return returnValue; 
 
     }

@@ -25,3 +25,7 @@ export  function archiveExportTask(id:number) {
 export  function getExportTaskDownloadFileLink(id:number) {
     return fullCmsApiUrl(`/tasks/export/download/${id}`);
 }
+
+export  function getAddImportTaskUploadUrl() {
+    return fullCmsApiUrl(`/tasks/import`);
+}

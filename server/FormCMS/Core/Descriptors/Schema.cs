@@ -1,8 +1,9 @@
 using FluentResults;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
-using FormCMS.Utils.KateQueryExt;
+using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
+using Humanizer;
 using NUlid;
 
 namespace FormCMS.Core.Descriptors;
@@ -51,32 +52,32 @@ public static class SchemaHelper
         
         ColumnHelper.CreateCamelColumn<Schema>(x => x.Settings, ColumnType.Text),
 
-        DefaultAttributeNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
+        DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
 
     ];  
     
     public static SqlKata.Query ById(int id)
-        => BaseQuery().WhereCamelField(nameof(Schema.Id), id);
+        => BaseQuery().Where(nameof(Schema.Id).Camelize(), id);
     
     public static SqlKata.Query BySchemaId(string schemaId)
         => BaseQuery()
             .OrderByDesc(nameof(Schema.Id))
-            .WhereCamelField(nameof(Schema.SchemaId), schemaId);
+            .Where(nameof(Schema.SchemaId).Camelize(), schemaId);
 
     public static SqlKata.Query ByStartsNameAndType(string name, SchemaType type,
         PublicationStatus? publicationStatus)
         => BaseQuery()
             .WithStatus(publicationStatus)
-            .WhereStartsCamelField(nameof(Schema.Name), name)
-            .WhereCamelFieldEnum(nameof(Schema.Type), type);
+            .WhereStarts(nameof(Schema.Name).Camelize(), name)
+            .Where(nameof(Schema.Type).Camelize(), type.Camelize());
 
     public static SqlKata.Query ByNameAndTypeAndNotId(string name, SchemaType type, string schemaId)
         => BaseQuery()
-            .WhereCamelField(nameof(Schema.Name), name)
-            .WhereCamelFieldEnum(nameof(Schema.Type), type)
-            .WhereNotCamelField(nameof(Schema.SchemaId), schemaId);
+            .Where(nameof(Schema.Name).Camelize(), name)
+            .Where(nameof(Schema.Type).Camelize(), type.Camelize())
+            .WhereNot(nameof(Schema.SchemaId).Camelize(), schemaId);
     
     public static SqlKata.Query ByNameAndType(SchemaType? type, 
         IEnumerable<string>? names,PublicationStatus? publicationStatus)
@@ -85,41 +86,41 @@ public static class SchemaHelper
             .WithStatus(publicationStatus);
         if (type is not null)
         {
-            query = query.WhereCamelFieldEnum(nameof(Schema.Type), type.Value);
+            query = query.Where(nameof(Schema.Type).Camelize(), type.Value.Camelize());
         }
 
         if (names is not null)
         {
-            query = query.WhereInCamelField(nameof(Schema.Name), names);
+            query = query.WhereIn(nameof(Schema.Name).Camelize(), names);
         } 
         return query;
     }
 
     private static SqlKata.Query WithStatus(this SqlKata.Query query, PublicationStatus? status)
         => status.HasValue
-            ? query.WhereCamelFieldEnum(nameof(Schema.PublicationStatus), status.Value)
-            : query.WhereCamelField(nameof(Schema.IsLatest), true);
+            ? query.Where(nameof(Schema.PublicationStatus).Camelize(), status.Value.Camelize())
+            : query.Where(nameof(Schema.IsLatest).Camelize(), true);
     
     private static SqlKata.Query BaseQuery()
         =>new SqlKata.Query(TableName)
-            .SelectCamelField([
+            .Select(new []{
                 nameof(Schema.SchemaId), 
                 nameof(Schema.PublicationStatus), 
                 nameof(Schema.Id),
                 nameof(Schema.Name),
                 nameof(Schema.Type),
                 nameof(Schema.Settings),
-                nameof(DefaultAttributeNames.CreatedAt),
+                nameof(Schema.CreatedAt),
                 nameof(Schema.CreatedBy),
                 nameof(Schema.IsLatest)
-            ])
-            .Where(DefaultAttributeNames.Deleted, false);
+            }.Select(x=>x.Camelize()))
+            .Where(DefaultColumnNames.Deleted.Camelize(), false);
 
     public static SqlKata.Query SoftDelete(string schemaId)
     {
         return new SqlKata.Query(TableName)
-            .WhereCamelField(nameof(Schema.SchemaId),schemaId)
-            .AsCamelFieldUpdate([DefaultAttributeNames.Deleted], [true]);
+            .Where(nameof(Schema.SchemaId).Camelize(),schemaId)
+            .AsUpdate([DefaultColumnNames.Deleted.Camelize()], [true]);
     }
 
     public static SqlKata.Query[] Publish(this Schema schema)
@@ -127,13 +128,13 @@ public static class SchemaHelper
         return
         [
             new SqlKata.Query(TableName)
-                .WhereCamelField(nameof(Schema.SchemaId), schema.SchemaId)
-                .WhereCamelFieldEnum(nameof(Schema.PublicationStatus), PublicationStatus.Published)
-                .AsCamelFieldValueUpdate([nameof(Schema.PublicationStatus)], [PublicationStatus.Draft]),
+                .Where(nameof(Schema.SchemaId).Camelize(), schema.SchemaId)
+                .Where(nameof(Schema.PublicationStatus).Camelize(), PublicationStatus.Published.Camelize())
+                .AsUpdate([nameof(Schema.PublicationStatus).Camelize()], [PublicationStatus.Draft.Camelize()]),
             
             new SqlKata.Query(TableName)
-                .WhereCamelField(nameof(Schema.Id), schema.Id)
-                .AsCamelFieldValueUpdate([nameof(Schema.PublicationStatus)], [PublicationStatus.Published]),
+                .Where(nameof(Schema.Id).Camelize(), schema.Id)
+                .AsUpdate([nameof(Schema.PublicationStatus).Camelize()], [PublicationStatus.Published.Camelize()]),
         ];
     }
 
@@ -161,10 +162,9 @@ public static class SchemaHelper
 
     public static SqlKata.Query ResetLatest(this Schema schema)
         => new SqlKata.Query(TableName)
-            .WhereCamelField(nameof(Schema.SchemaId), schema.SchemaId)
-            .WhereCamelField(nameof(Schema.IsLatest), true)
-            .AsCamelFieldUpdate([nameof(Schema.IsLatest)], [false]);
-    
+            .Where(nameof(Schema.SchemaId).Camelize(), schema.SchemaId)
+            .Where(nameof(Schema.IsLatest).Camelize(), true)
+            .AsUpdate([nameof(Schema.IsLatest).Camelize()], [false]);
     
     public static SqlKata.Query Save(this Schema schema)
     {

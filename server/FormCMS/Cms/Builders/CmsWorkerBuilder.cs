@@ -14,10 +14,12 @@ public static class CmsWorkerBuilder
         int queryTimeoutSeconds
         )
     {
+        var parts = connectionString.Split(";").Where(x => !x.StartsWith("Password"));
         Console.WriteLine(
             $"""
              *********************************************************
              Adding CMS Workers
+             Database : {databaseProvider} - {string.Join(";", parts)}
              Delay Seconds: {delaySeconds}
              Query Timeout: {queryTimeoutSeconds}
              *********************************************************
@@ -34,6 +36,7 @@ public static class CmsWorkerBuilder
         services.AddScoped<DatabaseMigrator>();
         
         services.AddHostedService<ExportWorker>();
+        services.AddHostedService<ImportWorker>();
         services.AddHostedService<DataPublishingWorker>();
         
         return services;

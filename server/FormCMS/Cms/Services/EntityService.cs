@@ -5,6 +5,7 @@ using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.jsonElementExt;
 using FormCMS.Utils.DataModels;
+using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using DataType = FormCMS.Core.Descriptors.DataType;
@@ -71,10 +72,9 @@ public sealed class EntityService(
         var attr = ctx.Entity.Attributes
             .Where(x =>
                 x.Field == ctx.Entity.PrimaryKey
-                || Enum.TryParse<DefaultAttributeNames>(x.Field, true, out var e) && 
-                    e is DefaultAttributeNames.UpdatedAt
-                    or DefaultAttributeNames.PublicationStatus
-                    or DefaultAttributeNames.PublishedAt
+                ||x.Field == DefaultAttributeNames.PublishedAt.Camelize()
+                ||x.Field == DefaultAttributeNames.PublicationStatus.Camelize()
+                ||x.Field == DefaultColumnNames.UpdatedAt.Camelize()
                 || x.InDetail && x.IsLocal())
             .ToArray();
         

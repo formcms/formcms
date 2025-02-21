@@ -164,9 +164,9 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         await InitTables();
         if (options.EnableClient)
         {
+            app.UseStaticFiles();
             UseAdminPanel();
             UserRedirects();
-            app.MapStaticAssets();
         }
 
         UseApiRouters();
@@ -205,7 +205,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             apiGroup.MapGroup("/tasks").MapTasksHandler();
 
             app.MapGroup(options.RouteOptions.PageBaseUrl)
-                .MapPages("files", options.RouteOptions.ApiBaseUrl)
+                .MapPages("files","favicon.ico", options.RouteOptions.ApiBaseUrl)
                 .CacheOutput(options.PageCachePolicy);
             if (options.MapCmsHomePage) app.MapHomePage().CacheOutput(options.PageCachePolicy);
         }
@@ -268,19 +268,20 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             var parts = dbOptions.ConnectionString.Split(";").Where(x => !x.StartsWith("Password"));
 
             logger.LogInformation(
-                $"""
-                 *********************************************************
-                 Using {title}, Version {informationalVersion?.Split("+").First()}
-                 Database : {dbOptions.Provider} - {string.Join(";", parts)}
-                 Client App is Enabled :{options.EnableClient}
-                 Use CMS' home page: {options.MapCmsHomePage}
-                 GraphQL Client Path: {options.GraphQlPath}
-                 RouterOption: API Base URL={options.RouteOptions.ApiBaseUrl} Page Base URL={options.RouteOptions.PageBaseUrl}
-                 Image Compression: MaxWidth={options.ImageCompression.MaxWidth}, Quality={options.ImageCompression.Quality}
-                 Schema Cache Settings: Entity Schema Expiration={options.EntitySchemaExpiration}, Query Schema Expiration = {options.QuerySchemaExpiration}
-                 Output Cache Settings: Page CachePolicy={options.PageCachePolicy}, Query Cache Policy={options.QueryCachePolicy}
-                 *********************************************************
-                 """);
+                $$$"""
+                   *********************************************************
+                   Using {{{title}}}, Version {{{informationalVersion?.Split("+").First()}}}
+                   Database : {{{dbOptions.Provider}}} - {{{string.Join(";", parts)}}}
+                   Client App is Enabled :{{{options.EnableClient}}}
+                   Use CMS' home page: {{{options.MapCmsHomePage}}}
+                   GraphQL Client Path: {{{options.GraphQlPath}}}
+                   RouterOption: API Base URL={{{options.RouteOptions.ApiBaseUrl}}} Page Base URL={{{options.RouteOptions.PageBaseUrl}}}
+                   Image Compression: MaxWidth={{{options.ImageCompression.MaxWidth}}}, Quality={{{options.ImageCompression.Quality}}}
+                   Schema Cache Settings: Entity Schema Expiration={{{options.EntitySchemaExpiration}}}, Query Schema Expiration = {{{options.QuerySchemaExpiration}}}
+                   Output Cache Settings: Page CachePolicy={{{options.PageCachePolicy}}}, Query Cache Policy={{{options.QueryCachePolicy}}}
+                   DOTNET_ENVIRONMENT: {{{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")}}}
+                   *********************************************************
+                   """);
         }
     }
 }

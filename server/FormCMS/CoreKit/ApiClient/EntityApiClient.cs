@@ -3,6 +3,7 @@ using Amazon.Runtime;
 using FormCMS.Utils.HttpClientExt;
 using FluentResults;
 using FormCMS.Core.Descriptors;
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.StrArgsExt;
@@ -64,7 +65,7 @@ public class EntityApiClient(HttpClient client)
     ) => Update(entity, new Dictionary<string,object>
     {
         { DefaultAttributeNames.Id.Camelize(), id },
-        { DefaultAttributeNames.UpdatedAt.Camelize(),  updatedAt},
+        { DefaultColumnNames.UpdatedAt.Camelize(),  updatedAt},
         { field, val },
         
     });

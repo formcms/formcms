@@ -17,6 +17,7 @@ public static class TaskHandler
 
         builder.MapGet("/entity", (ITaskService s) => s.GetEntity());    
         
+        
         builder.MapPost("/export", (ITaskService s) => s.AddExportTask());
         
         builder.MapGet("/export/download/{id:int}", (
@@ -29,5 +30,10 @@ public static class TaskHandler
             ITaskService s,
             int id
         ) => s.DeleteExportedFile(id));
+
+        builder.MapPost($"/import/", (
+            HttpContext context,
+            ITaskService s
+        ) =>s.AddImportTask(context.Request.Form.Files[0]));
     }
 }

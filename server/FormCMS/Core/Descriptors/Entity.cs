@@ -6,9 +6,9 @@ using DynamicExpresso;
 using FormCMS.CoreKit.RelationDbQuery;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
-using FormCMS.Utils.KateQueryExt;
 using FormCMS.Utils.RecordExt;
 using GraphQL.Client.Abstractions.Utilities;
 
@@ -60,8 +60,8 @@ public static class EntityHelper
         var labelAttribute = attributes.First(x => x.Field == entity.LabelAttributeName);
         var publicationStatusAttribute  = attributes.First(x=>x.Field == DefaultAttributeNames.PublicationStatus.Camelize());
         
-        var deletedAttribute = DefaultAttributeNames.Deleted.CreateLoadedAttribute(entity.TableName, DataType.Int, DisplayType.Number);
-        var updatedAtAttribute =  attributes.First(x=>x.Field == DefaultAttributeNames.UpdatedAt.Camelize());
+        var deletedAttribute = DefaultColumnNames.Deleted.CreateLoadedAttribute(entity.TableName, DataType.Int, DisplayType.Number);
+        var updatedAtAttribute =  attributes.First(x=>x.Field == DefaultColumnNames.UpdatedAt.Camelize());
         
         return new LoadedEntity(
             [..attributes],
@@ -92,7 +92,7 @@ public static class EntityHelper
         var query = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
         if (publicationStatus.HasValue)
         {
-            query.WhereCamelEnum(e.PublicationStatusAttribute.AddTableModifier(), publicationStatus.Value);
+            query.Where(e.PublicationStatusAttribute.AddTableModifier(), publicationStatus.Value.Camelize());
         }
 
         query.ApplyJoin([..filters.Select(x => x.Vector), ..sorts.Select(x => x.Vector)], publicationStatus);
@@ -116,7 +116,7 @@ public static class EntityHelper
         var query = e.Basic().WhereIn(e.PrimaryKeyAttribute.AddTableModifier(), ids.GetValues()).Select(fields);
         if (publicationStatus.HasValue)
         {
-            query.WhereCamelEnum(e.PublicationStatusAttribute.AddTableModifier(), publicationStatus.Value);
+            query.Where(e.PublicationStatusAttribute.AddTableModifier(), publicationStatus.Value.Camelize());
         }
 
         return query;
@@ -146,7 +146,7 @@ public static class EntityHelper
         var q = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
         if (publicationStatus.HasValue)
         {
-            q.WhereCamelEnum(e.PublicationStatusAttribute.AddTableModifier(), publicationStatus.Value);
+            q.Where(e.PublicationStatusAttribute.AddTableModifier(), publicationStatus.Value.Camelize());
         }
 
         q.ApplyFilters(filters);
@@ -180,10 +180,10 @@ public static class EntityHelper
             item.Remove(e.PrimaryKey);
         }
         
-        item.SetCamelKeyCamelValue(DefaultAttributeNames.PublicationStatus, e.DefaultPublicationStatus);
+        item[DefaultAttributeNames.PublicationStatus.Camelize()] = e.DefaultPublicationStatus.Camelize();
         if (e.DefaultPublicationStatus == PublicationStatus.Published)
         {
-            item.SetCamelKey(DefaultAttributeNames.PublishedAt, DateTime.Now);
+            item[DefaultAttributeNames.PublishedAt.Camelize()] = DateTime.Now;
         }
 
         return new SqlKata.Query(e.TableName).AsInsert(item, true);
@@ -191,19 +191,19 @@ public static class EntityHelper
 
     public static Result<SqlKata.Query> SavePublicationStatus(this LoadedEntity e, object id, Record record)
     {
-        if (!record.CamelKeyEnum<PublicationStatus>(DefaultAttributeNames.PublicationStatus, out var status))
+        if (!record.GetAndParseEnum<PublicationStatus>(DefaultAttributeNames.PublicationStatus.Camelize(), out var status))
             return Result.Fail("Cannot save publication status, unknown status");
 
         var updatingRecord = new Dictionary<string, object>();
-        updatingRecord.SetCamelKeyCamelValue(DefaultAttributeNames.PublicationStatus, status);
+        updatingRecord[DefaultAttributeNames.PublicationStatus.Camelize()]=status.Camelize();
 
         if (status is PublicationStatus.Published or PublicationStatus.Scheduled)
         {
-            if (!record.CamelKeyDateTime(DefaultAttributeNames.PublishedAt, out var dateTime))
+            if (!record.GetAndParseDateTime(DefaultAttributeNames.PublishedAt.Camelize(), out var dateTime))
             {
                 return Result.Fail("Cannot save publication status, invalidate publish time");
             }
-            updatingRecord.SetCamelKey(DefaultAttributeNames.PublishedAt, dateTime);
+            updatingRecord[DefaultAttributeNames.PublishedAt.Camelize()] = dateTime;
         }
         
         return new SqlKata.Query(e.TableName)
@@ -212,10 +212,10 @@ public static class EntityHelper
     }
 
     public static SqlKata.Query PublishAllScheduled(this Entity e)
-    => new SqlKata.Query(e.TableName)
-        .WhereCamelEnum(DefaultAttributeNames.PublicationStatus, PublicationStatus.Scheduled)
-        .WhereDate(DefaultAttributeNames.PublishedAt, "<", DateTime.Now)
-        .AsCamelFieldValueUpdate([DefaultAttributeNames.PublicationStatus], [PublicationStatus.Published]) ;
+        => new SqlKata.Query(e.TableName)
+            .Where(DefaultAttributeNames.PublicationStatus.Camelize(), PublicationStatus.Scheduled.Camelize())
+            .WhereDate(DefaultAttributeNames.PublishedAt.Camelize(), "<", DateTime.Now)
+            .AsUpdate([DefaultAttributeNames.PublicationStatus.Camelize()], [PublicationStatus.Published.Camelize()]);
     
     public static Result<SqlKata.Query> UpdateQuery(this LoadedEntity e, Record item)
     {
@@ -226,15 +226,15 @@ public static class EntityHelper
         }
         
         
-        if (!item.RemoveCamelKey(DefaultAttributeNames.UpdatedAt, out var updatedAt))
+        if (!item.Remove(DefaultColumnNames.UpdatedAt.Camelize(), out var updatedAt))
         {
             return Result.Fail($"Failed to get updatedAt value with field [{e.UpdatedAtAttribute.Field.ToCamelCase()}]");
         }
 
         var ret = new SqlKata.Query(e.TableName)
             .Where(e.PrimaryKey, id)
-            .Where(DefaultAttributeNames.UpdatedAt, updatedAt!)
-            .Where(DefaultAttributeNames.Deleted, false)
+            .Where(DefaultColumnNames.UpdatedAt.Camelize(), updatedAt!)
+            .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .AsUpdate(item.Keys, item.Values);
         item[e.PrimaryKey] = id;
         return ret;
@@ -248,7 +248,7 @@ public static class EntityHelper
         }
 
 
-        if (!item.RemoveCamelKey(DefaultAttributeNames.UpdatedAt, out var updatedAt))
+        if (!item.Remove(DefaultColumnNames.UpdatedAt.Camelize(), out var updatedAt))
         {
             return Result.Fail(
                 $"Failed to get updatedAt value with field [{e.UpdatedAtAttribute.Field.ToCamelCase()}]");
@@ -256,8 +256,8 @@ public static class EntityHelper
 
         return new SqlKata.Query(e.TableName)
             .Where(e.PrimaryKey, id)
-            .Where(DefaultAttributeNames.UpdatedAt, updatedAt!)
-            .AsCamelFieldUpdate([DefaultAttributeNames.Deleted], [true]);
+            .Where(DefaultColumnNames.UpdatedAt.Camelize(), updatedAt!)
+            .AsUpdate([DefaultColumnNames.Deleted.Camelize()], [true]);
     }
 
     public static SqlKata.Query Basic(this LoadedEntity e)

@@ -17,27 +17,20 @@ public static class RecordExtensions
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
 
-    public static string CamelKeyStr(this Record r, string field)
-        => (string)r[field.Camelize()];
-
-    public static object CamelKey(this Record r, string field)
-        => r[field.Camelize()];
-    
-    public static bool CamelKeyDateTime(
+    public static bool GetAndParseDateTime(
         this Record record,
-        Enum field,
+        string field,
         out DateTime e)
     {
         e = default;
-        if (!record.TryGetValue(field.Camelize(), out var o) || o is not string s)
+        if (!record.TryGetValue(field, out var o) || o is not string s)
         {
             return false;
         }
-
         return DateTime.TryParse(s, out e);
     }
-    
-    public static bool CamelKeyEnum<TEnum>(
+
+    public static bool GetAndParseEnum<TEnum>(
         this Record record,
         string field,
         out TEnum e)
@@ -48,40 +41,11 @@ public static class RecordExtensions
         {
             return false;
         }
-
         return Enum.TryParse(s, true, out e);
     }
 
-    public static bool CamelKeyEnum<TEnum>(
-        this Record record,
-        Enum field,
-        out TEnum e)
-        where TEnum : struct
-    {
-        e = default;
-        if (!record.TryGetValue(field.Camelize(), out var o) || o is not string s)
-        {
-            return false;
-        }
-
-        return Enum.TryParse(s, true, out e);
-    }
-
-    public static bool RemoveCamelKey(this Record r, Enum field, out object? val)
-        => r.Remove(field.Camelize(), out val);
-    
-    public static void SetCamelKeyCamelValue(this Record record, Enum field, Enum value)
-    {
-        record[field.Camelize()]= value.Camelize();
-    }
-
-    public static void SetCamelKey(this Record record, Enum field, object value)
-    {
-        record[field.Camelize()] = value;
-    }
-
-    public static string StrOrEmpty(this Record r, string field)
-        =>r.TryGetValue(field, out var o)?o.ToString() ?? string.Empty:string.Empty;
+    public static string GetStrOrEmpty(this Record r, string field)
+        =>(r.TryGetValue(field, out var o) && o is not null)?o.ToString() ?? string.Empty:string.Empty;
 
 
     public static string ToToken(this Record r)

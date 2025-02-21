@@ -9,6 +9,7 @@ using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.HttpContextExt;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
+using Humanizer;
 
 namespace FormCMS.Auth.Services;
 
@@ -28,7 +29,7 @@ public class AccountService<TUser, TRole,TCtx>(
     {
         var query = SchemaHelper.ByNameAndType(SchemaType.Entity, null, null);
         var records= await queryExecutor.Many(query,ct);
-        return records.Select(x => x.CamelKeyStr(nameof(Entity.Name))).ToArray();
+        return records.Select(x => (string)x[nameof(Entity.Name).Camelize()]).ToArray();
     }
     
     public async Task<string[]> GetRoles(CancellationToken ct)

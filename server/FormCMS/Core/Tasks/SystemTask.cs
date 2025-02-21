@@ -1,9 +1,9 @@
-using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
-using FormCMS.Utils.KateQueryExt;
+using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
+using Humanizer;
 
 namespace FormCMS.Core.Tasks;
 
@@ -38,8 +38,19 @@ public static class TaskHelper
     public const string TableName = "__tasks";
     private const int DefaultPageSize = 50;
 
-    public static string GetExportFileName(object taskId)
-        => $"export-{taskId}.db";
+    public static string GetExportFileName(int taskId)
+    {
+        return $"export-{taskId}.zip";
+    }
+    public static string GetTempExportFileName(int taskId)
+    {
+        return Path.Combine(Path.GetTempPath(), GetExportFileName(taskId));
+    }
+    
+    public static string GetTempImportFileName(object taskId)
+    {
+        return Path.Combine(Path.GetTempPath(), $"import-{taskId}.zip");
+    }
 
     public static readonly XEntity Entity = XEntityExtensions.CreateEntity<SystemTask>(
         nameof(SystemTask.Type),
@@ -63,14 +74,13 @@ public static class TaskHelper
         ColumnHelper.CreateCamelColumn<SystemTask, string>(x => x.CreatedBy),
         ColumnHelper.CreateCamelColumn<SystemTask, int>(x => x.Progress),
         
-        DefaultAttributeNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
+        DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
     ];
-
-    public static SqlKata.Query AddExportTask(string userName)
+    public static SqlKata.Query AddTask(TaskType t ,string userName)
     {
-        var task = new SystemTask(Type:TaskType.Export,TaskStatus:TaskStatus.Init,CreatedBy: userName);
+        var task = new SystemTask(Type:t,TaskStatus:TaskStatus.Init,CreatedBy: userName);
         var record = RecordExtensions.FormObject(task,
             whiteList:[
                 nameof(SystemTask.Type), 
@@ -78,24 +88,26 @@ public static class TaskHelper
                 nameof(SystemTask.Progress),
                 nameof(SystemTask.TaskStatus)
             ]);
-        return new SqlKata.Query(TableName).AsInsert(record);
+        return new SqlKata.Query(TableName).AsInsert(record,true);
     }
 
-    public static SqlKata.Query GetNewExportTask()
+    public static SqlKata.Query GetNewTask(TaskType t)
     {
         var query = new SqlKata.Query(TableName)
-            .Where(DefaultAttributeNames.Deleted, false);
-        query.WhereCamelFieldEnum(nameof(SystemTask.Type), TaskType.Export);
-        query.WhereCamelFieldEnum(nameof(SystemTask.TaskStatus), TaskStatus.Init);
-        query.WhereCamelField(nameof(SystemTask.Progress), 0);
+            .Where(DefaultColumnNames.Deleted.Camelize(), false)
+            .Where(nameof(SystemTask.Type).Camelize(), t.Camelize())
+            .Where(nameof(SystemTask.TaskStatus).Camelize(), TaskStatus.Init.Camelize());
         return query;
     }
 
     public static SqlKata.Query UpdateTaskStatus(SystemTask systemTask)
     {
-        var record = RecordExtensions.FormObject(systemTask, whiteList:[nameof(SystemTask.TaskStatus), nameof(SystemTask.Progress)]);
+        var record = RecordExtensions.FormObject(
+            systemTask,
+            whiteList: [nameof(SystemTask.TaskStatus), nameof(SystemTask.Progress)]
+        );
         var query = new SqlKata.Query(TableName)
-            .WhereCamelField(nameof(SystemTask.Id), systemTask.Id).AsUpdate(record);
+            .Where(nameof(SystemTask.Id).Camelize(), systemTask.Id).AsUpdate(record);
         return query;
     }
    

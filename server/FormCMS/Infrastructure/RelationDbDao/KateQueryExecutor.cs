@@ -1,4 +1,5 @@
 using FormCMS.Utils.DataModels;
+using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using SqlKata;
 using Column = FormCMS.Utils.DataModels.Column;
@@ -8,6 +9,60 @@ namespace FormCMS.Infrastructure.RelationDbDao;
 public record KateQueryExecutorOption(int? TimeoutSeconds);
 public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutorOption option)
 {
+   public async Task<Dictionary<string, object>> LoadDict(string tableName, string keyField, string valueField, IEnumerable<object> ids,CancellationToken ct)
+   {
+      var query = new Query(tableName)
+         .WhereIn(keyField, ids)
+         .Select(keyField, valueField);
+      
+      var records = await Many(query, ct);
+      return records.ToDictionary(
+         x => x.GetStrOrEmpty(keyField),
+         x => x[valueField]
+      );
+   }
+
+   public async Task RemoveIdAndUpsert(string tableName, string primaryKey, string importKey, Record[] records)
+   {
+      var ids = records.Select(x => x[primaryKey]).ToArray();
+
+      var existingRecords = await Many(new Query(tableName).WhereIn(importKey, ids));
+      var existingIds = existingRecords.Select(x => x.GetStrOrEmpty(importKey)).ToArray();
+      
+      var recordsToUpdate = new List<Record>();
+      var recordsToInsert = new List<Record>();
+
+      foreach (var record in records)
+      {
+         var id = record.GetStrOrEmpty(primaryKey);
+         record.Remove(primaryKey);
+         
+         if (existingIds.Contains(id))
+         {
+            recordsToUpdate.Add(record);
+         }
+         else
+         {
+            recordsToInsert.Add(record);
+         }
+      }
+
+      foreach (var record in recordsToUpdate)
+      {
+         var k = record[primaryKey];
+         record.Remove(primaryKey);
+         var q = new Query(tableName)
+            .Where(importKey, k)
+            .AsUpdate(record);
+         await ExecAndGetAffected(q);
+      }
+
+      if (recordsToInsert.Count != 0)
+      {
+         await BatchInsert(tableName, recordsToInsert.ToArray());
+      }
+   }
+
    public Task BatchInsert(string tableName, Record[] records)
    {
       var cols = records[0].Select(x => x.Key);

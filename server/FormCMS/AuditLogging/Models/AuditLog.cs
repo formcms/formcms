@@ -1,7 +1,7 @@
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
-using FormCMS.Utils.KateQueryExt;
 using FormCMS.Utils.RecordExt;
+using Humanizer;
 using Query = SqlKata.Query;
 
 namespace FormCMS.AuditLogging.Models;
@@ -81,7 +81,8 @@ public static class AuditLogHelper
     {
         var fields = Entity.Attributes.Select(x=>x.Field);
         return new Query(AuditLogConstants.TableName)
-            .WhereCamelField(nameof(AuditLog.Id),id).Select(fields);
+            .Where(nameof(AuditLog.Id).Camelize(),id)
+            .Select(fields);
     }
 
     public static Query Count() => new (AuditLogConstants.TableName);

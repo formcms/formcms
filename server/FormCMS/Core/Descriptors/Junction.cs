@@ -1,4 +1,5 @@
 using FormCMS.CoreKit.RelationDbQuery;
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 
 namespace FormCMS.Core.Descriptors;
@@ -24,10 +25,10 @@ public static class JunctionHelper
     {
         var tableName = GetJunctionTableName(sourceEntity.Name, targetEntity.Name);
         var id = DefaultAttributeNames.Id.CreateLoadedAttribute(tableName, DataType.Int, DisplayType.Number);
-        var deleted =  DefaultAttributeNames.Deleted.CreateLoadedAttribute(tableName,DataType.Int, DisplayType.Number);
+        var deleted =  DefaultColumnNames.Deleted.CreateLoadedAttribute(tableName,DataType.Int, DisplayType.Number);
         var publicationStatusAttr = DefaultAttributeNames.PublicationStatus.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.Datetime);
-        var updatedAtAttr = DefaultAttributeNames.UpdatedAt.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.Datetime);
-        var createdAtAttr = DefaultAttributeNames.CreatedAt.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.Datetime);
+        var updatedAtAttr = DefaultColumnNames.UpdatedAt.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.Datetime);
+        var createdAtAttr = DefaultColumnNames.CreatedAt.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.Datetime);
         sourceEntity = sourceEntity with
         {
             Attributes =

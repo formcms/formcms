@@ -1,7 +1,7 @@
 using FluentResults;
 using FormCMS.Core.Descriptors;
-using FormCMS.Utils.KateQueryExt;
 using FormCMS.Utils.DataModels;
+using FormCMS.Utils.EnumExt;
 using Humanizer;
 
 namespace FormCMS.CoreKit.RelationDbQuery;
@@ -56,7 +56,7 @@ public static class KateQueryExt
             .Where(desc.TargetEntity.DeletedAttribute.AddTableModifier(nextPrefix), false);
         if (publicationStatus.HasValue)
         {
-            query = query.WhereCamelEnum(desc.TargetEntity.PublicationStatusAttribute.AddTableModifier(nextPrefix), publicationStatus.Value);
+            query = query.Where(desc.TargetEntity.PublicationStatusAttribute.AddTableModifier(nextPrefix), publicationStatus.Value.Camelize());
         }
         return query;
     }
@@ -77,7 +77,7 @@ public static class KateQueryExt
         if (publicationStatus.HasValue)
         {
             query = query
-                .WhereCamelEnum(junction.TargetEntity.PublicationStatusAttribute.AddTableModifier(nextPrefix), publicationStatus.Value);
+                .Where(junction.TargetEntity.PublicationStatusAttribute.AddTableModifier(nextPrefix), publicationStatus.Value.Camelize());
         }
         return query;
     }

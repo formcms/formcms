@@ -14,6 +14,10 @@ public static class ProfileHandler
 
         app.MapGet("/info", (
             IProfileService svc
-        ) => svc.GetInfo() ?? throw new ResultException("Unauthorized"));
+        ) =>
+        {
+            var info = svc.GetInfo();
+            return info is not null ? Results.Ok(info) : Results.Unauthorized();
+        });
     }
 }

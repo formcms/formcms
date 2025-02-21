@@ -50,8 +50,8 @@ public sealed class AuditLogBuilder(ILogger<AuditLogBuilder> logger )
                 await service.AddLog(
                     ActionType.Create, 
                     args.Entity.Name, 
-                    args.Record.StrOrEmpty(args.Entity.PrimaryKey),
-                    args.Record.StrOrEmpty(args.Entity.LabelAttributeName),
+                    args.Record.GetStrOrEmpty(args.Entity.PrimaryKey),
+                    args.Record.GetStrOrEmpty(args.Entity.LabelAttributeName),
                     args.Record) ;
                 return args;
             }
@@ -62,8 +62,8 @@ public sealed class AuditLogBuilder(ILogger<AuditLogBuilder> logger )
                 await service.AddLog(
                     ActionType.Delete, 
                     args.Entity.Name, 
-                    args.Record.StrOrEmpty(args.Entity.PrimaryKey),
-                    args.Record.StrOrEmpty(args.Entity.LabelAttributeName),
+                    args.Record.GetStrOrEmpty(args.Entity.PrimaryKey),
+                    args.Record.GetStrOrEmpty(args.Entity.LabelAttributeName),
                     args.Record
                     ) ;
                 return args;
@@ -75,8 +75,8 @@ public sealed class AuditLogBuilder(ILogger<AuditLogBuilder> logger )
                 await service.AddLog(
                     ActionType.Update,
                     args.Entity.Name,
-                    args.Record.StrOrEmpty(args.Entity.PrimaryKey),
-                    args.Record.StrOrEmpty(args.Entity.LabelAttributeName),
+                    args.Record.GetStrOrEmpty(args.Entity.PrimaryKey),
+                    args.Record.GetStrOrEmpty(args.Entity.LabelAttributeName),
                     args.Record
                 );
                 return args;

@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using System.Text.Json;
 using FluentResults;
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
@@ -227,8 +228,8 @@ public static class AttributeHelper
 
         string[] timeAttrs =
         [
-            DefaultAttributeNames.CreatedAt.Camelize(),
-            DefaultAttributeNames.UpdatedAt.Camelize(),
+            DefaultColumnNames.CreatedAt.Camelize(),
+            DefaultColumnNames.UpdatedAt.Camelize(),
             DefaultAttributeNames.PublishedAt.Camelize()
         ];
 
@@ -265,16 +266,16 @@ public static class AttributeHelper
         return !string.IsNullOrWhiteSpace(val);
     }
 
-    public static bool GetCollectionTarget(this Attribute a, out string entityName, out string linkingAttribute)
+    public static bool GetCollectionTarget(this Attribute a, out string entityName, out string lookupAttr)
     {
-        (entityName, linkingAttribute) = ("", "");
+        (entityName, lookupAttr) = ("", "");
         var parts = a.Options.Split('.');
         if (parts.Length != 2)
         {
             return false;
         }
 
-        (entityName, linkingAttribute) = (parts[0], parts[1]);
+        (entityName, lookupAttr) = (parts[0], parts[1]);
         return true;
     }
 
@@ -458,8 +459,8 @@ public static class AttributeHelper
 
             ColumnType DatetimeColType() => attribute.Field switch
             {
-                _ when DefaultAttributeNames.CreatedAt.EqualsStr(attribute.Field) => ColumnType.CreatedTime,
-                _ when DefaultAttributeNames.UpdatedAt.EqualsStr(attribute.Field) => ColumnType.UpdatedTime,
+                _ when DefaultColumnNames.CreatedAt.EqualsStr(attribute.Field) => ColumnType.CreatedTime,
+                _ when DefaultColumnNames.UpdatedAt.EqualsStr(attribute.Field) => ColumnType.UpdatedTime,
                 _ => ColumnType.Datetime
             };
 

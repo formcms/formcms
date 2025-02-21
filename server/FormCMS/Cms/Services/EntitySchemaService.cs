@@ -245,7 +245,7 @@ public sealed class EntitySchemaService(
         else
         {
             var newColumns = entity.Attributes.Where(x=>x.IsLocal()).ToColumns(dict);
-            await dao.CreateTable(entity.TableName, newColumns.EnsureColumn(DefaultAttributeNames.Deleted,ColumnType.Boolean), ct);
+            await dao.CreateTable(entity.TableName, newColumns.EnsureColumn(DefaultColumnNames.Deleted,ColumnType.Boolean), ct);
         }
     }
 
@@ -276,7 +276,7 @@ public sealed class EntitySchemaService(
             if (columns.Length == 0)
             {
                 var cols =  junction.JunctionEntity.Attributes.ToColumns(dict);
-                await dao.CreateTable(junction.JunctionEntity.TableName, cols.EnsureColumn(DefaultAttributeNames.Deleted,ColumnType.Boolean), ct);
+                await dao.CreateTable(junction.JunctionEntity.TableName, cols.EnsureColumn(DefaultColumnNames.Deleted,ColumnType.Boolean), ct);
                 await dao.CreateForeignKey(
                     table: junction.JunctionEntity.TableName,
                     col: junction.SourceAttribute.Field,

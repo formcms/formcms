@@ -32,9 +32,19 @@ public class TaskService(
     public Task EnsureTable()
         =>migrator.MigrateTable(TaskHelper.TableName,TaskHelper.Columns);
 
+    public async Task<int> AddImportTask(IFormFile file)
+    {
+        var query = TaskHelper.AddTask(TaskType.Import,profileService.GetInfo()?.Name ?? "");
+        var id=await executor.ExeAndGetId(query);
+        
+        await using var stream = new FileStream(TaskHelper.GetTempImportFileName(id), FileMode.Create);
+        await file.CopyToAsync(stream);
+        return id;
+    }
+
     public Task<int> AddExportTask()
     {
-        var query = TaskHelper.AddExportTask(profileService.GetInfo()?.Name ?? "");
+        var query = TaskHelper.AddTask(TaskType.Export,profileService.GetInfo()?.Name ?? "");
         return executor.ExeAndGetId(query);
     }
 

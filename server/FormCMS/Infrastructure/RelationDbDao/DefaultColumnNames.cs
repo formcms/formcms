@@ -1,8 +1,8 @@
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-internal enum DefaultColumnNames
+public enum DefaultColumnNames
 {
-    Id,
+    ImportKey,
     Deleted,
     CreatedAt,
     UpdatedAt,

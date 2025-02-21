@@ -54,7 +54,7 @@ public class MessageProduceBuilder(ILogger<MessageProduceBuilder> logger, Messag
             {
                 await messageProducer.Produce(
                     Topics.CmsCrud,
-                    EncodeMessage(Operations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record));
+                    EncodeMessage(Operations.Create, parameter.Name, parameter.Record.GetStrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record));
                 return parameter;
             });
 
@@ -62,7 +62,7 @@ public class MessageProduceBuilder(ILogger<MessageProduceBuilder> logger, Messag
             {
                 await messageProducer.Produce(
                     Topics.CmsCrud,
-                    EncodeMessage(Operations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record)
+                    EncodeMessage(Operations.Create, parameter.Name, parameter.Record.GetStrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record)
                 );
                 return parameter;
             });
@@ -70,7 +70,7 @@ public class MessageProduceBuilder(ILogger<MessageProduceBuilder> logger, Messag
             {
                 await messageProducer.Produce(
                     Topics.CmsCrud,
-                    EncodeMessage(Operations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record));
+                    EncodeMessage(Operations.Create, parameter.Name, parameter.Record.GetStrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record));
                 return parameter;
             });
         }
