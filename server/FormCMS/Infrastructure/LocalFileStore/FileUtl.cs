@@ -1,3 +1,4 @@
+using System.Net;
 using FluentResults;
 using SkiaSharp; 
 
@@ -7,27 +8,50 @@ public record LocalFileStoreOptions(string PathPrefix, string UrlPrefix, int Max
 public class LocalFileStore(LocalFileStoreOptions options):IFileStore
 {
     public string GetDownloadPath(string file)=>$"{options.UrlPrefix}/{file}";
-    
-    public void Del(string file)
+
+    public Task Download(string path, string localPath)
     {
-        file = Path.Combine(options.PathPrefix, file);
-        File.Delete(file);
-    }
-    
-    public void Move(string fromPath, string toPath)
-    {
-        toPath = Path.Combine(options.PathPrefix, toPath);
-        if (File.Exists(toPath))
+        path = Path.Join(options.PathPrefix, path);
+        if (File.Exists(path))
         {
-            File.Delete(toPath);
+            CreateDirAndCopy(path, localPath);
         }
-        File.Move(fromPath, toPath);
+
+        return Task.CompletedTask;
+    }
+
+    public Task Del(string file)
+    {
+        file = Path.Join(options.PathPrefix, file);
+        File.Delete(file);
+        return Task.CompletedTask;
+    }
+
+    private void CreateDirAndCopy(string source, string dest)
+    {
+        string? destinationDir = Path.GetDirectoryName(dest);
+        if (!string.IsNullOrEmpty(destinationDir) && !Directory.Exists(destinationDir))
+        {
+            Directory.CreateDirectory(destinationDir);
+        }
+
+        File.Copy(source, dest, true);
+    }
+
+    public Task Upload(string localPath, string path)
+    {
+        path = Path.Join(options.PathPrefix, path);
+        if (File.Exists(localPath))
+        {
+            CreateDirAndCopy(localPath, path);
+        }
+        return Task.CompletedTask;
     }
     
-    public async Task<Result<string[]>> Save(IEnumerable<IFormFile> files)
+    public async Task<Result<string[]>> Upload(IEnumerable<IFormFile> files)
     {
         var dir = GetDirectoryName();
-        Directory.CreateDirectory(Path.Combine(options.PathPrefix, dir));
+        Directory.CreateDirectory(Path.Join(options.PathPrefix, dir));
         List<string> ret = new();
 
         foreach (var file in files)
@@ -37,8 +61,8 @@ public class LocalFileStore(LocalFileStoreOptions options):IFileStore
                 return Result.Fail($"Invalid file length {file.FileName}");
             }
 
-            var fileName = Path.Combine(dir, GetFileName(file.FileName));
-            await using var saveStream = File.Create(Path.Combine(options.PathPrefix, fileName));
+            var fileName = Path.Join(dir, GetFileName(file.FileName));
+            await using var saveStream = File.Create(Path.Join(options.PathPrefix, fileName));
 
             if (IsImage(file))
             {

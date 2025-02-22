@@ -24,7 +24,7 @@ public static class Util
             ),
             (
                 "ConnectionStrings__Sqlite",
-                $"Data Source={Path.Combine(Environment.CurrentDirectory, "_cms_unit_tests.db")}"
+                $"Data Source={Path.Join(Environment.CurrentDirectory, "_cms_unit_tests.db")}"
             )
         ];
         foreach (var (k,v) in settings)

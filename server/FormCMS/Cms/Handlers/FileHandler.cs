@@ -9,6 +9,6 @@ public static class FileHandler
     {
         app.MapPost($"/", async (
             IFileStore store, HttpContext context
-        ) => string.Join(",", (await store.Save(context.Request.Form.Files)).Ok()));
+        ) => string.Join(",", (await store.Upload(context.Request.Form.Files)).Ok()));
     }
 }

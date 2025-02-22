@@ -3,6 +3,7 @@ using FormCMS.Infrastructure.LocalFileStore;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using Task = System.Threading.Tasks.Task;
 using TaskStatus = FormCMS.Core.Tasks.TaskStatus;
@@ -16,16 +17,21 @@ public class TaskService(
     IFileStore store
 ) : ITaskService
 {
-    public Task DeleteExportedFile(int id)
+    public async Task DeleteTaskFile(int id,CancellationToken ct)
     {
-        store.Del(TaskHelper.GetExportFileName(id));
+        var record =await executor.Single(TaskHelper.ById(id),ct)?? throw new ResultException("Task not found");
+        var task = record.ToObject<SystemTask>().Ok();
+        await store.Del(task.GetPaths().Zip);
+        
         var query = TaskHelper.UpdateTaskStatus(new SystemTask(Id: id, TaskStatus: TaskStatus.Archived));
-        return executor.ExecAndGetAffected(query);
+        await executor.ExecAndGetAffected(query,ct);
     }
     
-    public string GetExportedFileDownloadUrl(int id)
+    public async Task<string> GetTaskFileUrl(int id, CancellationToken ct)
     {
-        return store.GetDownloadPath(TaskHelper.GetExportFileName(id));
+        var record =await executor.Single(TaskHelper.ById(id),ct)?? throw new ResultException("Task not found");
+        var task = record.ToObject<SystemTask>().Ok();
+        return store.GetDownloadPath(task.GetPaths().Zip);
     }
 
     public XEntity GetEntity() => TaskHelper.Entity;
@@ -34,17 +40,19 @@ public class TaskService(
 
     public async Task<int> AddImportTask(IFormFile file)
     {
-        var query = TaskHelper.AddTask(TaskType.Import,profileService.GetInfo()?.Name ?? "");
-        var id=await executor.ExeAndGetId(query);
-        
-        await using var stream = new FileStream(TaskHelper.GetTempImportFileName(id), FileMode.Create);
+        var task = TaskHelper.InitTask(TaskType.Import, profileService.GetInfo()?.Name ?? "");
+        var query = TaskHelper.AddTask(task);
+        var id = await executor.ExeAndGetId(query);
+
+        await using var stream = new FileStream(task.GetPaths().FullZip, FileMode.Create);
         await file.CopyToAsync(stream);
         return id;
     }
 
     public Task<int> AddExportTask()
     {
-        var query = TaskHelper.AddTask(TaskType.Export,profileService.GetInfo()?.Name ?? "");
+        var task = TaskHelper.InitTask(TaskType.Export, profileService.GetInfo()?.Name ?? "");
+        var query = TaskHelper.AddTask(task);
         return executor.ExeAndGetId(query);
     }
 

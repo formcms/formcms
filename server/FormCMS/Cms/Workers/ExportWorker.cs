@@ -3,16 +3,16 @@ using FormCMS.Core.Tasks;
 using FormCMS.Infrastructure.LocalFileStore;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
+using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
-using Microsoft.Data.Sqlite;
 using Query = SqlKata.Query;
 
 namespace FormCMS.Cms.Workers;
 
 public class ExportWorker(
     IServiceScopeFactory scopeFactory,
-    ILoggerFactory loggerFactory,
+    ILoggerFactory logFactory,
     ILogger<ExportWorker> logger,
     IFileStore fileStore
 ) : TaskWorker(serviceScopeFactory:scopeFactory,logger:logger)
@@ -22,21 +22,26 @@ public class ExportWorker(
         return TaskType.Export;
     }
 
-    protected override async Task DoTask(IServiceScope serviceScope,KateQueryExecutor destinationExecutor,int taskId, CancellationToken ct)
+    protected override async Task DoTask(IServiceScope serviceScope,KateQueryExecutor sourceExecutor,SystemTask task, CancellationToken ct)
     {
-        await using var conn = CreateConnection();
-        var (targetExecutor,migrator) = CreateDbAccessor();
+        var destConnection = task.GetPaths().CreateConnection();
+        var destDao = new SqliteDao(destConnection, new Logger<SqliteDao>(logFactory));
+
+        var (destExecutor, destMigrator) = (new KateQueryExecutor(destDao, new KateQueryExecutorOption(300)), new DatabaseMigrator(destDao));
         var (schemaRecords, entities,entityDict) = await LoadData();
         await ExportSchema();
         await ExportEntities();
         await ExportJunctions();
-        fileStore.Move(TaskHelper.GetTempExportFileName(taskId),TaskHelper.GetExportFileName(taskId));
+        
+        task.GetPaths().Zip();
+        await fileStore.Upload(task.GetPaths().FullZip,task.GetPaths().Zip);
+        task.GetPaths().Clean();
         return;
-
+        
         async Task<(Record[], Entity[], Dictionary<string, Entity>)> LoadData()
         {
             var records =
-                await destinationExecutor.Many(SchemaHelper.ByNameAndType(null, null, PublicationStatus.Published),ct);
+                await sourceExecutor.Many(SchemaHelper.ByNameAndType(null, null, PublicationStatus.Published),ct);
             var arr = records.Select(x => SchemaHelper.RecordToSchema(x).Ok())
                 .Where(x => x.Type == SchemaType.Entity)
                 .Select(x => x.Settings.Entity!).ToArray();
@@ -78,46 +83,51 @@ public class ExportWorker(
         {
             var attrs = entity.Attributes.Where(x => x.IsLocal());
             var cols = attrs.ToColumns(entityDict);
-            await migrator.MigrateTable(entity.TableName, cols.EnsureColumn(DefaultColumnNames.Deleted,ColumnType.Boolean));
-            await BatchInsert(entity.TableName, entity.PrimaryKey, cols.Select(x=>x.Name));
+            await destMigrator.MigrateTable(entity.TableName, cols.EnsureColumn(DefaultColumnNames.Deleted,ColumnType.Boolean));
+            await GetPageDataAndInsert(entity, cols.Select(x=>x.Name));
+        }
+
+        async Task CopyFiles(LoadedEntity entity, Record[] records)
+        {
+            foreach (var attr in entity.Attributes)
+            {
+                if (attr.DisplayType is not (DisplayType.File or DisplayType.Image or DisplayType.Gallery)) continue;
+                foreach (var record in records)
+                {
+                    if (!record.TryGetValue(attr.Field, out var value) || value is not string s) continue;
+                    
+                    var paths = s.Split(',');
+                    foreach (var path in paths)
+                    {
+                        await fileStore.Download(path, Path.Join(task.GetPaths().Folder, path));
+                    }
+                }
+            }
         }
         
-        async Task BatchInsert(string tableName, string primaryKey,IEnumerable<string> fields)
+        async Task GetPageDataAndInsert(LoadedEntity entity,IEnumerable<string> fields)
         {
             const int limit = 1000;
-            var query = new Query(tableName)
+            var query = new Query(entity.TableName)
                 .Where(DefaultColumnNames.Deleted.Camelize(), false)
-                .OrderBy(primaryKey)
+                .OrderBy(entity.PrimaryKey)
                 .Select(fields).Limit(limit);
-            var records = await destinationExecutor.Many(query, ct);
+            var records = await sourceExecutor.Many(query, ct);
             while (true)
             {
-                await targetExecutor.BatchInsert(tableName, records);
+                await CopyFiles(entity, records);
+                
+                await destExecutor.BatchInsert(entity.TableName, records);
                 if (records.Length < limit) break;
-                var lastId = records.Last()[primaryKey];
-                records = await destinationExecutor.Many(query.Where(primaryKey, ">", lastId),ct);
+                var lastId = records.Last()[entity.PrimaryKey];
+                records = await sourceExecutor.Many(query.Where(entity.PrimaryKey, ">", lastId),ct);
             }
         }
 
-        (KateQueryExecutor,DatabaseMigrator) CreateDbAccessor()
-        {
-            var targetDao = new SqliteDao(conn, new Logger<SqliteDao>(loggerFactory));
-            return (new KateQueryExecutor(targetDao, new KateQueryExecutorOption(300)),
-                new DatabaseMigrator(targetDao));
-        }
-
-        SqliteConnection CreateConnection()
-        {
-            var connectionString = $"Data Source={TaskHelper.GetTempExportFileName(taskId)}";
-            var con= new SqliteConnection(connectionString);
-            con.Open();
-            return con;
-        }
-        
         async Task ExportSchema()
         {
-            await migrator.MigrateTable(SchemaHelper.TableName, SchemaHelper.Columns);
-            await targetExecutor.BatchInsert(SchemaHelper.TableName, schemaRecords);
+            await destMigrator.MigrateTable(SchemaHelper.TableName, SchemaHelper.Columns);
+            await destExecutor.BatchInsert(SchemaHelper.TableName, schemaRecords);
         }
     }
 }

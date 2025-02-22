@@ -4,6 +4,7 @@ using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using Humanizer;
+using NUlid;
 
 namespace FormCMS.Core.Tasks;
 
@@ -27,8 +28,11 @@ public record SystemTask(
     TaskStatus TaskStatus,
     TaskType Type = TaskType.Default, 
     string CreatedBy = "",
+    
     int Id = 0,
+    string TaskId = "",
     int Progress = 0,
+    string Error = "",
     DateTime CreatedAt = default,
     DateTime UpdatedAt = default
 );
@@ -38,19 +42,13 @@ public static class TaskHelper
     public const string TableName = "__tasks";
     private const int DefaultPageSize = 50;
 
-    public static string GetExportFileName(int taskId)
-    {
-        return $"export-{taskId}.zip";
-    }
-    public static string GetTempExportFileName(int taskId)
-    {
-        return Path.Combine(Path.GetTempPath(), GetExportFileName(taskId));
-    }
-    
-    public static string GetTempImportFileName(object taskId)
-    {
-        return Path.Combine(Path.GetTempPath(), $"import-{taskId}.zip");
-    }
+    public static TaskPaths GetPaths(this SystemTask task)
+        => new (
+            $"{task.TaskId}.zip",
+            Path.Join(Path.GetTempPath(),$"{task.TaskId}.zip"),
+            Path.Join(Path.GetTempPath(),$"{task.TaskId}"),
+            Path.Join(Path.GetTempPath(), $"{task.TaskId}/cms.db")
+        );
 
     public static readonly XEntity Entity = XEntityExtensions.CreateEntity<SystemTask>(
         nameof(SystemTask.Type),
@@ -60,8 +58,10 @@ public static class TaskHelper
             XAttrExtensions.CreateAttr<SystemTask, int>(x => x.Id, isDefault: true),
             XAttrExtensions.CreateAttr<SystemTask, object>(x => x.Type),
             XAttrExtensions.CreateAttr<SystemTask, object>(x => x.TaskStatus),
+            XAttrExtensions.CreateAttr<SystemTask, string>(x => x.TaskId),
             XAttrExtensions.CreateAttr<SystemTask, string>(x => x.CreatedBy),
             XAttrExtensions.CreateAttr<SystemTask, int>(x => x.Progress),
+            XAttrExtensions.CreateAttr<SystemTask, string>(x => x.Error),
             XAttrExtensions.CreateAttr<SystemTask, DateTime>(x => x.CreatedAt, isDefault: true),
             XAttrExtensions.CreateAttr<SystemTask, DateTime>(x => x.UpdatedAt, isDefault: true),
         ]);
@@ -69,8 +69,10 @@ public static class TaskHelper
     public static readonly Column[] Columns =
     [
         ColumnHelper.CreateCamelColumn<SystemTask>(x => x.Id, ColumnType.Id),
+        ColumnHelper.CreateCamelColumn<SystemTask>(x => x.Error, ColumnType.Text),
         ColumnHelper.CreateCamelColumn<SystemTask,Enum>(x => x.Type),
         ColumnHelper.CreateCamelColumn<SystemTask,Enum>(x => x.TaskStatus),
+        ColumnHelper.CreateCamelColumn<SystemTask, string>(x => x.TaskId),
         ColumnHelper.CreateCamelColumn<SystemTask, string>(x => x.CreatedBy),
         ColumnHelper.CreateCamelColumn<SystemTask, int>(x => x.Progress),
         
@@ -78,12 +80,16 @@ public static class TaskHelper
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
     ];
-    public static SqlKata.Query AddTask(TaskType t ,string userName)
+    
+    public static SystemTask InitTask(TaskType t ,string userName)
+        =>new SystemTask(Type:t,TaskStatus:TaskStatus.Init,TaskId:  Ulid.NewUlid().ToString() ,CreatedBy: userName);
+    
+    public static SqlKata.Query AddTask(SystemTask task)
     {
-        var task = new SystemTask(Type:t,TaskStatus:TaskStatus.Init,CreatedBy: userName);
         var record = RecordExtensions.FormObject(task,
             whiteList:[
                 nameof(SystemTask.Type), 
+                nameof(SystemTask.TaskId), 
                 nameof(SystemTask.CreatedBy), 
                 nameof(SystemTask.Progress),
                 nameof(SystemTask.TaskStatus)
@@ -104,13 +110,20 @@ public static class TaskHelper
     {
         var record = RecordExtensions.FormObject(
             systemTask,
-            whiteList: [nameof(SystemTask.TaskStatus), nameof(SystemTask.Progress)]
+            whiteList: [nameof(SystemTask.TaskStatus), nameof(SystemTask.Progress),nameof(SystemTask.Error)]
         );
         var query = new SqlKata.Query(TableName)
+            .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .Where(nameof(SystemTask.Id).Camelize(), systemTask.Id).AsUpdate(record);
         return query;
     }
-   
+
+    public static SqlKata.Query ById(int id)
+        => new SqlKata.Query(TableName)
+            .Where(DefaultColumnNames.Deleted.Camelize(), false)
+            .Where(nameof(SystemTask.Id).Camelize(), id)
+            .Select(Entity.Attributes.Where(x => x.InList).Select(x => x.Field));
+
     public static SqlKata.Query List(int?offset = null, int? limit = null)
     {
         var q = new SqlKata.Query(TableName);

@@ -17,19 +17,20 @@ public static class TaskHandler
 
         builder.MapGet("/entity", (ITaskService s) => s.GetEntity());    
         
-        
         builder.MapPost("/export", (ITaskService s) => s.AddExportTask());
         
-        builder.MapGet("/export/download/{id:int}", (
+        builder.MapGet("/export/download/{id:int}", async (
             HttpContext context,
             ITaskService s, 
-            int id
-        ) => context.Response.Redirect(s.GetExportedFileDownloadUrl(id)));
+            int id,
+            CancellationToken ct
+        ) => context.Response.Redirect(await s.GetTaskFileUrl(id,ct)));
 
         builder.MapPost("/export/archive/{id:int}", (
             ITaskService s,
-            int id
-        ) => s.DeleteExportedFile(id));
+            int id,
+            CancellationToken ct
+        ) => s.DeleteTaskFile(id,ct));
 
         builder.MapPost($"/import/", (
             HttpContext context,

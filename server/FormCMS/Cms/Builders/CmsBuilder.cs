@@ -147,7 +147,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         void AddStorageServices()
         {
             services.AddSingleton(new LocalFileStoreOptions(
-                Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/files"),
+                Path.Join(Directory.GetCurrentDirectory(), "wwwroot/files"),
                 "/files",
                 systemSettings.ImageCompression.MaxWidth,
                 systemSettings.ImageCompression.Quality));

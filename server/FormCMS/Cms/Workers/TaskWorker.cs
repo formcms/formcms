@@ -2,6 +2,7 @@ using FormCMS.Core.Tasks;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
+using Microsoft.Data.Sqlite;
 using TaskStatus = FormCMS.Core.Tasks.TaskStatus;
 
 namespace FormCMS.Cms.Workers;
@@ -49,7 +50,7 @@ public abstract class TaskWorker(
                 ct
             );
             logger.LogInformation("Got {taskType} task, id = {id}", task.Type, task.Id);
-            await DoTask(scope, executor, task.Id,ct);
+            await DoTask(scope, executor, task,ct);
             await executor.ExecAndGetAffected(
                 TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.Finished, Progress = 100 }),
                 ct);
@@ -58,10 +59,10 @@ public abstract class TaskWorker(
         {
             logger.LogError("{error}", e);
             await executor.ExecAndGetAffected(
-                TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.Failed, Progress = 0 }), ct);
+                TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.Failed, Progress = 0, Error = e.ToString()}), ct);
         }
     }
 
     protected abstract TaskType GetTaskType();
-    protected abstract Task DoTask(IServiceScope serviceScope, KateQueryExecutor destinationExecutor, int taskId, CancellationToken ct);
+    protected abstract Task DoTask(IServiceScope serviceScope, KateQueryExecutor executor, SystemTask task, CancellationToken ct);
 }

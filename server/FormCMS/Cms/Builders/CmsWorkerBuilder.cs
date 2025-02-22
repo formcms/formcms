@@ -26,7 +26,7 @@ public static class CmsWorkerBuilder
              """);
 
         services.AddSingleton(new LocalFileStoreOptions(
-            Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/files"), "/files",0, 0));
+            Path.Join(Directory.GetCurrentDirectory(), "wwwroot/files"), "/files",0, 0));
         services.AddSingleton<IFileStore,LocalFileStore>();
         
         //scoped services

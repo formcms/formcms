@@ -22,9 +22,9 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
       );
    }
 
-   public async Task RemoveIdAndUpsert(string tableName, string primaryKey, string importKey, Record[] records)
+   public async Task RemoveIdAndUpsert(string tableName, string importKey, Record[] records)
    {
-      var ids = records.Select(x => x[primaryKey]).ToArray();
+      var ids = records.Select(x => x[importKey]).ToArray();
 
       var existingRecords = await Many(new Query(tableName).WhereIn(importKey, ids));
       var existingIds = existingRecords.Select(x => x.GetStrOrEmpty(importKey)).ToArray();
@@ -34,8 +34,7 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
 
       foreach (var record in records)
       {
-         var id = record.GetStrOrEmpty(primaryKey);
-         record.Remove(primaryKey);
+         var id = record.GetStrOrEmpty(importKey);
          
          if (existingIds.Contains(id))
          {
@@ -49,8 +48,7 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
 
       foreach (var record in recordsToUpdate)
       {
-         var k = record[primaryKey];
-         record.Remove(primaryKey);
+         var k = record[importKey];
          var q = new Query(tableName)
             .Where(importKey, k)
             .AsUpdate(record);

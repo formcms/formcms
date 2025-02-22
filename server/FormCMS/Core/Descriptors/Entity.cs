@@ -122,7 +122,7 @@ public static class EntityHelper
         return query;
     }
 
-    //why not use listQuery? allQuery without default limitation
+    //why not use listQuery? allQuery doesn't default limitation
     public static SqlKata.Query AllQueryForTree(this LoadedEntity e, IEnumerable<LoadedAttribute> attributes)
         => e.Basic().Select(attributes.Select(x => x.Field));
     
