@@ -36,7 +36,7 @@ public class ImportWorker(
         var sourceExecutor = new KateQueryExecutor(sourceDao, new KateQueryExecutorOption(300));
         var destMigrator = serviceScope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
 
-        var (allSchemas, allEntities, entityNameToEntity) = await LoadData();
+        var (allSchemas, allEntities, entityNameToEntity, allJunctions) = await LoadData();
         var attributeToLookupEntity = GetAttributeToLookup();
 
         var trans = await destDao.BeginTransaction();
@@ -59,21 +59,33 @@ public class ImportWorker(
 
         return;
 
-        async Task<(ImmutableArray<Schema>, ImmutableArray<Entity>, ImmutableDictionary<string, Entity>)> LoadData()
+        async Task<(ImmutableArray<Schema>, ImmutableArray<LoadedEntity>, ImmutableDictionary<string, LoadedEntity>,ImmutableArray<Junction>)> LoadData()
         {
-            var records =
-                await sourceExecutor.Many(SchemaHelper.ByNameAndType(null, null, PublicationStatus.Published), ct);
+            var records = await sourceExecutor.Many(SchemaHelper.ByNameAndType(null, null, PublicationStatus.Published), ct);
             var schemas = records.Select(x => SchemaHelper.RecordToSchema(x).Ok()).ToArray();
             var entities = schemas
                 .Where(x => x.Type == SchemaType.Entity)
-                .Select(x => x.Settings.Entity!).ToArray();
-            var dict = entities.ToDictionary(x => x.Name, x => x);
-            return ([..schemas], [..entities], dict.ToImmutableDictionary());
+                .Select(x => x.Settings.Entity!.ToLoadedEntity()).ToArray();
+            var dict = entities.ToDictionary(x => x.Name);
+            var juctionDict = new Dictionary<string, Junction>();
+            foreach (var entity in entities)
+            {
+                foreach (var attr in entity.Attributes)
+                {
+                    if (attr.DataType == DataType.Junction && attr.GetJunctionTarget(out var junctionTarget))
+                    {
+                        var junction = JunctionHelper.CreateJunction(entity, dict[junctionTarget], attr);
+                        juctionDict[junction.JunctionEntity.TableName] = junction;
+                    }
+                }
+            }
+
+            return ([..schemas], [..entities], dict.ToImmutableDictionary(), [..juctionDict.Values]);
         }
 
-        ImmutableDictionary<(string, string), Entity> GetAttributeToLookup()
+        ImmutableDictionary<(string, string), LoadedEntity> GetAttributeToLookup()
         {
-            var toLookupEntity = new Dictionary<(string, string), Entity>();
+            var toLookupEntity = new Dictionary<(string, string), LoadedEntity>();
 
             foreach (var entity in allEntities)
             {
@@ -90,6 +102,12 @@ public class ImportWorker(
                         toLookupEntity[(entity.Name, attribute.Field)] = entityNameToEntity[parent];
                     }
                 }
+            }
+            
+            foreach (var junction in allJunctions)
+            {
+                toLookupEntity[(junction.JunctionEntity.Name, junction.SourceAttribute.Field)] = junction.SourceEntity;
+                toLookupEntity[(junction.JunctionEntity.Name, junction.TargetAttribute.Field)] = junction.TargetEntity;
             }
 
             return toLookupEntity.ToImmutableDictionary();
@@ -136,7 +154,7 @@ public class ImportWorker(
                     var circleReference = value.Count == 1 && value.Contains(key);
                     if (value.Count != 0 && !circleReference) continue;
 
-                    await ImportEntity(entityNameToEntity[key].ToLoadedEntity(), circleReference);
+                    await ImportEntity(entityNameToEntity[key], circleReference);
                     keysToRemove.Add(key);
                 }
 
@@ -157,22 +175,9 @@ public class ImportWorker(
 
         async Task ImportJunctions()
         {
-            var dict = new Dictionary<string, LoadedEntity>();
-            foreach (var entity in allEntities)
+            foreach (var junction in allJunctions)
             {
-                foreach (var attr in entity.Attributes)
-                {
-                    if (attr.DataType == DataType.Junction && attr.GetJunctionTarget(out var junctionTarget))
-                    {
-                        var junction = JunctionHelper.CreateJunction(entity, entityNameToEntity[junctionTarget], attr);
-                        dict[junction.JunctionEntity.TableName] = junction.JunctionEntity;
-                    }
-                }
-            }
-
-            foreach (var (_, value) in dict)
-            {
-                await ImportEntity(value, false);
+                await ImportEntity(junction.JunctionEntity, false);
             }
         }
 

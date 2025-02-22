@@ -343,13 +343,13 @@ public sealed class EntitySchemaService(
         }).Map(c => attr with{Collection = c});
     }
 
-    private async Task<Dictionary<string, Entity>> GetLookupEntityMap(IEnumerable<Attribute> attributes)
+    private async Task<Dictionary<string, LoadedEntity>> GetLookupEntityMap(IEnumerable<Attribute> attributes)
     {
-        var ret = new Dictionary<string, Entity>();
+        var ret = new Dictionary<string, LoadedEntity>();
         foreach (var attribute in attributes.Where(x=>x.DataType == DataType.Lookup))
         {
             var lookup = await GetLookupEntity(attribute, null).Ok();
-            ret[lookup.Name] = lookup;
+            ret[lookup.Name] = lookup.ToLoadedEntity();
         }
         return ret;
     }

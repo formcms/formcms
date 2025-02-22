@@ -418,7 +418,7 @@ public static class AttributeHelper
             _ => rec[attribute.Field]
         };
 
-    public static Column[] ToColumns(this IEnumerable<Attribute> attributes, Dictionary<string, Entity> dictEntity)
+    public static Column[] ToColumns(this IEnumerable<Attribute> attributes, Dictionary<string, LoadedEntity> dictEntity)
     {
         var ret = new List<Column>();
         foreach (var attribute in attributes)

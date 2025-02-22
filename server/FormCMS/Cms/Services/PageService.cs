@@ -125,13 +125,13 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
     {
         foreach (var node in ctx.Nodes.Where(x => x.DataSource.Offset > 0 || x.DataSource.Limit > 0))
         {
-            if (data.ByJsonPath<Record[]>(node.DataSource.Field, out var value))
+            if (data.ByJsonPath<Record[]>(node.DataSource.Field, out var value) && value != null)
             {
                 var nodeWithArg = node with
                 {
                     DataSource = node.DataSource with { QueryString = node.MergeArgs(args).ToQueryString() }
                 };
-                TagPagination(data, value!, nodeWithArg.ToPagePart(ctx.Page.Name));
+                TagPagination(data, value, nodeWithArg.ToPagePart(ctx.Page.Name));
             }
         }
     }

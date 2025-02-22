@@ -38,13 +38,13 @@ public class ExportWorker(
         task.GetPaths().Clean();
         return;
         
-        async Task<(Record[], Entity[], Dictionary<string, Entity>)> LoadData()
+        async Task<(Record[], LoadedEntity[], Dictionary<string, LoadedEntity>)> LoadData()
         {
             var records =
                 await sourceExecutor.Many(SchemaHelper.ByNameAndType(null, null, PublicationStatus.Published),ct);
             var arr = records.Select(x => SchemaHelper.RecordToSchema(x).Ok())
                 .Where(x => x.Type == SchemaType.Entity)
-                .Select(x => x.Settings.Entity!).ToArray();
+                .Select(x => x.Settings.Entity!.ToLoadedEntity()).ToArray();
 
             var dict = arr.ToDictionary(x => x.Name, x => x);
             return (records, arr, dict);
@@ -54,7 +54,7 @@ public class ExportWorker(
         {
             foreach (var entity in entities)
             {
-                await ExportEntity(entity.ToLoadedEntity());
+                await ExportEntity(entity);
             }
         }
 
