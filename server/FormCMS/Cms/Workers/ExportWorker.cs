@@ -40,8 +40,8 @@ public class ExportWorker(
         
         async Task<(Record[], LoadedEntity[], Dictionary<string, LoadedEntity>)> LoadData()
         {
-            var records =
-                await sourceExecutor.Many(SchemaHelper.ByNameAndType(null, null, PublicationStatus.Published),ct);
+            //export latest schema
+            var records = await sourceExecutor.Many(SchemaHelper.ByNameAndType(null, null, null),ct);
             var arr = records.Select(x => SchemaHelper.RecordToSchema(x).Ok())
                 .Where(x => x.Type == SchemaType.Entity)
                 .Select(x => x.Settings.Entity!.ToLoadedEntity()).ToArray();

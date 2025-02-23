@@ -63,7 +63,7 @@ public static class SchemaHelper
     
     public static SqlKata.Query BySchemaId(string schemaId)
         => BaseQuery()
-            .OrderByDesc(nameof(Schema.Id))
+            .OrderByDesc(nameof(Schema.Id).Camelize())
             .Where(nameof(Schema.SchemaId).Camelize(), schemaId);
 
     public static SqlKata.Query ByStartsNameAndType(string name, SchemaType type,

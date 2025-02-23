@@ -61,7 +61,7 @@ public class ImportWorker(
 
         async Task<(ImmutableArray<Schema>, ImmutableArray<LoadedEntity>, ImmutableDictionary<string, LoadedEntity>,ImmutableArray<Junction>)> LoadData()
         {
-            var records = await sourceExecutor.Many(SchemaHelper.ByNameAndType(null, null, PublicationStatus.Published), ct);
+            var records = await sourceExecutor.Many(SchemaHelper.ByNameAndType(null, null, null), ct);
             var schemas = records.Select(x => SchemaHelper.RecordToSchema(x).Ok()).ToArray();
             var entities = schemas
                 .Where(x => x.Type == SchemaType.Entity)
