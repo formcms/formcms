@@ -36,6 +36,6 @@ internal static class SystemTaskExtensions
 
     public static void Zip(this TaskPaths paths)
     {
-        ZipFile.CreateFromDirectory(paths.Folder, paths.Zip); 
+        ZipFile.CreateFromDirectory(paths.Folder, paths.FullZip); 
     }
 }

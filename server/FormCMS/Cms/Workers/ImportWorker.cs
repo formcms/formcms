@@ -216,7 +216,7 @@ public class ImportWorker(
             var fields = cols.Select(x => x.Name).ToArray();
             await destMigrator.MigrateTable(entity.TableName, cols
                 .EnsureColumn(DefaultColumnNames.Deleted, ColumnType.Boolean)
-                .EnsureColumn(DefaultColumnNames.ImportKey, ColumnType.String)
+                .EnsureColumn(DefaultColumnNames.ImportKey, ColumnType.Int)
             );
 
             await (circleReference ? LoadByTreeLevelAndInsert() : LoadByPageAndInsert());
@@ -236,7 +236,7 @@ public class ImportWorker(
                 {
                     var ids = records.Select(x => x[entity.PrimaryKey]).ToArray();
                     await PreInsert(entity, records);
-                    await destinationExecutor.RemoveIdAndUpsert(entity.TableName,
+                    await destinationExecutor.Upsert(entity.TableName,
                         DefaultColumnNames.ImportKey.Camelize(),
                         records);
 
@@ -256,7 +256,7 @@ public class ImportWorker(
                 while (true)
                 {
                     await PreInsert(entity, records);
-                    await destinationExecutor.RemoveIdAndUpsert(entity.TableName,
+                    await destinationExecutor.Upsert(entity.TableName,
                         DefaultColumnNames.ImportKey.Camelize(),
                         records);
                     if (records.Length < limit) break;

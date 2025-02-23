@@ -81,20 +81,21 @@ public static class KateQueryExt
     private static SqlKata.Query ApplyJunctionJoin(SqlKata.Query query, Junction junction, 
         string prefix, string nextPrefix, PublicationStatus? publicationStatus)
     {
-        var crossAlias = $"{nextPrefix}_{junction.JunctionEntity.TableName}";
+        var crossAlias = $"{prefix}_{junction.JunctionEntity.TableName}";
+        var destAlias = prefix + nextPrefix;
         query
             .LeftJoin($"{junction.JunctionEntity.TableName} as {crossAlias}",
                 junction.SourceEntity.PrimaryKeyAttribute.AddTableModifier(prefix),
                 junction.SourceAttribute.AddTableModifier(crossAlias))
-            .LeftJoin($"{junction.TargetEntity.TableName} as {nextPrefix}",
+            .LeftJoin($"{junction.TargetEntity.TableName} as {destAlias}",
                 junction.TargetAttribute.AddTableModifier(crossAlias),
-                junction.TargetEntity.PrimaryKeyAttribute.AddTableModifier(nextPrefix))
+                junction.TargetEntity.PrimaryKeyAttribute.AddTableModifier(destAlias))
             .Where(junction.JunctionEntity.DeletedAttribute.AddTableModifier(crossAlias), false)
-            .Where(junction.TargetEntity.DeletedAttribute.AddTableModifier(nextPrefix), false);
+            .Where(junction.TargetEntity.DeletedAttribute.AddTableModifier(destAlias), false);
         if (publicationStatus.HasValue)
         {
             query = query
-                .Where(junction.TargetEntity.PublicationStatusAttribute.AddTableModifier(nextPrefix), publicationStatus.Value.Camelize());
+                .Where(junction.TargetEntity.PublicationStatusAttribute.AddTableModifier(destAlias), publicationStatus.Value.Camelize());
         }
         return query;
     }

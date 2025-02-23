@@ -22,11 +22,13 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
       );
    }
 
-   public async Task RemoveIdAndUpsert(string tableName, string importKey, Record[] records)
+   public async Task Upsert(string tableName, string importKey, Record[] records)
    {
       var ids = records.Select(x => x[importKey]).ToArray();
 
       var existingRecords = await Many(new Query(tableName).WhereIn(importKey, ids));
+      
+      //convert to string, avoid source records and dest records has different data type, e.g. int vs long
       var existingIds = existingRecords.Select(x => x.GetStrOrEmpty(importKey)).ToArray();
       
       var recordsToUpdate = new List<Record>();
