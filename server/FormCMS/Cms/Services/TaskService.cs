@@ -14,7 +14,8 @@ public class TaskService(
     IProfileService profileService,
     KateQueryExecutor executor,
     DatabaseMigrator migrator,
-    IFileStore store
+    IFileStore store,
+    HttpClient httpClient
 ) : ITaskService
 {
     public async Task DeleteTaskFile(int id,CancellationToken ct)
@@ -46,6 +47,19 @@ public class TaskService(
 
         await using var stream = new FileStream(task.GetPaths().FullZip, FileMode.Create);
         await file.CopyToAsync(stream);
+        return id;
+    }
+    
+    public async Task<int> ImportDemoData()
+    {
+        const string url = "https://github.com/FormCMS/FormCMS/raw/refs/heads/doc/etc/demo-data.zip";
+        var task = TaskHelper.InitTask(TaskType.Import, profileService.GetInfo()?.Name ?? "");
+        var query = TaskHelper.AddTask(task);
+        var id = await executor.ExeAndGetId(query);
+
+        await using var stream = new FileStream(task.GetPaths().FullZip, FileMode.Create);
+        byte[] fileBytes = await httpClient.GetByteArrayAsync(url);
+        stream.Write(fileBytes, 0, fileBytes.Length);
         return id;
     }
 

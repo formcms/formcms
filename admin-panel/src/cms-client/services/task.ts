@@ -18,6 +18,9 @@ export  function addExportTask() {
     return catchResponse(()=>axios.post(fullCmsApiUrl(`/tasks/export`)));
 }
 
+export  function importDemoData() {
+    return catchResponse(()=>axios.post(fullCmsApiUrl(`/tasks/import/demo`)));
+}
 export  function archiveExportTask(id:number) {
     return catchResponse(()=>axios.post(fullCmsApiUrl(`/tasks/export/archive/${id}`),{}));
 }
@@ -29,3 +32,4 @@ export  function getExportTaskDownloadFileLink(id:number) {
 export  function getAddImportTaskUploadUrl() {
     return fullCmsApiUrl(`/tasks/import`);
 }
+

@@ -13,14 +13,14 @@ public static class HostApplicationExt
     ) => DocDbLinkerBuilder.AddNatsMongoLink(collection, apiLinksArray);
     
     public static IServiceCollection AddPostgresCmsWorker(
-        this IServiceCollection services, string connectionString, TaskTimingSeconds? taskTimingSeconds
+        this IServiceCollection services, string connectionString, TaskTimingSeconds? taskTimingSeconds = null
     ) => CmsWorkerBuilder.AddWorker(services, DatabaseProvider.Postgres, connectionString, taskTimingSeconds);
 
     public static IServiceCollection AddSqliteCmsWorker(
-        this IServiceCollection services, string connectionString, TaskTimingSeconds? taskTimingSeconds
+        this IServiceCollection services, string connectionString, TaskTimingSeconds? taskTimingSeconds = null
     ) => CmsWorkerBuilder.AddWorker(services, DatabaseProvider.Sqlite,connectionString,taskTimingSeconds);
 
     public static IServiceCollection AddSqlServerCmsWorker(
-        this IServiceCollection services, string connectionString, TaskTimingSeconds? taskTimingSeconds
+        this IServiceCollection services, string connectionString, TaskTimingSeconds? taskTimingSeconds = null
     ) => CmsWorkerBuilder.AddWorker(services, DatabaseProvider.SqlServer,connectionString,taskTimingSeconds);
 }

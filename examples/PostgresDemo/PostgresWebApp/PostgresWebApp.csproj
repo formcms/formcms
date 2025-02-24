@@ -7,10 +7,71 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="FormCMS" Version="0.4.1.1" />
+        <PackageReference Include="FormCMS" Version="0.4.1.5" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0"/>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\07dd8898.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\10973c50.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\191901cd.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\23bc40ce.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\26c072ab.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\32e6f675.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\4ac23cda.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\516d1a7a.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\540da177.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\594cd67f.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\5e3a51a9.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\64ae4a71.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\69a50050.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\718217ef.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\71b11c2d.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\7aabe47d.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\8c64aa79.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\8eb664be.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\95574a0a.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\9964db62.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\99aa0dc9.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\abdbf302.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\b002e51c.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\b2eecb29.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\b44dcb4c.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\bba4926f.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\bf0d22c1.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\c318fbf1.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\c3996a51.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\c6065846.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\ca1ef9bb.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\cb026a67.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\db679505.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-10\ff70c04c.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-11\1526663a.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-11\3599327b.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-11\42b80584.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2024-11\f5955a33.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\233f7606.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\273b6006.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\41eb60dc.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\468c3e87.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\4bc9ce33.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\618c3591.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\679def11.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\72f1cb5d.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\840c8719.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\903a163c.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\9898a987.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\a9ee7e49.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\b84556f1.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\bdc8a1c2.txt" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\bf87a05f.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\d9730109.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\e41efe2c.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\e459a3bc.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-01\f344c696.jpg" />
+      <_ContentIncludedByDefault Remove="wwwroot\files\2025-02\3687285c.jpg" />
     </ItemGroup>
 
 </Project>

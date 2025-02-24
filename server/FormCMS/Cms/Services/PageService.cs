@@ -45,7 +45,7 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
 
         logger.LogError("Fail to load page [{page}], err: {err}", name, msg);
         return $"""
-                <a href="/admin">Log in to Admin</a><br/>
+                <a href="/admin">Go to Admin Panel</a><br/>
                 <a href="/schema">Go to Schema Builder</a>
                 """;
     }

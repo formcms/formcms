@@ -86,9 +86,6 @@ By transforming GraphQL into optimized REST-like queries, FormCMS ensures a secu
 ---
 ## Online Course System Demo
 
-### Source Code
-[Example Project on GitHub](https://github.com/formcms/formcms/tree/main/examples/WebApiExamples)
-
 ### Live Demo
 - **Public Site:** [fluent-cms-admin.azurewebsites.net](https://fluent-cms-admin.azurewebsites.net/)
 - **Admin Panel:** [fluent-cms-admin.azurewebsites.net/admin](https://fluent-cms-admin.azurewebsites.net/admin)
@@ -98,6 +95,19 @@ By transforming GraphQL into optimized REST-like queries, FormCMS ensures a secu
 ### Additional Resources
 - **GraphQL Playground:** [fluent-cms-admin.azurewebsites.net/graph](https://fluent-cms-admin.azurewebsites.net/graph)
 - **Documentation:** [fluent-cms-admin.azurewebsites.net/doc/index.html](https://fluent-cms-admin.azurewebsites.net/doc/index.html)  
+
+### Examples Source Code
+example code can be found at /formCMS/examples
+
+- for Sqlite: run the SqliteDemo project
+- for SqlServer: run the SqlServerDemo/SqlServerAppHost project
+- for PostgreSQL : run the PostgresDemo/PostgresAppHost project
+
+Defult login:  
+  - Eamil : `samdmin@cms.com`  
+  - Password: `Admin1!`  
+
+After login to `Admin Panel`, you can go to `Tasks`, click `Import Demo Data`, to import demo data.
 
 ---
 ## Online Course System Backend
@@ -461,6 +471,34 @@ These users can:
 
 By maintaining a detailed audit trail, the System enhances security and operational efficiency, ensuring that all modifications are tracked and can be reviewed when necessary.
 </details>  
+
+
+
+---
+
+## Export and Import Data
+<details>
+<summary>
+This feature allows you to export or import data
+</summary>
+
+This feature is helpful for the following scenarios:  
+1. Migrating data from one server to another, or even between different types of databases.   
+2. Backing up your data.   
+3. Cleaning data by exporting only the latest schema, excluding audit log data.   
+
+### Exporting Data
+1. Log in to the 'Admin Panel' and navigate to `Tasks`.
+2. Click `Add Export Task`.
+3. Wait a few minutes, then refresh the page. Once the task is complete, you can download the exported zip file.
+
+### Importing Data
+1. Log in to the 'Admin Panel' and go to `Tasks`.
+2. Click `Add Import Task`, then select the zip file you wish to import.
+3. Wait a few minutes, then refresh the page to check if the task was successful.
+
+</details>  
+
 
 ---
 ## **GraphQL Query**
@@ -1493,8 +1531,10 @@ The WebApp will now query MongoDB directly for the specified collections.
 
 <details>
 <summary>
-Follow these steps to integrate  FormCMS into your project using a NuGet package.
+Follow these steps to integrate FormCMS into your project using a NuGet package.
 </summary>
+
+You can reference the code from https://github.com/FormCMS/FormCMS/tree/main/examples
 
 1. **Create a New ASP.NET Core Web Application**.
 
@@ -1510,7 +1550,6 @@ Follow these steps to integrate  FormCMS into your project using a NuGet package
    builder.AddSqliteCms("Data Source=cms.db");
    var app = builder.Build();
    ```
-
    Currently,  FormCMS supports `AddSqliteCms`, `AddSqlServerCms`, and `AddPostgresCms`.
 
 4. **Initialize FormCMS**:
@@ -1518,23 +1557,7 @@ Follow these steps to integrate  FormCMS into your project using a NuGet package
    ```
    await app.UseCmsAsync();
    ```  
-   This will bootstrap the router and initialize the  FormCMS schema table.
-
-5. **Optional: Set Up User Authorization**:
-   If you wish to manage user authorization, you can add the following code. If you're handling authorization yourself or don’t need it, you can skip this step.  
-   ```
-   builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
-   builder.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>();
-   ```
-
-   If you'd like to create a default user, add this after `app.Build()`:
-   ```
-   InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]));
-   ```
-
-Once your web server is running, you can access the **Admin Panel** at `/admin` and the **Schema Builder** at `/schema`.
-
-You can find an example project [here](https://github.com/formcms/formcms/tree/main/examples/WebApiExamples).
+   This will bootstrap the router and initialize the FormCMS schema table.
 
 </details>
 

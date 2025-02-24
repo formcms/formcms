@@ -14,7 +14,6 @@ public record ImportWorkerOptions(int DelaySeconds);
 
 public class ImportWorker(
     ImportWorkerOptions options,
-    IRelationDbDao destDao,
     IServiceScopeFactory scopeFactory,
     ILogger<ImportWorker> logger,
     ILoggerFactory logFactory,

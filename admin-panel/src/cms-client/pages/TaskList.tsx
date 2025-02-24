@@ -4,7 +4,8 @@ import { encodeDataTableState } from "../../components/dataTable/dataTableStateU
 import { EditDataTable } from "../../components/dataTable/EditDataTable";
 import { useDataTableStateManager } from "../../components/dataTable/useDataTableStateManager";
 import { FetchingStatus } from "../../components/FetchingStatus";
-import {addExportTask, archiveExportTask, getAddImportTaskUploadUrl, getExportTaskDownloadFileLink, useTasks } from "../services/task";
+import {addExportTask, archiveExportTask, getAddImportTaskUploadUrl, getExportTaskDownloadFileLink,
+    importDemoData, useTasks } from "../services/task";
 import { XEntity } from "../types/xEntity";
 import { useCheckError } from "../../components/useCheckError";
 import { Column } from "primereact/column";
@@ -27,6 +28,11 @@ export function TaskList({schema}:{baseRouter:string, schema:XEntity}){
     async function handleAddExportTask(){
         const {error} = await addExportTask ();
         await handleErrorOrSuccess(error, 'Export task added!', mutate); 
+    }
+
+    async function handleImportDemoData(){
+        const {error} = await  importDemoData();
+        await handleErrorOrSuccess(error, 'Task added!', mutate);
     }
     
     function onAddImportTaskUpload(){
@@ -61,7 +67,8 @@ export function TaskList({schema}:{baseRouter:string, schema:XEntity}){
         <FetchingStatus isLoading={isLoading} error={error}/>
         <h2>{schema?.displayName} list</h2>
         <Button onClick={handleAddExportTask}>Add Export Task</Button>{' '}
-        <Button onClick={handleAddImportTask}>Add Import Task</Button>
+        <Button onClick={handleAddImportTask}>Add Import Task</Button>{' '}
+        <Button onClick={handleImportDemoData}>Import Demo Data</Button>
         <CheckErrorStatus/>
         <div className="card">
             {data && columns &&<EditDataTable columns={tableColumns} data={data} stateManager={stateManager}/>}

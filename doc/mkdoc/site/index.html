@@ -98,6 +98,11 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-bs-level="2"><a href="#export-and-import-data" class="nav-link">Export and Import Data</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#graphql-query" class="nav-link">GraphQL Query</a>
               <ul class="nav flex-column">
               </ul>
@@ -234,8 +239,6 @@ Have suggestions? Connect with us on Reddit! https://www.reddit.com/r/FormCMS/</
 <p>By transforming GraphQL into optimized REST-like queries, FormCMS ensures a secure, efficient, and scalable API experience.</p>
 <hr />
 <h2 id="online-course-system-demo">Online Course System Demo</h2>
-<h3 id="source-code">Source Code</h3>
-<p><a href="https://github.com/formcms/formcms/tree/main/examples/WebApiExamples">Example Project on GitHub</a></p>
 <h3 id="live-demo">Live Demo</h3>
 <ul>
 <li><strong>Public Site:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/">fluent-cms-admin.azurewebsites.net</a></li>
@@ -248,6 +251,17 @@ Have suggestions? Connect with us on Reddit! https://www.reddit.com/r/FormCMS/</
 <li><strong>GraphQL Playground:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/graph">fluent-cms-admin.azurewebsites.net/graph</a></li>
 <li><strong>Documentation:</strong> <a href="https://fluent-cms-admin.azurewebsites.net/doc/index.html">fluent-cms-admin.azurewebsites.net/doc/index.html</a>  </li>
 </ul>
+<h3 id="examples-source-code">Examples Source Code</h3>
+<p>example code can be found at /formCMS/examples</p>
+<ul>
+<li>for Sqlite: run the SqliteDemo project</li>
+<li>for SqlServer: run the SqlServerDemo/SqlServerAppHost project</li>
+<li>for PostgreSQL : run the PostgresDemo/PostgresAppHost project</li>
+</ul>
+<p>Defult login:<br />
+  - Eamil : <code>samdmin@cms.com</code><br />
+  - Password: <code>Admin1!</code>  </p>
+<p>After login to <code>Admin Panel</code>, you can go to <code>Tasks</code>, click <code>Import Demo Data</code>, to import demo data.</p>
 <hr />
 <h2 id="online-course-system-backend">Online Course System Backend</h2>
 <p>This section provides detailed guidance on developing a foundational online course system, encompassing key entities: <code>teacher</code>, <code>course</code>, <code>lesson</code>,<code>skill</code>, and <code>material</code>.</p>
@@ -872,6 +886,25 @@ If you want to preview how the content looks on a page before publishing, you ca
 <li>Supports compliance with regulatory requirements.</li>
 </ul>
 <p>By maintaining a detailed audit trail, the System enhances security and operational efficiency, ensuring that all modifications are tracked and can be reviewed when necessary.</p>
+<hr />
+<h2 id="export-and-import-data">Export and Import Data</h2>
+<p>This feature allows you to export or import data</p>
+<p>This feature is helpful for the following scenarios:<br />
+1. Migrating data from one server to another, or even between different types of databases. <br />
+2. Backing up your data. <br />
+3. Cleaning data by exporting only the latest schema, excluding audit log data.   </p>
+<h3 id="exporting-data">Exporting Data</h3>
+<ol>
+<li>Log in to the 'Admin Panel' and navigate to <code>Tasks</code>.</li>
+<li>Click <code>Add Export Task</code>.</li>
+<li>Wait a few minutes, then refresh the page. Once the task is complete, you can download the exported zip file.</li>
+</ol>
+<h3 id="importing-data">Importing Data</h3>
+<ol>
+<li>Log in to the 'Admin Panel' and go to <code>Tasks</code>.</li>
+<li>Click <code>Add Import Task</code>, then select the zip file you wish to import.</li>
+<li>Wait a few minutes, then refresh the page to check if the task was successful.</li>
+</ol>
 <hr />
 <h2 id="graphql-query"><strong>GraphQL Query</strong></h2>
 <p>FormCMS simplifies frontend development by offering robust GraphQL support.</p>
@@ -1743,7 +1776,8 @@ builder.Services.AddMongoDbQuery(queryLinksArray);
 <p>The WebApp will now query MongoDB directly for the specified collections.</p>
 <hr />
 <h2 id="integrating-it-into-your-project">Integrating it into Your Project</h2>
-<p>Follow these steps to integrate  FormCMS into your project using a NuGet package.</p>
+<p>Follow these steps to integrate FormCMS into your project using a NuGet package.</p>
+<p>You can reference the code from https://github.com/FormCMS/FormCMS/tree/main/examples</p>
 <ol>
 <li>
 <p><strong>Create a New ASP.NET Core Web Application</strong>.</p>
@@ -1757,28 +1791,16 @@ builder.Services.AddMongoDbQuery(queryLinksArray);
 <p><strong>Modify <code>Program.cs</code></strong>:
    Add the following line before <code>builder.Build()</code> to configure the database connection (use your actual connection string):<br />
 <code>builder.AddSqliteCms("Data Source=cms.db");
-   var app = builder.Build();</code></p>
+   var app = builder.Build();</code>
+   Currently,  FormCMS supports <code>AddSqliteCms</code>, <code>AddSqlServerCms</code>, and <code>AddPostgresCms</code>.</p>
 </li>
-</ol>
-<p>Currently,  FormCMS supports <code>AddSqliteCms</code>, <code>AddSqlServerCms</code>, and <code>AddPostgresCms</code>.</p>
-<ol>
 <li>
 <p><strong>Initialize FormCMS</strong>:
    Add this line after <code>builder.Build()</code> to initialize the CMS:<br />
 <code>await app.UseCmsAsync();</code><br />
-   This will bootstrap the router and initialize the  FormCMS schema table.</p>
-</li>
-<li>
-<p><strong>Optional: Set Up User Authorization</strong>:
-   If you wish to manage user authorization, you can add the following code. If you're handling authorization yourself or don’t need it, you can skip this step.<br />
-<code>builder.Services.AddDbContext&lt;AppDbContext&gt;(options =&gt; options.UseSqlite(connectionString));
-   builder.AddCmsAuth&lt;IdentityUser, IdentityRole, AppDbContext&gt;();</code></p>
+   This will bootstrap the router and initialize the FormCMS schema table.</p>
 </li>
 </ol>
-<p>If you'd like to create a default user, add this after <code>app.Build()</code>:
-   <code>InvalidParamExceptionFactory.CheckResult(await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]));</code></p>
-<p>Once your web server is running, you can access the <strong>Admin Panel</strong> at <code>/admin</code> and the <strong>Schema Builder</strong> at <code>/schema</code>.</p>
-<p>You can find an example project <a href="https://github.com/formcms/formcms/tree/main/examples/WebApiExamples">here</a>.</p>
 <hr />
 <h2 id="adding-business-logic">Adding Business Logic</h2>
 <p>Learn how to customize your application by adding validation logic, hook functions, and producing events to Kafka.</p>
@@ -1995,5 +2017,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-02-15 22:26:27.728485+00:00
+Build Date UTC : 2025-02-24 21:48:44.916547+00:00
 -->

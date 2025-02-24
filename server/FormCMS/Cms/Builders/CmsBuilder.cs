@@ -87,7 +87,8 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             services.AddScoped<IEntityService, EntityService>();
             services.AddScoped<IQueryService, QueryService>();
             services.AddScoped<IPageService, PageService>();
-
+            
+            services.AddHttpClient();  //needed by task service
             services.AddScoped<ITaskService, TaskService>();
         }
 

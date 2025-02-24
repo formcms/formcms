@@ -36,5 +36,10 @@ public static class TaskHandler
             HttpContext context,
             ITaskService s
         ) =>s.AddImportTask(context.Request.Form.Files[0]));
+
+        builder.MapPost($"/import/demo", (
+            HttpContext context,
+            ITaskService s
+        ) => s.ImportDemoData());
     }
 }
