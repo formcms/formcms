@@ -10,12 +10,14 @@ using Query = SqlKata.Query;
 
 namespace FormCMS.Cms.Workers;
 
+public record ExportWorkerOptions(int DelaySeconds);
 public class ExportWorker(
     IServiceScopeFactory scopeFactory,
     ILoggerFactory logFactory,
     ILogger<ExportWorker> logger,
-    IFileStore fileStore
-) : TaskWorker(serviceScopeFactory:scopeFactory,logger:logger)
+    IFileStore fileStore,
+    ExportWorkerOptions options
+) : TaskWorker(serviceScopeFactory:scopeFactory,logger:logger,delaySeconds:options.DelaySeconds)
 {
     protected override TaskType GetTaskType()
     {

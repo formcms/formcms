@@ -10,14 +10,16 @@ using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 
 namespace FormCMS.Cms.Workers;
+public record ImportWorkerOptions(int DelaySeconds);
 
 public class ImportWorker(
+    ImportWorkerOptions options,
     IRelationDbDao destDao,
     IServiceScopeFactory scopeFactory,
     ILogger<ImportWorker> logger,
     ILoggerFactory logFactory,
     IFileStore fileStore
-) : TaskWorker(serviceScopeFactory: scopeFactory, logger: logger)
+) : TaskWorker(serviceScopeFactory: scopeFactory, logger: logger,delaySeconds: options.DelaySeconds)
 {
 
     protected override TaskType GetTaskType()

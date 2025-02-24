@@ -205,7 +205,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             apiGroup.MapGroup("/tasks").MapTasksHandler();
 
             app.MapGroup(options.RouteOptions.PageBaseUrl)
-                .MapPages("files","favicon.ico", options.RouteOptions.ApiBaseUrl)
+                .MapPages("doc","files","favicon.ico", options.RouteOptions.ApiBaseUrl)
                 .CacheOutput(options.PageCachePolicy);
             if (options.MapCmsHomePage) app.MapHomePage().CacheOutput(options.PageCachePolicy);
         }

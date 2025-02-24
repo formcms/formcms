@@ -4,24 +4,25 @@ using FormCMS.Infrastructure.RelationDbDao;
 
 namespace FormCMS.Cms.Builders;
 
+public record TaskTimingSeconds(int QueryTimeout,int ExportDelay,int ImportDelay, int PublishDelay);
 public static class CmsWorkerBuilder
 {
     public static IServiceCollection AddWorker(
         IServiceCollection services,
         DatabaseProvider databaseProvider,
         string connectionString,
-        int delaySeconds,
-        int queryTimeoutSeconds
+        TaskTimingSeconds? taskTimingSeconds
+        
         )
     {
+        taskTimingSeconds ??= new TaskTimingSeconds(60, 30, 30, 30);
         var parts = connectionString.Split(";").Where(x => !x.StartsWith("Password"));
         Console.WriteLine(
             $"""
              *********************************************************
              Adding CMS Workers
              Database : {databaseProvider} - {string.Join(";", parts)}
-             Delay Seconds: {delaySeconds}
-             Query Timeout: {queryTimeoutSeconds}
+             TaskTimingConfig: {taskTimingSeconds}
              *********************************************************
              """);
 
@@ -31,12 +32,17 @@ public static class CmsWorkerBuilder
         
         //scoped services
         services.AddDao(databaseProvider, connectionString );
-        services.AddSingleton(new KateQueryExecutorOption(queryTimeoutSeconds));
+        services.AddSingleton(new KateQueryExecutorOption(taskTimingSeconds.QueryTimeout));
         services.AddScoped<KateQueryExecutor>();
         services.AddScoped<DatabaseMigrator>();
         
+        services.AddSingleton(new ExportWorkerOptions(taskTimingSeconds.ExportDelay));
         services.AddHostedService<ExportWorker>();
+        
+        services.AddSingleton(new ImportWorkerOptions(taskTimingSeconds.ImportDelay));
         services.AddHostedService<ImportWorker>();
+        
+        services.AddSingleton(new DataPublishingWorkerOptions(taskTimingSeconds.PublishDelay));
         services.AddHostedService<DataPublishingWorker>();
         
         return services;

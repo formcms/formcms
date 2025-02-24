@@ -4,8 +4,9 @@ using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.ResultExt;
 
 namespace FormCMS.Cms.Workers;
-
+public record DataPublishingWorkerOptions(int DelaySeconds);
 public sealed class DataPublishingWorker(
+    DataPublishingWorkerOptions options,
     IServiceScopeFactory serviceScopeFactory,
     ILogger<DataPublishingWorker> logger
 ) : BackgroundService
@@ -54,7 +55,7 @@ public sealed class DataPublishingWorker(
             {
                 logger.LogError("Fail to publish, error = {error}", e.Message);
             }
-            await Task.Delay(1000 * 30, ct); // ✅ Prevents blocking
+            await Task.Delay(options.DelaySeconds * 30, ct); // ✅ Prevents blocking
         }
     }
 }

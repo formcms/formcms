@@ -1,3 +1,5 @@
+using FormCMS.Cms.Builders;
+
 namespace FormCMS.Course;
 
 public static class Worker
@@ -15,11 +17,17 @@ public static class Worker
         var conn = builder.Configuration.GetConnectionString(provider) ??
                    throw new Exception($"Connection string {provider} not found");
 
+        var taskTimingSeconds = new TaskTimingSeconds(
+            builder.Configuration.GetValue<int>("QueryTimeout"),
+            builder.Configuration.GetValue<int>("ExportDelay"),
+            builder.Configuration.GetValue<int>("ImportDelay"),
+            builder.Configuration.GetValue<int>("PublishDelay")
+            );
         _ = provider switch
         {
-            Constants.Sqlite => builder.Services.AddSqliteCmsWorker(conn,120),
-            Constants.Postgres => builder.Services.AddPostgresCmsWorker(conn),
-            Constants.SqlServer => builder.Services.AddSqlServerCmsWorker(conn),
+            Constants.Sqlite => builder.Services.AddSqliteCmsWorker(conn,taskTimingSeconds),
+            Constants.Postgres => builder.Services.AddPostgresCmsWorker(conn,taskTimingSeconds),
+            Constants.SqlServer => builder.Services.AddSqlServerCmsWorker(conn,taskTimingSeconds),
             _ => throw new Exception("Database provider not found")
         };
         

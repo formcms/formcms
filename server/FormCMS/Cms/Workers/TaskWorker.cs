@@ -9,7 +9,8 @@ namespace FormCMS.Cms.Workers;
 
 public abstract class TaskWorker(
     IServiceScopeFactory serviceScopeFactory,
-    ILogger logger
+    ILogger logger,
+    int delaySeconds
 ) : BackgroundService
 {
     protected override async Task ExecuteAsync(CancellationToken ct)
@@ -25,7 +26,7 @@ public abstract class TaskWorker(
                 //connect db error, try it later
                 logger.LogError("{error}", ex);
             }
-            await Task.Delay(1000 * 30, ct); // ✅ Prevents blocking
+            await Task.Delay(1000 * delaySeconds, ct); // ✅ Prevents blocking
         }
     }
 
