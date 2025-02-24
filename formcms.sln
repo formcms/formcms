@@ -6,8 +6,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCms.Course.Tests", "ser
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS.App", "server\FormCMS.App\FormCMS.App.csproj", "{026D0D09-ED38-4244-9417-FF74562C0A9B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebApiExamples", "examples\WebApiExamples\WebApiExamples.csproj", "{23F6E543-242A-4738-A450-C1798E295FF4}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS.Course.ServiceDefaults", "server\FormCMS.Course.ServiceDefaults\FormCMS.Course.ServiceDefaults.csproj", "{2D4A4323-F357-4ADD-A5A8-46563CE77B8C}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS.Course.AppHost", "server\FormCMS.Course.AppHost\FormCMS.Course.AppHost.csproj", "{665FF906-EDA4-43A9-91E5-E9C43C36441B}"
@@ -21,6 +19,16 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS.App.AppHost", "server\FormCMS.App.AppHost\FormCMS.App.AppHost.csproj", "{D19697EB-85DB-47CE-AEB2-0A5B1D3A6D1D}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS.App.Tests", "server\FormCMS.App.Tests\FormCMS.App.Tests.csproj", "{9BD38EDA-5C4E-4C6D-96CA-C8955DB35C57}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqliteDemo", "examples\SqliteDemo\SqliteDemo.csproj", "{1A868F91-5908-4693-9A1A-5C37ECD6D834}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlServerCmsApp", "examples\SqlServerDemo\SqlServerCmsApp\SqlServerCmsApp.csproj", "{FEDF81EF-08D1-44C4-9CF5-43D6C0FD8C05}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlServerAppHost", "examples\SqlServerDemo\SqlServerAppHost\SqlServerAppHost.csproj", "{7865E1D7-574E-44EE-99EF-1A6EE7BC9BDF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostgresAppHost", "examples\PostgresDemo\PostgresAppHost\PostgresAppHost.csproj", "{C38FCD24-4C43-4B2C-AF73-7F2FC11DB336}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostgresWebApp", "examples\PostgresDemo\PostgresWebApp\PostgresWebApp.csproj", "{C8BB873C-C0D9-467C-92A2-5353EED97BF5}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -48,10 +56,6 @@ Global
 		{026D0D09-ED38-4244-9417-FF74562C0A9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{026D0D09-ED38-4244-9417-FF74562C0A9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{026D0D09-ED38-4244-9417-FF74562C0A9B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{23F6E543-242A-4738-A450-C1798E295FF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{23F6E543-242A-4738-A450-C1798E295FF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{23F6E543-242A-4738-A450-C1798E295FF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{23F6E543-242A-4738-A450-C1798E295FF4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2046DC4C-DDD1-4DB9-882D-89390D85A669}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2046DC4C-DDD1-4DB9-882D-89390D85A669}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2046DC4C-DDD1-4DB9-882D-89390D85A669}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -84,6 +88,26 @@ Global
 		{9BD38EDA-5C4E-4C6D-96CA-C8955DB35C57}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{9BD38EDA-5C4E-4C6D-96CA-C8955DB35C57}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{9BD38EDA-5C4E-4C6D-96CA-C8955DB35C57}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1A868F91-5908-4693-9A1A-5C37ECD6D834}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1A868F91-5908-4693-9A1A-5C37ECD6D834}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1A868F91-5908-4693-9A1A-5C37ECD6D834}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1A868F91-5908-4693-9A1A-5C37ECD6D834}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FEDF81EF-08D1-44C4-9CF5-43D6C0FD8C05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEDF81EF-08D1-44C4-9CF5-43D6C0FD8C05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEDF81EF-08D1-44C4-9CF5-43D6C0FD8C05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEDF81EF-08D1-44C4-9CF5-43D6C0FD8C05}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7865E1D7-574E-44EE-99EF-1A6EE7BC9BDF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7865E1D7-574E-44EE-99EF-1A6EE7BC9BDF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7865E1D7-574E-44EE-99EF-1A6EE7BC9BDF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7865E1D7-574E-44EE-99EF-1A6EE7BC9BDF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C38FCD24-4C43-4B2C-AF73-7F2FC11DB336}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C38FCD24-4C43-4B2C-AF73-7F2FC11DB336}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C38FCD24-4C43-4B2C-AF73-7F2FC11DB336}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C38FCD24-4C43-4B2C-AF73-7F2FC11DB336}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C8BB873C-C0D9-467C-92A2-5353EED97BF5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C8BB873C-C0D9-467C-92A2-5353EED97BF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C8BB873C-C0D9-467C-92A2-5353EED97BF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C8BB873C-C0D9-467C-92A2-5353EED97BF5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 
 EndGlobal

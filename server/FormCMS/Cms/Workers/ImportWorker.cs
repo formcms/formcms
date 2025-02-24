@@ -39,18 +39,16 @@ public class ImportWorker(
         var (allSchemas, allEntities, entityNameToEntity, allJunctions) = await LoadData();
         var attributeToLookupEntity = GetAttributeToLookup();
 
-        var trans = await destDao.BeginTransaction();
+        //data is too big to put into a transaction 
         try
         {
             await ImportSchemas();
             await ImportEntities();
             await ImportJunctions();
-            trans.Commit();
         }
         catch (Exception ex)
         {
             logger.LogError("{ex}", ex);
-            trans.Rollback();
         }
         finally
         {
@@ -67,7 +65,7 @@ public class ImportWorker(
                 .Where(x => x.Type == SchemaType.Entity)
                 .Select(x => x.Settings.Entity!.ToLoadedEntity()).ToArray();
             var dict = entities.ToDictionary(x => x.Name);
-            var juctionDict = new Dictionary<string, Junction>();
+            var junctionDict = new Dictionary<string, Junction>();
             foreach (var entity in entities)
             {
                 foreach (var attr in entity.Attributes)
@@ -75,12 +73,12 @@ public class ImportWorker(
                     if (attr.DataType == DataType.Junction && attr.GetJunctionTarget(out var junctionTarget))
                     {
                         var junction = JunctionHelper.CreateJunction(entity, dict[junctionTarget], attr);
-                        juctionDict[junction.JunctionEntity.TableName] = junction;
+                        junctionDict[junction.JunctionEntity.TableName] = junction;
                     }
                 }
             }
 
-            return ([..schemas], [..entities], dict.ToImmutableDictionary(), [..juctionDict.Values]);
+            return ([..schemas], [..entities], dict.ToImmutableDictionary(), [..junctionDict.Values]);
         }
 
         ImmutableDictionary<(string, string), LoadedEntity> GetAttributeToLookup()

@@ -36,7 +36,7 @@
         
         <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
-        <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="9.0.0-preview.9.24556.5" />
+        <PackageReference Include="Microsoft.Extensions.Caching.Hybrid" Version="9.2.0-preview.1.25105.6" />
         <PackageReference Include="MongoDB.Driver" Version="2.30.0" />
         <PackageReference Include="NJsonSchema.CodeGeneration.TypeScript" Version="11.1.0" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
@@ -60,7 +60,7 @@
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net9.0</TargetFramework>
         <PackageId>FormCMS</PackageId>
-        <Version>0.4.0</Version>
+        <Version>0.4.1.1</Version>
         <Authors>Jason C</Authors>
         <Company>FormCMS</Company>
         <Description>A headless CMS with GraphQL API and drag-and-drop page designer.</Description>
