@@ -125,8 +125,8 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     {
         return t switch
         {
-            ColumnType.Id => "SERIAL PRIMARY KEY",
-            ColumnType.Int => "INTEGER",
+            ColumnType.Id => "BIGSERIAL PRIMARY KEY",
+            ColumnType.Int => "BIGINT",
             ColumnType.Boolean => "BOOLEAN DEFAULT FALSE",
             
             ColumnType.Text => "TEXT",

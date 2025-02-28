@@ -12,8 +12,7 @@ public static class CmsWorkerBuilder
         DatabaseProvider databaseProvider,
         string connectionString,
         TaskTimingSeconds? taskTimingSeconds
-        
-        )
+       ) 
     {
         taskTimingSeconds ??= new TaskTimingSeconds(60, 30, 30, 30);
         var parts = connectionString.Split(";").Where(x => !x.StartsWith("Password"));

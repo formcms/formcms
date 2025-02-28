@@ -114,8 +114,8 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
     private static string ColumnTypeToString(ColumnType dataType)
         => dataType switch
         {
-            ColumnType.Id => "INT IDENTITY(1,1) PRIMARY KEY",
-            ColumnType.Int => "INT",
+            ColumnType.Id => "BIGINT IDENTITY(1,1) PRIMARY KEY",
+            ColumnType.Int => "BIGINT",
             ColumnType.Boolean => "BIT DEFAULT 0",
 
             ColumnType.Text => "TEXT",

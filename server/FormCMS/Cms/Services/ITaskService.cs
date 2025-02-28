@@ -4,13 +4,13 @@ namespace FormCMS.Cms.Services;
 
 public interface ITaskService
 {
-    Task<int> AddImportTask(IFormFile file);
-    Task<int> ImportDemoData();
-    Task<int> AddExportTask();
+    Task<long> AddImportTask(IFormFile file);
+    Task<long> ImportDemoData();
+    Task<long> AddExportTask();
     Task<ListResponse> List(StrArgs args, int? offset, int? limit, CancellationToken ct);
     
-    Task<string> GetTaskFileUrl(int id, CancellationToken ct);
-    Task DeleteTaskFile(int id, CancellationToken ct);
+    Task<string> GetTaskFileUrl(long id, CancellationToken ct);
+    Task DeleteTaskFile(long id, CancellationToken ct);
     XEntity GetEntity();
     Task EnsureTable();
     

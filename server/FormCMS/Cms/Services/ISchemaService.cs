@@ -12,8 +12,8 @@ public interface ISchemaService
     Task<Schema[]> All(SchemaType? type, IEnumerable<string>? names, PublicationStatus? publicationStatus, CancellationToken ct = default);
     Task<Schema[]> AllWithAction(SchemaType? type, PublicationStatus? publicationStatus, CancellationToken ct = default);
 
-    Task<Schema?> ByIdWithAction(int id, CancellationToken ct = default);
-    Task<Schema?> ById(int id, CancellationToken ct = default);
+    Task<Schema?> ByIdWithAction(long id, CancellationToken ct = default);
+    Task<Schema?> ById(long id, CancellationToken ct = default);
 
     Task<Schema[]> History(string schemaId, CancellationToken ct = default);
     
@@ -28,7 +28,7 @@ public interface ISchemaService
     Task<Schema> Save(Schema schema,CancellationToken ct  = default);
     
     Task<Schema> AddOrUpdateByNameWithAction(Schema schema, CancellationToken ct = default);
-    Task Delete(int id, CancellationToken ct = default);
+    Task Delete(long id, CancellationToken ct = default);
     
     Task EnsureTopMenuBar(CancellationToken ct = default);
     Task EnsureSchemaTable();

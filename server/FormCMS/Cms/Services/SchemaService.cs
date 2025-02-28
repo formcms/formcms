@@ -29,7 +29,7 @@ public sealed class SchemaService(
         return items.Select(x => SchemaHelper.RecordToSchema(x).Ok()).ToArray();
     }
 
-    public async Task<Schema?> ByIdWithAction(int id, CancellationToken ct = default)
+    public async Task<Schema?> ByIdWithAction(long id, CancellationToken ct = default)
     {
         var schema = await ById(id, ct);
         if (schema is not null)
@@ -46,7 +46,7 @@ public sealed class SchemaService(
         return items.Select(x => SchemaHelper.RecordToSchema(x).Ok()).ToArray();
     }
 
-    public async Task<Schema?> ById(int id, CancellationToken ct = default)
+    public async Task<Schema?> ById(long id, CancellationToken ct = default)
     {
         var query = SchemaHelper.ById(id);
         var item = await queryExecutor.Single(query, ct);
@@ -123,7 +123,7 @@ public sealed class SchemaService(
         return await Save(res.RefSchema, ct);
     }
 
-    public async Task Delete(int id, CancellationToken ct)
+    public async Task Delete(long id, CancellationToken ct)
     {
         var schema = await ById(id,ct)?? throw new ResultException($"Schema [{id}] not found");
         await hook.SchemaPreDel.Trigger(provider, new SchemaPreDelArgs(schema));

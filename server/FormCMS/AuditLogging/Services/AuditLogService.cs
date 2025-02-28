@@ -15,7 +15,7 @@ public class AuditLogService(
     ):IAuditLogService
 {
 
-    public async Task<AuditLog> Single(int id, CancellationToken ct = default)
+    public async Task<AuditLog> Single(long id, CancellationToken ct = default)
     {
         EnsureHasPermission();
         var query = AuditLogHelper.ById(id);

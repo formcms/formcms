@@ -160,7 +160,7 @@ public sealed class EntitySchemaService(
         result = dataType switch
         {
             DataType.Text or DataType.String => result,
-            DataType.Int => !options.ParseInt ? result : int.TryParse(v, out var i) ? new ValidValue(I: i) : null,
+            DataType.Int => !options.ParseInt ? result : long.TryParse(v, out var l) ? new ValidValue(L: l) : null,
             DataType.Datetime => !options.ParseDate ? result :
                 DateTime.TryParse(v, out var d) ? new ValidValue(D: d) : null,
             _ => null
@@ -416,7 +416,7 @@ public sealed class EntitySchemaService(
 
 
     private Schema ToSchema(
-        Entity entity, string schemaId="", int id = 0
+        Entity entity, string schemaId="", long id = 0
     ) => new(
         Id: id,
         SchemaId:schemaId,

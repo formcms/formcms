@@ -9,5 +9,5 @@ public interface IAuditLogService
     Task AddLog(ActionType actionType, string entityName, string id, string label, Record record);
     Task EnsureAuditLogTable();
     XEntity GetAuditLogEntity();
-    Task<AuditLog> Single(int id, CancellationToken ct = default);
+    Task<AuditLog> Single(long id, CancellationToken ct = default);
 }

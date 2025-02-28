@@ -15,11 +15,11 @@ public class SchemaApiClient (HttpClient client)
 
     public Task<Result> Save(Schema schema) => client.PostResult("/".ToSchemaApi(), schema);
 
-    public Task<Result<JsonElement>> One(int id) => client.GetResult<JsonElement>($"/{id}".ToSchemaApi());
+    public Task<Result<JsonElement>> One(long id) => client.GetResult<JsonElement>($"/{id}".ToSchemaApi());
 
     public Task<Result<Menu>> GetTopMenuBar() => client.GetResult<Menu>("/menu/top-menu-bar".ToSchemaApi());
 
-    public Task<Result> Delete(int id) => client.DeleteResult($"/{id}".ToSchemaApi());
+    public Task<Result> Delete(long id) => client.DeleteResult($"/{id}".ToSchemaApi());
     
     public Task<Result<Schema>> SaveEntityDefine(Schema schema)
         =>  client.PostResult<Schema>("/entity/define".ToSchemaApi(), schema);

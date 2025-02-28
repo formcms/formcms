@@ -55,7 +55,7 @@ public sealed class DataPublishingWorker(
             {
                 logger.LogError("Fail to publish, error = {error}", e.Message);
             }
-            await Task.Delay(options.DelaySeconds * 30, ct); // ✅ Prevents blocking
+            await Task.Delay(options.DelaySeconds * 1000, ct); // ✅ Prevents blocking
         }
     }
 }

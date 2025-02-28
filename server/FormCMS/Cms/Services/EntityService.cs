@@ -140,7 +140,7 @@ public sealed class EntityService(
         return new LookupListResponse(true, filteredItems);
     }
 
-    public async Task<int> JunctionDelete(string name, string id, string attr, JsonElement[] elements,
+    public async Task<long> JunctionDelete(string name, string id, string attr, JsonElement[] elements,
         CancellationToken ct)
     {
         var ctx = await GetJunctionCtx(name, id, attr, ct);
@@ -155,7 +155,7 @@ public sealed class EntityService(
         return ret;
     }
 
-    public async Task<int> JunctionSave(string name, string id, string attr, JsonElement[] elements,
+    public async Task<long> JunctionSave(string name, string id, string attr, JsonElement[] elements,
         CancellationToken ct)
     {
         var ctx = await GetJunctionCtx(name, id, attr, ct);

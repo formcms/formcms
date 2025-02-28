@@ -71,10 +71,10 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
       return ExecAndGetAffected(query);
    }
    
-   public Task<int> ExeAndGetId(
+   public Task<long> ExeAndGetId(
       Query query,  CancellationToken ct = default
    ) => provider.ExecuteKateQuery((db,tx)
-      => db.ExecuteScalarAsync<int>(
+      => db.ExecuteScalarAsync<long>(
          query: query,
          transaction:tx,
          timeout: option.TimeoutSeconds,

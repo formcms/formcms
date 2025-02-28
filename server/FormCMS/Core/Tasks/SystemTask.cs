@@ -29,7 +29,7 @@ public record SystemTask(
     TaskType Type = TaskType.Default, 
     string CreatedBy = "",
     
-    int Id = 0,
+    long Id = 0,
     string TaskId = "",
     int Progress = 0,
     string Error = "",
@@ -55,7 +55,7 @@ public static class TaskHelper
         defaultPageSize: DefaultPageSize,
         attributes:
         [
-            XAttrExtensions.CreateAttr<SystemTask, int>(x => x.Id, isDefault: true),
+            XAttrExtensions.CreateAttr<SystemTask, long>(x => x.Id, isDefault: true),
             XAttrExtensions.CreateAttr<SystemTask, object>(x => x.Type),
             XAttrExtensions.CreateAttr<SystemTask, object>(x => x.TaskStatus),
             XAttrExtensions.CreateAttr<SystemTask, string>(x => x.TaskId),
@@ -118,7 +118,7 @@ public static class TaskHelper
         return query;
     }
 
-    public static SqlKata.Query ById(int id)
+    public static SqlKata.Query ById(long id)
         => new SqlKata.Query(TableName)
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .Where(nameof(SystemTask.Id).Camelize(), id)

@@ -25,8 +25,8 @@ public interface IEntityService
     
     Task<object[]> JunctionTargetIds(string name, string sid, string attr, CancellationToken ct);
     Task<ListResponse> JunctionList(string name, string id, string attr, bool exclude, Pagination pagination,StrArgs args,  CancellationToken ct= default);
-    Task<int> JunctionSave(string name, string id, string attr, JsonElement[] elements, CancellationToken ct = default);
-    Task<int> JunctionDelete(string name, string id, string attr, JsonElement[] elements, CancellationToken ct= default);
+    Task<long> JunctionSave(string name, string id, string attr, JsonElement[] elements, CancellationToken ct = default);
+    Task<long> JunctionDelete(string name, string id, string attr, JsonElement[] elements, CancellationToken ct= default);
 
     Task<LookupListResponse> LookupList(string name, string startsVal, CancellationToken ct = default);
 }

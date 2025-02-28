@@ -20,14 +20,15 @@ public static class JasonElementExtensions
    {
       return jsonElement.EnumerateArray().Select(item => item.ToPrimitive()).ToArray();
    }
-   public static object ToPrimitive(this JsonElement element)
+
+   private static object ToPrimitive(this JsonElement element)
    {
          return (element.ValueKind switch
          {
             JsonValueKind.Object => element.ToDictionary(),
             JsonValueKind.Array => element.ToArray(),
             JsonValueKind.String => element.GetString(),
-            JsonValueKind.Number => element.TryGetInt32(out var i) ? (object)i : element.GetDecimal(),
+            JsonValueKind.Number => element.TryGetInt64(out var i) ? (object)i : element.GetDecimal(),
             JsonValueKind.True => true,
             JsonValueKind.False => false,
             JsonValueKind.Null => null,

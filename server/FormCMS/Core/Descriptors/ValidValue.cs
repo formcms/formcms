@@ -5,9 +5,9 @@ namespace FormCMS.Core.Descriptors;
 //the reason not ues object directly
 //1. ensure value cannot be one of the primitive types in construction
 //2. after JSON serializing/deserializing, an object was changed to JsonElement
-public readonly record struct ValidValue(string? S = null, int? I = null, long? L = null, DateTime? D = null)
+public readonly record struct ValidValue(string? S = null, long? L = null, DateTime? D = null)
 {
-    public object? ObjectValue => I as object ?? D as object ?? L as object ?? S;
+    public object? ObjectValue => D as object ?? L as object ?? S;
 
     //null object
     public static ValidValue NullValue = new();
@@ -31,7 +31,6 @@ public static class ValidValueHelper
     public static ValidValue ToValidValue(this object o) => o switch
     {
         string s => new ValidValue(s),
-        int i => new ValidValue(I: i),
         long l => new ValidValue(L: l),
         DateTime d => new ValidValue(D: d),
         _ => new ValidValue(o.ToString() ?? "")

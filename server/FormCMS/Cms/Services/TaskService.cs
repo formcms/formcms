@@ -18,7 +18,7 @@ public class TaskService(
     HttpClient httpClient
 ) : ITaskService
 {
-    public async Task DeleteTaskFile(int id,CancellationToken ct)
+    public async Task DeleteTaskFile(long id,CancellationToken ct)
     {
         var record =await executor.Single(TaskHelper.ById(id),ct)?? throw new ResultException("Task not found");
         var task = record.ToObject<SystemTask>().Ok();
@@ -28,7 +28,7 @@ public class TaskService(
         await executor.ExecAndGetAffected(query,ct);
     }
     
-    public async Task<string> GetTaskFileUrl(int id, CancellationToken ct)
+    public async Task<string> GetTaskFileUrl(long id, CancellationToken ct)
     {
         var record =await executor.Single(TaskHelper.ById(id),ct)?? throw new ResultException("Task not found");
         var task = record.ToObject<SystemTask>().Ok();
@@ -39,7 +39,7 @@ public class TaskService(
     public Task EnsureTable()
         =>migrator.MigrateTable(TaskHelper.TableName,TaskHelper.Columns);
 
-    public async Task<int> AddImportTask(IFormFile file)
+    public async Task<long> AddImportTask(IFormFile file)
     {
         var task = TaskHelper.InitTask(TaskType.Import, profileService.GetInfo()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
@@ -50,7 +50,7 @@ public class TaskService(
         return id;
     }
     
-    public async Task<int> ImportDemoData()
+    public async Task<long> ImportDemoData()
     {
         const string url = "https://github.com/FormCMS/FormCMS/raw/refs/heads/doc/etc/demo-data.zip";
         var task = TaskHelper.InitTask(TaskType.Import, profileService.GetInfo()?.Name ?? "");
@@ -63,7 +63,7 @@ public class TaskService(
         return id;
     }
 
-    public Task<int> AddExportTask()
+    public Task<long> AddExportTask()
     {
         var task = TaskHelper.InitTask(TaskType.Export, profileService.GetInfo()?.Name ?? "");
         var query = TaskHelper.AddTask(task);

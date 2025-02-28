@@ -28,7 +28,7 @@ public record Schema(
     SchemaType Type ,
     Settings Settings,
     
-    int Id = 0,
+    long Id = 0,
     string SchemaId ="",
     bool IsLatest = false,
     PublicationStatus PublicationStatus = PublicationStatus.Draft,
@@ -58,7 +58,7 @@ public static class SchemaHelper
 
     ];  
     
-    public static SqlKata.Query ById(int id)
+    public static SqlKata.Query ById(long id)
         => BaseQuery().Where(nameof(Schema.Id).Camelize(), id);
     
     public static SqlKata.Query BySchemaId(string schemaId)

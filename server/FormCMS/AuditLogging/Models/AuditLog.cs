@@ -14,7 +14,7 @@ public enum ActionType
 }
 
 public record AuditLog(
-    int Id,
+    long Id,
     string UserId,
     string UserName,
     ActionType Action,
@@ -38,7 +38,7 @@ public static class AuditLogHelper
         defaultPageSize: AuditLogConstants.DefaultPageSize,
         attributes:
         [
-            XAttrExtensions.CreateAttr<AuditLog, int>(x => x.Id, isDefault: true),
+            XAttrExtensions.CreateAttr<AuditLog, long>(x => x.Id, isDefault: true),
             XAttrExtensions.CreateAttr<AuditLog, string>(x => x.RecordId),
             XAttrExtensions.CreateAttr<AuditLog, string>(x => x.RecordLabel),
             XAttrExtensions.CreateAttr<AuditLog, object>(x => x.Action),
@@ -77,7 +77,7 @@ public static class AuditLogHelper
         return q;
     }
 
-    public static Query ById(int id)
+    public static Query ById(long id)
     {
         var fields = Entity.Attributes.Select(x=>x.Field);
         return new Query(AuditLogConstants.TableName)

@@ -37,7 +37,7 @@ public static class XAttrExtensions
         displayType ??= typeof(TValue) switch
         {
             { } t when t == typeof(string) => DisplayType.Text,
-            { } t when t == typeof(int) => DisplayType.Number,
+            { } t when t == typeof(int) || t == typeof(long) => DisplayType.Number,
             { } t when t == typeof(DateTime) => DisplayType.Datetime,
             _ => DisplayType.Text
         };

@@ -396,7 +396,6 @@ public static class AttributeHelper
             {
                 JsonValueKind.String when resolver.ResolveVal(attr, ele.Value.GetString()!, out var caseVal) => caseVal!
                     .Value.ObjectValue!,
-                JsonValueKind.Number when ele.Value.TryGetInt32(out var intValue) => intValue,
                 JsonValueKind.Number when ele.Value.TryGetInt64(out var longValue) => longValue,
                 JsonValueKind.Number when ele.Value.TryGetDouble(out var doubleValue) => doubleValue,
                 JsonValueKind.Number => ele.Value.GetDecimal(),
