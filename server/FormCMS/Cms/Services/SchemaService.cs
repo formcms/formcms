@@ -20,7 +20,7 @@ public sealed class SchemaService(
     }
 
     public Task Publish(Schema schema, CancellationToken ct = default)
-        =>queryExecutor.ExecBatch(schema.Publish(), false, ct);
+        =>queryExecutor.ExecBatch(schema.Publish().Select(x=>(x,false)), ct);
 
     public async Task<Schema[]> All(SchemaType? type, IEnumerable<string>? names, PublicationStatus? status, CancellationToken ct = default)
     {
@@ -84,8 +84,8 @@ public sealed class SchemaService(
         schema = schema.Init();
         var resetQuery = schema.ResetLatest();
         var save = schema.Save();
-        var id = await queryExecutor.ExecBatch([resetQuery, save], true, ct);
-        schema = schema with { Id = id};
+        var ids = await queryExecutor.ExecBatch([(resetQuery,false), (save,true)], ct);
+        schema = schema with { Id = ids.Last()};
         return schema;
     }
     
@@ -127,7 +127,7 @@ public sealed class SchemaService(
     {
         var schema = await ById(id,ct)?? throw new ResultException($"Schema [{id}] not found");
         await hook.SchemaPreDel.Trigger(provider, new SchemaPreDelArgs(schema));
-        await queryExecutor.ExecAndGetAffected(SchemaHelper.SoftDelete(schema.SchemaId), ct);
+        await queryExecutor.Exec(SchemaHelper.SoftDelete(schema.SchemaId),false, ct);
     }
 
     public async Task EnsureTopMenuBar(CancellationToken ct)

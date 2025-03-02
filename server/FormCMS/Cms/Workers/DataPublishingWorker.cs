@@ -23,7 +23,7 @@ public sealed class DataPublishingWorker(
             {
                 var query = SchemaHelper.ByNameAndType(SchemaType.Entity, null, PublicationStatus.Published);
                 var items = await queryExecutor.Many(query, ct);
-                var count = 0;
+                long count = 0;
                 foreach (var item in items)
                 {
                     if (!SchemaHelper.RecordToSchema(item).Try(out var entity, out var error))
@@ -37,8 +37,8 @@ public sealed class DataPublishingWorker(
                     {
                         try
                         {
-                            count += await queryExecutor.ExecAndGetAffected(
-                                entity.Settings.Entity!.PublishAllScheduled(), ct);
+                            count += await queryExecutor.Exec(
+                                entity.Settings.Entity!.PublishAllScheduled(), false,ct);
                         }
                         catch (Exception e)
                         {

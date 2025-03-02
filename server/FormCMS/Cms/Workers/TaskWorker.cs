@@ -46,21 +46,21 @@ public abstract class TaskWorker(
         var task = record.ToObject<SystemTask>().Ok();
         try
         {
-            await executor.ExecAndGetAffected(
-                TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.InProgress, Progress = 50 }),
+            await executor.Exec(
+                TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.InProgress, Progress = 50 }),false,
                 ct
             );
             logger.LogInformation("Got {taskType} task, id = {id}", task.Type, task.Id);
             await DoTask(scope, executor, task,ct);
-            await executor.ExecAndGetAffected(
-                TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.Finished, Progress = 100 }),
+            await executor.Exec(
+                TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.Finished, Progress = 100 }),false,
                 ct);
         }
         catch (Exception e)
         {
             logger.LogError("{error}", e);
-            await executor.ExecAndGetAffected(
-                TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.Failed, Progress = 0, Error = e.ToString()}), ct);
+            await executor.Exec(
+                TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.Failed, Progress = 0, Error = e.ToString()}), false,ct);
         }
     }
 

@@ -4,7 +4,6 @@ import { useEditTable } from "./useEditTable";
 import {addCollectionItem, useCollectionData} from "../services/entity";
 import { SaveDialog } from "../../components/dialogs/SaveDialog";
 import { ItemForm } from "./ItemForm";
-import { fileUploadURL } from "../configs";
 import {Message} from "primereact/message";
 import {Toast} from "primereact/toast";
 import {useRef, useState} from "react";
@@ -13,14 +12,14 @@ import { XAttr, XEntity } from "../types/xEntity";
 import { useDataTableStateManager } from "../../components/dataTable/useDataTableStateManager";
 import { encodeDataTableState } from "../../components/dataTable/dataTableStateUtil";
 import { createColumn } from "../../components/dataTable/columns/createColumn";
+import { getFileUploadURL } from "../services/asset";
 
 
-export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
+export function EditTable({column, data, schema, getFullAssetsURL}: {
     schema: XEntity,
     column: XAttr,
     data: any,
     getFullAssetsURL : (arg:string) =>string
-    baseRouter:string
 }) {
     const {visible, showDialog, hideDialog} = useDialogState()
     const { id, listColumns, inputColumns} = useEditTable(data, schema, column)
@@ -44,7 +43,7 @@ export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
         }
     }
     
-    return <div className={'card col-12'}>
+    return  <div className={'card col-12'}>
         <Toast ref={toastRef} position="top-right" />
         <label id={column.field} className="font-bold">
             {column.header}
@@ -58,10 +57,10 @@ export function EditTable({baseRouter,column, data, schema, getFullAssetsURL}: {
             handleHide={hideDialog}
             header={'Add ' + column.header}>
             <>
-                <ItemForm
+                 <ItemForm
                     id={undefined}
                     formId={formId}
-                    uploadUrl={fileUploadURL()}
+                    uploadUrl={getFileUploadURL()}
                     columns={inputColumns}
                     data={{}}
                     getFullAssetsURL={getFullAssetsURL}

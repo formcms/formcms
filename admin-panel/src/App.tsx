@@ -5,7 +5,7 @@ import 'primeflex/primeflex.css'; // flex
 import './App.css';
 import {TopMenuBar} from "./layout/TopMenuBar";
 import React  from "react";
-import {setCmsApiBaseUrl, setCmsAssetBaseUrl} from "./cms-client/configs";
+import {setCmsApiBaseUrl} from "./cms-client/configs";
 import {configs} from "./config";
 import {EntityRouter} from "./cms-client/EntityRouter";
 import {Route, Routes} from "react-router-dom";
@@ -20,8 +20,6 @@ import { setAuthApiBaseUrl } from './auth/configs';
 setCmsApiBaseUrl(configs.apiURL)
 setAuditLogBaseUrl(configs.apiURL)
 setAuthApiBaseUrl(configs.apiURL)
-
-setCmsAssetBaseUrl(configs.assetURL);
 
 axios.defaults.withCredentials = true
 function App() {

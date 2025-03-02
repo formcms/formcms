@@ -138,7 +138,7 @@ public class ImportWorker(
 
                 var resetQuery = schema.ResetLatest();
                 var save = schema.Save();
-                await destinationExecutor.ExecBatch([resetQuery, save], true, ct);
+                await destinationExecutor.ExecBatch([(resetQuery,false), (save,false)], ct);
             }
         }
         
@@ -277,8 +277,9 @@ public class ImportWorker(
             {
                 foreach (var attr in entity.Attributes)
                 {
-                    if (attr.DisplayType is not (DisplayType.File or DisplayType.Image or DisplayType.Gallery))
+                    if (!attr.IsAsset())
                         continue;
+                    
                     foreach (var record in records)
                     {
                         if (!record.TryGetValue(attr.Field, out var value) || value is not string s) continue;

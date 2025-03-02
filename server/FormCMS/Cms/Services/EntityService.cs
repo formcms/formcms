@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Descriptors;
+using FormCMS.Core.Files;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.jsonElementExt;
@@ -8,12 +9,14 @@ using FormCMS.Utils.DataModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
+using Humanizer;
 using DataType = FormCMS.Core.Descriptors.DataType;
 using Task = System.Threading.Tasks.Task;
 
 namespace FormCMS.Cms.Services;
 
 public sealed class EntityService(
+    IRelationDbDao relationDbDao,
     IServiceProvider provider,
     KateQueryExecutor queryExecutor,
     IEntitySchemaService entitySchemaSvc,
@@ -112,7 +115,7 @@ public sealed class EntityService(
             throw new ResultException($"Failed to get Record Id, cannot find [{name}]");
         }
         var query = entity.SavePublicationStatus(id, ele.ToDictionary() ).Ok();
-        await queryExecutor.ExecAndGetAffected(query, ct);
+        await queryExecutor.Exec(query,false, ct);
     }
 
     public async Task<LookupListResponse> LookupList(string name, string startsVal, CancellationToken ct = default)
@@ -151,7 +154,7 @@ public sealed class EntityService(
             new JunctionPreDelArgs(ctx.Entity, id, ctx.Attribute, items));
 
         var query = ctx.Junction.Delete(ctx.Id, res.RefItems);
-        var ret = await queryExecutor.ExecAndGetAffected(query, ct);
+        var ret = await queryExecutor.Exec(query,false, ct);
         return ret;
     }
 
@@ -166,7 +169,7 @@ public sealed class EntityService(
             new JunctionPreAddArgs(ctx.Entity, id, ctx.Attribute, items));
         var query = ctx.Junction.Insert(ctx.Id, res.RefItems);
 
-        var ret = await queryExecutor.ExeAndGetId(query, ct);
+        var ret = await queryExecutor.Exec(query,true, ct);
         return ret;
     }
 
@@ -306,7 +309,7 @@ public sealed class EntityService(
         }
     }
 
-    private async Task<Record> UpdateWithAction(RecordContext ctx, CancellationToken token)
+    private async Task<Record> UpdateWithAction(RecordContext ctx, CancellationToken ct)
     {
         var (entity, record) = ctx;
 
@@ -314,21 +317,56 @@ public sealed class EntityService(
         ResultExt.Ensure(entity.ValidateTitleAttributes(record));
 
         var res = await hookRegistry.EntityPreUpdate.Trigger(provider,
-            new EntityPreUpdateArgs(entity,record));
+            new EntityPreUpdateArgs(entity, record));
 
         record = res.RefRecord;
-        var query = entity.UpdateQuery(record).Ok();
         
-        var affected = await queryExecutor.ExecAndGetAffected(query, token);
-        if (affected == 0)
+        //to prevent SqlServer 'Cannot update identity column' error 
+        if (!record.Remove(entity.PrimaryKey, out var value) || value is not long id )
         {
-            throw new ResultException("Error: Concurrent Update Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
+            throw new ResultException($"Failed to get id value with primary key [${entity.PrimaryKey}]");
         }
-        await hookRegistry.EntityPostUpdate.Trigger(provider, new EntityPostUpdateArgs(entity,record));
-        return record;
+
+        var assetRecords = await queryExecutor.Many(Assets.GetAssetIDsByPaths(entity.GetAssets(record)), ct);
+        var existingLinks = await queryExecutor.Many(AssetLinks.GetAssetIdsByEntityAndRecordId(entity.Name, id),ct);
+
+
+        using var trans = await relationDbDao.BeginTransaction();
+        try
+        {
+            var query = entity.UpdateQuery(id, record).Ok();
+
+            var affected = await queryExecutor.Exec(query, false, ct);
+            if (affected == 0)
+            {
+                throw new ResultException(
+                    "Error: Concurrent Update Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
+            }
+
+            var (toAdd, toDel) = AssetLinks.Diff(
+                assetRecords.Select(x => (long)x[nameof(Asset.Id).Camelize()]),
+                existingLinks.Select(x => (long)x[nameof(AssetLink.AssetId).Camelize()])
+            );
+
+            if (toAdd.Length > 0)
+                await queryExecutor.BatchInsert(AssetLinks.TableName,  AssetLinks.ToInsertRecords(entity.Name, id, toAdd));
+
+            if (toDel.Length > 0)
+                await queryExecutor.Exec(AssetLinks.DeleteByEntityAndRecordId(entity.Name, id, toDel), false, ct);
+
+            trans.Commit();
+
+            await hookRegistry.EntityPostUpdate.Trigger(provider, new EntityPostUpdateArgs(entity, record));
+            return record;
+        }
+        catch (Exception e)
+        {
+            trans.Rollback();
+            throw new ResultException(e.Message);
+        }
     }
 
-    private async Task<Record> InsertWithAction(RecordContext ctx, CancellationToken token)
+    private async Task<Record> InsertWithAction(RecordContext ctx, CancellationToken ct)
     {
         var (entity, record) = ctx;
         ResultExt.Ensure(entity.ValidateLocalAttributes(record));
@@ -338,16 +376,35 @@ public sealed class EntityService(
             new EntityPreAddArgs(entity, record));
         record = res.RefRecord;
         
-        var query = entity.Insert(record);
-        var id = await queryExecutor.ExeAndGetId(query, token);
-        record[entity.PrimaryKey] = id;
+        var trans = await relationDbDao.BeginTransaction();
+        try
+        {
 
-        await hookRegistry.EntityPostAdd.Trigger(provider,
-            new EntityPostAddArgs(entity,record));
-        return record;
+            var id = await queryExecutor.Exec(entity.Insert(record), true, ct);
+
+            var assetPaths = entity.GetAssets(record);
+            if (assetPaths.Length > 0)
+            {
+                var assetRecords = await queryExecutor.Many( Assets.GetAssetIDsByPaths(assetPaths), ct);
+                var assetIds = assetRecords.Select(x => (long)x[nameof(Asset.Id).Camelize()]);
+                var assetLinkRecords = AssetLinks.ToInsertRecords( entity.Name, id,assetIds);
+                await queryExecutor.BatchInsert(AssetLinks.TableName, assetLinkRecords);
+            }
+
+            record[entity.PrimaryKey] = id;
+            trans.Commit();
+
+            await hookRegistry.EntityPostAdd.Trigger(provider, new EntityPostAddArgs(entity, record));
+            return record;
+        }
+        catch (Exception ex)
+        {
+            trans.Rollback();
+            throw new ResultException(ex.Message);
+        }
     }
 
-    private async Task<Record> Delete(RecordContext ctx, CancellationToken token)
+    private async Task<Record> Delete(RecordContext ctx, CancellationToken ct)
     {
         var (entity, record) = ctx;
 
@@ -356,15 +413,39 @@ public sealed class EntityService(
         record = res.RefRecord;
 
 
-        var query = entity.DeleteQuery(record).Ok();
-        var affected = await queryExecutor.ExecAndGetAffected(query, token);
-        if (affected == 0)
+        if (!record.TryGetValue(entity.PrimaryKey, out var val) || val is not long id)
         {
-            throw new ResultException("Error: Concurrent Write Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
-        } 
+            throw new ResultException($"Failed to get id value with primary key [${entity.PrimaryKey}]");
+        }
+
+        var existingAssetRecords = await queryExecutor.Many(AssetLinks.GetAssetIdsByEntityAndRecordId(entity.Name, id), ct);
         
-        await hookRegistry.EntityPostDel.Trigger(provider, new EntityPostDelArgs(entity ,record));
-        return record;
+        var transaction = await relationDbDao.BeginTransaction();
+        try
+        {
+            var affected = await queryExecutor.Exec( entity.DeleteQuery(id, record).Ok(), false, ct);
+            if (affected == 0)
+            {
+                throw new ResultException(
+                    "Error: Concurrent Write Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
+            }
+
+            if (existingAssetRecords.Length > 0)
+            {
+                var toDel = existingAssetRecords.Select(x => (long)x[nameof(AssetLink.AssetId).Camelize()]).ToArray();
+                await queryExecutor.Exec(AssetLinks.DeleteByEntityAndRecordId(entity.Name, id, toDel), false, ct);
+            }
+            transaction.Commit();
+
+            await hookRegistry.EntityPostDel.Trigger(provider, new EntityPostDelArgs(entity, record));
+            return record;
+
+        }
+        catch (Exception e)
+        {
+            transaction.Rollback();
+            throw e is ResultException? e: new ResultException(e.Message);
+        }
     }
 
     record IdContext(LoadedEntity Entity, ValidValue Id);

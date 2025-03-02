@@ -54,7 +54,7 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
          var q = new Query(tableName)
             .Where(importKey, k)
             .AsUpdate(record);
-         await ExecAndGetAffected(q);
+         await Exec(q,false);
       }
 
       if (recordsToInsert.Count != 0)
@@ -67,44 +67,40 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
    {
       var cols = records[0].Select(x => x.Key);
       var values = records.Select(item => item.Select(kv => kv.Value));
-      var query = new SqlKata.Query(tableName).AsInsert(cols, values);
-      return ExecAndGetAffected(query);
+      var query = new Query(tableName).AsInsert(cols, values);
+      return Exec(query,false);
    }
-   
-   public Task<long> ExeAndGetId(
-      Query query,  CancellationToken ct = default
-   ) => provider.ExecuteKateQuery((db,tx)
-      => db.ExecuteScalarAsync<long>(
-         query: query,
-         transaction:tx,
-         timeout: option.TimeoutSeconds,
-         cancellationToken: ct)
-   );
-   
-   public Task<int> ExecAndGetAffected(
-      Query query, CancellationToken ct = default
-   ) => provider.ExecuteKateQuery((db, tx)
-      => db.ExecuteAsync(
-         query: query,
-         transaction: tx,
-         timeout: option.TimeoutSeconds,
-         cancellationToken: ct)
-   );
 
-   public async Task<int> ExecBatch(
-      Query[] queries, bool getIdFromLastQuery, CancellationToken ct = default
+   public async Task<long> Exec(
+      Query query, bool returnId, CancellationToken ct = default
+   ) => await provider.ExecuteKateQuery(async (db, tx)
+      => returnId
+         ? await db.ExecuteScalarAsync<long>(
+            query: query,
+            transaction: tx,
+            timeout: option.TimeoutSeconds,
+            cancellationToken: ct)
+         : await db.ExecuteAsync(
+            query: query,
+            transaction: tx,
+            timeout: option.TimeoutSeconds,
+            cancellationToken: ct)
+   );
+   
+   public async Task<long[]> ExecBatch(
+      IEnumerable<(Query,bool)> queries, CancellationToken ct = default
    )
    {
       //already in transaction, let outer code handle transaction 
       if (provider.InTransaction())
       {
-         return await Exec();
+         return await ExecAll();
       }
 
       var tx = await provider.BeginTransaction();
       try
       {
-         var ret = await Exec();
+         var ret = await ExecAll();
          tx.Commit();
          return ret;
       }
@@ -114,22 +110,14 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
          throw;
       }
 
-      async Task<int> Exec()
+      async Task<long[]> ExecAll()
       {
-         var ret = 0;
-         for (var i = 0; i < queries.Length; i++)
+         var ret = new List<long>();
+         foreach (var (query,returnId) in queries)
          {
-            var query = queries[i];
-            ret = await provider.ExecuteKateQuery((db, t) =>
-               i == queries.Length - 1 && getIdFromLastQuery
-                  ? db.ExecuteScalarAsync<int>(query: query, transaction: t, timeout: option.TimeoutSeconds,
-                     cancellationToken: ct)
-                  : db.ExecuteAsync(query: query, transaction: t, timeout: option.TimeoutSeconds,
-                     cancellationToken: ct)
-            );
+            ret.Add(await Exec(query,returnId,ct));
          }
-
-         return ret;
+         return ret.ToArray();
       }
    }
 

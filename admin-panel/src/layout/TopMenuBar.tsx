@@ -5,7 +5,7 @@ import { useNavigate} from "react-router-dom";
 import {configs} from "../config";
 import {RoleRoute, UserRoute} from "../auth/AccountRouter";
 import { UserAccess } from '../auth/types/userAccess';
-import { TasksRouter } from '../cms-client/EntityRouter';
+import {AssetsRouter, TasksRouter } from '../cms-client/EntityRouter';
 
 
 const entityPrefix = '/entities'
@@ -14,6 +14,8 @@ export const  MenuUsers = "menu_users";
 export const  MenuRoles = "menu_roles";
 export const  MenuAuditLog = "menu_audit_log";
 export const  MenuTasks = "menu_tasks";
+
+export const MenuAssets = "menu_assets";
 
 export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: UserAccess}) {
     const navigate = useNavigate();
@@ -55,6 +57,14 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: U
             label: 'Tasks',
             command: () => {
                 navigate(`${configs.entityBaseRouter}${TasksRouter}`)
+            }
+        },
+        {
+            key: MenuAssets,
+            icon: 'pi pi-cog',
+            label: 'Assets',
+            command: () => {
+                navigate(`${configs.entityBaseRouter}${AssetsRouter}`)
             }
         },
         

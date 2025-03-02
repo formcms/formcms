@@ -248,7 +248,7 @@ public class EntityApiTest
         await _schemaApiClient.EnsureSimpleEntity(_post, Name,false).Ok();
         var item = await _entityApiClient.Insert(_post, Name, "post1").Ok();
         Assert.True(item.ToDictionary().TryGetValue("id", out var element));
-        Assert.Equal(1, element);
+        Assert.Equal("1", element.ToString());
         
         item = await _entityApiClient.Single(_post, 1).Ok();
         var updatedAt = item.GetProperty(DefaultColumnNames.UpdatedAt.Camelize()).GetString()!;

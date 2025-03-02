@@ -3,7 +3,7 @@ import {FilterMatchMode} from "primereact/api";
 import { XAttr } from "../xEntity";
 import { decodeDataTableState } from "./dataTableStateUtil";
 
-export function useDataTableStateManager(rows:number, cols: XAttr[], qs: string|undefined) {
+export function useDataTableStateManager(rows:number, cols: XAttr[], qs?: string|undefined) {
     const defaultState:any = createDefaultState(rows,cols,qs);
     const [state, dispatch] = useReducer(reducer, defaultState)
     return {

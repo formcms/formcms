@@ -25,7 +25,7 @@ public class TaskService(
         await store.Del(task.GetPaths().Zip);
         
         var query = TaskHelper.UpdateTaskStatus(new SystemTask(Id: id, TaskStatus: TaskStatus.Archived));
-        await executor.ExecAndGetAffected(query,ct);
+        await executor.Exec(query,false,ct);
     }
     
     public async Task<string> GetTaskFileUrl(long id, CancellationToken ct)
@@ -43,7 +43,7 @@ public class TaskService(
     {
         var task = TaskHelper.InitTask(TaskType.Import, profileService.GetInfo()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
-        var id = await executor.ExeAndGetId(query);
+        var id = await executor.Exec(query,true);
 
         await using var stream = new FileStream(task.GetPaths().FullZip, FileMode.Create);
         await file.CopyToAsync(stream);
@@ -55,7 +55,7 @@ public class TaskService(
         const string url = "https://github.com/FormCMS/FormCMS/raw/refs/heads/doc/etc/demo-data.zip";
         var task = TaskHelper.InitTask(TaskType.Import, profileService.GetInfo()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
-        var id = await executor.ExeAndGetId(query);
+        var id = await executor.Exec(query,true);
 
         await using var stream = new FileStream(task.GetPaths().FullZip, FileMode.Create);
         byte[] fileBytes = await httpClient.GetByteArrayAsync(url);
@@ -67,7 +67,7 @@ public class TaskService(
     {
         var task = TaskHelper.InitTask(TaskType.Export, profileService.GetInfo()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
-        return executor.ExeAndGetId(query);
+        return executor.Exec(query,true);
     }
 
     public async Task<ListResponse> List(StrArgs args,int? offset, int? limit, CancellationToken ct)

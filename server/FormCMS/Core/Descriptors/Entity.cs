@@ -53,6 +53,19 @@ public static class EntityConstants
 
 public static class EntityHelper
 {
+    public static string[] GetAssets(this LoadedEntity entity, Record record)
+    {
+        var paths = new List<string>();
+        foreach (var attribute in entity.Attributes.Where(x => x.IsAsset()))
+        {
+            if (record.TryGetValue(attribute.Field, out var value) 
+                && value is string stringValue )
+            {
+                paths.AddRange(stringValue.Split(","));
+            }
+        }
+        return paths.ToArray();
+    }
     public static LoadedEntity ToLoadedEntity(this Entity entity)
     {
         var attributes = entity.Attributes.Select(x => x.ToLoaded(entity.TableName)).ToArray();
@@ -217,14 +230,9 @@ public static class EntityHelper
             .WhereDate(DefaultAttributeNames.PublishedAt.Camelize(), "<", DateTime.Now)
             .AsUpdate([DefaultAttributeNames.PublicationStatus.Camelize()], [PublicationStatus.Published.Camelize()]);
     
-    public static Result<SqlKata.Query> UpdateQuery(this LoadedEntity e, Record item)
+    public static Result<SqlKata.Query> UpdateQuery(this LoadedEntity e, long id, Record item)
     {
-        //to prevent SqlServer 'Cannot update identity column' error 
-        if (!item.Remove(e.PrimaryKey, out var id))
-        {
-            return Result.Fail($"Failed to get id value with primary key [${e.PrimaryKey}]");
-        }
-        
+       
         
         if (!item.Remove(DefaultColumnNames.UpdatedAt.Camelize(), out var updatedAt))
         {
@@ -240,14 +248,8 @@ public static class EntityHelper
         return ret;
     }
 
-    public static Result<SqlKata.Query> DeleteQuery(this LoadedEntity e,Record item)
+    public static Result<SqlKata.Query> DeleteQuery(this LoadedEntity e,long id,Record item)
     {
-        if (!item.TryGetValue(e.PrimaryKey, out var id))
-        {
-            return Result.Fail($"Failed to get id value with primary key [${e.PrimaryKey}]");
-        }
-
-
         if (!item.Remove(DefaultColumnNames.UpdatedAt.Camelize(), out var updatedAt))
         {
             return Result.Fail(

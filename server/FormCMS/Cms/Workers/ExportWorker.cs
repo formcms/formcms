@@ -93,7 +93,7 @@ public class ExportWorker(
         {
             foreach (var attr in entity.Attributes)
             {
-                if (attr.DisplayType is not (DisplayType.File or DisplayType.Image or DisplayType.Gallery)) continue;
+                if (attr.IsAsset()) continue;
                 foreach (var record in records)
                 {
                     if (!record.TryGetValue(attr.Field, out var value) || value is not string s) continue;

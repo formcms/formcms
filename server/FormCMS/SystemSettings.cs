@@ -22,6 +22,7 @@ public sealed class SystemSettings
     public TimeSpan EntitySchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);
     public TimeSpan QuerySchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);
 
+    public string AssetUrlPrefix { get; set; } = "/files";
     public string PageCachePolicy { get; set; } = DefaultPageCachePolicyName;
     public string QueryCachePolicy { get; set; } = DefaultQueryCachePolicyName;
     public int DatabaseQueryTimeout { get; set; } = 30;

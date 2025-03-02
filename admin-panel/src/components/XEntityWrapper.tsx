@@ -1,4 +1,4 @@
-import { FetchingStatus } from "./FetchingStatus";
+import { Message } from "primereact/message";
 import { XEntity } from "./xEntity";
 
 export function XEntityWrapper(
@@ -11,11 +11,11 @@ export function XEntityWrapper(
         useEntityHook: () => { data: XEntity|undefined; error: any; isLoading: boolean };
         Component: React.ComponentType<{ baseRouter: string; schema: any }>;
 }) {
-    const { data: schema, error, isLoading } = useEntityHook();
+    const { data: schema, error } = useEntityHook();
     
     return (
         <>
-            <FetchingStatus isLoading={isLoading} error={error} />
+            {error && <Message severity={'error'} text={error}/>}
             {schema && <Component baseRouter={baseRouter} schema={schema} />}
         </>
     );

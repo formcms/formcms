@@ -8,7 +8,6 @@ import { ButtonGroup } from 'primereact/buttongroup';
 import {Picklist} from "../containers/Picklist";
 import {useCheckError} from "../../components/useCheckError";
 import {useConfirm} from "../../components/useConfirm";
-import {fileUploadURL, getFullCmsAssetUrl} from "../configs";
 import {PageLayout} from "./PageLayout";
 import {FetchingStatus} from "../../components/FetchingStatus";
 import {EditTable} from "../containers/EditTable";
@@ -20,6 +19,7 @@ import { PublicationSettings } from "../containers/PublicationSettings";
 import { DefaultAttributeNames } from "../types/defaultAttributeNames";
 import { PublicationStatus } from "../types/publicationStatus";
 import { SpecialQueryKeys } from "../types/specialQueryKeys";
+import { getFileUploadURL, useGetCmsAssetsUrl } from "../services/asset";
 
 export function DataItemPage({baseRouter}: { baseRouter: string }) {
     const {schemaName} = useParams()
@@ -28,6 +28,7 @@ export function DataItemPage({baseRouter}: { baseRouter: string }) {
 
 export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, baseRouter: string }) {
     const {id} = useParams()
+    const  getCmsAssetUrl= useGetCmsAssetsUrl();
     const {data, error: useItemError, isLoading,mutate} = useItemData(schema.name, id)
     
     const {handleErrorOrSuccess: handlePageErrorOrSucess, CheckErrorStatus:PageErrorStatus} = useCheckError();
@@ -121,6 +122,8 @@ export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, b
         })
     }
     
+   
+    
     return <>
         <ButtonGroup>
             <Button type={'submit'} label={`Save ${schema.displayName}`} icon="pi pi-check" form={itemEditFormId}/>
@@ -141,16 +144,16 @@ export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, b
         <Confirm/>
         <div className="grid">
             <div className={`col-12 md:col-12 lg:${trees.length > 0? "col-9":"col-12"}`}>
-                <ItemForm uploadUrl={fileUploadURL()} formId={itemEditFormId} columns={inputColumns} {...{
+                <ItemForm uploadUrl={getFileUploadURL()} formId={itemEditFormId} columns={inputColumns} {...{
                     schema,
                     data,
                     id,
                     onSubmit,
-                    getFullAssetsURL:getFullCmsAssetUrl
+                    getFullAssetsURL:getCmsAssetUrl
                 }} />
                 {
                     tables.map((column) => {
-                        const props = {schema, data, column, getFullAssetsURL:getFullCmsAssetUrl, baseRouter}
+                        const props = {schema, data, column, getFullAssetsURL:getCmsAssetUrl, baseRouter}
                         return <div key={column.field}>
                             <Divider/>
                             {column.displayType === 'picklist' && <Picklist key={column.field} {...props}/>}

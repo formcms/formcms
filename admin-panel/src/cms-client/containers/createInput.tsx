@@ -12,6 +12,8 @@ import {GalleryInput} from "../../components/inputs/GalleryInput";
 import {DropDownInput} from "../../components/inputs/DropDownInput";
 import {MultiSelectInput} from "../../components/inputs/MultiSelectInput";
 import {XAttr } from "../types/xEntity";
+import { AssetSelector } from "./AssetSelector";
+import { MultiAssetSelector } from "./MultiAssetSelector";
 
 export function createInput(props :{
     column: XAttr,
@@ -35,11 +37,11 @@ export function createInput(props :{
         case 'date':
             return <DateInput className={'field col-12  md:col-4'} key={field} {...props}/>
         case 'image':
-            return <FileInput previewImage className={'field col-12  md:col-4'} key={field} {...props}/>
+            return <FileInput  fileSelector={ AssetSelector} previewImage className={'field col-12  md:col-4'} key={field} {...props}/>
         case 'gallery':
-            return <GalleryInput className={'field col-12  md:col-4'} key={field} {...props}/>
+            return <GalleryInput  fileSelector={MultiAssetSelector} className={'field col-12  md:col-4'} key={field} {...props}/>
         case 'file':
-            return <FileInput download className={'field col-12  md:col-4'} key={field} {...props}/>
+            return <FileInput fileSelector={AssetSelector} download className={'field col-12  md:col-4'} key={field} {...props}/>
         case 'dropdown':
             return <DropDownInput options={props.column.options.split(',')} className={'field col-12 md:col-4'} key={field}{...props}/>
         case 'lookup':

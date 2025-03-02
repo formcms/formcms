@@ -11,6 +11,7 @@ using FormCMS.Utils.PageRender;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.Identities;
 using FormCMS.Infrastructure.Cache;
+using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.LocalFileStore;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
@@ -88,6 +89,8 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             services.AddScoped<IQueryService, QueryService>();
             services.AddScoped<IPageService, PageService>();
             
+            services.AddScoped<IAssetService, AssetService>();
+            
             services.AddHttpClient();  //needed by task service
             services.AddScoped<ITaskService, TaskService>();
         }
@@ -147,11 +150,10 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
 
         void AddStorageServices()
         {
-            services.AddSingleton(new LocalFileStoreOptions(
-                Path.Join(Directory.GetCurrentDirectory(), "wwwroot/files"),
-                "/files",
-                systemSettings.ImageCompression.MaxWidth,
-                systemSettings.ImageCompression.Quality));
+            services.AddSingleton(new ResizeOptions(systemSettings.ImageCompression.MaxWidth,systemSettings.ImageCompression.Quality));
+            services.AddSingleton<Resizer>();
+            
+            services.AddSingleton(new LocalFileStoreOptions( Path.Join(Directory.GetCurrentDirectory(), "wwwroot/files"), systemSettings.AssetUrlPrefix));
             services.AddSingleton<IFileStore,LocalFileStore>();
         }
     }
@@ -198,7 +200,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             apiGroup.MapGroup("/schemas")
                 .MapSchemaBuilderSchemaHandlers()
                 .MapAdminPanelSchemaHandlers();
-            apiGroup.MapGroup("/files").MapFileHandlers();
+            apiGroup.MapGroup("/assets").MapAssetHandlers();
             apiGroup.MapGroup("/queries").MapQueryHandlers().CacheOutput(options.QueryCachePolicy);
 
             // if an auth component is not use, the handler will use fake profile service
@@ -237,6 +239,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             await schemaService.EnsureTopMenuBar();
             
             await serviceScope.ServiceProvider.GetRequiredService<ITaskService>().EnsureTable();
+            await serviceScope.ServiceProvider.GetRequiredService<IAssetService>().EnsureTable();
              
         }
 

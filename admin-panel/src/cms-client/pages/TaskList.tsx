@@ -17,7 +17,7 @@ import { Dialog } from "primereact/dialog";
 
 
 
-export function TaskList({schema}:{baseRouter:string, schema:XEntity}){
+export function TaskList({schema}:{schema:XEntity}){
     const columns = schema?.attributes?.filter(column => column.inList) ?? [];
     const stateManager = useDataTableStateManager(schema.defaultPageSize, columns,undefined )
     const {data,error,isLoading,mutate}= useTasks(encodeDataTableState(stateManager.state))

@@ -1,7 +1,6 @@
 import {useForm} from "react-hook-form";
 import {createInput} from "./createInput";
 import {XAttr} from "../types/xEntity" ;
-    "";
 
 export function ItemForm({columns, data, id, onSubmit, formId, uploadUrl, getFullAssetsURL}: {
     columns: XAttr[],

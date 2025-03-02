@@ -294,32 +294,26 @@ public static class AttributeHelper
     public static bool GetJunctionTarget(this Attribute a, out string val)
     {
         val = a.Options;
-        return !string.IsNullOrWhiteSpace(val);
+        return !string.IsNullOrWhiteSpace(a.Options);
     }
 
     public static bool IsCompound(this Attribute a)
-    {
-        return a.DataType is DataType.Lookup or DataType.Junction or DataType.Collection;
-    }
+        => a.DataType is DataType.Lookup or DataType.Junction or DataType.Collection;
 
     public static bool IsCsv(this Attribute a)
-    {
-        return a.DisplayType is DisplayType.Gallery or DisplayType.Multiselect;
-    }
+        => a.DisplayType is DisplayType.Gallery or DisplayType.Multiselect;
 
     public static bool IsLocal(this Attribute a)
-    {
-        return a.DataType != DataType.Junction && a.DataType != DataType.Collection;
-    }
+        => a.DataType != DataType.Junction && a.DataType != DataType.Collection;
 
+    public static bool IsAsset(this Attribute a)
+        => a.DisplayType is DisplayType.File or DisplayType.Image or DisplayType.Gallery;
     public static Attribute ToAttribute(string name, DataType colType)
-    {
-        return new Attribute(
+        => new(
             Field: name,
             Header: name,
             DataType: colType
         );
-    }
 
 
     public static ValidValue[] GetUniq<T>(this T a, IEnumerable<Record> records)

@@ -1,7 +1,6 @@
 import {Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import {useListData,deleteItem} from "../services/entity";
 import {Button} from "primereact/button";
-import {getFullCmsAssetUrl} from "../configs";
 import {PageLayout} from "./PageLayout";
 import {FetchingStatus} from "../../components/FetchingStatus";
 import {EditDataTable} from "../../components/dataTable/EditDataTable";
@@ -12,6 +11,7 @@ import { encodeDataTableState } from "../../components/dataTable/dataTableStateU
 import { createColumn } from "../../components/dataTable/columns/createColumn";
 import { useCheckError } from "../../components/useCheckError";
 import { useConfirm } from "../../components/useConfirm";
+import { useGetCmsAssetsUrl } from "../services/asset";
 
 export function DataListPage({baseRouter}:{baseRouter:string}){
     const {schemaName} = useParams()
@@ -20,7 +20,7 @@ export function DataListPage({baseRouter}:{baseRouter:string}){
 
 export const NewItemRoute = "new";
 export function DataListPageComponent({schema,baseRouter}:{schema:XEntity,baseRouter:string}) {
-    
+    const getCmsAssetUrl=useGetCmsAssetsUrl();
     const navigate = useNavigate();
 
     const columns = schema?.attributes?.filter(x => 
@@ -51,7 +51,7 @@ export function DataListPageComponent({schema,baseRouter}:{schema:XEntity,baseRo
         })
     }
 
-    const dataTableColumns = columns.map(x=>createColumn(x,getFullCmsAssetUrl, x.field==schema.labelAttributeName?onEdit:undefined))
+    const dataTableColumns = columns.map(x=>createColumn(x, getCmsAssetUrl, x.field==schema.labelAttributeName?onEdit:undefined))
     useEffect(()=> window.history.replaceState(null,"", `?${qs}`),[stateManager.state]);
     
     return <>
