@@ -11,6 +11,7 @@ public class AssetService(
     IFileStore store,
     DatabaseMigrator migrator,
     KateQueryExecutor executor,
+    IProfileService profileService,
     SystemSettings systemSettings  
     ):IAssetService
 {
@@ -33,12 +34,14 @@ public class AssetService(
     public async Task<string[]> Add(IEnumerable<IFormFile> files)
     {
         var infos = await store.Upload(files).Ok();
+        var userInfo = profileService.GetInfo() ?? throw new ResultException("Not logged in");
         var assets = infos.Select(x => new Asset(
-            Path: x.Path, Url: x.Url, 
-            Name: x.Name, Title: x.Name, 
-            Size: x.FileSize, Type: x.ContentType,
-            Metadata: new Dictionary<string, object>(), 
-            Links: [])
+                CreatedBy: userInfo.Name,
+                Path: x.Path, Url: x.Url,
+                Name: x.Name, Title: x.Name,
+                Size: x.FileSize, Type: x.ContentType,
+                Metadata: new Dictionary<string, object>()
+            )
         );
         
         //track those assets to reuse later

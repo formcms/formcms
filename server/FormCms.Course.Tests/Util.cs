@@ -1,9 +1,10 @@
 using System.Text.Json;
-
 namespace FormCMS.Course.Tests;
 
 public static class Util
 {
+    
+   
     internal static int GetInt(this IDictionary<string,object> e, string key)
     {
         var val = e[key];
@@ -14,7 +15,7 @@ public static class Util
             _ => throw new ArgumentOutOfRangeException()
         };
     }
-    public static void SetTestConnectionString()
+    internal static void SetTestConnectionString()
     {
         (string, string)[] settings =
         [

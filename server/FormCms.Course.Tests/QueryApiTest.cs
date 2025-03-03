@@ -14,8 +14,8 @@ namespace FormCMS.Course.Tests;
 
 public class QueryApiTest
 {
-    private readonly string _queryName = "query_api_test_query_" + Ulid.NewUlid();
-    private readonly  string _post = "query_api_test_post_" + Ulid.NewUlid();
+    private readonly string _queryName = "qt_query_" + Ulid.NewUlid();
+    private readonly  string _post = "qt_post_" + Ulid.NewUlid();
     
     private readonly QueryApiClient _query;
     private readonly EntityApiClient _entity;

@@ -34,7 +34,7 @@ public class EntityApiClient(HttpClient client)
     );
 
     public Task<Result<JsonElement>> Single(
-        string entity, int id
+        string entity, long id
     ) => client.GetResult<JsonElement>(
         $"/{entity}/{id}".ToEntityApi()
     );
@@ -61,7 +61,7 @@ public class EntityApiClient(HttpClient client)
     ) => client.PostResult<JsonElement>($"/{entity}/insert".ToEntityApi(), payload);
 
     public Task<Result> Update(
-        string entity, int id, string field, string val, string updatedAt
+        string entity, long id, string field, string val, string updatedAt
     ) => Update(entity, new Dictionary<string,object>
     {
         { DefaultAttributeNames.Id.Camelize(), id },

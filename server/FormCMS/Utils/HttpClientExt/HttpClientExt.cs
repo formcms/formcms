@@ -37,6 +37,20 @@ public static class HttpClientExt
         var res = await client.GetAsync(uri);
         return await res.ParseResult();
     }
+
+    public static async Task<Result<string>> PostFileResult(this HttpClient client, string url, string field, IEnumerable<(string,byte[])> files)
+    {
+        using var content = new MultipartFormDataContent();
+        foreach (var (fileName,bytes) in files)
+        {
+            var fileContent = new ByteArrayContent(bytes);
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
+            content.Add(fileContent, field, fileName); 
+        }
+        var response = await client.PostAsync(url, content);
+        return await response.ParseString();
+    }
+    
     public static async Task<Result<T>> PostResult<T>(this HttpClient client, string url, object payload )
     {
         var res = await client.PostAsync(url, Content(payload,JsonSerializerOptions));

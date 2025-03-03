@@ -18,7 +18,7 @@ public record Asset(
     int Size,
     string Type,
     Record Metadata, 
-    AssetLink[] Links, 
+    string CreatedBy,
     DateTime CreatedAt = default,
     long Id = 0
 );
@@ -51,6 +51,7 @@ public static class Assets
         ColumnHelper.CreateCamelColumn<Asset, string>(x => x.Title),
         ColumnHelper.CreateCamelColumn<Asset, int>(x => x.Size),
         ColumnHelper.CreateCamelColumn<Asset, string>(x => x.Type),
+        ColumnHelper.CreateCamelColumn<Asset, string>(x => x.CreatedBy),
         
         ColumnHelper.CreateCamelColumn<Asset>(x => x.Metadata, ColumnType.Text),
 
@@ -70,6 +71,7 @@ public static class Assets
                 nameof(Asset.Title),
                 nameof(Asset.Size),
                 nameof(Asset.Type),
+                nameof(Asset.CreatedBy),
             ])).ToArray();
     }
 
