@@ -11,7 +11,7 @@ export function TreeSelectContainer(
 
     const targetEntity = column.lookup!
     const options = useTree(targetEntity)
-    if (typeof item[column.field] === "object") {
+    if (item[column.field] && typeof item[column.field] === "object" ) {
         item[column.field] = item[column.field][targetEntity.primaryKey];
     }
 

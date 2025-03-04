@@ -1,5 +1,5 @@
 using FormCMS.Core.Tasks;
-using FormCMS.Infrastructure.LocalFileStore;
+using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
@@ -32,7 +32,7 @@ public class TaskService(
     {
         var record =await executor.Single(TaskHelper.ById(id),ct)?? throw new ResultException("Task not found");
         var task = record.ToObject<SystemTask>().Ok();
-        return store.GetDownloadPath(task.GetPaths().Zip);
+        return store.GetUrl(task.GetPaths().Zip);
     }
 
     public XEntity GetEntity() => TaskHelper.Entity;

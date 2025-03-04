@@ -1,5 +1,5 @@
 using FormCMS.Core.Files;
-using FormCMS.Infrastructure.LocalFileStore;
+using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;

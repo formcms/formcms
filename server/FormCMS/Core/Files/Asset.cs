@@ -12,14 +12,15 @@ namespace FormCMS.Core.Files;
 
 public record Asset(
     string Path, // unique name, yyyy-MM date + ulid
-    string Url,  
+    string Url,
     string Name, // original name, for search
     string Title, // default as name, for link title, picture caption
     int Size,
     string Type,
-    Record Metadata, 
+    Record Metadata,
     string CreatedBy,
     DateTime CreatedAt = default,
+    DateTime UpdatedAt = default,
     long Id = 0
 );
 
@@ -34,12 +35,16 @@ public static class Assets
         attributes:
         [
             XAttrExtensions.CreateAttr<Asset, string>(x => x.Path, displayType: DisplayType.Image),
+            XAttrExtensions.CreateAttr<Asset, string>(x => x.Url,inList:false),
             XAttrExtensions.CreateAttr<Asset, string>(x => x.Name),
             XAttrExtensions.CreateAttr<Asset, string>(x => x.Title),
             XAttrExtensions.CreateAttr<Asset, int>(x => x.Size),
             XAttrExtensions.CreateAttr<Asset, string>(x => x.Type),
-            XAttrExtensions.CreateAttr<Asset, DateTime>(x => x.CreatedAt, isDefault:true)
-            
+            XAttrExtensions.CreateAttr<Asset, object>(x => x.Metadata, inList:false),
+            XAttrExtensions.CreateAttr<Asset, string>(x => x.CreatedBy, isDefault:true),
+            XAttrExtensions.CreateAttr<Asset, DateTime>(x => x.CreatedAt, isDefault:true),
+            XAttrExtensions.CreateAttr<Asset, DateTime>(x => x.UpdatedAt, inList:false, isDefault:true),
+            XAttrExtensions.CreateAttr<Asset, long>(x => x.Id,inList:false, isDefault:true),
         ]);
 
     public static readonly Column[] Columns =
@@ -88,11 +93,14 @@ public static class Assets
         return q;
     }
 
+    public static bool IsValidPath(string path)=> 
+        !string.IsNullOrWhiteSpace(path) 
+        && !path.StartsWith("http"); // not external link
 
     public static Query GetAssetIDsByPaths(IEnumerable<string> paths)
         => new Query(TableName)
-            .Select( nameof(Asset.Id).Camelize())
-            .Where(DefaultColumnNames.Deleted.Camelize(),false)
+            .Select( nameof(Asset.Id).Camelize(), nameof(Asset.Path).Camelize())
+            .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .WhereIn(nameof(Asset.Path).Camelize(), paths);
 
     public static Query Count() => new Query(TableName)

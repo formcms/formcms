@@ -12,7 +12,7 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Core.Identities;
 using FormCMS.Infrastructure.Cache;
 using FormCMS.Infrastructure.ImageUtil;
-using FormCMS.Infrastructure.LocalFileStore;
+using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.ResultExt;

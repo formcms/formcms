@@ -1,4 +1,5 @@
 using FormCMS.Utils.DataModels;
+using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using SqlKata;
@@ -9,6 +10,28 @@ namespace FormCMS.Infrastructure.RelationDbDao;
 public record KateQueryExecutorOption(int? TimeoutSeconds);
 public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutorOption option)
 {
+   public static async Task GetPageDataAndInsert(
+      KateQueryExecutor sourceExecutor, KateQueryExecutor destExecutor, 
+      string tableName, string primaryKey, IEnumerable<string> fields,
+      Func<Record[], Task>? recordsHandlerFunc, CancellationToken ct)
+   {
+      const int limit = 1000;
+      var query = new Query(tableName)
+         .Where(DefaultColumnNames.Deleted.Camelize(), false)
+         .OrderBy(primaryKey)
+         .Select(fields).Limit(limit);
+      var records = await sourceExecutor.Many(query, ct);
+      while (true)
+      {
+         if (recordsHandlerFunc != null) await recordsHandlerFunc(records);
+
+         await destExecutor.BatchInsert(tableName, records);
+         if (records.Length < limit) break;
+         var lastId = records.Last()[primaryKey];
+         records = await sourceExecutor.Many(query.Clone().Where(primaryKey, ">", lastId), ct);
+      }
+   }
+
    public async Task<Dictionary<string, object>> LoadDict(string tableName, string keyField, string valueField, IEnumerable<object> ids,CancellationToken ct)
    {
       var query = new Query(tableName)
@@ -65,6 +88,7 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
 
    public Task BatchInsert(string tableName, Record[] records)
    {
+      if (records.Length == 0) return Task.CompletedTask;
       var cols = records[0].Select(x => x.Key);
       var values = records.Select(item => item.Select(kv => kv.Value));
       var query = new Query(tableName).AsInsert(cols, values);

@@ -1,13 +1,14 @@
 using System.Collections.Immutable;
 using FormCMS.Core.Descriptors;
+using FormCMS.Core.Files;
 using FormCMS.Core.Tasks;
-using FormCMS.Infrastructure.LocalFileStore;
+using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
-using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
+using Humanizer;
 
 namespace FormCMS.Cms.Workers;
 public record ImportWorkerOptions(int DelaySeconds);
@@ -20,12 +21,6 @@ public class ImportWorker(
     IFileStore fileStore
 ) : TaskWorker(serviceScopeFactory: scopeFactory, logger: logger,delaySeconds: options.DelaySeconds)
 {
-
-    protected override TaskType GetTaskType()
-    {
-        return TaskType.Import;
-    }
-
     protected override async Task DoTask(
         IServiceScope serviceScope, KateQueryExecutor destinationExecutor,
         SystemTask task, CancellationToken ct)
@@ -46,6 +41,8 @@ public class ImportWorker(
             await ImportSchemas();
             await ImportEntities();
             await ImportJunctions();
+            await ImportAssets();
+            await ImportAssetLinks();
         }
         catch (Exception ex)
         {
@@ -57,6 +54,89 @@ public class ImportWorker(
         }
 
         return;
+
+        async Task ImportAssets()
+        {
+            await destMigrator.MigrateTable(Assets.TableName, Assets.Columns.EnsureColumn(DefaultColumnNames.ImportKey,ColumnType.String));
+            await KateQueryExecutor.GetPageDataAndInsert(
+                sourceExecutor,
+                destinationExecutor,
+                Assets.TableName,
+                nameof(Asset.Id).Camelize(),
+                Assets.Entity.Attributes.Select(x => x.Field),
+                async records =>
+                {
+                    RenamePrimaryKeyToImportKey(records, nameof(Asset.Id).Camelize());
+                    foreach (string path in records.Select(x => x[nameof(Asset.Path).Camelize()]))
+                    {
+                        var local = Path.Join(task.GetPaths().Folder, path);
+                        await fileStore.Upload(local, path);
+                    } 
+                },
+                ct
+            );
+        }
+
+        async Task ImportAssetLinks()
+        {
+            await destMigrator.MigrateTable(AssetLinks.TableName, AssetLinks.Columns);
+            await KateQueryExecutor.GetPageDataAndInsert(
+                sourceExecutor,
+                destinationExecutor,
+                AssetLinks.TableName,
+                nameof(Asset.Id).Camelize(),
+                AssetLinks.Columns.Select(x => x.Name),
+                MapAssetLinks,
+                ct
+            );
+        }
+
+        async Task MapAssetLinks(Record[] records)
+        {
+            var entityNameToRecordArray = new Dictionary<string, object[]>();
+            foreach (var record in records)
+            {
+                var entityName = (string)record[nameof(AssetLink.EntityName).Camelize()];
+                var recordId = record[nameof(AssetLink.RecordId).Camelize()];
+                if (entityNameToRecordArray.ContainsKey(entityName))
+                {
+                    entityNameToRecordArray[entityName] = [..entityNameToRecordArray[entityName], recordId];
+                }
+                else
+                {
+                    entityNameToRecordArray[entityName] = [recordId];
+                }
+            }
+
+            var entityNameToLookupDict = new Dictionary<string, Dictionary<string, object>>();
+            foreach (var (key, ids) in entityNameToRecordArray)
+            {
+                var entity = entityNameToEntity[key];
+                var dictImportKeyToId = await destinationExecutor.LoadDict(
+                    entity.TableName,
+                    DefaultColumnNames.ImportKey.Camelize(),
+                    entity.PrimaryKey,
+                    ids, ct
+                );
+                entityNameToLookupDict[key] = dictImportKeyToId;
+
+            }
+            
+            var dictAssetImportKeyToId = await destinationExecutor.LoadDict(
+                Assets.TableName,
+                DefaultColumnNames.ImportKey.Camelize(),
+                nameof(Asset.Id).Camelize(),
+                records.Select(x=>x[nameof(AssetLink.AssetId).Camelize()]), ct
+            );
+
+            foreach (var record in records)
+            {
+                var entityName = (string)record[nameof(AssetLink.EntityName).Camelize()];
+                var recordId = record.GetStrOrEmpty(nameof(AssetLink.RecordId).Camelize());
+                record[nameof(AssetLink.RecordId).Camelize()] = entityNameToLookupDict[entityName][recordId];
+                record[nameof(AssetLink.AssetId).Camelize()] = dictAssetImportKeyToId[record.GetStrOrEmpty(nameof(AssetLink.AssetId).Camelize())];
+            }
+        }
 
         async Task<(ImmutableArray<Schema>, ImmutableArray<LoadedEntity>, ImmutableDictionary<string, LoadedEntity>,ImmutableArray<Junction>)> LoadData()
         {
@@ -266,33 +346,20 @@ public class ImportWorker(
             }
         }
 
+        void RenamePrimaryKeyToImportKey(Record[] records, string primaryKey)
+        {
+            foreach (var record in records)
+            {
+                record[DefaultColumnNames.ImportKey.Camelize()] = record[primaryKey];
+                record.Remove(primaryKey);
+            }
+        }
+        
         async Task PreInsert(LoadedEntity entity, Record[] records)
         {
-            await CopyFiles();
             ConvertDateTime();
-            RenamePrimaryKeyToImportKey();
+            RenamePrimaryKeyToImportKey(records, entity.PrimaryKey);
             await ReplaceLookupFields();
-
-            async Task CopyFiles()
-            {
-                foreach (var attr in entity.Attributes)
-                {
-                    if (!attr.IsAsset())
-                        continue;
-                    
-                    foreach (var record in records)
-                    {
-                        if (!record.TryGetValue(attr.Field, out var value) || value is not string s) continue;
-
-                        var paths = s.Split(',');
-                        foreach (var path in paths)
-                        {
-                            var local = Path.Join(task.GetPaths().Folder, path);
-                            await fileStore.Upload(local, path);
-                        }
-                    }
-                }
-            }
 
             void ConvertDateTime()
             {
@@ -306,14 +373,7 @@ public class ImportWorker(
                 }
             }
 
-            void RenamePrimaryKeyToImportKey()
-            {
-                foreach (var record in records)
-                {
-                    record[DefaultColumnNames.ImportKey.Camelize()] = record[entity.PrimaryKey];
-                    record.Remove(entity.PrimaryKey);
-                }
-            }
+           
 
             async Task ReplaceLookupFields()
             {
@@ -341,4 +401,6 @@ public class ImportWorker(
             }
         }
     }
+    
+    protected override TaskType GetTaskType() => TaskType.Import;
 }

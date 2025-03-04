@@ -1,17 +1,36 @@
 using FluentResults;
 using FormCMS.Infrastructure.ImageUtil;
-using Microsoft.AspNetCore.Server.HttpSys;
-using NUlid;
 
-namespace FormCMS.Infrastructure.LocalFileStore;
+namespace FormCMS.Infrastructure.FileStore;
 
 public record LocalFileStoreOptions(string PathPrefix, string UrlPrefix);
+
 public class LocalFileStore(
     LocalFileStoreOptions options,
     Resizer resizer
     ):IFileStore
 {
-    public string GetDownloadPath(string file)=>$"{options.UrlPrefix}/{file}";
+    public string GetUrl(string file)=> Path.Join(options.UrlPrefix,file);
+    
+    public Task<FileInfo?> GetFileInfo(string file)
+    {
+        string fullPath = Path.Join(options.PathPrefix, file);
+        if (!File.Exists(fullPath))
+        {
+            return Task.FromResult<FileInfo?>(null);
+        }
+
+        var sysFileInfo = new System.IO.FileInfo(fullPath);
+        var fileInfo = new FileInfo(
+            Path: fullPath,
+            Url: GetUrl(file),
+            Name: sysFileInfo.Name,
+            ContentType: Util.GetContentType(sysFileInfo.Extension),
+            FileSize: (int)sysFileInfo.Length // Cast long to int, assuming files < 2GB
+        );
+
+        return Task.FromResult<FileInfo?>(fileInfo);
+    }
 
     public Task Download(string path, string localPath)
     {
@@ -54,7 +73,7 @@ public class LocalFileStore(
     
     public async Task<Result<FileInfo[]>> Upload(IEnumerable<IFormFile> files)
     {
-        var dir = GetDirectoryName();
+        var dir = Util.GetDirectoryName();
         Directory.CreateDirectory(Path.Join(options.PathPrefix, dir));
         var ret = new List<FileInfo>();
 
@@ -65,7 +84,7 @@ public class LocalFileStore(
                 return Result.Fail($"Invalid file length {file.FileName}");
             }
 
-            var filePath = "/" + Path.Join(dir, GetUniqName(file.FileName));
+            var filePath = "/" + Path.Join(dir, Util.GetUniqName(file.FileName));
             await using var saveStream = File.Create(Path.Join(options.PathPrefix, filePath));
 
             if (resizer.IsImage(file))
@@ -79,7 +98,7 @@ public class LocalFileStore(
 
             ret.Add(new FileInfo(
                 Path: filePath,  // Full filesystem path
-                Url: options.UrlPrefix + filePath,            // URL for access
+                Url: GetUrl(filePath),            // URL for access
                 Name: file.FileName,
                 ContentType: file.ContentType,
                 FileSize: (int)saveStream.Length
@@ -88,11 +107,4 @@ public class LocalFileStore(
 
         return ret.ToArray();
     }
-
-   
-
-    private string GetUniqName(string fileName)
-        => string.Concat(Ulid.NewUlid().ToString().AsSpan(0, 12), Path.GetExtension(fileName));
-
-    private string GetDirectoryName() => DateTime.Now.ToString("yyyy-MM");
 }

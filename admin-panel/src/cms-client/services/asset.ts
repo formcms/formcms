@@ -19,7 +19,9 @@ export function getFileUploadURL (){
 
 export function useGetCmsAssetsUrl (){
     const { data: assetBaseUrl } = useSWR<string>(fullCmsApiUrl(`/assets/base`), fetcher, swrConfig);
-
-    const getCmsAssetUrl = (url: string) => `${assetBaseUrl || ''}/${url}`;
-    return getCmsAssetUrl; 
+    return (url: string) => {
+        if (!url) return url;
+        
+        return url.startsWith('http') ? url : `${assetBaseUrl || ''}/${url}`;
+    }
 }

@@ -13,7 +13,6 @@ export function MultiSelectInput(
         id: any
     }) {
     const {column,options} = props
-    console.log(column,options)
     return <InputPanel  {...props} childComponent={(field: any) => {
         return <MultiSelect
             display="chip"

@@ -1,6 +1,6 @@
 using FormCMS.Cms.Workers;
 using FormCMS.Infrastructure.ImageUtil;
-using FormCMS.Infrastructure.LocalFileStore;
+using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.RelationDbDao;
 
 namespace FormCMS.Cms.Builders;

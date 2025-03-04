@@ -1,12 +1,11 @@
 using FormCMS.Core.Descriptors;
+using FormCMS.Core.Files;
 using FormCMS.Core.Tasks;
-using FormCMS.Infrastructure.LocalFileStore;
+using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
-using FormCMS.Utils.DisplayModels;
-using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
-using Query = SqlKata.Query;
+using Humanizer;
 
 namespace FormCMS.Cms.Workers;
 
@@ -34,12 +33,47 @@ public class ExportWorker(
         await ExportSchema();
         await ExportEntities();
         await ExportJunctions();
+        await ExportAssets();
+        await ExportAssetLinks();
         
         task.GetPaths().Zip();
         await fileStore.Upload(task.GetPaths().FullZip,task.GetPaths().Zip);
         task.GetPaths().Clean();
         return;
-        
+
+        async Task ExportAssets()
+        {
+            await destMigrator.MigrateTable(Assets.TableName, Assets.Columns);
+            await KateQueryExecutor.GetPageDataAndInsert(
+                sourceExecutor,
+                destExecutor,
+                Assets.TableName,
+                nameof(Asset.Id).Camelize(),
+                Assets.Entity.Attributes.Select(x => x.Field),
+                async records =>
+                {
+                    foreach (string path in records.Select(x => x[nameof(Asset.Path).Camelize()]))
+                    {
+                        await fileStore.Download(path, Path.Join(task.GetPaths().Folder, path));
+                    }
+                },
+                ct
+            );
+        }
+
+        async Task ExportAssetLinks()
+        {
+             await destMigrator.MigrateTable(AssetLinks.TableName, AssetLinks.Columns);
+             await KateQueryExecutor.GetPageDataAndInsert(
+                 sourceExecutor,
+                 destExecutor,
+                 AssetLinks.TableName,
+                 nameof(AssetLink.Id).Camelize(),
+                 AssetLinks.Columns.Select(x=>x.Name),
+                 null,
+                 ct
+             );
+        }
         async Task<(Record[], LoadedEntity[], Dictionary<string, LoadedEntity>)> LoadData()
         {
             //export latest schema
@@ -86,44 +120,7 @@ public class ExportWorker(
             var attrs = entity.Attributes.Where(x => x.IsLocal());
             var cols = attrs.ToColumns(entityDict);
             await destMigrator.MigrateTable(entity.TableName, cols.EnsureColumn(DefaultColumnNames.Deleted,ColumnType.Boolean));
-            await GetPageDataAndInsert(entity, cols.Select(x=>x.Name));
-        }
-
-        async Task CopyFiles(LoadedEntity entity, Record[] records)
-        {
-            foreach (var attr in entity.Attributes)
-            {
-                if (attr.IsAsset()) continue;
-                foreach (var record in records)
-                {
-                    if (!record.TryGetValue(attr.Field, out var value) || value is not string s) continue;
-                    
-                    var paths = s.Split(',');
-                    foreach (var path in paths)
-                    {
-                        await fileStore.Download(path, Path.Join(task.GetPaths().Folder, path));
-                    }
-                }
-            }
-        }
-        
-        async Task GetPageDataAndInsert(LoadedEntity entity,IEnumerable<string> fields)
-        {
-            const int limit = 1000;
-            var query = new Query(entity.TableName)
-                .Where(DefaultColumnNames.Deleted.Camelize(), false)
-                .OrderBy(entity.PrimaryKey)
-                .Select(fields).Limit(limit);
-            var records = await sourceExecutor.Many(query, ct);
-            while (true)
-            {
-                await CopyFiles(entity, records);
-                
-                await destExecutor.BatchInsert(entity.TableName, records);
-                if (records.Length < limit) break;
-                var lastId = records.Last()[entity.PrimaryKey];
-                records = await sourceExecutor.Many(query.Where(entity.PrimaryKey, ">", lastId),ct);
-            }
+            await KateQueryExecutor.GetPageDataAndInsert(sourceExecutor,destExecutor, entity.TableName, entity.PrimaryKey, cols.Select(x=>x.Name),null,ct);
         }
 
         async Task ExportSchema()
