@@ -36,22 +36,13 @@ public class ImportWorker(
         var attributeToLookupEntity = GetAttributeToLookup();
 
         //data is too big to put into a transaction 
-        try
-        {
-            await ImportSchemas();
-            await ImportEntities();
-            await ImportJunctions();
-            await ImportAssets();
-            await ImportAssetLinks();
-        }
-        catch (Exception ex)
-        {
-            logger.LogError("{ex}", ex);
-        }
-        finally
-        {
-            task.GetPaths().Clean();
-        }
+       
+        await ImportSchemas();
+        await ImportEntities();
+        await ImportJunctions();
+        await ImportAssets();
+        await ImportAssetLinks();
+        task.GetPaths().Clean();
 
         return;
 
@@ -67,6 +58,8 @@ public class ImportWorker(
                 async records =>
                 {
                     RenamePrimaryKeyToImportKey(records, nameof(Asset.Id).Camelize());
+                    ConvertDateTime(records, [nameof(Asset.CreatedAt).Camelize(),nameof(Asset.UpdatedAt).Camelize()]);
+                    
                     foreach (string path in records.Select(x => x[nameof(Asset.Path).Camelize()]))
                     {
                         var local = Path.Join(task.GetPaths().Folder, path);
@@ -79,25 +72,32 @@ public class ImportWorker(
 
         async Task ImportAssetLinks()
         {
-            await destMigrator.MigrateTable(AssetLinks.TableName, AssetLinks.Columns);
             await KateQueryExecutor.GetPageDataAndInsert(
                 sourceExecutor,
                 destinationExecutor,
                 AssetLinks.TableName,
                 nameof(Asset.Id).Camelize(),
-                AssetLinks.Columns.Select(x => x.Name),
-                MapAssetLinks,
+                AssetLinks.Entity.Attributes.Select(x => x.Field),
+                async records =>
+                {
+                    ConvertDateTime(records, [nameof(DefaultColumnNames.CreatedAt).Camelize(),nameof(DefaultColumnNames.UpdatedAt).Camelize()]);
+                    foreach (var record in records)
+                    {
+                        record.Remove(nameof(Asset.Id).Camelize());
+                    }
+                    await MapAssetLinks(records);
+                },
                 ct
             );
         }
 
         async Task MapAssetLinks(Record[] records)
         {
-            var entityNameToRecordArray = new Dictionary<string, object[]>();
+            var entityNameToRecordArray = new Dictionary<string, string[]>();
             foreach (var record in records)
             {
                 var entityName = (string)record[nameof(AssetLink.EntityName).Camelize()];
-                var recordId = record[nameof(AssetLink.RecordId).Camelize()];
+                var recordId = record.GetStrOrEmpty(nameof(AssetLink.RecordId).Camelize());
                 if (entityNameToRecordArray.ContainsKey(entityName))
                 {
                     entityNameToRecordArray[entityName] = [..entityNameToRecordArray[entityName], recordId];
@@ -126,15 +126,16 @@ public class ImportWorker(
                 Assets.TableName,
                 DefaultColumnNames.ImportKey.Camelize(),
                 nameof(Asset.Id).Camelize(),
-                records.Select(x=>x[nameof(AssetLink.AssetId).Camelize()]), ct
+                records.Select(x=>x.GetStrOrEmpty(nameof(AssetLink.AssetId).Camelize())), ct
             );
 
             foreach (var record in records)
             {
-                var entityName = (string)record[nameof(AssetLink.EntityName).Camelize()];
+                var entityName = record.GetStrOrEmpty(nameof(AssetLink.EntityName).Camelize());
                 var recordId = record.GetStrOrEmpty(nameof(AssetLink.RecordId).Camelize());
+                var assetId = record.GetStrOrEmpty(nameof(AssetLink.AssetId).Camelize());
                 record[nameof(AssetLink.RecordId).Camelize()] = entityNameToLookupDict[entityName][recordId];
-                record[nameof(AssetLink.AssetId).Camelize()] = dictAssetImportKeyToId[record.GetStrOrEmpty(nameof(AssetLink.AssetId).Camelize())];
+                record[nameof(AssetLink.AssetId).Camelize()] = dictAssetImportKeyToId[assetId];
             }
         }
 
@@ -295,7 +296,7 @@ public class ImportWorker(
             var fields = cols.Select(x => x.Name).ToArray();
             await destMigrator.MigrateTable(entity.TableName, cols
                 .EnsureColumn(DefaultColumnNames.Deleted, ColumnType.Boolean)
-                .EnsureColumn(DefaultColumnNames.ImportKey, ColumnType.Int)
+                .EnsureColumn(DefaultColumnNames.ImportKey, ColumnType.String)
             );
 
             await (circleReference ? LoadByTreeLevelAndInsert() : LoadByPageAndInsert());
@@ -354,27 +355,24 @@ public class ImportWorker(
                 record.Remove(primaryKey);
             }
         }
-        
-        async Task PreInsert(LoadedEntity entity, Record[] records)
-        {
-            ConvertDateTime();
-            RenamePrimaryKeyToImportKey(records, entity.PrimaryKey);
-            await ReplaceLookupFields();
 
-            void ConvertDateTime()
+        void ConvertDateTime(Record[] records, IEnumerable<string> fields)
+        {
+            foreach (var field in fields)
             {
-                foreach (var attr in entity.Attributes.Where(x => x.DataType == DataType.Datetime))
+                foreach (var rec in records)
                 {
-                    foreach (var rec in records)
-                    {
-                        if (!rec.TryGetValue(attr.Field, out var val) || val is not string s) continue;
-                        rec[attr.Field] = DateTime.Parse(s);
-                    }
+                    if (!rec.TryGetValue(field, out var val) || val is not string s) continue;
+                    rec[field] = DateTime.Parse(s);
                 }
             }
+        }
 
-           
-
+        async Task PreInsert(LoadedEntity entity, Record[] records)
+        {
+            ConvertDateTime(records, entity.Attributes.Where(x => x.DataType == DataType.Datetime).Select(x=>x.Field));
+            RenamePrimaryKeyToImportKey(records, entity.PrimaryKey);
+            await ReplaceLookupFields();
             async Task ReplaceLookupFields()
             {
                 foreach (var attribute in entity.Attributes)
@@ -386,7 +384,7 @@ public class ImportWorker(
                         lookupEntity.TableName,
                         DefaultColumnNames.ImportKey.Camelize(),
                         lookupEntity.PrimaryKey,
-                        records.Select(x => x[attribute.Field]), ct
+                        records.Select(x => x.GetStrOrEmpty(attribute.Field)), ct
                     );
 
                     foreach (var record in records)

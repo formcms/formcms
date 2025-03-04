@@ -31,5 +31,9 @@
     <ItemGroup>
       <Folder Include="wwwroot\" />
     </ItemGroup>
-
+    <ItemGroup>
+        <None Update="cms.db">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 </Project>

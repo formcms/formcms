@@ -132,10 +132,10 @@ public sealed class EntitySchemaService(
             await hook.SchemaPostSave.Trigger(provider, new SchemaPostSaveArgs(schema));
             return schema;
         }
-        catch
+        catch(Exception ex )
         {
             tx.Rollback();
-            throw;
+            throw ex is ResultException ? ex: new ResultException(ex.Message,ex);
         }
 
         Schema WithDefaultAttr(Schema s)

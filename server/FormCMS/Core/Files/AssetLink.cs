@@ -1,5 +1,6 @@
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
+using FormCMS.Utils.DisplayModels;
 using Humanizer;
 using SqlKata;
 using Column = FormCMS.Utils.DataModels.Column;
@@ -10,6 +11,8 @@ public record AssetLink(
     string EntityName,
     long RecordId,
     long AssetId,
+    DateTime CreatedAt = default,
+    DateTime UpdatedAt = default,
     long Id = 0
 );
 
@@ -17,17 +20,31 @@ public static class AssetLinks
 {
     public const string TableName = "__assetLinks";
     private const int DefaultPageSize = 50;
+    
+    public static readonly XEntity Entity = XEntityExtensions.CreateEntity<Asset>(
+        nameof(Asset.Type),
+        defaultPageSize: DefaultPageSize,
+        attributes:
+        [
+            XAttrExtensions.CreateAttr<AssetLink, string>(x => x.EntityName),
+            XAttrExtensions.CreateAttr<AssetLink, long>(x => x.RecordId),
+            XAttrExtensions.CreateAttr<AssetLink, long>(x => x.AssetId),
+            XAttrExtensions.CreateAttr<AssetLink, DateTime>(x => x.CreatedAt),
+            XAttrExtensions.CreateAttr<AssetLink, DateTime>(x => x.UpdatedAt),
+            XAttrExtensions.CreateAttr<AssetLink, long>(x => x.Id,isDefault:true),
+        ]);
 
     public static readonly Column[] Columns =
     [
-        ColumnHelper.CreateCamelColumn<AssetLink>(x => x.Id, ColumnType.Id),
         ColumnHelper.CreateCamelColumn<AssetLink,string>(x => x.EntityName),
         ColumnHelper.CreateCamelColumn<AssetLink,long>(x => x.AssetId),
         ColumnHelper.CreateCamelColumn<AssetLink,long>(x => x.RecordId),
-       
+        
+        ColumnHelper.CreateCamelColumn<AssetLink,DateTime>(x => x.CreatedAt),
+        ColumnHelper.CreateCamelColumn<AssetLink,DateTime>(x => x.UpdatedAt),
+        
+        ColumnHelper.CreateCamelColumn<AssetLink>(x => x.Id, ColumnType.Id),
         DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
-        DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
-        DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
     ];
 
     public static Query GetAssetIdsByEntityAndRecordId(string entity, long recordId)

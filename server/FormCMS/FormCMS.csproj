@@ -52,15 +52,11 @@
         <None Include="../../doc/mkdoc/docs/index.md" Pack="true" PackagePath="\readme.md" />
     </ItemGroup>
 
-    <ItemGroup>
-      <Folder Include="Auth\DTO\" />
-    </ItemGroup>
-
     <PropertyGroup>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net9.0</TargetFramework>
         <PackageId>FormCMS</PackageId>
-        <Version>0.4.1.5</Version>
+        <Version>0.4.2.2</Version>
         <Authors>Jason C</Authors>
         <Company>FormCMS</Company>
         <Description>A headless CMS with GraphQL API and drag-and-drop page designer.</Description>

@@ -73,7 +73,7 @@ export function TaskList({schema}:{schema:XEntity}){
         <div className="card">
             {data && columns &&<EditDataTable columns={tableColumns} data={data} stateManager={stateManager}/>}
         </div>
-        <Dialog maximizable visible={visible} 
+        <Dialog visible={visible} 
                 header={'Select a file to upload'} modal className="p-fluid" 
                 onHide={hideDialog}>
             <FileUpload withCredentials mode={"basic"} auto url={getAddImportTaskUploadUrl()}  name={'files'} onUpload={onAddImportTaskUpload}/>

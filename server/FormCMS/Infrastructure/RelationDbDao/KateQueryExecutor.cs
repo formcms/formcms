@@ -32,7 +32,7 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
       }
    }
 
-   public async Task<Dictionary<string, object>> LoadDict(string tableName, string keyField, string valueField, IEnumerable<object> ids,CancellationToken ct)
+   public async Task<Dictionary<string, object>> LoadDict(string tableName, string keyField, string valueField, IEnumerable<string> ids,CancellationToken ct)
    {
       var query = new Query(tableName)
          .WhereIn(keyField, ids)
@@ -47,7 +47,7 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
 
    public async Task Upsert(string tableName, string importKey, Record[] records)
    {
-      var ids = records.Select(x => x[importKey]).ToArray();
+      var ids = records.Select(x => x.GetStrOrEmpty(importKey)).ToArray();
 
       var existingRecords = await Many(new Query(tableName).WhereIn(importKey, ids));
       
