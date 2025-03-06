@@ -14,6 +14,7 @@ export enum TaskStatus {
     Init = "init",
     InProgress = "inProgress",
     Finished = "finished",
+    Archived = "archived",
     Failed = "failed",
 }
 
@@ -28,7 +29,9 @@ export interface SystemTask {
     type: TaskType;
     createdBy: string;
     id: number;
+    taskId: string;
     progress: number;
+    error: string;
     createdAt: Date;
     updatedAt: Date;
 }

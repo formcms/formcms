@@ -4,20 +4,21 @@ import {ListResponse} from "../../cms-client/types/listResponse";
 
 export function SelectDataTable(
     {
-        dataKey,
         columns,
         data,
         selectedItems, 
         setSelectedItems,
-        actionBodyTemplate,
         stateManager: {state, handlers: {onPage, onFilter, onSort}},
+
+        actionBodyTemplate,
+        dataKey,
+        selectionMode
     }:
     {
         columns: React.JSX.Element[];
         data: ListResponse | undefined
         selectedItems: any
         setSelectedItems: any
-        actionBodyTemplate?: any
         stateManager: {
             state: any
             handlers: {
@@ -26,7 +27,10 @@ export function SelectDataTable(
                 onSort: any,
             }
         }
+
+        actionBodyTemplate?: any
         dataKey?: string;
+        selectionMode?: 'single' | 'multiple' | undefined;
     }
 ) {
     const {items, totalRecords} = data ?? {}
@@ -47,9 +51,10 @@ export function SelectDataTable(
         onFilter={onFilter}
         onPage={onPage}
         selection={selectedItems}
+        
         onSelectionChange={(e) => setSelectedItems(e.value)}
     >
-        <Column selectionMode="multiple" headerStyle={{width: '3rem'}}></Column>
+        <Column selectionMode={selectionMode} headerStyle={{width: '3rem'}}></Column>
         {columns}
         {actionBodyTemplate &&
             <Column body={actionBodyTemplate} exportable={false} style={{minWidth: '12rem'}}></Column>}

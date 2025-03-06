@@ -4,12 +4,12 @@ import {useCheckError} from "../../components/useCheckError";
 import {useConfirm} from "../../components/useConfirm";
 import {usePicklist} from "./usePicklist";
 import {useDialogState} from "../../components/dialogs/useDialogState";
-import {SelectDataTable} from "../../components/dataTable/SelectDataTable";
+import {SelectDataTable} from "../../components/data/SelectDataTable";
 import {SaveDialog} from "../../components/dialogs/SaveDialog";
 import { XAttr } from "../types/xEntity";
-import { useDataTableStateManager } from "../../components/dataTable/useDataTableStateManager";
-import { encodeDataTableState } from "../../components/dataTable/dataTableStateUtil";
-import { createColumn } from "../../components/dataTable/columns/createColumn";
+import { useDataTableStateManager } from "../../components/data/useDataTableStateManager";
+import { encodeDataTableState } from "../../components/data/dataTableStateUtil";
+import { createColumn } from "../../components/data/columns/createColumn";
 
 export function Picklist({column, data, schema, getFullAssetsURL}: {
     data: any,

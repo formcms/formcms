@@ -232,8 +232,6 @@ public static class EntityHelper
     
     public static Result<SqlKata.Query> UpdateQuery(this LoadedEntity e, long id, Record item)
     {
-       
-        
         if (!item.Remove(DefaultColumnNames.UpdatedAt.Camelize(), out var updatedAt))
         {
             return Result.Fail($"Failed to get updatedAt value with field [{e.UpdatedAtAttribute.Field.ToCamelCase()}]");

@@ -5,8 +5,10 @@ using FormCMS.Auth.Services;
 using NJsonSchema;
 using NJsonSchema.CodeGeneration.TypeScript;
 using FormCMS.Core.Descriptors;
+using FormCMS.Core.Files;
 using FormCMS.Core.Identities;
 using FormCMS.Core.Tasks;
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 using NJsonSchema.Generation;
 
@@ -15,9 +17,11 @@ TsGenerator.GenerateCode<ListResponse>("../../admin-panel/src/cms-client/types/l
 TsGenerator.GenerateCode<ListResponseMode>("../../admin-panel/src/cms-client/types/listResponseMode.ts");
 TsGenerator.GenerateCode<LookupListResponse>("../../admin-panel/src/cms-client/types/lookupListResponse.ts");
 TsGenerator.GenerateCode<DefaultAttributeNames>("../../admin-panel/src/cms-client/types/defaultAttributeNames.ts");
+TsGenerator.GenerateCode<DefaultColumnNames>("../../admin-panel/src/cms-client/types/defaultColumnNames.ts");
 TsGenerator.GenerateCode<PublicationStatus>("../../admin-panel/src/cms-client/types/publicationStatus.ts");
 TsGenerator.GenerateCode<SpecialQueryKeys>("../../admin-panel/src/cms-client/types/specialQueryKeys.ts");
 TsGenerator.GenerateCode<SystemTask>("../../admin-panel/src/cms-client/types/systemTask.ts");
+TsGenerator.GenerateCode<Asset>("../../admin-panel/src/cms-client/types/asset.ts");
 
 
 TsGenerator.GenerateCode<RoleAccess>("../../admin-panel/src/auth/types/roleAccess.ts");
@@ -29,8 +33,8 @@ TsGenerator.GenerateCode<AuditLog>("../../admin-panel/src/auditLog/types/auditLo
 TsGenerator.GenerateCode<XEntity>("../../admin-panel/src/auditLog/types/xEntity.ts");
 TsGenerator.GenerateCode<ListResponse>("../../admin-panel/src/auditLog/types/listResponse.ts");
 
-TsGenerator.GenerateCode<XEntity>("../../admin-panel/src/components/dataTable/xEntity.ts");
-TsGenerator.GenerateCode<ListResponse>("../../admin-panel/src/components/dataTable/listResponse.ts");
+TsGenerator.GenerateCode<XEntity>("../../admin-panel/src/components/xEntity.ts");
+TsGenerator.GenerateCode<ListResponse>("../../admin-panel/src/components/data/listResponse.ts");
 internal static class TsGenerator
 {
     private static readonly JsonSerializerOptions CamelNaming = new JsonSerializerOptions

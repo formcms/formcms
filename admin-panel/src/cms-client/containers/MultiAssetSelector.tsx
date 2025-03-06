@@ -1,10 +1,10 @@
-import { createColumn } from "../../components/dataTable/columns/createColumn";
-import { encodeDataTableState } from "../../components/dataTable/dataTableStateUtil";
-import { useDataTableStateManager } from "../../components/dataTable/useDataTableStateManager";
+import { createColumn } from "../../components/data/columns/createColumn";
+import { encodeDataTableState } from "../../components/data/dataTableStateUtil";
+import { useDataTableStateManager } from "../../components/data/useDataTableStateManager";
 import { FetchingStatus } from "../../components/FetchingStatus";
 import { useAssetEntity, useAssets, useGetCmsAssetsUrl } from "../services/asset";
 import { XEntity } from "../types/xEntity";
-import { SelectDataTable } from "../../components/dataTable/SelectDataTable";
+import { SelectDataTable } from "../../components/data/SelectDataTable";
 import { Dialog } from "primereact/dialog";
 import { Button } from "primereact/button";
 

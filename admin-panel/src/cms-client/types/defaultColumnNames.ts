@@ -10,8 +10,9 @@
 
 
 
-export enum DefaultAttributeNames {
-    Id = "id",
-    PublishedAt = "publishedAt",
-    PublicationStatus = "publicationStatus",
+export enum DefaultColumnNames {
+    ImportKey = "importKey",
+    Deleted = "deleted",
+    CreatedAt = "createdAt",
+    UpdatedAt = "updatedAt",
 }

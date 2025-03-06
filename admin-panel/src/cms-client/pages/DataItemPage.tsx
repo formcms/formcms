@@ -20,6 +20,7 @@ import { DefaultAttributeNames } from "../types/defaultAttributeNames";
 import { PublicationStatus } from "../types/publicationStatus";
 import { SpecialQueryKeys } from "../types/specialQueryKeys";
 import { getFileUploadURL, useGetCmsAssetsUrl } from "../services/asset";
+import { DefaultColumnNames } from "../types/defaultColumnNames";
 
 export function DataItemPage({baseRouter}: { baseRouter: string }) {
     const {schemaName} = useParams()
@@ -77,7 +78,7 @@ export function DataItemPageComponent({schema, baseRouter}: { schema: XEntity, b
 
     const onSubmit = async (formData: any) => {
         formData[schema.primaryKey] = id
-        formData[DefaultAttributeNames.UpdatedAt] = data[DefaultAttributeNames.UpdatedAt];
+        formData[DefaultColumnNames.UpdatedAt] = data[DefaultColumnNames.UpdatedAt];
 
         const {error} = await updateItem(schema.name, formData)
         await handlePageErrorOrSucess(error, 'Save Succeed', mutate)

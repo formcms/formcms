@@ -1,12 +1,14 @@
 import { FetchingStatus } from "../../components/FetchingStatus"
-import { EditDataTable } from "../../components/dataTable/EditDataTable";
+import { EditDataTable } from "../../components/data/EditDataTable";
+import { encodeDataTableState } from "../../components/data/dataTableStateUtil";
+import { createColumn } from "../../components/data/columns/createColumn";
+import { useDataTableStateManager } from "../../components/data/useDataTableStateManager";
+
 import {useAuditLogs} from "../services/auditLog"
 import { XEntity } from "../types/xEntity";
-import { useDataTableStateManager } from "../../components/dataTable/useDataTableStateManager";
-import { encodeDataTableState } from "../../components/dataTable/dataTableStateUtil";
-import { createColumn } from "../../components/dataTable/columns/createColumn";
-import { useNavigate } from "react-router-dom";
 
+
+import { useNavigate } from "react-router-dom";
 export function AuditLogList({baseRouter,schema}: { baseRouter: string,schema:XEntity }) {
     const navigate = useNavigate();    
     const columns = schema?.attributes?.filter(column => column.inList) ?? [];

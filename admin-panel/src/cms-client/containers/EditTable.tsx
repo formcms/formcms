@@ -7,11 +7,11 @@ import { ItemForm } from "./ItemForm";
 import {Message} from "primereact/message";
 import {Toast} from "primereact/toast";
 import {useRef, useState} from "react";
-import { EditDataTable } from "../../components/dataTable/EditDataTable";
+import { EditDataTable } from "../../components/data/EditDataTable";
 import { XAttr, XEntity } from "../types/xEntity";
-import { useDataTableStateManager } from "../../components/dataTable/useDataTableStateManager";
-import { encodeDataTableState } from "../../components/dataTable/dataTableStateUtil";
-import { createColumn } from "../../components/dataTable/columns/createColumn";
+import { useDataTableStateManager } from "../../components/data/useDataTableStateManager";
+import { encodeDataTableState } from "../../components/data/dataTableStateUtil";
+import { createColumn } from "../../components/data/columns/createColumn";
 import { getFileUploadURL } from "../services/asset";
 
 

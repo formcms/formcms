@@ -27,7 +27,7 @@ public record Asset(
 public static class Assets
 {
     public const string TableName = "__assets";
-    private const int DefaultPageSize = 50;
+    private const int DefaultPageSize = 48;
 
     public static readonly XEntity Entity = XEntityExtensions.CreateEntity<Asset>(
         nameof(Asset.Type),

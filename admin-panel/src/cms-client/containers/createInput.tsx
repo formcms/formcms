@@ -39,7 +39,7 @@ export function createInput(props :{
         case 'image':
             return <FileInput  fileSelector={ AssetSelector} previewImage className={'field col-12  md:col-4'} key={field} {...props}/>
         case 'gallery':
-            return <GalleryInput  fileSelector={MultiAssetSelector} className={'field col-12  md:col-4'} key={field} {...props}/>
+            return <GalleryInput  fileSelector={AssetSelector} className={'field col-12  md:col-4'} key={field} {...props}/>
         case 'file':
             return <FileInput fileSelector={AssetSelector} download className={'field col-12  md:col-4'} key={field} {...props}/>
         case 'dropdown':

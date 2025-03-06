@@ -16,9 +16,13 @@ export function FileInput(props: {
     download?: boolean
     getFullAssetsURL: (arg: string) => string
     fileSelector?: React.ComponentType<{
+        selectionMode?: 'single' | 'multiple' | undefined;
+
         show: boolean;
-        setShow:(show: boolean) => void
-        onSelect: (selectedPath: string) => void
+        setShow: (show: boolean) => void;
+
+        path: string;
+        setPath: (paths: string) => void;
     }>
 }) {
     const FileSelectDialog = props.fileSelector;
@@ -26,10 +30,6 @@ export function FileInput(props: {
 
     return <InputPanel  {...props} childComponent={(field: any) => {
         const {uploadUrl} = props
-        const handleOnSelect = (selectedPath: string) => {
-            field.onChange(selectedPath);
-            setShowChooseLib(false);
-        }
         
         return <>
             <InputText 
@@ -75,7 +75,9 @@ export function FileInput(props: {
             {
                 FileSelectDialog &&
                     <FileSelectDialog 
-                        onSelect={handleOnSelect}
+                        selectionMode="single"
+                        path={field.value}
+                        setPath={path => field.onChange(path)}
                         show={showChooseLib}
                         setShow={setShowChooseLib}
                     />

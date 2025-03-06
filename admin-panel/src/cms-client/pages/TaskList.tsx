@@ -1,8 +1,8 @@
 import { Button } from "primereact/button";
-import { createColumn } from "../../components/dataTable/columns/createColumn";
-import { encodeDataTableState } from "../../components/dataTable/dataTableStateUtil";
-import { EditDataTable } from "../../components/dataTable/EditDataTable";
-import { useDataTableStateManager } from "../../components/dataTable/useDataTableStateManager";
+import { createColumn } from "../../components/data/columns/createColumn";
+import { encodeDataTableState } from "../../components/data/dataTableStateUtil";
+import { EditDataTable } from "../../components/data/EditDataTable";
+import { useDataTableStateManager } from "../../components/data/useDataTableStateManager";
 import { FetchingStatus } from "../../components/FetchingStatus";
 import {addExportTask, archiveExportTask, getAddImportTaskUploadUrl, getExportTaskDownloadFileLink,
     importDemoData, useTasks } from "../services/task";
