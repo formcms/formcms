@@ -21,12 +21,10 @@ public sealed class EntityService(
     IServiceProvider provider,
     KateQueryExecutor queryExecutor,
     IEntitySchemaService entitySchemaSvc,
-    IFileStore store,
-    IProfileService profileService,
+    IAssetService assetService,
     HookRegistry hookRegistry
 ) : IEntityService
 {
-
 
     public async Task<ListResponse?> ListWithAction(
         string name,
@@ -319,8 +317,6 @@ public sealed class EntityService(
         }
     }
 
-
-
     private async Task<Record> UpdateWithAction(RecordContext ctx, CancellationToken ct)
     {
         var (entity, record) = ctx;
@@ -351,7 +347,7 @@ public sealed class EntityService(
                     "Error: Concurrent Update Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
             }
 
-            await UpdateAssetsLinks(entity, record, id, UpdateAssetLinkType.Update, ct);
+            await assetService.UpdateAssetsLinks(entity.GetAssets(record), entity.Name, id, true, ct);
             trans.Commit();
 
             await hookRegistry.EntityPostUpdate.Trigger(provider, new EntityPostUpdateArgs(entity, record));
@@ -379,7 +375,8 @@ public sealed class EntityService(
         {
 
             var id = await queryExecutor.Exec(entity.Insert(record), true, ct);
-            await UpdateAssetsLinks(entity, record, id,UpdateAssetLinkType.Add, ct);
+
+            await assetService.UpdateAssetsLinks(entity.GetAssets(record), entity.Name, id, false, ct);
             record[entity.PrimaryKey] = id;
             trans.Commit();
 
@@ -418,7 +415,7 @@ public sealed class EntityService(
                     "Error: Concurrent Write Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
             }
 
-            await UpdateAssetsLinks(entity, record, id, UpdateAssetLinkType.Delete, ct);
+            await assetService.UpdateAssetsLinks([], entity.Name, id, false, ct);
 
             transaction.Commit();
 
@@ -431,63 +428,6 @@ public sealed class EntityService(
             transaction.Rollback();
             throw e is ResultException ? e : new ResultException(e.Message);
         }
-    }
-
-    enum UpdateAssetLinkType{Add, Update, Delete}
-    private async Task UpdateAssetsLinks(LoadedEntity entity, Record record, long id, UpdateAssetLinkType t, CancellationToken ct)
-    {
-        Record[] assetRecords = [];
-        if (t != UpdateAssetLinkType.Delete)
-        {
-            var assetPaths = entity.GetAssets(record).Where(Assets.IsValidPath).ToArray();
-            assetRecords = await queryExecutor.Many(Assets.GetAssetIDsByPaths(assetPaths), ct);
-            assetRecords = await EnsurePathTracked(assetPaths, assetRecords,ct);
-        }
-
-        var existingLinks = t == UpdateAssetLinkType.Add 
-            ? []
-            : await queryExecutor.Many(AssetLinks.GetAssetIdsByEntityAndRecordId(entity.Name, id), ct);
-
-        var (toAdd, toDel) = AssetLinks.Diff(
-            assetRecords.Select(x => (long)x[nameof(Asset.Id).Camelize()]),
-            existingLinks.Select(x => (long)x[nameof(AssetLink.AssetId).Camelize()])
-        );
-
-        await queryExecutor.BatchInsert(AssetLinks.TableName, AssetLinks.ToInsertRecords(entity.Name, id, toAdd));
-
-        if (toDel.Length > 0)
-        {
-            await queryExecutor.Exec(AssetLinks.DeleteByEntityAndRecordId(entity.Name, id, toDel), false, ct);
-        }
-    }
-
-    private async Task<Record[]> EnsurePathTracked(string[] assetPaths, Record[] assetRecords, CancellationToken ct)
-    {
-        var set = assetRecords
-            .Select(x => x.GetStrOrEmpty(nameof(Asset.Path).Camelize()))
-            .ToHashSet();
-        var list = new List<Asset>();
-        foreach (var s in assetPaths)
-        {
-            if (set.Contains(s)) continue;
-            var info = await store.GetFileInfo(s);
-            if (info == null) continue;
-            var asset = new Asset(
-                CreatedBy: profileService.GetInfo()?.Name ?? "",
-                Path: s, Url: info.Url,
-                Name: s, Title: s,
-                Size: info.FileSize, Type: info.ContentType,
-                Metadata: new Dictionary<string, object>()
-            );
-            list.Add(asset);
-        }
-
-        if (list.Count > 0)
-        {
-            await queryExecutor.BatchInsert(Assets.TableName, list.ToInsertRecords());
-            assetRecords = await queryExecutor.Many(Assets.GetAssetIDsByPaths(assetPaths), ct);
-        }
-        return assetRecords;
     }
 
     record IdContext(LoadedEntity Entity, ValidValue Id);

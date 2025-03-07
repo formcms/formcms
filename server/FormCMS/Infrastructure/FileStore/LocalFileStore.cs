@@ -1,35 +1,36 @@
 using FluentResults;
 using FormCMS.Infrastructure.ImageUtil;
+using Microsoft.AspNetCore.StaticFiles;
 
 namespace FormCMS.Infrastructure.FileStore;
 
 public record LocalFileStoreOptions(string PathPrefix, string UrlPrefix);
 
 public class LocalFileStore(
-    LocalFileStoreOptions options,
-    Resizer resizer
+    LocalFileStoreOptions options
     ):IFileStore
 {
     public string GetUrl(string file)=> Path.Join(options.UrlPrefix,file);
     
-    public Task<FileInfo?> GetFileInfo(string file)
+    public Task<long> GetFileSize(string file)
     {
         string fullPath = Path.Join(options.PathPrefix, file);
         if (!File.Exists(fullPath))
         {
-            return Task.FromResult<FileInfo?>(null);
+            return Task.FromResult(0L);
         }
-
-        var sysFileInfo = new System.IO.FileInfo(fullPath);
-        var fileInfo = new FileInfo(
-            Path: fullPath,
-            Url: GetUrl(file),
-            Name: sysFileInfo.Name,
-            ContentType: Util.GetContentType(sysFileInfo.Extension),
-            FileSize: (int)sysFileInfo.Length // Cast long to int, assuming files < 2GB
-        );
-
-        return Task.FromResult<FileInfo?>(fileInfo);
+        
+        var sysFileInfo = new FileInfo(fullPath);
+        return Task.FromResult(sysFileInfo.Length);
+    }
+    
+    public Task<string> GetContentType(string filePath)
+    {
+        var provider = new FileExtensionContentTypeProvider();
+        var tp = provider.TryGetContentType(filePath, out var contentType) 
+            ? contentType 
+            : "application/octet-stream"; // Default fallback
+        return Task.FromResult(tp);
     }
 
     public Task Download(string path, string localPath)
@@ -63,48 +64,31 @@ public class LocalFileStore(
 
     public Task Upload(string localPath, string path)
     {
-        path = Path.Join(options.PathPrefix, path);
+        var dest = Path.Join(options.PathPrefix, path);
         if (File.Exists(localPath))
         {
-            CreateDirAndCopy(localPath, path);
+            CreateDirAndCopy(localPath, dest);
         }
+
         return Task.CompletedTask;
     }
     
-    public async Task<Result<FileInfo[]>> Upload(IEnumerable<IFormFile> files)
+    public async Task UploadAndDispose(IEnumerable<(string,IFormFile)> files)
     {
-        var dir = Util.GetDirectoryName();
-        Directory.CreateDirectory(Path.Join(options.PathPrefix, dir));
-        var ret = new List<FileInfo>();
-
-        foreach (var file in files)
+        var set = new HashSet<string>();
+        foreach (var (fileName, file) in files)
         {
-            if (file.Length == 0)
+            var dest = Path.Join(options.PathPrefix, fileName);
+            var dir = Path.GetDirectoryName(dest);
+            
+            if (!string.IsNullOrEmpty(dir) && !set.Contains(dir) && !Directory.Exists(dir))
             {
-                return Result.Fail($"Invalid file length {file.FileName}");
+                Directory.CreateDirectory(dir);
+                set.Add(dir);
             }
 
-            var filePath = "/" + Path.Join(dir, Util.GetUniqName(file.FileName));
-            await using var saveStream = File.Create(Path.Join(options.PathPrefix, filePath));
-
-            if (resizer.IsImage(file))
-            {
-                resizer.Compress(file.OpenReadStream(),saveStream);
-            }
-            else
-            {
-                await file.CopyToAsync(saveStream);
-            }
-
-            ret.Add(new FileInfo(
-                Path: filePath,  // Full filesystem path
-                Url: GetUrl(filePath),            // URL for access
-                Name: file.FileName,
-                ContentType: file.ContentType,
-                FileSize: (int)saveStream.Length
-            ));
+            await using var fileStream = new FileStream(dest, FileMode.Create, FileAccess.Write);
+            await file.CopyToAsync(fileStream);
         }
-
-        return ret.ToArray();
     }
 }

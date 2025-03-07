@@ -9,6 +9,7 @@ using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
+using Query = SqlKata.Query;
 
 namespace FormCMS.Cms.Workers;
 public record ImportWorkerOptions(int DelaySeconds);
@@ -97,7 +98,7 @@ public class ImportWorker(
             foreach (var record in records)
             {
                 var entityName = (string)record[nameof(AssetLink.EntityName).Camelize()];
-                var recordId = record.GetStrOrEmpty(nameof(AssetLink.RecordId).Camelize());
+                var recordId = record.StrOrEmpty(nameof(AssetLink.RecordId).Camelize());
                 if (entityNameToRecordArray.ContainsKey(entityName))
                 {
                     entityNameToRecordArray[entityName] = [..entityNameToRecordArray[entityName], recordId];
@@ -113,27 +114,28 @@ public class ImportWorker(
             {
                 var entity = entityNameToEntity[key];
                 var dictImportKeyToId = await destinationExecutor.LoadDict(
-                    entity.TableName,
+                    new Query(entity.TableName).WhereIn(DefaultColumnNames.ImportKey.Camelize(),ids),
                     DefaultColumnNames.ImportKey.Camelize(),
                     entity.PrimaryKey,
-                    ids, ct
+                     ct
                 );
                 entityNameToLookupDict[key] = dictImportKeyToId;
 
             }
-            
+
+            var assetIds = records.Select(x => x.StrOrEmpty(nameof(AssetLink.AssetId).Camelize()));
             var dictAssetImportKeyToId = await destinationExecutor.LoadDict(
-                Assets.TableName,
+                    new Query(Assets.TableName).WhereIn(DefaultColumnNames.ImportKey.Camelize(),assetIds),
                 DefaultColumnNames.ImportKey.Camelize(),
                 nameof(Asset.Id).Camelize(),
-                records.Select(x=>x.GetStrOrEmpty(nameof(AssetLink.AssetId).Camelize())), ct
+                 ct
             );
 
             foreach (var record in records)
             {
-                var entityName = record.GetStrOrEmpty(nameof(AssetLink.EntityName).Camelize());
-                var recordId = record.GetStrOrEmpty(nameof(AssetLink.RecordId).Camelize());
-                var assetId = record.GetStrOrEmpty(nameof(AssetLink.AssetId).Camelize());
+                var entityName = record.StrOrEmpty(nameof(AssetLink.EntityName).Camelize());
+                var recordId = record.StrOrEmpty(nameof(AssetLink.RecordId).Camelize());
+                var assetId = record.StrOrEmpty(nameof(AssetLink.AssetId).Camelize());
                 record[nameof(AssetLink.RecordId).Camelize()] = entityNameToLookupDict[entityName][recordId];
                 record[nameof(AssetLink.AssetId).Camelize()] = dictAssetImportKeyToId[assetId];
             }
@@ -308,7 +310,7 @@ public class ImportWorker(
                         attributeToLookupEntity.TryGetValue((entity.Name, f.Field), out var e) && e.Name == entity.Name
                     ).Field;
 
-                var query = new SqlKata.Query(entity.TableName).Select(fields);
+                var query = new Query(entity.TableName).Select(fields);
 
                 var records = await sourceExecutor.Many(query.Clone().Where(parentField, null), ct);
 
@@ -328,7 +330,7 @@ public class ImportWorker(
             async Task LoadByPageAndInsert()
             {
                 const int limit = 1000;
-                var query = new SqlKata.Query(entity.TableName)
+                var query = new Query(entity.TableName)
                     .OrderBy(entity.PrimaryKey)
                     .Select(fields).Limit(limit);
                 var records = await sourceExecutor.Many(query, ct);
@@ -380,16 +382,17 @@ public class ImportWorker(
                     if (!attributeToLookupEntity.TryGetValue((entity.Name, attribute.Field), out var lookupEntity))
                         continue;
 
+                    var vals = records.Select(x => x.StrOrEmpty(attribute.Field));
                     var dictImportKeyToId = await destinationExecutor.LoadDict(
-                        lookupEntity.TableName,
+                        new Query(lookupEntity.TableName).WhereIn(DefaultColumnNames.ImportKey.Camelize(), vals),
                         DefaultColumnNames.ImportKey.Camelize(),
                         lookupEntity.PrimaryKey,
-                        records.Select(x => x.GetStrOrEmpty(attribute.Field)), ct
+                        ct
                     );
 
                     foreach (var record in records)
                     {
-                        var importId = record.GetStrOrEmpty(attribute.Field);
+                        var importId = record.StrOrEmpty(attribute.Field);
                         if (dictImportKeyToId.TryGetValue(importId, out var id))
                         {
                             record[attribute.Field] = id;

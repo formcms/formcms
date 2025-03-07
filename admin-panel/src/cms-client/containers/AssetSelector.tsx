@@ -10,11 +10,9 @@ import {useState} from "react";
 import {Asset} from "../types/asset";
 import {SelectDataTable} from "../../components/data/SelectDataTable";
 import { GalleryView } from "../../components/data/GalleryView";
+import { AssetField } from "../types/assetUtils";
 
-/** Returns the string representation of a valid key from the `Asset` interface. */
-function AssetField(key: keyof Asset) {
-    return key as string;
-}
+
 
 type AssetSelectorProps = {
 
@@ -62,7 +60,7 @@ export function AssetSelectorComponent(
 
     const columns = schema?.attributes?.filter(column => column.inList) ?? [];
     const stateManager = useDataTableStateManager(schema.defaultPageSize, columns, undefined)
-    const {data, error, isLoading} = useAssets(encodeDataTableState(stateManager.state))
+    const {data, error, isLoading} = useAssets(encodeDataTableState(stateManager.state),false)
     const getCmsAssetUrl = useGetCmsAssetsUrl();
 
     const tableColumns = columns.map(x => createColumn(x, getCmsAssetUrl, undefined));

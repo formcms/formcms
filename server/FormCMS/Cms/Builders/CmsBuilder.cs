@@ -55,7 +55,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         optionsAction?.Invoke(systemSettings);
         services.AddSingleton(systemSettings);
 
-        var systemResources = new RestrictedFeatures([Menus.MenuSchemaBuilder, Menus.MenuTasks]);
+        var systemResources = new RestrictedFeatures([Menus.MenuSchemaBuilder, Menus.MenuTasks,Menus.MenuAssets]);
         services.AddSingleton(systemResources);
         
         services.AddSingleton(new DbOption(databaseProvider, connectionString));
@@ -69,7 +69,6 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         services.AddScoped<DatabaseMigrator>();
         
         AddCacheServices();
-        AddStorageServices();
         AddGraphqlServices();
         AddPageTemplateServices();
         AddCmsServices();
@@ -81,6 +80,15 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         
         void AddCmsServices()
         {
+            
+            services.AddSingleton(new ResizeOptions(systemSettings.ImageCompression.MaxWidth,systemSettings.ImageCompression.Quality));
+            services.AddSingleton<IResizer,Resizer>();
+            
+            services.AddSingleton(new LocalFileStoreOptions( Path.Join(Directory.GetCurrentDirectory(), "wwwroot/files"), systemSettings.AssetUrlPrefix));
+            services.AddSingleton<IFileStore,LocalFileStore>();
+            
+            services.AddScoped<IAssetService, AssetService>();
+            
             services.AddScoped<ISchemaService, SchemaService>();
             services.AddScoped<IEntitySchemaService, EntitySchemaService>();
             services.AddScoped<IQuerySchemaService, QuerySchemaService>();
@@ -88,8 +96,6 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             services.AddScoped<IEntityService, EntityService>();
             services.AddScoped<IQueryService, QueryService>();
             services.AddScoped<IPageService, PageService>();
-            
-            services.AddScoped<IAssetService, AssetService>();
             
             services.AddHttpClient();  //needed by task service
             services.AddScoped<ITaskService, TaskService>();
@@ -146,15 +152,6 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
                 new KeyValueCache<LoadedQuery>(p,
                     p.GetRequiredService<ILogger<KeyValueCache<LoadedQuery>>>(),
                     "query", systemSettings.QuerySchemaExpiration));
-        }
-
-        void AddStorageServices()
-        {
-            services.AddSingleton(new ResizeOptions(systemSettings.ImageCompression.MaxWidth,systemSettings.ImageCompression.Quality));
-            services.AddSingleton<Resizer>();
-            
-            services.AddSingleton(new LocalFileStoreOptions( Path.Join(Directory.GetCurrentDirectory(), "wwwroot/files"), systemSettings.AssetUrlPrefix));
-            services.AddSingleton<IFileStore,LocalFileStore>();
         }
     }
 

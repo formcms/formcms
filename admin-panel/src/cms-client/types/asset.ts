@@ -22,4 +22,5 @@ export interface Asset {
     createdAt: Date;
     updatedAt: Date;
     id: number;
+    linkCount: number;
 }

@@ -44,7 +44,7 @@ public static class RecordExtensions
         return Enum.TryParse(s, true, out e);
     }
 
-    public static string GetStrOrEmpty(this Record r, string field)
+    public static string StrOrEmpty(this Record r, string field)
         =>(r.TryGetValue(field, out var o) && o is not null)?o.ToString() ?? string.Empty:string.Empty;
 
 

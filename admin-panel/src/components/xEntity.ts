@@ -33,6 +33,7 @@ export enum DisplayType {
     Image = "image",
     Gallery = "gallery",
     File = "file",
+    Dictionary = "dictionary",
     Dropdown = "dropdown",
     Multiselect = "multiselect",
     Lookup = "lookup",

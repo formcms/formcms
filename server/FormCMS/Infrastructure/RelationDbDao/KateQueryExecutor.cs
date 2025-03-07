@@ -32,34 +32,30 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
       }
    }
 
-   public async Task<Dictionary<string, object>> LoadDict(string tableName, string keyField, string valueField, IEnumerable<string> ids,CancellationToken ct)
+   public async Task<Dictionary<string, object>> LoadDict(Query query, string keyField, string valueField, CancellationToken ct)
    {
-      var query = new Query(tableName)
-         .WhereIn(keyField, ids)
-         .Select(keyField, valueField);
-      
       var records = await Many(query, ct);
       return records.ToDictionary(
-         x => x.GetStrOrEmpty(keyField),
+         x => x.StrOrEmpty(keyField),
          x => x[valueField]
       );
    }
 
    public async Task Upsert(string tableName, string importKey, Record[] records)
    {
-      var ids = records.Select(x => x.GetStrOrEmpty(importKey)).ToArray();
+      var ids = records.Select(x => x.StrOrEmpty(importKey)).ToArray();
 
       var existingRecords = await Many(new Query(tableName).WhereIn(importKey, ids));
       
       //convert to string, avoid source records and dest records has different data type, e.g. int vs long
-      var existingIds = existingRecords.Select(x => x.GetStrOrEmpty(importKey)).ToArray();
+      var existingIds = existingRecords.Select(x => x.StrOrEmpty(importKey)).ToArray();
       
       var recordsToUpdate = new List<Record>();
       var recordsToInsert = new List<Record>();
 
       foreach (var record in records)
       {
-         var id = record.GetStrOrEmpty(importKey);
+         var id = record.StrOrEmpty(importKey);
          
          if (existingIds.Contains(id))
          {

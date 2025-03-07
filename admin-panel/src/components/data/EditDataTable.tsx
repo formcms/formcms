@@ -13,6 +13,7 @@ export function EditDataTable(
         onDelete,
         onView,
         onDuplicate,
+        canDelete
     }:
     {
         columns: React.JSX.Element[];
@@ -29,6 +30,7 @@ export function EditDataTable(
         onDelete?:(rowData:any)=>void
         onView?:(rowData:any)=>void
         onDuplicate?:(rowData:any)=>void
+        canDelete?:(rowData:any)=>boolean
     }) {
     const navigate = useNavigate();
     const actionBodyTemplate = (rowData: any) => {
@@ -40,7 +42,7 @@ export function EditDataTable(
                     <Button icon="pi pi-eye" rounded outlined className="mr-2" onClick={() => onView(rowData)}/>}
                 {onEdit &&
                     <Button icon="pi pi-pencil" rounded outlined className="mr-2" onClick={() => onEdit(rowData)}/>}
-                {onDelete &&
+                {onDelete && (!canDelete || canDelete(rowData)) &&
                     <Button icon="pi pi-trash" rounded outlined severity="danger" onClick={() => onDelete(rowData)}/>}
             </>
         );
@@ -49,7 +51,6 @@ export function EditDataTable(
 
     return columns && data && <DataTable
         sortMode="multiple"
-        //dataKey={schema.primaryKey}
         value={data.items}
         paginator
         totalRecords={data.totalRecords}
@@ -64,7 +65,7 @@ export function EditDataTable(
         onFilter={onFilter}
         onPage={onPage}>
         {columns}
-        {(onEdit||onDelete||onView) &&
+        {(onEdit||onDelete||onView||onDelete) &&
             <Column body={actionBodyTemplate} exportable={false} style={{minWidth: '12rem'}}></Column>}
     </DataTable>
 }

@@ -53,7 +53,7 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: U
     [
         {
             key: MenuTasks,
-            icon: 'pi pi-cog',
+            icon: 'pi pi-clock',
             label: 'Tasks',
             command: () => {
                 navigate(`${configs.entityBaseRouter}${TasksRouter}`)
@@ -61,7 +61,7 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: U
         },
         {
             key: MenuAssets,
-            icon: 'pi pi-cog',
+            icon: 'pi pi-images',
             label: 'Assets',
             command: () => {
                 navigate(`${configs.entityBaseRouter}${AssetsRouter}`)

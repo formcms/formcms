@@ -5,6 +5,9 @@ import {NewDataItemPage} from "./pages/NewDataItemPage";
 import { XEntityWrapper } from "../components/XEntityWrapper";
 import { useTaskEntity } from "./services/task";
 import { TaskList } from "./pages/TaskList";
+import { AssetList } from "./pages/AssetList";
+import { useAssetWithLinkCountEntity } from "./services/asset";
+import { AssetEdit } from "./pages/AssetEdit";
 
 export const TasksRouter = '/tasks'
 export const AssetsRouter = '/assets'
@@ -15,7 +18,18 @@ export function EntityRouter({baseRouter}:{baseRouter:string}) {
         <Route path={'/:schemaName/:id'} element={<DataItemPage baseRouter={baseRouter}/>}> </Route>
         <Route path={TasksRouter} element={<XEntityWrapper baseRouter={baseRouter} Component={TaskList}
                                                            useEntityHook={useTaskEntity}/>}> </Route>
-        <Route path={AssetsRouter} element={<XEntityWrapper baseRouter={baseRouter} Component={TaskList}
-                                                           useEntityHook={useTaskEntity}/>}> </Route>
+        <Route path={AssetsRouter} element={
+            <XEntityWrapper 
+                baseRouter={baseRouter + AssetsRouter} 
+                Component={AssetList}
+                useEntityHook={useAssetWithLinkCountEntity}/>
+        }> </Route>
+        <Route path={`${AssetsRouter}/:id`} element={
+            <XEntityWrapper
+                baseRouter={baseRouter + AssetsRouter}
+                Component={AssetEdit}
+                useEntityHook={useAssetWithLinkCountEntity}
+            />
+        }/>
     </Routes>
 }

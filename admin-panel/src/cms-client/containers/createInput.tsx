@@ -13,7 +13,7 @@ import {DropDownInput} from "../../components/inputs/DropDownInput";
 import {MultiSelectInput} from "../../components/inputs/MultiSelectInput";
 import {XAttr } from "../types/xEntity";
 import { AssetSelector } from "./AssetSelector";
-import { MultiAssetSelector } from "./MultiAssetSelector";
+import { DictionaryInput } from "../../components/inputs/DictionaryInput";
 
 export function createInput(props :{
     column: XAttr,
@@ -24,6 +24,8 @@ export function createInput(props :{
 }) {
     const {field, displayType,options} = props.column
     switch (displayType) {
+        case 'dictionary':
+            return <DictionaryInput className={'field col-12 md:col-12'} {...props} key={field} />
         case 'text':
             return <TextInput className={'field col-12 md:col-4'} key={field} {...props}/>
         case 'textarea':

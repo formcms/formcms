@@ -1,6 +1,7 @@
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.EnumExt;
 using Humanizer;
 using SqlKata;
 using Column = FormCMS.Utils.DataModels.Column;
@@ -33,6 +34,7 @@ public static class AssetLinks
             XAttrExtensions.CreateAttr<AssetLink, DateTime>(x => x.UpdatedAt),
             XAttrExtensions.CreateAttr<AssetLink, long>(x => x.Id,isDefault:true),
         ]);
+    
 
     public static readonly Column[] Columns =
     [
@@ -72,6 +74,14 @@ public static class AssetLinks
         return (toAdd, toDel);
     }
 
+    public static Query CountByAssetId(IEnumerable<long> assetIds)
+    => new Query(TableName)
+            .Where(DefaultColumnNames.Deleted.Camelize(), false)
+            .WhereIn(nameof(AssetLink.AssetId).Camelize(),assetIds)
+            .Select(nameof(AssetLink.AssetId).Camelize())
+            .SelectRaw($"count({nameof(AssetLink.AssetId).Camelize()}) as {nameof(Asset.LinkCount).Camelize()}")
+            .GroupBy(nameof(AssetLink.AssetId).Camelize());
+    
     public static Query DeleteByEntityAndRecordId(string entity, long recordId, IEnumerable<long> ids)
     {
         return new Query(TableName)

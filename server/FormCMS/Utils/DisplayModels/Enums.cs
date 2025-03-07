@@ -15,6 +15,7 @@ public enum DisplayType
     Gallery,
     File,
 
+    Dictionary,
 
     Dropdown, 
     Multiselect, 
