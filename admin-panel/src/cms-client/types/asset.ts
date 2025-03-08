@@ -10,6 +10,15 @@
 
 
 
+export interface AssetLink {
+    entityName: string;
+    recordId: number;
+    assetId: number;
+    createdAt: Date;
+    updatedAt: Date;
+    id: number;
+}
+
 export interface Asset {
     path: string;
     url: string;
@@ -23,4 +32,5 @@ export interface Asset {
     updatedAt: Date;
     id: number;
     linkCount: number;
+    links: AssetLink[] | undefined;
 }

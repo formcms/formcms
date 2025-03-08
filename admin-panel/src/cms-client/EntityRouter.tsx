@@ -26,7 +26,7 @@ export function EntityRouter({baseRouter}:{baseRouter:string}) {
         }> </Route>
         <Route path={`${AssetsRouter}/:id`} element={
             <XEntityWrapper
-                baseRouter={baseRouter + AssetsRouter}
+                baseRouter={baseRouter}
                 Component={AssetEdit}
                 useEntityHook={useAssetWithLinkCountEntity}
             />

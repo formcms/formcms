@@ -30,8 +30,8 @@ public static class AssetLinks
             XAttrExtensions.CreateAttr<AssetLink, string>(x => x.EntityName),
             XAttrExtensions.CreateAttr<AssetLink, long>(x => x.RecordId),
             XAttrExtensions.CreateAttr<AssetLink, long>(x => x.AssetId),
-            XAttrExtensions.CreateAttr<AssetLink, DateTime>(x => x.CreatedAt),
-            XAttrExtensions.CreateAttr<AssetLink, DateTime>(x => x.UpdatedAt),
+            XAttrExtensions.CreateAttr<AssetLink, DateTime>(x => x.CreatedAt, isDefault:true),
+            XAttrExtensions.CreateAttr<AssetLink, DateTime>(x => x.UpdatedAt, isDefault:true),
             XAttrExtensions.CreateAttr<AssetLink, long>(x => x.Id,isDefault:true),
         ]);
     
@@ -75,12 +75,18 @@ public static class AssetLinks
     }
 
     public static Query CountByAssetId(IEnumerable<long> assetIds)
-    => new Query(TableName)
+        => new Query(TableName)
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
-            .WhereIn(nameof(AssetLink.AssetId).Camelize(),assetIds)
+            .WhereIn(nameof(AssetLink.AssetId).Camelize(), assetIds)
             .Select(nameof(AssetLink.AssetId).Camelize())
             .SelectRaw($"count({nameof(AssetLink.AssetId).Camelize()}) as {nameof(Asset.LinkCount).Camelize()}")
             .GroupBy(nameof(AssetLink.AssetId).Camelize());
+
+    public static Query LinksByAssetId(IEnumerable<long> assetIds)
+        => new Query(TableName)
+            .Where(DefaultColumnNames.Deleted.Camelize(), false)
+            .WhereIn(nameof(AssetLink.AssetId).Camelize(), assetIds)
+            .Select(Entity.Attributes.Select(x=>x.Field));  
     
     public static Query DeleteByEntityAndRecordId(string entity, long recordId, IEnumerable<long> ids)
     {

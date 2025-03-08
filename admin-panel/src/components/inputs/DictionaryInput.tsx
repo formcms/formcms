@@ -85,6 +85,7 @@ export function DictionaryInput(
                 ))}
             </ul>
             <Button
+                type="button"
                 label="Add Key-Value Pair"
                 icon="pi pi-plus"
                 className="p-button-secondary mt-2"

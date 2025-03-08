@@ -22,6 +22,7 @@ TsGenerator.GenerateCode<PublicationStatus>("../../admin-panel/src/cms-client/ty
 TsGenerator.GenerateCode<SpecialQueryKeys>("../../admin-panel/src/cms-client/types/specialQueryKeys.ts");
 TsGenerator.GenerateCode<SystemTask>("../../admin-panel/src/cms-client/types/systemTask.ts");
 TsGenerator.GenerateCode<Asset>("../../admin-panel/src/cms-client/types/asset.ts");
+TsGenerator.GenerateCode<AssetLink>("../../admin-panel/src/cms-client/types/assetLink.ts");
 
 
 TsGenerator.GenerateCode<RoleAccess>("../../admin-panel/src/auth/types/roleAccess.ts");

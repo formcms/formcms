@@ -24,11 +24,11 @@ export  function useAssets(qs:string,countLink:boolean) {
     return {...res, error:decodeError(res.error)}
 }
 
-export function getAssetReplaceUrl(path:string){
-    return  fullCmsApiUrl(`/assets?path=${path}`);
+export function getAssetReplaceUrl(id:number){
+    return  fullCmsApiUrl(`/assets/${id}`);
 }
 
-export function getFileUploadURL (path:string){
+export function getFileUploadURL (){
     return  fullCmsApiUrl('/assets');
 }
 
@@ -42,4 +42,8 @@ export function useGetCmsAssetsUrl (){
 
 export function deleteAsset (id:number) {
     return catchResponse(()=>axios.post(fullCmsApiUrl(`/assets/delete/${id}/`)))
+}
+
+export function updateAssetMeta (asset:any) {
+    return catchResponse(()=>axios.post(fullCmsApiUrl(`/assets/meta/`),asset))
 }

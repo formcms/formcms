@@ -21,7 +21,8 @@ public record Asset(
     DateTime CreatedAt = default,
     DateTime UpdatedAt = default,
     long Id = 0,
-    int LinkCount = 0 //calculated field, omit from attribute and columns
+    int LinkCount = 0, //calculated field, omit from attribute and columns
+    AssetLink[]? Links = null //calculated field, omit from attribute and columns
 );
 
 public static class Assets
@@ -37,7 +38,7 @@ public static class Assets
             XAttrExtensions.CreateAttr<Asset, string>(x => x.Path, displayType: DisplayType.Image, isDefault:true),
             XAttrExtensions.CreateAttr<Asset, long>(x => x.Id, isDefault:true),
             XAttrExtensions.CreateAttr<Asset, string>(x => x.Url,inList:false, isDefault:true),
-            XAttrExtensions.CreateAttr<Asset, string>(x => x.Name),
+            XAttrExtensions.CreateAttr<Asset, string>(x => x.Name,isDefault:true),
             XAttrExtensions.CreateAttr<Asset, string>(x => x.Title),
             XAttrExtensions.CreateAttr<Asset, long>(x => x.Size, isDefault:true),
             XAttrExtensions.CreateAttr<Asset, string>(x => x.Type, isDefault:true),
@@ -47,7 +48,7 @@ public static class Assets
             XAttrExtensions.CreateAttr<Asset, DateTime>(x => x.UpdatedAt, isDefault:true),
         ]);
 
-    public static readonly XEntity EntityWithLinkCount = 
+    public static readonly XEntity EntityWithLink = 
         Entity with
         {
             Attributes = [
@@ -89,6 +90,15 @@ public static class Assets
             ])).ToArray();
     }
 
+    public static Query UpdateMetaData(this Asset asset)
+    {
+        var record = RecordExtensions.FormObject(asset, 
+            whiteList: [nameof(Asset.Title), nameof(Asset.Metadata)]);
+        return new Query(TableName)
+            .Where(nameof(Asset.Id).Camelize(), asset.Id)
+            .AsUpdate(record);
+    }
+
     public static Query Single(long id)
         => new Query(TableName)
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
@@ -112,6 +122,11 @@ public static class Assets
         !string.IsNullOrWhiteSpace(path) 
         && !path.StartsWith("http"); // not external link
 
+    public static Query UpdateSize(long id, long size)=>
+        new Query(TableName)
+            .Where(nameof(Asset.Id).Camelize(), id)
+            .AsUpdate([nameof(Asset.Size).Camelize()], [size]);
+
     public static Query GetAssetIDsByPaths(IEnumerable<string> paths)
         => new Query(TableName)
             .Select( nameof(Asset.Id).Camelize(), nameof(Asset.Path).Camelize())
@@ -120,9 +135,10 @@ public static class Assets
 
     public static Query Count() => new Query(TableName)
         .Where(DefaultColumnNames.Deleted.Camelize(), false);
-    
-    public static Query Deleted(long id) => new Query(TableName)
-        .Where(nameof(Asset.Id).Camelize(),id)
-        .AsUpdate([DefaultColumnNames.Deleted.Camelize()], [true]);
+
+    public static Query Deleted(long id) =>
+        new Query(TableName)
+            .Where(nameof(Asset.Id).Camelize(), id)
+            .AsUpdate([DefaultColumnNames.Deleted.Camelize()], [true]);
 
 }

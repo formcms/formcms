@@ -73,7 +73,7 @@ public class LocalFileStore(
         return Task.CompletedTask;
     }
     
-    public async Task UploadAndDispose(IEnumerable<(string,IFormFile)> files)
+    public async Task Upload(IEnumerable<(string,IFormFile)> files)
     {
         var set = new HashSet<string>();
         foreach (var (fileName, file) in files)

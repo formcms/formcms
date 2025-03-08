@@ -21,23 +21,28 @@ public class AssetService(
     IResizer resizer
     ):IAssetService
 {
-    public async Task<Asset> Single(long id, CancellationToken ct = default)
-    {
-        var record = await executor.Single(Assets.Single(id), ct);
-        return record?.ToObject<Asset>().Ok() ?? throw new ResultException("Asset not found");
-    }
-
-    public string GetBaseUrl() => systemSettings.AssetUrlPrefix;
-    
     public async Task EnsureTable()
     {
         await migrator.MigrateTable(Assets.TableName, Assets.Columns);
         await migrator.MigrateTable(AssetLinks.TableName, AssetLinks.Columns);
         await dao.CreateForeignKey(
-            AssetLinks.TableName, nameof(AssetLink.AssetId).Camelize(), 
+            AssetLinks.TableName, nameof(AssetLink.AssetId).Camelize(),
             Assets.TableName, nameof(Asset.Id).Camelize(),
             CancellationToken.None);
 
+    }
+    
+    public XEntity GetEntity(bool countLink) =>countLink ? Assets.EntityWithLink: Assets.Entity;
+    
+    public string GetBaseUrl() => systemSettings.AssetUrlPrefix;
+    
+    public async Task<Asset> Single(long id, CancellationToken ct = default)
+    {
+        var record = await executor.Single(Assets.Single(id), ct);
+        var asset = record?.ToObject<Asset>().Ok() ?? throw new ResultException("Asset not found");
+        var links = await executor.Many(AssetLinks.LinksByAssetId([id]),ct);
+        var assetLinks = links.Select(x => x.ToObject<AssetLink>().Ok()).ToArray();
+        return asset with{Links = assetLinks, LinkCount = links.Length};
     }
 
     public async Task<ListResponse> List(StrArgs args,int? offset, int? limit, bool countLinks, CancellationToken ct)
@@ -50,33 +55,6 @@ public class AssetService(
         return new ListResponse(items,count);
     }
 
-    private async Task LoadLinkCount(Record[] items, CancellationToken ct)
-    {
-        var ids = items.Select(x => (long)x[nameof(Asset.Id).Camelize()]);
-        var dict = await executor.LoadDict(
-            AssetLinks.CountByAssetId(ids), 
-            nameof(AssetLink.AssetId).Camelize(),
-            nameof(Asset.LinkCount).Camelize(), ct);
-        foreach (var item in items)
-        {
-            var id = item.StrOrEmpty(nameof(Asset.Id).Camelize());
-            if (dict.TryGetValue(id, out var val) )
-            {
-                item[nameof(Asset.LinkCount).Camelize()] = val;
-            }
-        }
-    }
-
-    public Task Delete(long id, CancellationToken ct)
-        =>executor.Exec(Assets.Deleted(id), false, ct);
-
-    public async Task Replace(string path,IFormFile file)
-    {
-        if (file.Length == 0) throw new ResultException($"File [{file.FileName}] is empty");
-        file = resizer.CompressImage(file);
-        await store.UploadAndDispose([(path, file)]);
-    }
-    
     public async Task<string[]> Add(IFormFile[] files)
     {
         var userInfo = profileService.GetInfo() ?? throw new ResultException("Not logged in");
@@ -88,7 +66,7 @@ public class AssetService(
         files = files.Select(resizer.CompressImage).ToArray();
         var dir = DateTime.Now.ToString("yyyy-MM");
         var pairs = files.Select(x => (Path.Join(dir,GetUniqName(x.FileName)), x)).ToArray();
-        await store.UploadAndDispose(pairs);
+        await store.Upload(pairs);
         
         var assets = new List<Asset>();
         foreach (var (fileName, file)  in pairs)
@@ -109,7 +87,64 @@ public class AssetService(
         await executor.BatchInsert(Assets.TableName, assets.ToInsertRecords());
         return assets.Select(x => x.Path).ToArray();
     }
-    public XEntity GetEntity(bool countLink) =>countLink ? Assets.EntityWithLinkCount: Assets.Entity;
+    
+    public async Task Replace(long id,IFormFile file, CancellationToken ct = default)
+    {
+        if (file.Length == 0) throw new ResultException($"File [{file.FileName}] is empty");
+        
+        //make sure the asset to replace exist
+        var asset = await Single(id, ct);
+        file = resizer.CompressImage(file);
+        using var trans = await dao.BeginTransaction();
+        try
+        {
+            await executor.Exec(Assets.UpdateSize(asset.Id, file.Length),false,ct);
+            await store.Upload([(asset.Path, file)]);
+            trans.Commit();
+        }
+        catch (Exception e)
+        {
+            trans.Rollback();
+            throw e is ResultException ? e : new ResultException(e.Message);
+        }
+    }
+
+    public Task UpdateMetadata(Asset asset,CancellationToken ct) 
+        => executor.Exec(asset.UpdateMetaData(),false,ct);
+    
+    public async Task Delete(long id, CancellationToken ct)
+    {
+        var asset = await Single(id, ct);
+        using var trans = await dao.BeginTransaction();
+        try
+        {
+            await executor.Exec(Assets.Deleted(id), false, ct);
+            await store.Del(asset.Path);
+            trans.Commit();
+        }
+        catch (Exception e)
+        {
+            trans.Rollback();
+            throw e is ResultException ? e : new ResultException(e.Message);
+        }
+    }
+
+    private async Task LoadLinkCount(Record[] items, CancellationToken ct)
+    {
+        var ids = items.Select(x => (long)x[nameof(Asset.Id).Camelize()]);
+        var dict = await executor.LoadDict(
+            AssetLinks.CountByAssetId(ids), 
+            nameof(AssetLink.AssetId).Camelize(),
+            nameof(Asset.LinkCount).Camelize(), ct);
+        foreach (var item in items)
+        {
+            var id = item.StrOrEmpty(nameof(Asset.Id).Camelize());
+            if (dict.TryGetValue(id, out var val) )
+            {
+                item[nameof(Asset.LinkCount).Camelize()] = val;
+            }
+        }
+    }
 
     public async Task UpdateAssetsLinks(string[] newAssetPaths, string entityName, long id, bool checkExisting,
         CancellationToken ct)
@@ -148,7 +183,8 @@ public class AssetService(
         var list = new List<Asset>();
         foreach (var s in assetPaths)
         {
-            if (set.Contains(s)) continue;
+            if (set.Contains(s) || !Assets.IsValidPath(s)) continue;
+            
             var size = await store.GetFileSize(s);
             if (size == 0) continue;
 

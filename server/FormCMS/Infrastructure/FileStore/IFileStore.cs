@@ -2,7 +2,7 @@ namespace FormCMS.Infrastructure.FileStore;
 
 public interface IFileStore
 {
-    Task UploadAndDispose(IEnumerable<(string,IFormFile)> files);
+    Task Upload(IEnumerable<(string,IFormFile)> files);
     Task Upload(string localPath, string path);
     Task Download(string path, string localPath);
     Task Del(string file);

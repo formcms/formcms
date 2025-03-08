@@ -1,10 +1,13 @@
-import { Asset } from "./asset";
+import { Asset,AssetLink } from "./asset";
 
 /** Returns the string representation of a valid key from the `Asset` interface. */
 export function AssetField(key: keyof Asset) {
     return key as string;
 }
 
+export function AssetLinkField(key: keyof AssetLink) {
+    return key as string;
+}
 export const formatFileSize = (bytes?: number) => {
     if (!bytes || bytes === 0) return '0 Bytes';
     const k = 1024;

@@ -1,5 +1,5 @@
-import {useParams} from "react-router-dom"
-import {getAssetReplaceUrl, useGetCmsAssetsUrl, useSingleAsset} from "../services/asset";
+import {useNavigate, useParams} from "react-router-dom"
+import {getAssetReplaceUrl, updateAssetMeta, useGetCmsAssetsUrl, useSingleAsset} from "../services/asset";
 import {XEntity} from "../types/xEntity";
 import {useForm} from "react-hook-form";
 import {createInput} from "../containers/createInput";
@@ -7,20 +7,29 @@ import {Button} from "primereact/button";
 import {FetchingStatus} from "../../components/FetchingStatus";
 import {FileUpload} from "primereact/fileupload";
 import { Image } from 'primereact/image';
-import { formatFileSize } from "../types/assetUtils";
+import {AssetLinkField, formatFileSize } from "../types/assetUtils";
 import { useState } from "react";
+import { useCheckError } from "../../components/useCheckError";
+import { DataTable } from "primereact/datatable";
+import { Column } from "primereact/column";
+import { AssetLink } from "../types/asset";
 
 export function AssetEdit(
     {
+        baseRouter,
         schema,
     }: {
+        baseRouter: string;
         schema: XEntity,
     }
 ) {
+    const navigate = useNavigate();
     const [version, setVersion] = useState(1);
     const {id} = useParams()
-    const {data, isLoading, error} = useSingleAsset(id);
+    const {data, isLoading, error,mutate} = useSingleAsset(id);
     const getCmsAssetUrl = useGetCmsAssetsUrl();
+    const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
+
     const columns = schema?.attributes?.filter(
         x => {
             return x.inDetail && !x.isDefault && x.displayType != "editTable" && x.displayType != "tree" && x.displayType != 'picklist';
@@ -33,8 +42,22 @@ export function AssetEdit(
     } = useForm()
 
     const onSubmit = async (formData: any) => {
-        console.log(formData)
-
+        const metadataObject = formData.metadata.reduce(
+            (acc: any, item: any) => {
+                if (item.key) acc[item.key] = item.value;
+                return acc;
+            },
+            {}
+        );
+        
+        var payload = {
+            ...formData,
+            metadata: metadataObject,
+            id:data?.id,
+        }
+        
+        const {error} = await updateAssetMeta(payload)
+        await handleErrorOrSuccess(error, 'Save Succeed', mutate) 
     }
 
 
@@ -50,8 +73,12 @@ export function AssetEdit(
         }
     }
     const formId = schema.name
+    const actionBodyTemplate = (rowData: AssetLink) => {
+        return ( <Button icon="pi pi-eye" rounded outlined className="mr-2" onClick={() => navigate(`${baseRouter}/${rowData.entityName}/${rowData.recordId}`)}/>);
+    };
     return data && columns && <>
         <FetchingStatus isLoading={isLoading} error={error}/>
+        <CheckErrorStatus/> 
         <br/>
         {data?.type?.startsWith("image") &&
         <div className="card flex justify-content-start">
@@ -60,11 +87,15 @@ export function AssetEdit(
         }
         <br/>
         <div className="mt-2 flex gap-4">
+            <label className="block font-bold">File Name:</label>
+            <label>{data.name}</label>
+            
             <label className="block font-bold">Type:</label>
             <label className="block">{data.type}</label>
             
             <label className="block font-bold">Size:</label>
             <label>{formatFileSize(data.size)}</label>
+
         </div>
         <br/>
         <div style={{display: "flex", gap: "10px", alignItems: "center"}}>
@@ -78,9 +109,10 @@ export function AssetEdit(
                 withCredentials
                 mode={"basic"}
                 auto
-                url={getAssetReplaceUrl(data.path)}
+                url={getAssetReplaceUrl(data.id)}
                 onUpload={(e) => {
                     setVersion(x=>x+1);
+                    mutate();
                 }}
                 chooseLabel="Replace file"
                 name={'files'}
@@ -106,5 +138,12 @@ export function AssetEdit(
                 }
             </div>
         </form>
+        {data.links && <h3>Used By:</h3>}
+        {data.links && <DataTable value={data.links} tableStyle={{ minWidth: '50rem' }}>
+            <Column field={AssetLinkField('entityName')} header={'Entity Name'} ></Column>
+            <Column field={AssetLinkField('recordId')} header={'Record Id'}></Column>
+            <Column field={AssetLinkField('createdAt')}  header={'Created At'}></Column>
+            <Column body={actionBodyTemplate} style={{minWidth: '12rem'}}></Column>
+        </DataTable>}
     </>
 }
