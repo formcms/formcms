@@ -6,7 +6,7 @@ import { XEntityWrapper } from "../components/XEntityWrapper";
 import { useTaskEntity } from "./services/task";
 import { TaskList } from "./pages/TaskList";
 import { AssetList } from "./pages/AssetList";
-import { useAssetWithLinkCountEntity } from "./services/asset";
+import { useAssetEntityWithLink } from "./services/asset";
 import { AssetEdit } from "./pages/AssetEdit";
 
 export const TasksRouter = '/tasks'
@@ -22,13 +22,13 @@ export function EntityRouter({baseRouter}:{baseRouter:string}) {
             <XEntityWrapper 
                 baseRouter={baseRouter + AssetsRouter} 
                 Component={AssetList}
-                useEntityHook={useAssetWithLinkCountEntity}/>
+                useEntityHook={useAssetEntityWithLink}/>
         }> </Route>
         <Route path={`${AssetsRouter}/:id`} element={
             <XEntityWrapper
                 baseRouter={baseRouter}
                 Component={AssetEdit}
-                useEntityHook={useAssetWithLinkCountEntity}
+                useEntityHook={useAssetEntityWithLink}
             />
         }/>
     </Routes>

@@ -17,6 +17,16 @@ public static class RecordExtensions
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
 
+    public static long MustGetLong(this Record record, string fieldName)
+    {
+        var value = record[fieldName];
+        if (value is JsonElement { ValueKind: JsonValueKind.Number } jsonElement)
+        {
+            return jsonElement.GetInt64();
+        }
+        return Convert.ToInt64(value);
+    }
+
     public static bool GetAndParseDateTime(
         this Record record,
         string field,

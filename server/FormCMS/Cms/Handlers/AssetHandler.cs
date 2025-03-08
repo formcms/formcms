@@ -10,8 +10,8 @@ public static class AssetHandler
     {
         app.MapGet("/entity", (
             IAssetService s,
-            bool? count
-        ) => s.GetEntity(count ?? false));
+            bool? linkCount
+        ) => s.GetEntity(linkCount ?? false));
 
         app.MapGet("/base", (IAssetService s, HttpContext context) =>
         {
@@ -24,9 +24,9 @@ public static class AssetHandler
             HttpContext context,
             int? offset,
             int? limit,
-            bool? count,
+            bool? linkCount,
             CancellationToken ct
-        ) => s.List(QueryHelpers.ParseQuery(context.Request.QueryString.Value), offset, limit, count ?? false, ct));
+        ) => s.List(QueryHelpers.ParseQuery(context.Request.QueryString.Value), offset, limit, linkCount ?? false, ct));
 
         app.MapGet("/{id:long}", (
             IAssetService svc,

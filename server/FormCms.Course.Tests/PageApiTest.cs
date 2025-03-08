@@ -51,7 +51,7 @@ public class PageApiTest
                 """.GraphQlQuery(_queryApiClient).Ok();
         
         var s = await _pageApiClient.GetDetailPage(_query, "2").Ok();
-        Assert.True(s?.IndexOf("2") > 0);
+        Assert.True(s.IndexOf('2', StringComparison.Ordinal) > 0);
         
     }
 
@@ -64,7 +64,7 @@ public class PageApiTest
         ));
         await _schemaApiClient.Save(schema).Ok();
         var s =await _pageApiClient.GetDetailPage(_query,"2").Ok();
-        Assert.True(s?.IndexOf("--2--") > 0);
+        Assert.True(s.IndexOf("--2--", StringComparison.Ordinal) > 0);
     }
     
     [Fact]
@@ -82,7 +82,7 @@ public class PageApiTest
         ));
         await _schemaApiClient.Save(schema).Ok();
         html =await _pageApiClient.GetLandingPage(_query).Ok();
-        Assert.True(html?.IndexOf("--1--") > 0);
+        Assert.True(html.IndexOf("--1--", StringComparison.Ordinal) > 0);
         
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
@@ -90,7 +90,7 @@ public class PageApiTest
         var divNode = doc.DocumentNode.SelectSingleNode("//div[@id='div1']");
         var lastValue = divNode.GetAttributeValue("last", "Attribute not found");
         html = await _pageApiClient.GetPagePart(lastValue).Ok();
-        Assert.True(html?.IndexOf("--5--") > 0);
+        Assert.True(html.IndexOf("--5--", StringComparison.Ordinal) > 0);
     }
 
     private async Task PrepareData()

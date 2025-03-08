@@ -19,7 +19,7 @@ namespace FormCMS.Cms.Services;
 public sealed class EntityService(
     IRelationDbDao relationDbDao,
     IServiceProvider provider,
-    KateQueryExecutor queryExecutor,
+    KateQueryExecutor executor,
     IEntitySchemaService entitySchemaSvc,
     IAssetService assetService,
     HookRegistry hookRegistry
@@ -48,7 +48,7 @@ public sealed class EntityService(
 
         parentField.GetCollectionTarget(out _, out var linkField);
         var attributes = entity.Attributes.Where(x => x.Field == entity.PrimaryKey || x.InList && x.IsLocal());
-        var items = await queryExecutor.Many(entity.AllQueryForTree(attributes), ct);
+        var items = await executor.Many(entity.AllQueryForTree(attributes), ct);
         return items.ToTree(entity.PrimaryKey, linkField);
     }
 
@@ -60,7 +60,7 @@ public sealed class EntityService(
             .Where(x => x.IsLocal() && attributes.Contains(x.Field))
             .Select(x => x.AddTableModifier());
         var query = ctx.Entity.ByIdsQuery(fields, [ctx.Id], null);
-        return await queryExecutor.Single(query, ct) ??
+        return await executor.Single(query, ct) ??
                throw new ResultException($"not find record by [{id}]");
     }
 
@@ -85,7 +85,7 @@ public sealed class EntityService(
 
         var query = ctx.Entity.ByIdsQuery(
             attr.Select(x => x.AddTableModifier()), [ctx.Id], null);
-        var record = await queryExecutor.Single(query, ct) ??
+        var record = await executor.Single(query, ct) ??
                      throw new ResultException($"not find record by [{id}]");
 
         await LoadItems(attr, [record], ct);
@@ -118,18 +118,18 @@ public sealed class EntityService(
         }
 
         var query = entity.SavePublicationStatus(id, ele.ToDictionary()).Ok();
-        await queryExecutor.Exec(query, false, ct);
+        await executor.Exec(query, false, ct);
     }
 
     public async Task<LookupListResponse> LookupList(string name, string startsVal, CancellationToken ct = default)
     {
         var (entity, sorts, pagination, attributes) = await GetLookupContext(name, ct);
-        var count = await queryExecutor.Count(entity.Basic(), ct);
+        var count = await executor.Count(entity.Basic(), ct);
         if (count < entity.DefaultPageSize)
         {
             //not enough for one page, search in a client
             var query = entity.ListQuery([], sorts, pagination, null, attributes, null);
-            var items = await queryExecutor.Many(query, ct);
+            var items = await executor.Many(query, ct);
             return new LookupListResponse(false, items);
         }
 
@@ -143,7 +143,7 @@ public sealed class EntityService(
         }
 
         var queryWithFilters = entity.ListQuery(filters, sorts, pagination, null, attributes, null);
-        var filteredItems = await queryExecutor.Many(queryWithFilters, ct);
+        var filteredItems = await executor.Many(queryWithFilters, ct);
         return new LookupListResponse(true, filteredItems);
     }
 
@@ -158,7 +158,7 @@ public sealed class EntityService(
             new JunctionPreDelArgs(ctx.Entity, id, ctx.Attribute, items));
 
         var query = ctx.Junction.Delete(ctx.Id, res.RefItems);
-        var ret = await queryExecutor.Exec(query, false, ct);
+        var ret = await executor.Exec(query, false, ct);
         return ret;
     }
 
@@ -173,7 +173,7 @@ public sealed class EntityService(
             new JunctionPreAddArgs(ctx.Entity, id, ctx.Attribute, items));
         var query = ctx.Junction.Insert(ctx.Id, res.RefItems);
 
-        var ret = await queryExecutor.Exec(query, true, ct);
+        var ret = await executor.Exec(query, true, ct);
         return ret;
     }
 
@@ -181,7 +181,7 @@ public sealed class EntityService(
     {
         var (_, _, junction, id) = await GetJunctionCtx(name, sid, attr, ct);
         var query = junction.GetTargetIds([id]);
-        var records = await queryExecutor.Many(query, ct);
+        var records = await executor.Many(query, ct);
         return records.Select(x => x[junction.TargetAttribute.Field]).ToArray();
     }
 
@@ -206,9 +206,9 @@ public sealed class EntityService(
             ? junction.GetNotRelatedItemsCount(filters, [id])
             : junction.GetRelatedItemsCount(filters, [id]);
 
-        var items = await queryExecutor.Many(listQuery, ct);
+        var items = await executor.Many(listQuery, ct);
         await LoadItems(attrs, items, ct);
-        return new ListResponse(items, await queryExecutor.Count(countQuery, ct));
+        return new ListResponse(items, await executor.Count(countQuery, ct));
     }
 
     public async Task<Record> CollectionInsert(string name, string sid, string attr, JsonElement element,
@@ -231,11 +231,11 @@ public sealed class EntityService(
             .ToArray();
 
         var listQuery = collection.List(filters, sorts, validPagination, null, attributes, [id], null);
-        var items = await queryExecutor.Many(listQuery, ct);
+        var items = await executor.Many(listQuery, ct);
         await LoadItems(attributes, items, ct);
 
         var countQuery = collection.Count(filters, [id]);
-        return new ListResponse(items, await queryExecutor.Count(countQuery, ct));
+        return new ListResponse(items, await executor.Count(countQuery, ct));
     }
 
 
@@ -263,9 +263,9 @@ public sealed class EntityService(
         var countQuery = entity.CountQuery([..res.RefFilters], null);
         return mode switch
         {
-            ListResponseMode.Count => new ListResponse([], await queryExecutor.Count(countQuery, ct)),
+            ListResponseMode.Count => new ListResponse([], await executor.Count(countQuery, ct)),
             ListResponseMode.Items => new ListResponse(await RetrieveItems(), 0),
-            _ => new ListResponse(await RetrieveItems(), await queryExecutor.Count(countQuery, ct))
+            _ => new ListResponse(await RetrieveItems(), await executor.Count(countQuery, ct))
         };
 
 
@@ -273,7 +273,7 @@ public sealed class EntityService(
         {
             var listQuery = entity.ListQuery([..res.RefFilters], [..res.RefSorts], res.RefPagination, null, attributes,
                 null);
-            var items = await queryExecutor.Many(listQuery, ct);
+            var items = await executor.Many(listQuery, ct);
             await LoadItems(attributes, items, ct);
             return items;
         }
@@ -305,7 +305,7 @@ public sealed class EntityService(
 
         var query = lookup.LookupTitleQuery(ids);
 
-        var targetRecords = await queryExecutor.Many(query, token);
+        var targetRecords = await executor.Many(query, token);
         foreach (var lookupRecord in targetRecords)
         {
             var lookupId = lookupRecord[lookup.TargetEntity.PrimaryKey];
@@ -340,14 +340,15 @@ public sealed class EntityService(
         {
             var query = entity.UpdateQuery(id, record).Ok();
 
-            var affected = await queryExecutor.Exec(query, false, ct);
+            var affected = await executor.Exec(query, false, ct);
             if (affected == 0)
             {
                 throw new ResultException(
                     "Error: Concurrent Update Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
             }
 
-            await assetService.UpdateAssetsLinks(entity.GetAssets(record), entity.Name, id, true, ct);
+            var oldLinks = await executor.Many(AssetLinks.GetAssetIdsByEntityAndRecordId(entity.Name, id), ct);
+            await assetService.UpdateAssetsLinks(oldLinks,entity.GetAssets(record), entity.Name, id, ct);
             trans.Commit();
 
             await hookRegistry.EntityPostUpdate.Trigger(provider, new EntityPostUpdateArgs(entity, record));
@@ -374,9 +375,9 @@ public sealed class EntityService(
         try
         {
 
-            var id = await queryExecutor.Exec(entity.Insert(record), true, ct);
+            var id = await executor.Exec(entity.Insert(record), true, ct);
 
-            await assetService.UpdateAssetsLinks(entity.GetAssets(record), entity.Name, id, false, ct);
+            await assetService.UpdateAssetsLinks([],entity.GetAssets(record), entity.Name, id, ct);
             record[entity.PrimaryKey] = id;
             trans.Commit();
 
@@ -408,14 +409,15 @@ public sealed class EntityService(
         var transaction = await relationDbDao.BeginTransaction();
         try
         {
-            var affected = await queryExecutor.Exec(entity.DeleteQuery(id, record).Ok(), false, ct);
+            var affected = await executor.Exec(entity.DeleteQuery(id, record).Ok(), false, ct);
             if (affected == 0)
             {
                 throw new ResultException(
                     "Error: Concurrent Write Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
             }
 
-            await assetService.UpdateAssetsLinks([], entity.Name, id, false, ct);
+            var oldLinks = await executor.Many(AssetLinks.GetAssetIdsByEntityAndRecordId(entity.Name, id), ct);
+            await assetService.UpdateAssetsLinks(oldLinks,[], entity.Name, id, ct);
 
             transaction.Commit();
 

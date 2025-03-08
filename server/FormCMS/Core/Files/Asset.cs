@@ -48,7 +48,7 @@ public static class Assets
             XAttrExtensions.CreateAttr<Asset, DateTime>(x => x.UpdatedAt, isDefault:true),
         ]);
 
-    public static readonly XEntity EntityWithLink = 
+    public static readonly XEntity EntityWithLinkCount = 
         Entity with
         {
             Attributes = [
@@ -122,10 +122,21 @@ public static class Assets
         !string.IsNullOrWhiteSpace(path) 
         && !path.StartsWith("http"); // not external link
 
-    public static Query UpdateSize(long id, long size)=>
+    public static Query UpdateFile(long id, string fileName, long size, string contentType) =>
         new Query(TableName)
             .Where(nameof(Asset.Id).Camelize(), id)
-            .AsUpdate([nameof(Asset.Size).Camelize()], [size]);
+            .AsUpdate(
+                [
+                    nameof(Asset.Name).Camelize(),
+                    nameof(Asset.Size).Camelize(),
+                    nameof(Asset.Type).Camelize()
+                ],
+                [
+                    fileName,
+                    size,
+                    contentType
+                ]
+            );
 
     public static Query GetAssetIDsByPaths(IEnumerable<string> paths)
         => new Query(TableName)

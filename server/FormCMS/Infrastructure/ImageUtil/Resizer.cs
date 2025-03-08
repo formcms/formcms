@@ -36,7 +36,7 @@ public class Resizer(ResizeOptions opts):IResizer
     
     private bool IsImage(IFormFile file)
     {
-        string[] validExtensions = [".jpg", ".jpeg", ".png", ".bmp", ".gif"];
+        string[] validExtensions = [".jpg", ".jpeg", ".png", ".bmp"];
         var ext = Path.GetExtension(file.FileName).ToLower();
         return validExtensions.Contains(ext);
     }

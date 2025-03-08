@@ -10,17 +10,17 @@ export function useSingleAsset(id: any){
     let res = useSWR<Asset>(fullCmsApiUrl(`/assets/${id}`), fetcher,swrConfig);
     return {...res, error:decodeError(res.error)}
 }
-export  function useAssetWithLinkCountEntity() {
-    let res = useSWR<XEntity>(fullCmsApiUrl(`/assets/entity?count=${true}`), fetcher,swrConfig);
+export  function useAssetEntityWithLink() {
+    let res = useSWR<XEntity>(fullCmsApiUrl(`/assets/entity?linkCount=${true}`), fetcher,swrConfig);
     return {...res, error:decodeError(res.error)}
 }
 
 export  function useAssetEntity() {
-    let res = useSWR<XEntity>(fullCmsApiUrl(`/assets/entity?count=${false}`), fetcher,swrConfig);
+    let res = useSWR<XEntity>(fullCmsApiUrl(`/assets/entity?linkCount=${false}`), fetcher,swrConfig);
     return {...res, error:decodeError(res.error)}
 }
-export  function useAssets(qs:string,countLink:boolean) {
-    let res = useSWR<ListResponse>(fullCmsApiUrl(`/assets?count=${countLink}&${qs}`), fetcher,swrConfig);
+export  function useAssets(qs:string,withLinkCount:boolean) {
+    let res = useSWR<ListResponse>(fullCmsApiUrl(`/assets?linkCount=${withLinkCount}&${qs}`), fetcher,swrConfig);
     return {...res, error:decodeError(res.error)}
 }
 

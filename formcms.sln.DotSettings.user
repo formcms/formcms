@@ -17,6 +17,7 @@
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AComplexGraphType_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E2_003Fresharper_002Dhost_003FSourcesCache_003F0513e11cf298f13db1b97324317b0e817e6756d4a9d4743b8c7928a1d465e5_003FComplexGraphType_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AConsumerConfig_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003F0e3d5462920846549f6d7044ba86da286ca00_003Fd7_003F82d77f17_003FConsumerConfig_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AControllerEndpointRouteBuilderExtensions_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003Fa6d7c3abd4bb25b143ddc7a36ea5f74afd9a85471a3df5ea5d0653fea102b_003FControllerEndpointRouteBuilderExtensions_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AConvert_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F9c51d33b445d17a95cb7e8a881ee50e4c566234ff3f3411a1cbe5dcece2_003FConvert_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ACorsMiddlewareExtensions_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F83e8d6253cd5b84246acc3beca6a7fbd17fba950b92c66c2f58dee26604a96_003FCorsMiddlewareExtensions_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ACorsServiceCollectionExtensions_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F5570e8ab16d4eb814d243f16417a3186d7b39836678c2e571af1483cca268_003FCorsServiceCollectionExtensions_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003ADbConnection_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003Fb3ed9f8226a5f643ea5254d868339499e9f0342ddcb280d1d5074c9899c6b6_003FDbConnection_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
@@ -62,6 +63,7 @@
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AHybridCache_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003Ff138c256ad771ed7edf7a05a30e2f7d33e3e7df8824e8e7a88ecf931_003FHybridCache_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AIAsyncEnumerable_00601_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003F6d2342c247c64eb7a9b3702e481e4443f83e00_003Fd7_003F53af06e6_003FIAsyncEnumerable_00601_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AICacheEntry_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E2_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003F51bdb2654e8f4169b707ee2bc215de369e00_003Fc1_003F6bb83d6b_003FICacheEntry_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
+	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AIConvertible_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003F6d2342c247c64eb7a9b3702e481e4443f83e00_003F1b_003Ff6f15bbc_003FIConvertible_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AIDbTransaction_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003Feb830247bd32428ea6fcd75810231dff326800_003F35_003Fae75061c_003FIDbTransaction_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AIdentityApiEndpointRouteBuilderExtensions_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FSourcesCache_003F493ea29440165dd297937caaecca318704dfe5735267c4f9a160ef3c185855_003FIdentityApiEndpointRouteBuilderExtensions_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
 	<s:String x:Key="/Default/CodeInspection/ExcludedFiles/FilesAndFoldersToSkip2/=7020124F_002D9FFC_002D4AC3_002D8F3D_002DAAB8E0240759_002Ff_003AIdGenerator_002Ecs_002Fl_003A_002E_002E_003F_002E_002E_003FLibrary_003FApplication_0020Support_003FJetBrains_003FRider2024_002E3_003Fresharper_002Dhost_003FDecompilerCache_003Fdecompiler_003Fc3629d2b587c4413bad52f527fccbbc05e00_003F88_003F1baad1d5_003FIdGenerator_002Ecs/@EntryIndexedValue">ForceIncluded</s:String>
@@ -174,20 +176,30 @@
   &lt;Assembly Path="/Users/jingshunchen/.nuget/packages/fluentcms/0.3.4/lib/net9.0/FluentCms.dll" /&gt;
   &lt;Assembly Path="/Users/jingshunchen/.nuget/packages/formcms/0.3.6/lib/net9.0/FormCMS.dll" /&gt;
 &lt;/AssemblyExplorer&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=2bee4511_002D9cf5_002D4754_002D9226_002D4e1712300f89/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="All tests from &amp;lt;FormCMS.App.Tests&amp;gt;" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;And&gt;
-    &lt;Or&gt;
-      &lt;Project Location="/Users/jingshunchen/repos/formcms/server/FormCMS.App.Tests" Presentation="&amp;lt;FormCMS.App.Tests&amp;gt;" /&gt;
-      &lt;TestAncestor&gt;
-        &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetApiTest.CreateAsset&lt;/TestId&gt;
-      &lt;/TestAncestor&gt;
-    &lt;/Or&gt;
-    &lt;Not&gt;
-      &lt;TestAncestor&gt;
-        &lt;TestId&gt;xUnit::9BD38EDA-5C4E-4C6D-96CA-C8955DB35C57::net9.0::FormCMS.App.Tests.QueryTest&lt;/TestId&gt;
-      &lt;/TestAncestor&gt;
-    &lt;/Not&gt;
-  &lt;/And&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=2bee4511_002D9cf5_002D4754_002D9226_002D4e1712300f89/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from &amp;lt;FormCMS.App.Tests&amp;gt;" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;Or&gt;
+    &lt;And&gt;
+      &lt;Or&gt;
+        &lt;Project Location="/Users/jingshunchen/repos/formcms/server/FormCMS.App.Tests" Presentation="&amp;lt;FormCMS.App.Tests&amp;gt;" /&gt;
+        &lt;TestAncestor&gt;
+          &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetApiTest.CreateAsset&lt;/TestId&gt;
+        &lt;/TestAncestor&gt;
+      &lt;/Or&gt;
+      &lt;Not&gt;
+        &lt;TestAncestor&gt;
+          &lt;TestId&gt;xUnit::9BD38EDA-5C4E-4C6D-96CA-C8955DB35C57::net9.0::FormCMS.App.Tests.QueryTest&lt;/TestId&gt;
+        &lt;/TestAncestor&gt;
+      &lt;/Not&gt;
+    &lt;/And&gt;
+    &lt;TestAncestor&gt;
+      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetApiTest.AddDataWithFileAsset&lt;/TestId&gt;
+      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetApiTest.GetEntity&lt;/TestId&gt;
+      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetApiTest.ListWithLinkCount&lt;/TestId&gt;
+      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetApiTest.Replace&lt;/TestId&gt;
+      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetApiTest.TestBaseUrl&lt;/TestId&gt;
+      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetApiTest.TestMeta&lt;/TestId&gt;
+    &lt;/TestAncestor&gt;
+  &lt;/Or&gt;
 &lt;/SessionState&gt;</s:String>
 	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=76cbf04d_002D7b66_002D459f_002Db7c6_002Decf81918da49/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="CreateAsset" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;TestAncestor&gt;
@@ -195,7 +207,7 @@
   &lt;/TestAncestor&gt;
 &lt;/SessionState&gt;</s:String>
 	
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=9d98ade2_002D0100_002D448c_002D8914_002D3c3c3f45cbd3/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="TestPreviewUnPublished" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=9d98ade2_002D0100_002D448c_002D8914_002D3c3c3f45cbd3/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="TestPreviewUnPublished" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
   &lt;Project Location="/Users/jingshunchen/repos/formcms/server/FormCms.Course.Tests" Presentation="&amp;lt;FormCms.Course.Tests&amp;gt;" /&gt;
 &lt;/SessionState&gt;</s:String>
 	

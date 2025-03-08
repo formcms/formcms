@@ -37,7 +37,7 @@ public static class HttpClientExt
         var res = await client.GetAsync(uri);
         return await res.ParseResult();
     }
-
+    
     public static async Task<Result<string>> PostFileResult(this HttpClient client, string url, string field, IEnumerable<(string,byte[])> files)
     {
         using var content = new MultipartFormDataContent();
@@ -93,7 +93,7 @@ public static class HttpClientExt
         if (!msg.IsSuccessStatusCode)
         {
             return Result.Fail(
-                $"Fail to {msg.RequestMessage?.Method} {msg.RequestMessage?.RequestUri}, message= {str}");
+                $"Fail to {msg.RequestMessage?.Method} {msg.RequestMessage?.RequestUri},statusCode={msg.StatusCode}, message= {str}");
         }
         return Result.Ok(str);
     }

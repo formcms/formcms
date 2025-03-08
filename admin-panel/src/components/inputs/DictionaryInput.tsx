@@ -42,7 +42,7 @@ export function DictionaryInput(
                 {fields.map((field, index) => (
                     <li
                         key={field.id}
-                        className="flex align-items-center py-3 px-2 border-top-1 surface-border flex-wrap"
+                        className="flex align-items-center py-3 px-2 border-top-1 border-bottom-1 surface-border flex-wrap"
                     >
                         <div className="text-500 w-6 md:w-2 font-medium">
                             <Controller
@@ -86,7 +86,7 @@ export function DictionaryInput(
             </ul>
             <Button
                 type="button"
-                label="Add Key-Value Pair"
+                label="Add Pair"
                 icon="pi pi-plus"
                 className="p-button-secondary mt-2"
                 onClick={() => append({key: "", value: ""})}

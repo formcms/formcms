@@ -7,12 +7,13 @@ import {Button} from "primereact/button";
 import {FetchingStatus} from "../../components/FetchingStatus";
 import {FileUpload} from "primereact/fileupload";
 import { Image } from 'primereact/image';
-import {AssetLinkField, formatFileSize } from "../types/assetUtils";
+import {AssetField, AssetLinkField, formatFileSize } from "../types/assetUtils";
 import { useState } from "react";
 import { useCheckError } from "../../components/useCheckError";
 import { DataTable } from "primereact/datatable";
 import { Column } from "primereact/column";
 import { AssetLink } from "../types/asset";
+import { ArrayToObject } from "../../components/inputs/DictionaryInputUtils";
 
 export function AssetEdit(
     {
@@ -42,22 +43,13 @@ export function AssetEdit(
     } = useForm()
 
     const onSubmit = async (formData: any) => {
-        const metadataObject = formData.metadata.reduce(
-            (acc: any, item: any) => {
-                if (item.key) acc[item.key] = item.value;
-                return acc;
-            },
-            {}
-        );
-        
         var payload = {
             ...formData,
-            metadata: metadataObject,
+            metadata: ArrayToObject(formData[AssetField('metadata')]),
             id:data?.id,
         }
-        
         const {error} = await updateAssetMeta(payload)
-        await handleErrorOrSuccess(error, 'Save Succeed', mutate) 
+        await handleErrorOrSuccess(error, 'Save Meta Data Succeed', mutate) 
     }
 
 

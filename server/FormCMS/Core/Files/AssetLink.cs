@@ -41,11 +41,10 @@ public static class AssetLinks
         ColumnHelper.CreateCamelColumn<AssetLink,string>(x => x.EntityName),
         ColumnHelper.CreateCamelColumn<AssetLink,long>(x => x.AssetId),
         ColumnHelper.CreateCamelColumn<AssetLink,long>(x => x.RecordId),
-        
-        ColumnHelper.CreateCamelColumn<AssetLink,DateTime>(x => x.CreatedAt),
-        ColumnHelper.CreateCamelColumn<AssetLink,DateTime>(x => x.UpdatedAt),
-        
         ColumnHelper.CreateCamelColumn<AssetLink>(x => x.Id, ColumnType.Id),
+        
+        DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
+        DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
         DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
     ];
 
@@ -79,7 +78,7 @@ public static class AssetLinks
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .WhereIn(nameof(AssetLink.AssetId).Camelize(), assetIds)
             .Select(nameof(AssetLink.AssetId).Camelize())
-            .SelectRaw($"count({nameof(AssetLink.AssetId).Camelize()}) as {nameof(Asset.LinkCount).Camelize()}")
+            .SelectRaw($"count(\"{nameof(AssetLink.AssetId).Camelize()}\") as \"{nameof(Asset.LinkCount).Camelize()}\"")
             .GroupBy(nameof(AssetLink.AssetId).Camelize());
 
     public static Query LinksByAssetId(IEnumerable<long> assetIds)
