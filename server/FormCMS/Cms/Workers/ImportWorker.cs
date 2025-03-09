@@ -1,6 +1,6 @@
 using System.Collections.Immutable;
 using FormCMS.Core.Descriptors;
-using FormCMS.Core.Files;
+using FormCMS.Core.Assets;
 using FormCMS.Core.Tasks;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.RelationDbDao;

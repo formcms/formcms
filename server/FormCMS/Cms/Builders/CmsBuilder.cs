@@ -82,7 +82,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         {
             
             services.AddSingleton(new ResizeOptions(systemSettings.ImageCompression.MaxWidth,systemSettings.ImageCompression.Quality));
-            services.AddSingleton<IResizer,Resizer>();
+            services.AddSingleton<IResizer,ImageSharpResizer>();
             
             services.AddSingleton(new LocalFileStoreOptions( Path.Join(Directory.GetCurrentDirectory(), "wwwroot/files"), systemSettings.AssetUrlPrefix));
             services.AddSingleton<IFileStore,LocalFileStore>();

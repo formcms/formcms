@@ -2,9 +2,8 @@ using SkiaSharp;
 
 namespace FormCMS.Infrastructure.ImageUtil;
 
-public record ResizeOptions(int MaxWidth, int Quality);
 
-public class Resizer(ResizeOptions opts):IResizer
+public class SkiaSharpResizer(ResizeOptions opts):IResizer
 {
     public IFormFile CompressImage(IFormFile inputFile)
     {

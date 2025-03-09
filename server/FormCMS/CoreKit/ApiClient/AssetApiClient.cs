@@ -1,5 +1,5 @@
 using FluentResults;
-using FormCMS.Core.Files;
+using FormCMS.Core.Assets;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.HttpClientExt;
 

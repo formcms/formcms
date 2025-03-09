@@ -6,7 +6,7 @@ using Humanizer;
 using SqlKata;
 using Column = FormCMS.Utils.DataModels.Column;
 
-namespace FormCMS.Core.Files;
+namespace FormCMS.Core.Assets;
 
 public record AssetLink(
     string EntityName,

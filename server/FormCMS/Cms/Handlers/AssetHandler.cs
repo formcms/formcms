@@ -1,5 +1,5 @@
 using FormCMS.Cms.Services;
-using FormCMS.Core.Files;
+using FormCMS.Core.Assets;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace FormCMS.Cms.Handlers;

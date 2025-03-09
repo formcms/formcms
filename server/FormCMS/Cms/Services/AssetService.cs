@@ -1,4 +1,4 @@
-using FormCMS.Core.Files;
+using FormCMS.Core.Assets;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;

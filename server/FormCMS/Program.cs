@@ -5,7 +5,7 @@ using FormCMS.Auth.Services;
 using NJsonSchema;
 using NJsonSchema.CodeGeneration.TypeScript;
 using FormCMS.Core.Descriptors;
-using FormCMS.Core.Files;
+using FormCMS.Core.Assets;
 using FormCMS.Core.Identities;
 using FormCMS.Core.Tasks;
 using FormCMS.Infrastructure.RelationDbDao;

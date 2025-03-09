@@ -7,7 +7,7 @@ using Humanizer;
 using SqlKata;
 using Column = FormCMS.Utils.DataModels.Column;
 
-namespace FormCMS.Core.Files;
+namespace FormCMS.Core.Assets;
 
 public record Asset(
     string Path, // unique name, yyyy-MM date + ulid

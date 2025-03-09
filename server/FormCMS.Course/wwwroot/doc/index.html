@@ -24,7 +24,7 @@
     <body class="homepage">
         <div class="navbar fixed-top navbar-expand-lg navbar-dark bg-primary">
             <div class="container">
-                <a class="navbar-brand" href=".">FormCMS - Opensource Headless CMS powered with Asp.net Core(c#) and React, featuring Rest APIs, GraphQL and GraphJS page designer.</a>
+                <a class="navbar-brand" href="/">FormCMS - Opensource Headless CMS powered with Asp.net Core(c#) and React, featuring Rest APIs, GraphQL and GraphJS page designer.</a>
 
                 <!-- Expanded navigation -->
                 <div id="navbar-collapse" class="navbar-collapse collapse">
@@ -910,14 +910,56 @@ If you want to preview how the content looks on a page before publishing, you ca
 <li>Click <code>Add Import Task</code>, then select the zip file you wish to import.</li>
 <li>Wait a few minutes, then refresh the page to check if the task was successful.</li>
 </ol>
-<hr />
 <h2 id="asset-library">Asset Library</h2>
-<p>The system tracks uploaded assets (images and files), enabling asset reuse and optimizing storage space. </p>
-<p>In the data management form, the <code>image</code>, <code>file</code>, and <code>gallery</code> input have the following three options. </p>
+<p>The Asset Library tracks uploaded assets (images, files, etc.), enabling reuse across the system, optimizing storage, and providing robust management capabilities.</p>
+<p>The system maintains a centralized repository of assets, each represented by the <code>Asset</code> record with metadata, usage tracking, and linking capabilities. Assets are uniquely identified by a <code>Path</code> (e.g., a combination of a <code>yyyy-MM</code> date and ULID), and their relationships to other data entities are tracked via <code>AssetLink</code> records. For images, the system automatically resizes them to optimize storage space, using a default maximum width of 1200 pixels and a compression quality of 75, configurable via system settings.</p>
+<h3 id="key-features">Key Features</h3>
+<h4 id="add-asset-to-data">Add Asset to Data</h4>
+<p>In data management forms, fields for <code>image</code>, <code>file</code>, or <code>gallery</code> inputs provide the following options: </p>
 <ul>
-<li><strong>Choose File</strong>: Uploads files to the server and stores the server path.</li>
-<li><strong>Choose Library</strong>: Allows selection of a previously saved asset from the library.</li>
-<li><strong>Delete</strong>: Clears the asset path by setting it to empty.</li>
+<li><strong>Choose File</strong>: Uploads a new file to the server. The system generates a unique <code>Path</code> (e.g., <code>2025-03-abc123</code>), assigns a fixed <code>Url</code> based on the <code>Path</code>, and records the <code>Name</code> (original filename), <code>Size</code>, <code>Type</code>, and <code>CreatedBy</code> metadata. For images, the system resizes the file to a maximum width of 1200 pixels (configurable via <code>ImageCompressionOptions.MaxWidth</code>) with a compression quality of 75 (configurable via <code>ImageCompressionOptions.Quality</code>) before saving, updating the <code>Size</code> accordingly. The <code>CreatedAt</code> timestamp is set to the upload time, and a default <code>Title</code> is derived from the <code>Name</code>. </li>
+<li><strong>Choose Library</strong>: Opens a dialog to select an existing asset from the library. The dialog offers: <ul>
+<li><code>Gallery View</code>: Displays assets as thumbnails (ideal for images). </li>
+<li><code>List View</code>: Shows assets in a tabular format with details like <code>Name</code>, <code>Title</code>, <code>Size</code>, <code>CreatedAt</code>, and <code>Type</code>. Users can filter by Name (e.g., search by keyword), Size (e.g., range of bytes), and CreatedAt (e.g., date range), and order the list by these fields in ascending or descending order. </li>
+<li>Selecting an asset links it to the current data entity, incrementing its <code>LinkCount</code> and adding an <code>AssetLink</code> entry. </li>
+</ul>
+</li>
+<li><strong>Delete</strong>: Removes the asset reference from the current data entity by clearing its path, potentially reducing the asset’s <code>LinkCount</code>. </li>
+</ul>
+<h4 id="delete-orphan-assets">Delete Orphan Assets</h4>
+<p>On the <strong>Asset List Page</strong>, users can view all assets with details such as <code>Name</code>, <code>Title</code>, <code>Size</code>, <code>Type</code>, <code>CreatedAt</code>, and <code>LinkCount</code> (the number of data entities referencing the asset). Assets with a <code>LinkCount</code> of 0 (orphans) can be deleted to free up storage. Deletion removes the asset’s file and its record from the system.</p>
+<h4 id="replace-file">Replace File</h4>
+<p>On the <strong>Asset Detail Page</strong>, users can upload a new file to replace an existing asset’s content:<br />
+- The new file updates the asset’s <code>Size</code>, <code>Type</code>, and <code>UpdatedAt</code> timestamp.<br />
+- For images, the system resizes the new file to a maximum width of 1200 pixels (configurable via <code>ImageCompressionOptions.MaxWidth</code>) with a compression quality of 75 (configurable via <code>ImageCompressionOptions.Quality</code>) before saving.<br />
+- The <code>Path</code> and <code>Url</code> remain unchanged, ensuring existing references remain valid.<br />
+- All data entities linked to the asset (via <code>AssetLink</code>) automatically use the new file content when accessing the fixed <code>Url</code>.   </p>
+<h4 id="update-metadata">Update Metadata</h4>
+<p>The <strong>Asset Detail Page</strong> allows users to modify an asset’s metadata:<br />
+- <strong>Title</strong>: Edit the <code>Title</code> field (defaults to <code>Name</code> on creation). This can serve as a display name, link title, or caption (e.g., for images in galleries).<br />
+- <strong>Metadata Dictionary</strong>: Add or update key-value pairs in the <code>Metadata</code> record to store custom information (e.g., <code>{"AltText": "Description", "Category": "Marketing"}</code>).<br />
+- Changes to metadata update the <code>UpdatedAt</code> timestamp.  </p>
+<h3 id="data-structure">Data Structure</h3>
+<ul>
+<li><strong>Asset</strong>: Represents a stored file with fields like <code>Path</code> (unique identifier), <code>Url</code> (fixed access location), <code>Name</code>, <code>Title</code>, <code>Size</code>, <code>Type</code>, <code>Metadata</code>, <code>CreatedBy</code>, <code>CreatedAt</code>, <code>UpdatedAt</code>, <code>Id</code>, <code>LinkCount</code> (calculated), and <code>Links</code> (calculated array of <code>AssetLink</code>). </li>
+<li><strong>AssetLink</strong>: Tracks relationships between assets and data entities, with fields like <code>EntityName</code> (e.g., "BlogPost"), <code>RecordId</code> (entity’s ID), <code>AssetId</code>, <code>CreatedAt</code>, <code>UpdatedAt</code>, and <code>Id</code>. </li>
+</ul>
+<h3 id="configuration">Configuration</h3>
+<ul>
+<li><strong>Image Compression</strong>: Controlled via <code>ImageCompressionOptions</code> in <code>SystemSettings</code>: <ul>
+<li><code>MaxWidth</code>: Defaults to 1200 pixels; can be overridden to adjust the maximum width of resized images. </li>
+<li><code>Quality</code>: Defaults to 75 (on a 0-100 scale); can be adjusted to balance file size and image clarity. </li>
+</ul>
+</li>
+<li><strong>Asset URL</strong>: The <code>Url</code> is prefixed with <code>/files</code> by default (configurable via <code>SystemSettings.AssetUrlPrefix</code>), ensuring a consistent access pattern (e.g., <code>/files/2025-03-abc123</code>). </li>
+</ul>
+<h3 id="benefits">Benefits</h3>
+<ul>
+<li><strong>Reuse</strong>: Assets can be shared across multiple data entities, reducing redundancy. </li>
+<li><strong>Storage Optimization</strong>: Orphaned assets can be removed, and configurable image resizing (e.g., max width 1200px, quality 75) minimizes storage usage. </li>
+<li><strong>Consistency</strong>: The fixed <code>Url</code> ensures seamless updates when replacing files, maintaining all existing links. </li>
+<li><strong>Flexibility</strong>: Metadata, file replacement, and adjustable compression settings allow assets to evolve without breaking references. </li>
+<li><strong>Tracking</strong>: <code>LinkCount</code> and <code>AssetLink</code> provide visibility into asset usage. </li>
 </ul>
 <hr />
 <h2 id="graphql-query"><strong>GraphQL Query</strong></h2>
@@ -1661,7 +1703,7 @@ builder.AddProject&lt;Projects.FormCMS_Course&gt;(name: &quot;web&quot;)
 
 builder.Build().Run();
 </code></pre>
-<h3 id="benefits">Benefits:</h3>
+<h3 id="benefits_1">Benefits:</h3>
 <ol>
 <li><strong>Simplified Configuration</strong>:<br />
    No need to manually specify endpoints for the database or Redis servers. Configuration values can be retrieved using:
@@ -2031,5 +2073,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-03-04 16:53:45.655809+00:00
+Build Date UTC : 2025-03-08 23:20:41.961133+00:00
 -->

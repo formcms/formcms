@@ -19,7 +19,7 @@ public static class CmsWorkerBuilder
         var parts = connectionString.Split(";").Where(x => !x.StartsWith("Password"));
 
         services.AddSingleton(new ResizeOptions(1200,90));
-        services.AddSingleton<Resizer>();
+        services.AddSingleton<SkiaSharpResizer>();
 
         services.AddSingleton(new LocalFileStoreOptions(
             Path.Join(Directory.GetCurrentDirectory(), "wwwroot/files"), "/files"));
