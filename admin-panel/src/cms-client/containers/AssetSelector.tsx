@@ -66,6 +66,7 @@ export function AssetSelectorComponent(
     const tableColumns = columns.map(x => createColumn(x, getCmsAssetUrl, undefined));
     
     const handleSetSelectItems=(item:any)=>{
+        console.log("handleSetSelectItems",item);
         if (setPath){
             setPath(item.path);
             setShow(false);

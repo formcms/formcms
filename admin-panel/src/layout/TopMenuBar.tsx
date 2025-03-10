@@ -6,6 +6,7 @@ import {configs} from "../config";
 import {RoleRoute, UserRoute} from "../auth/AccountRouter";
 import { UserAccess } from '../auth/types/userAccess';
 import {AssetsRouter, TasksRouter } from '../cms-client/EntityRouter';
+import { useAssetEntity } from '../cms-client/services/asset';
 
 
 const entityPrefix = '/entities'
@@ -17,23 +18,29 @@ export const  MenuTasks = "menu_tasks";
 
 export const MenuAssets = "menu_assets";
 
-export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: UserAccess}) {
-    const navigate = useNavigate();
-    const items = useTopMenuBar().filter(x=>{
-        if (profile.roles.includes('sa')){
-            return true;
-        }
 
+export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: UserAccess}) {
+    function CanAccess(entityName:string) {
+        return profile.roles.includes('sa') ||
+            profile?.readWriteEntities?.includes(entityName)
+            || profile?.restrictedReadWriteEntities?.includes(entityName)
+            || profile?.readonlyEntities?.includes(entityName)
+            || profile?.restrictedReadonlyEntities?.includes(entityName)
+    }
+    
+    const {data:asset} = useAssetEntity()
+    const navigate = useNavigate();
+    let items = useTopMenuBar();
+   
+    items = items.filter(x=>{
         if (!x.url.startsWith(entityPrefix)){
             return true;
         }
 
         const entityName = x.url.substring(entityPrefix.length + 1);
-        return profile?.readWriteEntities?.includes(entityName)
-            || profile?.restrictedReadWriteEntities?.includes(entityName)
-            || profile?.readonlyEntities?.includes(entityName)
-            || profile?.restrictedReadonlyEntities?.includes(entityName);
+        return CanAccess(entityName);
     })
+    
     const links = items.map((x: any)=> {
             if (x.isHref) {
                 return x;
@@ -50,6 +57,17 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: U
         }
     );
 
+    if (CanAccess(asset?.name??"")) {
+        links.push({
+            key: MenuAssets,
+            icon: 'pi pi-images',
+            label: 'Assets',
+            command: () => {
+                navigate(`${configs.entityBaseRouter}${AssetsRouter}`)
+            }
+        });
+    }
+    
     [
         {
             key: MenuTasks,
@@ -59,14 +77,7 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: U
                 navigate(`${configs.entityBaseRouter}${TasksRouter}`)
             }
         },
-        {
-            key: MenuAssets,
-            icon: 'pi pi-images',
-            label: 'Assets',
-            command: () => {
-                navigate(`${configs.entityBaseRouter}${AssetsRouter}`)
-            }
-        },
+        
         
         {
             key: MenuRoles,

@@ -18,4 +18,9 @@ public class HookRegistry
         public HookList<EntityPostAddArgs> EntityPostAdd { get; } = new();
         public HookList<JunctionPreAddArgs> JunctionPreAdd { get; } = new();
         public HookList<JunctionPreDelArgs> JunctionPreDel { get; } = new();
+        public HookList<AssetPreListArgs> AssetPreList { get; } = new();
+        public HookList<AssetPreSingleArgs> AssetPreSingle { get; } = new();
+        public HookList<AssetPreUpdateArgs> AssetPreUpdate { get; } = new();
+        
+        public HookList<AssetPreAddArgs> AssetPreAdd { get; } = new();
 }

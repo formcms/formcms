@@ -25,5 +25,19 @@ public class DummyProfileService(RestrictedFeatures restrictedFeatures): IProfil
     public Task ChangePassword(ProfileDto dto)
     {
         throw new ResultException("Not implemented yet");
-    } 
+    }
+
+    public AccessLevel MustGetReadWriteLevel(string entityName)
+    {
+        return AccessLevel.Full;
+    }
+
+    public AccessLevel MustGetReadLevel(string entityName)
+    {
+        return AccessLevel.Full;
+    }
+
+    public async Task EnsureCurrentUserHaveEntityAccess(string entityName)
+    {
+    }
 }

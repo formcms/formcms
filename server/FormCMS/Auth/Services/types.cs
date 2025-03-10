@@ -12,3 +12,9 @@ public static class Constants
 {
     public const string CreatedBy = "createdBy";
 }
+
+public enum AccessLevel
+{
+    Full,
+    Restricted,
+}

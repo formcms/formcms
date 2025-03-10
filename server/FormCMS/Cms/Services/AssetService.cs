@@ -1,4 +1,5 @@
 using FormCMS.Core.Assets;
+using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
@@ -18,7 +19,9 @@ public class AssetService(
     IProfileService profileService,
     SystemSettings systemSettings,
     IRelationDbDao dao,
-    IResizer resizer
+    IResizer resizer,
+    IServiceProvider provider,
+    HookRegistry hookRegistry
 ) : IAssetService
 {
     public async Task EnsureTable()
@@ -38,6 +41,8 @@ public class AssetService(
 
     public async Task<Asset> Single(long id, CancellationToken ct = default)
     {
+        await hookRegistry.AssetPreSingle.Trigger(provider,new AssetPreSingleArgs(id));
+        
         var record = await executor.Single(Assets.Single(id), ct);
         var asset = record?.ToObject<Asset>().Ok() ?? throw new ResultException("Asset not found");
         var links = await executor.Many(AssetLinks.LinksByAssetId([id]), ct);
@@ -47,7 +52,11 @@ public class AssetService(
 
     public async Task<ListResponse> List(StrArgs args, int? offset, int? limit, bool withLinkCount, CancellationToken ct)
     {
+
         var (filters, sorts) = QueryStringParser.Parse(args);
+        var res =await hookRegistry.AssetPreList.Trigger(provider,new AssetPreListArgs([..filters]));
+        filters = [..res.RefFilters];
+        
         var query = Assets.List(offset, limit);
         var items = await executor.Many(query, Assets.Columns, filters, sorts, ct);
         if (withLinkCount) await LoadLinkCount(items, ct);
@@ -57,7 +66,6 @@ public class AssetService(
 
     public async Task<string[]> Add(IFormFile[] files)
     {
-        var userInfo = profileService.GetInfo() ?? throw new ResultException("Not logged in");
         foreach (var formFile in files)
         {
             if (formFile.Length == 0) throw new ResultException($"File [{formFile.FileName}] is empty");
@@ -72,7 +80,7 @@ public class AssetService(
         foreach (var (fileName, file) in pairs)
         {
             var asset = new Asset(
-                CreatedBy: userInfo.Name,
+                CreatedBy: "",
                 Path: "/" + fileName,
                 Url: store.GetUrl(fileName),
                 Name: file.FileName,
@@ -80,6 +88,8 @@ public class AssetService(
                 Size: file.Length,
                 Type: file.ContentType,
                 Metadata: new Dictionary<string, object>());
+            var res =await hookRegistry.AssetPreAdd.Trigger(provider, new AssetPreAddArgs(asset));
+            asset = res.RefAsset;
             assets.Add(asset);
         }
 
@@ -91,6 +101,7 @@ public class AssetService(
     public async Task Replace(long id, IFormFile file, CancellationToken ct = default)
     {
         if (file.Length == 0) throw new ResultException($"File [{file.FileName}] is empty");
+        await hookRegistry.AssetPreUpdate.Trigger(provider,new AssetPreUpdateArgs(id));
 
         //make sure the asset to replace existing
         var asset = await Single(id, ct);
@@ -115,6 +126,7 @@ public class AssetService(
 
     public async Task Delete(long id, CancellationToken ct)
     {
+        await hookRegistry.AssetPreUpdate.Trigger(provider,new AssetPreUpdateArgs(id));
         var asset = await Single(id, ct);
         using var trans = await dao.BeginTransaction();
         try

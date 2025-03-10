@@ -48,7 +48,7 @@ export function GalleryView(
         } : undefined;
 
         // Handle single selection
-        const handleSingleSelect = setPath && path !== undefined
+        const handleSingleSelect = setPath !== undefined
             ? () => setPath(asset[pathField])
             : undefined;
 

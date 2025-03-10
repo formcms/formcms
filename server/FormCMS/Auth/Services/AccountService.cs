@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FluentResults;
+using FormCMS.Core.Assets;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -7,7 +8,6 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Core.Identities;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.HttpContextExt;
-using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
 
@@ -29,7 +29,8 @@ public class AccountService<TUser, TRole,TCtx>(
     {
         var query = SchemaHelper.ByNameAndType(SchemaType.Entity, null, null);
         var records= await queryExecutor.Many(query,ct);
-        return records.Select(x => (string)x[nameof(Entity.Name).Camelize()]).ToArray();
+        var entityName = records.Select(x => (string)x[nameof(Entity.Name).Camelize()]).ToArray();
+        return [..entityName, Assets.Entity.Name];
     }
     
     public async Task<string[]> GetRoles(CancellationToken ct)
@@ -70,22 +71,26 @@ public class AccountService<TUser, TRole,TCtx>(
             Roles: [..item.Values.Where(x => x.role is not null).Select(x => x.role.Name!).Distinct()],
             ReadWriteEntities:
             [
-                ..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.FullAccess)
+                ..item.Values
+                    .Where(x => x.userClaim?.ClaimType == AccessScope.FullAccess)
                     .Select(x => x.userClaim.ClaimValue!).Distinct()
             ],
             RestrictedReadWriteEntities:
             [
-                ..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.RestrictedAccess)
+                ..item.Values
+                    .Where(x => x.userClaim?.ClaimType == AccessScope.RestrictedAccess)
                     .Select(x => x.userClaim.ClaimValue!).Distinct()
             ],
             ReadonlyEntities:
             [
-                ..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.FullRead)
+                ..item.Values
+                    .Where(x => x.userClaim?.ClaimType == AccessScope.FullRead)
                     .Select(x => x.userClaim.ClaimValue!).Distinct()
             ],
             RestrictedReadonlyEntities:
             [
-                ..item.Values.Where(x => x.userClaim?.ClaimType == AccessScope.RestrictedRead)
+                ..item.Values
+                    .Where(x => x.userClaim?.ClaimType == AccessScope.RestrictedRead)
                     .Select(x => x.userClaim.ClaimValue!).Distinct()
             ],
             AllowedMenus: []
@@ -162,8 +167,6 @@ public class AccountService<TUser, TRole,TCtx>(
         Assure(await userManager.DeleteAsync(user));
     }
     
-   
-
     public async Task SaveUser(UserAccess access)
     {
         if (!accessor.HttpContext.HasRole(Roles.Sa)) throw new ResultException("Only supper admin have permission");

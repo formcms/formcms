@@ -2,7 +2,7 @@ using FormCMS.Core.Descriptors;
 
 namespace FormCMS.Auth.Services;
 
-public interface ISchemaPermissionService
+public interface ISchemaAuthService
 {
     void GetAll();
     void GetOne(Schema schema);

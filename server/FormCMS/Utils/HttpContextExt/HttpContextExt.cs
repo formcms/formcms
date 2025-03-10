@@ -30,9 +30,12 @@ public static class HttpContextExt
         return context?.User.IsInRole(role) == true;
     }
 
-    public static bool GetUserId(this HttpContext? context, out string userId)
+    public static bool UserName(this HttpContext? context, out string userId)
     {
         userId = context?.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
         return !string.IsNullOrWhiteSpace(userId);
     }
+
+    public static string UserNameOrEmpty(this HttpContext? context)
+        =>context?.User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "";
 }

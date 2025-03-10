@@ -12,7 +12,8 @@ public sealed record ProfileDto(string OldPassword, string Password);
 public class ProfileService<TUser>(
     UserManager<TUser> userManager,
     IHttpContextAccessor contextAccessor,
-    RestrictedFeatures restrictedFeatures
+    RestrictedFeatures restrictedFeatures,
+    SignInManager<TUser> signInManager
     ):IProfileService
 where TUser :IdentityUser, new()
 {
@@ -24,8 +25,6 @@ where TUser :IdentityUser, new()
 
         string[] roles = [..claimsPrincipal.FindAll(ClaimTypes.Role).Select(x => x.Value)];
         
-        
-
         return new UserAccess
         (
             Id: claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "",
@@ -45,6 +44,56 @@ where TUser :IdentityUser, new()
         var user = await MustGetCurrentUser();
         var result =await userManager.ChangePasswordAsync(user, dto.OldPassword, dto.Password);
         if (!result.Succeeded) throw new ResultException(IdentityErrMsg(result));
+    }
+    
+    public AccessLevel MustGetReadWriteLevel(string entityName)
+    {
+        var access = GetInfo();
+        if (access.HasRole(Roles.Sa) || access.CanFullReadWrite(entityName))
+        {
+            return AccessLevel.Full;
+        }
+
+        if (access.CanRestrictedReadWrite(entityName))
+        {
+            return AccessLevel.Restricted;
+        }
+
+        throw new ResultException("You don't have permission to read [" + entityName + "]");
+    }
+
+    public AccessLevel MustGetReadLevel(string entityName)
+    {
+        var access = GetInfo();
+        if (access.HasRole(Roles.Sa) || access.CanFullReadOnly(entityName) || access.CanFullReadWrite(entityName))
+        {
+            return AccessLevel.Full;
+        }
+
+        if ( access.CanRestrictedReadOnly(entityName) || access.CanRestrictedReadWrite(entityName))
+        {
+            return AccessLevel.Restricted;
+        }
+        throw new ResultException("You don't have permission to read [" + entityName + "]");
+    }
+    
+    public async Task EnsureCurrentUserHaveEntityAccess(string entityName)
+    {
+        var user = await userManager.GetUserAsync(contextAccessor.HttpContext!.User) ??
+                   throw new Exception("User not found.");
+
+        var claims = await userManager.GetClaimsAsync(user);
+
+        var hasAccess = claims.Any(claim => 
+            claim.Value == entityName && 
+            claim.Type is AccessScope.RestrictedAccess or AccessScope.FullAccess
+        );
+
+        if (!hasAccess)
+        {
+            await userManager.AddClaimAsync(user, new Claim(AccessScope.RestrictedAccess, entityName));
+            await signInManager.RefreshSignInAsync(user);
+        }
     }
 
     private async Task<TUser> MustGetCurrentUser()

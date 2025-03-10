@@ -20,6 +20,7 @@ public class TaskService(
 {
     public async Task DeleteTaskFile(long id,CancellationToken ct)
     {
+        EnsureHasPermission();
         var record =await executor.Single(TaskHelper.ById(id),ct)?? throw new ResultException("Task not found");
         var task = record.ToObject<SystemTask>().Ok();
         await store.Del(task.GetPaths().Zip);
@@ -30,6 +31,7 @@ public class TaskService(
     
     public async Task<string> GetTaskFileUrl(long id, CancellationToken ct)
     {
+        EnsureHasPermission();
         var record =await executor.Single(TaskHelper.ById(id),ct)?? throw new ResultException("Task not found");
         var task = record.ToObject<SystemTask>().Ok();
         return store.GetUrl(task.GetPaths().Zip);
@@ -41,6 +43,7 @@ public class TaskService(
 
     public async Task<long> AddImportTask(IFormFile file)
     {
+        EnsureHasPermission();
         var task = TaskHelper.InitTask(TaskType.Import, profileService.GetInfo()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
         var id = await executor.Exec(query,true);
@@ -52,6 +55,7 @@ public class TaskService(
     
     public async Task<long> ImportDemoData()
     {
+        EnsureHasPermission();
         const string url = "https://github.com/FormCMS/FormCMS/raw/refs/heads/doc/etc/demo-data.zip";
         var task = TaskHelper.InitTask(TaskType.Import, profileService.GetInfo()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
@@ -65,6 +69,7 @@ public class TaskService(
 
     public Task<long> AddExportTask()
     {
+        EnsureHasPermission();
         var task = TaskHelper.InitTask(TaskType.Export, profileService.GetInfo()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
         return executor.Exec(query,true);

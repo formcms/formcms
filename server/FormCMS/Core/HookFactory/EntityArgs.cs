@@ -1,9 +1,8 @@
 using System.Collections.Immutable;
 using FormCMS.Core.Descriptors;
-using FormCMS.Utils.DisplayModels;
 
 namespace FormCMS.Core.HookFactory;
-public record EntityPreGetSingleArgs(LoadedEntity Entity, string RecordId, Record? OutRecord):BaseArgs (Entity.Name);
+public record EntityPreGetSingleArgs(LoadedEntity Entity, ValidValue RecordId, Record? OutRecord):BaseArgs (Entity.Name);
 
 public record EntityPreGetListArgs(LoadedEntity Entity, ImmutableArray<ValidFilter> RefFilters, ImmutableArray<ValidSort> RefSorts, ValidPagination RefPagination ):BaseArgs(Entity.Name) ;
 

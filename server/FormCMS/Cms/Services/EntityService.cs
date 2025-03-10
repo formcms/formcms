@@ -16,10 +16,10 @@ namespace FormCMS.Cms.Services;
 
 public sealed class EntityService(
     IRelationDbDao relationDbDao,
-    IServiceProvider provider,
     KateQueryExecutor executor,
     IEntitySchemaService entitySchemaSvc,
     IAssetService assetService,
+    IServiceProvider provider,
     HookRegistry hookRegistry
 ) : IEntityService
 {
@@ -50,23 +50,11 @@ public sealed class EntityService(
         return items.ToTree(entity.PrimaryKey, linkField);
     }
 
-    public async Task<Record> SingleByIdBasic(string entityName, string id, string[] attributes,
-        CancellationToken ct)
-    {
-        var ctx = await GetIdCtx(entityName, id, ct);
-        var fields = ctx.Entity.Attributes
-            .Where(x => x.IsLocal() && attributes.Contains(x.Field))
-            .Select(x => x.AddTableModifier());
-        var query = ctx.Entity.ByIdsQuery(fields, [ctx.Id], null);
-        return await executor.Single(query, ct) ??
-               throw new ResultException($"not find record by [{id}]");
-    }
-
     public async Task<Record> SingleWithAction(string entityName, string id, CancellationToken ct = default)
     {
         var ctx = await GetIdCtx(entityName, id, ct);
         var res = await hookRegistry.EntityPreGetSingle.Trigger(provider,
-            new EntityPreGetSingleArgs(ctx.Entity, id, null));
+            new EntityPreGetSingleArgs(ctx.Entity, ctx.Id, null));
         if (res.OutRecord is not null)
         {
             return res.OutRecord;
@@ -153,7 +141,7 @@ public sealed class EntityService(
             ctx.Junction.TargetEntity.Parse(ele, entitySchemaSvc).Ok()).ToArray();
 
         var res = await hookRegistry.JunctionPreDel.Trigger(provider,
-            new JunctionPreDelArgs(ctx.Entity, id, ctx.Attribute, items));
+            new JunctionPreDelArgs(ctx.Entity, ctx.Id, ctx.Attribute, items));
 
         var query = ctx.Junction.Delete(ctx.Id, res.RefItems);
         var ret = await executor.Exec(query, false, ct);
@@ -168,7 +156,7 @@ public sealed class EntityService(
         var items = elements
             .Select(ele => ctx.Junction.TargetEntity.Parse(ele, entitySchemaSvc).Ok()).ToArray();
         var res = await hookRegistry.JunctionPreAdd.Trigger(provider,
-            new JunctionPreAddArgs(ctx.Entity, id, ctx.Attribute, items));
+            new JunctionPreAddArgs(ctx.Entity, ctx.Id, ctx.Attribute, items));
         var query = ctx.Junction.Insert(ctx.Id, res.RefItems);
 
         var ret = await executor.Exec(query, true, ct);

@@ -55,7 +55,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         optionsAction?.Invoke(systemSettings);
         services.AddSingleton(systemSettings);
 
-        var systemResources = new RestrictedFeatures([Menus.MenuSchemaBuilder, Menus.MenuTasks,Menus.MenuAssets]);
+        var systemResources = new RestrictedFeatures([Menus.MenuSchemaBuilder, Menus.MenuTasks]);
         services.AddSingleton(systemResources);
         
         services.AddSingleton(new DbOption(databaseProvider, connectionString));

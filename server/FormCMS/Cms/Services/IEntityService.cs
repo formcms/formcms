@@ -12,7 +12,6 @@ public interface IEntityService
 
     Task<Record[]> ListAsTree(string name, CancellationToken ct);
     Task<Record> SingleWithAction(string entityName, string strId, CancellationToken ct = default);
-    Task<Record> SingleByIdBasic(string entityName, string strId, string[]attributes, CancellationToken ct =default);
     
     Task<Record> InsertWithAction(string name, JsonElement item, CancellationToken ct = default);
     Task<Record> UpdateWithAction(string name, JsonElement item, CancellationToken ct= default);

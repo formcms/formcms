@@ -24,10 +24,12 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
             .AddRoles<TRole>()
             .AddEntityFrameworkStores<TContext>();
         
-        services.AddScoped<IAccountService, AccountService<TUser, TRole, TContext>>();
-        services.AddScoped<ISchemaPermissionService, SchemaPermissionService<TUser>>();
-        services.AddScoped<IEntityPermissionService, EntityPermissionService>();
         services.AddScoped<IProfileService, ProfileService<TUser>>();
+        services.AddScoped<IAccountService, AccountService<TUser, TRole, TContext>>();
+        
+        services.AddScoped<ISchemaAuthService, SchemaAuthService>();
+        services.AddScoped<IEntityAuthService, EntityAuthService>();
+        services.AddScoped<IAssetAuthService, AssetAuthService>();
         
         return services;
     }
@@ -56,110 +58,9 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
         void RegisterHooks()
         {
             var registry = app.Services.GetRequiredService<HookRegistry>();
-
-            registry.SchemaPreSave.RegisterDynamic("*", async (
-                ISchemaPermissionService schemaPermissionService, 
-                SchemaPreSaveArgs args
-            ) => args with
-            {
-                RefSchema = await schemaPermissionService.BeforeSave(args.RefSchema)
-            });
-
-            registry.SchemaPostSave.RegisterDynamic("*", async (
-               ISchemaPermissionService schemaPermissionService, SchemaPostSaveArgs args
-            ) =>
-            {
-                await schemaPermissionService.AfterSave(args.Schema);
-                return args;
-            });
-
-            registry.SchemaPreDel.RegisterDynamic("*", async (
-               ISchemaPermissionService schemaPermissionService, SchemaPreDelArgs args
-            ) =>
-            {
-                await schemaPermissionService.Delete(args.Schema);
-                return args;
-            });
-
-            registry.SchemaPreGetAll.RegisterDynamic("*", (
-               ISchemaPermissionService schemaPermissionService, 
-               SchemaPreGetAllArgs args
-            ) =>
-            {
-                schemaPermissionService.GetAll();
-                return args;
-            });
-
-            registry.SchemaPostGetSingle.RegisterDynamic("*", (
-                ISchemaPermissionService schemaPermissionService, SchemaPostGetSingleArgs args
-            ) =>
-            {
-                schemaPermissionService.GetOne(args.Schema);
-                return args;
-            });
-
-            registry.EntityPreGetSingle.RegisterDynamic("*", (
-              IEntityPermissionService service, 
-              EntityPreGetSingleArgs args
-            ) =>
-            {
-                service.GetOne(args.Name, args.RecordId);
-                return args;
-            });
-
-            registry.EntityPreGetList.RegisterDynamic("*", (
-              IEntityPermissionService service, 
-              EntityPreGetListArgs args
-            ) =>
-            {
-                args = args with { RefFilters = service.List(args.Name, args.Entity, args.RefFilters) };
-                return args;
-            });
-
-            registry.JunctionPreAdd.RegisterDynamic("*", async (
-               IEntityPermissionService service, 
-               JunctionPreAddArgs args
-            ) =>
-            {
-                await service.Change(args.Entity.Name, args.RecordId);
-                return args;
-            });
-
-            registry.JunctionPreDel.RegisterDynamic("*", async (
-               IEntityPermissionService service, 
-               JunctionPreDelArgs args
-            ) =>
-            {
-                await service.Change(args.Entity.Name, args.RecordId);
-                return args;
-            });
-
-            registry.EntityPreDel.RegisterDynamic("*", async (
-               IEntityPermissionService service, 
-               EntityPreDelArgs args
-            ) =>
-            {
-                await service.Change(args.Entity.Name, args.RefRecord[args.Entity.PrimaryKey].ToString()??"");
-                return args;
-            });
-
-            registry.EntityPreUpdate.RegisterDynamic("*", async (
-               IEntityPermissionService service, 
-               EntityPreUpdateArgs args
-            ) =>
-            {
-                await service.Change(args.Entity.Name, args.RefRecord[args.Entity.PrimaryKey].ToString()??"");
-                return args;
-            });
-
-            registry.EntityPreAdd.RegisterDynamic("*", (
-               IEntityPermissionService service, EntityPreAddArgs args
-            ) =>
-            {
-                service.Create(args.Entity.Name);
-                service.AssignCreatedBy(args.RefRecord);
-                return args;
-            });
+            SchemaAuthUtil.RegisterHooks(registry);
+            EntityAuthUtil.RegisterHooks(registry);
+            AssetAuthUtil.RegisterHooks(registry);
         }
     }
 

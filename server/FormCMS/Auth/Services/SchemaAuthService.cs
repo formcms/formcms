@@ -1,28 +1,23 @@
 using System.Collections.Immutable;
-using System.Security.Claims;
 using FluentResults;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
-using FormCMS.Utils.HttpContextExt;
+using FormCMS.Core.Identities;
 using FormCMS.Utils.ResultExt;
-using Microsoft.AspNetCore.Identity;
 using Descriptors_Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Auth.Services;
 
-public class SchemaPermissionService<TUser>(
-    IHttpContextAccessor contextAccessor,
-    SignInManager<TUser> signInManager,
-    UserManager<TUser> userManager,
+public class SchemaAuthService(
+    IProfileService profileService,
     ISchemaService schemaService
-) :ISchemaPermissionService
-    where TUser : IdentityUser, new()
+) :ISchemaAuthService
 {
-   
+
     public void GetAll()
     {
-        if (!contextAccessor.HttpContext.HasRole(Roles.Sa) &&
-            !contextAccessor.HttpContext.HasRole(Roles.Admin))
+        var access = profileService.GetInfo();
+        if (!access.HasRole(Roles.Sa) && !access.HasRole(Roles.Admin))
         {
             throw new ResultException($"Fail to get schema list, you don't have [Sa] or [Admin] role.");
         }
@@ -30,8 +25,8 @@ public class SchemaPermissionService<TUser>(
 
     public void GetOne(Schema schema)
     {
-        if (!contextAccessor.HttpContext.HasRole(Roles.Sa) &&
-            !contextAccessor.HttpContext.HasRole(Roles.Admin))
+        var access = profileService.GetInfo();
+        if (!access.HasRole(Roles.Sa) && !access.HasRole(Roles.Admin))
         {
             throw new ResultException($"You don't have permission to access {schema.Type}:{schema.Name}");
         }
@@ -44,14 +39,10 @@ public class SchemaPermissionService<TUser>(
 
     public async Task<Schema> BeforeSave(Schema schema)
     {
-        if (!contextAccessor.HttpContext.GetUserId(out var userId))
-        {
-            throw new ResultException($"You are not logged in, can not save schema {schema.Type} [{schema.Name}]");
-        }
-
+        var access = profileService.GetInfo();
         await EnsureWritePermissionAsync(schema);
 
-        schema = schema with { CreatedBy = userId };
+        schema = schema with { CreatedBy = access?.Id ??"" };
         if (schema.Type == SchemaType.Entity)
         {
             schema = EnsureSchemaHaveCreatedByField(schema).Ok();
@@ -62,48 +53,29 @@ public class SchemaPermissionService<TUser>(
 
     public async Task AfterSave(Schema schema)
     {
-        await EnsureCurrentUserHaveEntityAccess(schema);
+        if (schema.Type == SchemaType.Entity)
+        {
+            await profileService.EnsureCurrentUserHaveEntityAccess(schema.Name);
+        }
     }
 
     private async Task EnsureWritePermissionAsync(Schema schema)
     {
-        if (contextAccessor.HttpContext?.User.Identity?.IsAuthenticated == false)
-        {
-            throw new ResultException($"You are not logged in, can not save {schema.Type} [{schema.Name}]");
-        }
+        var access = profileService.GetInfo();
         var hasPermission = schema.Type switch
         {
-            SchemaType.Menu => contextAccessor.HttpContext.HasRole(Roles.Sa),
+            SchemaType.Menu => access.HasRole(Roles.Sa),
             _ when schema.Id is 0 => 
-                contextAccessor.HttpContext.HasRole(Roles.Admin) || 
-                contextAccessor.HttpContext.HasRole(Roles.Sa),
+                access.HasRole(Roles.Admin) || 
+                access.HasRole(Roles.Sa),
             _ => 
-                contextAccessor.HttpContext.HasRole(Roles.Sa) || 
+                access.HasRole(Roles.Sa) || 
                 await IsCreatedByCurrentUser(schema)
         };
 
         if (!hasPermission)
         {
             throw new ResultException($"You don't have permission to save {schema.Type} [{schema.Name}]");
-        }
-    }
-
-    private async Task EnsureCurrentUserHaveEntityAccess(Schema schema)
-    {
-        var user = await userManager.GetUserAsync(contextAccessor.HttpContext!.User) ??
-                   throw new Exception("User not found.");
-
-        var claims = await userManager.GetClaimsAsync(user);
-
-        var hasAccess = claims.Any(claim => 
-            claim.Value == schema.Name && 
-            claim.Type is AccessScope.RestrictedAccess or AccessScope.FullAccess
-        );
-
-        if (!hasAccess)
-        {
-            await userManager.AddClaimAsync(user, new Claim(AccessScope.RestrictedAccess, schema.Name));
-            await signInManager.RefreshSignInAsync(user);
         }
     }
 
@@ -126,11 +98,9 @@ public class SchemaPermissionService<TUser>(
 
     private async Task<bool> IsCreatedByCurrentUser(Schema schema)
     {
-        if (!contextAccessor.HttpContext.GetUserId(out var userId))
-            throw new ResultException("Can not verify schema is created by you, you are not logged in.");
+        var access = profileService.GetInfo();
         var find = await schemaService.ById(schema.Id)
             ?? throw new ResultException($"Can not verify schema is created by you, can not find schema by id [{schema.Id}]");
-        return find.CreatedBy == userId;
+        return find.CreatedBy == access?.Id;
     }
 }
-  
