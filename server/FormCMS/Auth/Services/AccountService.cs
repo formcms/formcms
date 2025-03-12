@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FluentResults;
+using FormCMS.Cms.Services;
 using FormCMS.Core.Assets;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -7,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.Identities;
 using FormCMS.Infrastructure.RelationDbDao;
-using FormCMS.Utils.HttpContextExt;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
 
@@ -16,7 +16,7 @@ namespace FormCMS.Auth.Services;
 public class AccountService<TUser, TRole,TCtx>(
     UserManager<TUser> userManager,
     RoleManager<TRole> roleManager,
-    IHttpContextAccessor accessor,
+    IProfileService profileService,
     TCtx context,
     KateQueryExecutor queryExecutor
 ) : IAccountService
@@ -35,16 +35,14 @@ public class AccountService<TUser, TRole,TCtx>(
     
     public async Task<string[]> GetRoles(CancellationToken ct)
     {
-        if (!accessor.HttpContext.HasRole(Roles.Admin) && !accessor.HttpContext.HasRole(Roles.Sa))
-            throw new UnauthorizedAccessException();
+        profileService.MustHasAnyRole([Roles.Admin, Roles.Sa]);
         var roles = await context.Roles.Select(x => x.Name??"").ToArrayAsync(ct);
         return roles;
     }
 
     public async Task<UserAccess> GetSingleUser(string id, CancellationToken ct)
     {
-        if (!accessor.HttpContext.HasRole(Roles.Admin) && !accessor.HttpContext.HasRole(Roles.Sa))
-            throw new UnauthorizedAccessException();
+        profileService.MustHasAnyRole([Roles.Admin, Roles.Sa]);
         var query = from user in context.Users
             where user.Id == id 
             join userRole in context.UserRoles
@@ -99,9 +97,7 @@ public class AccountService<TUser, TRole,TCtx>(
 
     public async Task<UserAccess[]> GetUsers(CancellationToken ct)
     {
-        if (!accessor.HttpContext.HasRole(Roles.Admin) && !accessor.HttpContext.HasRole(Roles.Sa))
-            throw new UnauthorizedAccessException();
-
+        profileService.MustHasAnyRole([Roles.Admin, Roles.Sa]);
         var query = from user in context.Users
             join userRole in context.UserRoles
                 on user.Id equals userRole.UserId into userRolesGroup
@@ -161,7 +157,7 @@ public class AccountService<TUser, TRole,TCtx>(
 
     public async Task DeleteUser(string id)
     {
-        if(!accessor.HttpContext.HasRole(Roles.Sa)) throw new ResultException("Only supper admin have permission");
+        profileService.MustHasAnyRole([Roles.Sa]);
         var user = await userManager.Users.FirstOrDefaultAsync(x => x.Id == id)
             ?? throw new ResultException($"Fail to Delete User, Cannot find user by id [{id}]");
         Assure(await userManager.DeleteAsync(user));
@@ -169,7 +165,7 @@ public class AccountService<TUser, TRole,TCtx>(
     
     public async Task SaveUser(UserAccess access)
     {
-        if (!accessor.HttpContext.HasRole(Roles.Sa)) throw new ResultException("Only supper admin have permission");
+        profileService.MustHasAnyRole([Roles.Sa]);
         var user = await MustFindUser(access.Id);
         var claims = await userManager.GetClaimsAsync(user);
         await AssignRole(user, access.Roles).Ok();
@@ -195,15 +191,15 @@ public class AccountService<TUser, TRole,TCtx>(
     }
     public async Task DeleteRole(string name)
     {
+        profileService.MustHasAnyRole([Roles.Sa]);
         if (name is Roles.Admin or Roles.Sa) throw new ResultException($"Cannot delete System Build-in Role [{name}]");
-        if (!accessor.HttpContext.HasRole(Roles.Sa)) throw new ResultException("Only supper admin have permission");
         var role = await roleManager.FindByNameAsync(name)?? throw new ResultException($"Cannot find role by name [{name}]");
         Assure(await roleManager.DeleteAsync(role));
     }
 
     public async Task SaveRole(RoleAccess roleAccess)
     {
-        if (!accessor.HttpContext.HasRole(Roles.Sa)) throw new ResultException("Only supper admin have permission");
+        profileService.MustHasAnyRole([Roles.Sa]);
         if (string.IsNullOrWhiteSpace(roleAccess.Name))
         {
             throw new ResultException("Role name can not be null");

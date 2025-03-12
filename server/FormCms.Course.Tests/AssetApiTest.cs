@@ -62,10 +62,9 @@ public class AssetApiTest
     {
         var txtFileName = $"{Ulid.NewUlid()}.txt";
         var bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
-        var path = await _assetApiClient.AddAsset([(txtFileName, bs)]).Ok();
-        var list = await _assetApiClient.List(false,$"name[equals]={txtFileName}").Ok();
-        var id = list.Items[0].MustGetLong("id");
-
+        await _assetApiClient.AddAsset([(txtFileName, bs)]).Ok();
+        var id = await _assetApiClient.GetAssetIdByName(txtFileName);
+      
         txtFileName = $"{Ulid.NewUlid()}.txt";
         bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
         await _assetApiClient.Replace(id, txtFileName, bs).Ok();
@@ -80,8 +79,7 @@ public class AssetApiTest
         var txtFileName = $"{Ulid.NewUlid()}.txt";
         var bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
         await _assetApiClient.AddAsset([(txtFileName, bs)]).Ok();
-        var list = await _assetApiClient.List(false,$"name[equals]={txtFileName}").Ok();
-        var id = list.Items[0].MustGetLong("id");
+        var id = await _assetApiClient.GetAssetIdByName(txtFileName);
         
         var asset = await _assetApiClient.Single(id).Ok();
         asset = asset with

@@ -5,12 +5,12 @@ public static class EntityAuthUtil
 {
     public static void RegisterHooks(HookRegistry registry)
     {
-        registry.EntityPreGetSingle.RegisterDynamic("*", (
+        registry.EntityPreGetSingle.RegisterDynamic("*", async (
             IEntityAuthService service,
             EntityPreGetSingleArgs args
         ) =>
         {
-            service.CheckGetSinglePermission(args.Entity, args.RecordId);
+            await service.CheckGetSinglePermission(args.Entity, args.RecordId);
             return args;
         });
 

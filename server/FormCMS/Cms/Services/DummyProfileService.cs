@@ -37,7 +37,17 @@ public class DummyProfileService(RestrictedFeatures restrictedFeatures): IProfil
         return AccessLevel.Full;
     }
 
-    public async Task EnsureCurrentUserHaveEntityAccess(string entityName)
+    public void MustHasAnyRole(IEnumerable<string> role)
     {
+    }
+
+    public Task EnsureCurrentUserHaveEntityAccess(string entityName)
+    {
+        return Task.CompletedTask;
+    }
+
+    public bool HasRole(string role)
+    {
+        return true;
     }
 }

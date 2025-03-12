@@ -28,11 +28,10 @@ public class EntityAuthService(
         return [..filters, filter];
     }
 
-    public async Task CheckGetSinglePermission(LoadedEntity entity, ValidValue recordId)
+    public  Task CheckGetSinglePermission(LoadedEntity entity, ValidValue recordId)
     {
         var level = profileService.MustGetReadLevel(entity.Name);
-        if (level == AccessLevel.Full) return;
-        await EnsureCreatedByCurrentUser(entity, recordId);
+        return level == AccessLevel.Full ? Task.CompletedTask : EnsureCreatedByCurrentUser(entity, recordId.ObjectValue??0);
     }
 
     public void CheckInsertPermission(LoadedEntity entity)
@@ -40,18 +39,16 @@ public class EntityAuthService(
         profileService.MustGetReadWriteLevel(entity.Name);
     }
 
-    public async Task CheckUpdatePermission(LoadedEntity entity, Record record)
+    public  Task CheckUpdatePermission(LoadedEntity entity, Record record)
     {
         var level = profileService.MustGetReadWriteLevel(entity.Name);
-        if (level == AccessLevel.Full) return;
-        await EnsureCreatedByCurrentUser(entity, record[entity.PrimaryKey]);
+        return level == AccessLevel.Full ? Task.CompletedTask : EnsureCreatedByCurrentUser(entity, record[entity.PrimaryKey]);
     }
 
-    public async Task CheckUpdatePermission(LoadedEntity entity, ValidValue recordId)
+    public  Task CheckUpdatePermission(LoadedEntity entity, ValidValue recordId)
     {
         var level = profileService.MustGetReadWriteLevel(entity.Name);
-        if (level == AccessLevel.Full) return;
-        await EnsureCreatedByCurrentUser(entity, recordId.ObjectValue??0);
+        return level == AccessLevel.Full ? Task.CompletedTask : EnsureCreatedByCurrentUser(entity, recordId.ObjectValue??0);
     }
 
     public void AssignCreatedBy(Record record)

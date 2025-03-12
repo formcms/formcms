@@ -73,8 +73,8 @@ public class SchemaApiTest
     public async Task SaveSchemaAndOneAndGetLoaded()
     {
         var schema = (await _schema.SaveEntityDefine(_testSchema)).Ok();
-        (await _schema.GetLoadedEntity(schema.Name)).Ok();
-        (await _schema.One(schema.Id)).Ok();
+        await _schema.GetLoadedEntity(schema.Name).Ok();
+        await _schema.Single(schema.Id).Ok();
     }
 
     [Fact]

@@ -2,7 +2,6 @@ using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.ResultExt;
-using OpenTelemetry.Trace;
 using DisplayType = FormCMS.Utils.DisplayModels.DisplayType;
 using Entity = FormCMS.Core.Descriptors.Entity;
 
@@ -88,23 +87,32 @@ public static class SchemaHandler
         return app;
     }
 
+    //these two APIs are availabe for any login user
     public static RouteGroupBuilder MapAdminPanelSchemaHandlers(this RouteGroupBuilder app)
     {
         app.MapGet("/menu/{name}", async (
-            ISchemaService svc, string name, CancellationToken ct
+            ISchemaService svc, 
+            IProfileService profileService, 
+            string name, 
+            CancellationToken ct
         ) =>
         {
+            if (profileService.GetInfo() is null) return Results.Unauthorized();
             var schema = await svc.GetByNameDefault(name, SchemaType.Menu, null, ct) ??
                          throw new ResultException($"Cannot find menu [{name}]");
-            return schema.Settings.Menu;
+            return Results.Ok(schema.Settings.Menu);
         });
 
         app.MapGet("/entity/{name}", async (
-            IEntitySchemaService service, string name, CancellationToken ct
+            IEntitySchemaService service, 
+            IProfileService profileService, 
+            string name, 
+            CancellationToken ct
         ) =>
         {
+            if (profileService.GetInfo() is null) return Results.Unauthorized();
             var entity = await service.LoadEntity(name, null, ct).Ok();
-            return entity.ToXEntity();
+            return Results.Ok(entity.ToXEntity());
         });
         return app;
     }

@@ -121,8 +121,11 @@ public class AssetService(
         }
     }
 
-    public Task UpdateMetadata(Asset asset, CancellationToken ct)
-        => executor.Exec(asset.UpdateMetaData(), false, ct);
+    public async Task UpdateMetadata(Asset asset, CancellationToken ct)
+    {
+        await hookRegistry.AssetPreUpdate.Trigger(provider,new AssetPreUpdateArgs(asset.Id));
+        await executor.Exec(asset.UpdateMetaData(), false, ct);
+    }
 
     public async Task Delete(long id, CancellationToken ct)
     {

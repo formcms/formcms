@@ -2,11 +2,19 @@ using FluentResults;
 using FormCMS.Core.Assets;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.HttpClientExt;
+using FormCMS.Utils.RecordExt;
+using FormCMS.Utils.ResultExt;
 
 namespace FormCMS.CoreKit.ApiClient;
 
 public class AssetApiClient(HttpClient client)
 {
+    public async Task<long> GetAssetIdByName(string name)
+    {
+        var list = await List(false, $"name[equals]={name}").Ok();
+        return list.Items[0].MustGetLong("id");
+    }
+
     public Task<Result<string>> GetEntityBaseUrl()
         => client.GetStringResult($"/base".ToAssetApi());
     
@@ -29,4 +37,10 @@ public class AssetApiClient(HttpClient client)
     }
      public Task<Result> UpdateMeta(Asset asset)
          => client.PostResult($"/meta".ToAssetApi(), asset);
+
+     public async Task<long> AddAssetAndGetId((string name, byte[] content) file)
+     {
+         await AddAsset([file]);
+         return await GetAssetIdByName(file.name);
+     }
 }

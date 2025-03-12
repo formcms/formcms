@@ -16,20 +16,12 @@ public class SchemaAuthService(
 
     public void GetAll()
     {
-        var access = profileService.GetInfo();
-        if (!access.HasRole(Roles.Sa) && !access.HasRole(Roles.Admin))
-        {
-            throw new ResultException($"Fail to get schema list, you don't have [Sa] or [Admin] role.");
-        }
+        profileService.MustHasAnyRole([Roles.Sa,Roles.Admin]);
     }
 
     public void GetOne(Schema schema)
     {
-        var access = profileService.GetInfo();
-        if (!access.HasRole(Roles.Sa) && !access.HasRole(Roles.Admin))
-        {
-            throw new ResultException($"You don't have permission to access {schema.Type}:{schema.Name}");
-        }
+        profileService.MustHasAnyRole([Roles.Sa,Roles.Admin]);
     }
 
     public async Task Delete(Schema schema)
@@ -61,16 +53,11 @@ public class SchemaAuthService(
 
     private async Task EnsureWritePermissionAsync(Schema schema)
     {
-        var access = profileService.GetInfo();
         var hasPermission = schema.Type switch
         {
-            SchemaType.Menu => access.HasRole(Roles.Sa),
-            _ when schema.Id is 0 => 
-                access.HasRole(Roles.Admin) || 
-                access.HasRole(Roles.Sa),
-            _ => 
-                access.HasRole(Roles.Sa) || 
-                await IsCreatedByCurrentUser(schema)
+            SchemaType.Menu => profileService.HasRole(Roles.Sa),
+            _ when schema.Id is 0 => profileService.HasRole(Roles.Admin) || profileService.HasRole(Roles.Sa),
+            _ => profileService.HasRole(Roles.Sa) || await IsCreatedByCurrentUser(schema)
         };
 
         if (!hasPermission)
