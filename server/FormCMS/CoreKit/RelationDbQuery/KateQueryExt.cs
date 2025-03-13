@@ -8,33 +8,16 @@ namespace FormCMS.CoreKit.RelationDbQuery;
 
 public static class KateQueryExt
 {
-    /*
-     //todo: get distinct from GraphQL 
-     * why distinct:
-     posts:[ {id:1,title:p1}]
-     tags:[ {id:1, name:t1}, {id:2, name:t2} ]
-     post_tag :[{post_id:1,tag_id:1},{post_id:1,tag_id:2}]
-     
-     select posts.id, posts.name from posts 
-     left join post_tags on posts.id = post_tag.post_id
-     left join tags on post_tag.tag_id = tags.id
-     where tags.id > 0;
-     
-     results: posts:[ {id:1,title:p1},{id:1,title:p1}]
-     * limitation on distinct:
-     for sql server, can not distinct on Text field
-     
-     soution/work around:
-     create two query for an entity, one for list, one for detail(query by ID), only put Text field to Detail query 
-     */
-    public static void ApplyJoin(this SqlKata.Query query, IEnumerable<AttributeVector> vectors, PublicationStatus? publicationStatus, bool distinct = false)
+    
+    public static void ApplyJoin(
+        this SqlKata.Query query, 
+        IEnumerable<AttributeVector> vectors, 
+        PublicationStatus? publicationStatus
+        )
     {
         var root = AttributeTreeNode.Parse(vectors);
         Bfs(root, "");
-        if (distinct)
-        {
-            query.Distinct();
-        }
+
 
         void Bfs(AttributeTreeNode node, string prefix)
         {
@@ -64,7 +47,11 @@ public static class KateQueryExt
         }
     }
 
-    private static SqlKata.Query ApplyJoin(SqlKata.Query query, EntityLinkDesc desc, string prefix, string nextPrefix, 
+    private static SqlKata.Query ApplyJoin(
+        SqlKata.Query query, 
+        EntityLinkDesc desc, 
+        string prefix, 
+        string nextPrefix, 
         PublicationStatus? publicationStatus)
     {
         query.LeftJoin($"{desc.TargetEntity.TableName} as {nextPrefix}",

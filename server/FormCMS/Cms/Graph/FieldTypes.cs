@@ -4,7 +4,7 @@ using GraphQL.Types;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 namespace FormCMS.Cms.Graph;
 
-public static class FieldTypes
+public static  class FieldTypes
 {
     public static ObjectGraphType PlainType(Entity entity, bool dateAsStr)
     {
@@ -18,7 +18,7 @@ public static class FieldTypes
             entityType.AddField(new FieldType
             {
                 Name = attr.Field,
-                ResolvedType = PlainGraphType(attr,dateAsStr),
+                ResolvedType = PlainGraphType(attr, dateAsStr),
                 Resolver = Resolvers.ValueResolver
             });
         }

@@ -123,6 +123,15 @@ public static class Args
     {
         Name = PaginationConstants.OffsetKey
     };
+    public static  QueryArgument DistinctArg => new QueryArgument<BooleanGraphType>
+    {
+        Name = QueryConstants.DistinctKey
+    };
+
+    public static QueryArgument OmitAssetDetailArg => new QueryArgument<BooleanGraphType>
+    {
+        Name = QueryConstants.OmitAssetDetail
+    };
 
     public static QueryArgument SortExprArg => new QueryArgument<ListGraphType<SortExpr>>
     {

@@ -257,8 +257,7 @@ public sealed class EntityService(
 
         async Task<Record[]> RetrieveItems()
         {
-            var listQuery = entity.ListQuery([..res.RefFilters], [..res.RefSorts], res.RefPagination, null, attributes,
-                null);
+            var listQuery = entity.ListQuery([..res.RefFilters], [..res.RefSorts], res.RefPagination, null, attributes, null);
             var items = await executor.Many(listQuery, ct);
             await LoadItems(attributes, items, ct);
             return items;

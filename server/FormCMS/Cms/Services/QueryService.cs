@@ -61,6 +61,24 @@ public sealed class QueryService(
         return records;
     }
 
+    /*
+     * why distinct:
+     posts:[ {id:1,title:p1}]
+     tags:[ {id:1, name:t1}, {id:2, name:t2} ]
+     post_tag :[{post_id:1,tag_id:1},{post_id:1,tag_id:2}]
+
+     select posts.id, posts.name from posts
+     left join post_tags on posts.id = post_tag.post_id
+     left join tags on post_tag.tag_id = tags.id
+     where tags.id > 0;
+
+     results: posts:[ {id:1,title:p1},{id:1,title:p1}]
+     * limitation on distinct:
+     for sql server, can not distinct on Text field
+
+     soution/work around:
+     create two query for an entity, one for list, one for detail(query by ID), only put Text field to Detail query
+     */
     private async Task<Record[]> ListWithAction(QueryContext ctx, Span span, StrArgs args, CancellationToken ct = default)
     {
         var (query, filters, sorts, pagination) = ctx;
@@ -80,6 +98,7 @@ public sealed class QueryService(
             var fields = query.Selection.Where(x => x.IsLocal());
             var status = PublicationStatusHelper.GetDataStatus(args);
             var kateQuery = query.Entity.ListQuery( filters, sorts, pagination.PlusLimitOne(), validSpan, fields, status);
+            if (query.Distinct) kateQuery = kateQuery.Distinct();
             items = await executor.Many(kateQuery, ct);
             items = span.ToPage(items, pagination.Limit);
             if (items.Length > 0)

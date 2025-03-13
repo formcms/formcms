@@ -85,6 +85,7 @@ public static class Converter
         {
             GraphQLNullValue => (true, null),
             GraphQLIntValue integer => (true,integer.Value.ToString()),
+            GraphQLBooleanValue booleanValue=>(true, booleanValue.BoolValue.ToString()),
             GraphQLStringValue stringValue => (true,stringValue.Value.ToString()),
             GraphQLEnumValue enumValue => (true,enumValue.Name.StringValue),
             GraphQLVariable graphQlVariable => (true,variablePrefix + graphQlVariable.Name.StringValue),

@@ -47,13 +47,20 @@ public static class Resolvers
         {
             throw new ResultException(string.Join(";", res.Errors.Select(x=>x.Message)));
         }
-        var (sorts,filters,pagination) = res.Value;
+        var (sorts,filters,pagination,omitAssetDetails,distinct) = res.Value;
         
         var query = new Query(
-            Name: queryName, EntityName: entityName, context.Document.Source.ToString(), IdeUrl: "",
+            Name: queryName, 
+            EntityName: entityName, context.Document.Source.ToString(), 
+            IdeUrl: "",
             Pagination: pagination,
-            Filters: [..filters], Sorts: [..sorts], ReqVariables: [..context.Variables.GetRequiredNames()]
+            Filters: [..filters], 
+            Sorts: [..sorts], 
+            ReqVariables: [..context.Variables.GetRequiredNames()],
+            OmitAssetDetails: omitAssetDetails,
+            Distinct: distinct
         );
+        
         return new GraphQlRequestDto(query, 
             context.FieldAst.SelectionSet?.Selections.OfType<GraphQLField>().ToArray()??[],
             context.Variables.ToPairArray());

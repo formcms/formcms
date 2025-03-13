@@ -13,6 +13,7 @@ public static class PaginationConstants
 {
     public const string LimitKey = "limit";
     public const string OffsetKey = "offset";
+    
     public const string PaginationSeparator = ".";
     public const string OffsetSuffix = $"{PaginationSeparator}{OffsetKey}";
     public const string LimitSuffix = $"{PaginationSeparator}{LimitKey}";

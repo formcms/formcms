@@ -136,11 +136,19 @@ public static class EntityHelper
     }
 
     //why not use listQuery? allQuery doesn't default limitation
-    public static SqlKata.Query AllQueryForTree(this LoadedEntity e, IEnumerable<LoadedAttribute> attributes)
-        => e.Basic().Select(attributes.Select(x => x.Field));
+    public static SqlKata.Query AllQueryForTree(
+        this LoadedEntity e,
+        IEnumerable<LoadedAttribute> attributes
+    ) => e.Basic().Select(attributes.Select(x => x.Field));
     
-    public static SqlKata.Query ListQuery(this LoadedEntity e,ValidFilter[] filters, ValidSort[] sorts, 
-        ValidPagination? pagination, ValidSpan? cursor, IEnumerable<LoadedAttribute> attributes,PublicationStatus? publicationStatus)
+    public static SqlKata.Query ListQuery(
+        this LoadedEntity e,
+        ValidFilter[] filters, 
+        ValidSort[] sorts, 
+        ValidPagination? pagination, 
+        ValidSpan? cursor, 
+        IEnumerable<LoadedAttribute> attributes,PublicationStatus? publicationStatus
+        )
     {
         var query = e.GetCommonListQuery(filters,sorts,pagination,cursor,attributes,publicationStatus);
         query.ApplyJoin([..filters.Select(x => x.Vector), ..sorts.Select(x => x.Vector)], publicationStatus);

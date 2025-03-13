@@ -12,6 +12,8 @@ public sealed record Query(
     ImmutableArray<Filter> Filters,
     ImmutableArray<Sort> Sorts,
     ImmutableArray<string> ReqVariables,
+    bool OmitAssetDetails,
+    bool Distinct,
     string IdeUrl = "",
     Pagination? Pagination= null
 );
@@ -25,13 +27,19 @@ public sealed record LoadedQuery(
     ImmutableArray<GraphAttribute> Selection ,
     ImmutableArray<ValidFilter> Filters, 
     ImmutableArray<ValidSort> Sorts,
-    ImmutableArray<string> ReqVariables
+    ImmutableArray<string> ReqVariables,
+    bool OmitAssetDetails,
+    bool Distinct
 );
 
 public static class QueryConstants
 {
+    public const string DistinctKey = "distinct";
+    public const string OmitAssetDetail = "omitAssetDetail";
     public const string VariablePrefix = "$";
 }
+
+public record QueryArgs(Sort[] Sorts, Filter[] Filters, Pagination Pagination, bool OmitAssetDetails, bool Distinct);
 
 public static class QueryHelper
 {
@@ -50,7 +58,9 @@ public static class QueryHelper
             Entity: entity,
             Selection: [..selection],
             Sorts: [..sorts],
-            Filters: [..filters]
+            Filters: [..filters],
+            OmitAssetDetails: query.OmitAssetDetails,
+            Distinct: query.Distinct
         );
     }
 
@@ -64,7 +74,7 @@ public static class QueryHelper
         return Result.Ok();
     }
 
-    public static Result<(Sort[] sorts, Filter[] filters, Pagination pagination)> ParseArguments(IArgument[] args)
+    public static Result<QueryArgs> ParseArguments(IArgument[] args)
     {
         HashSet<string> keys = [FilterConstants.FilterExprKey, SortConstant.SortExprKey];
         var simpleArgs = args.Where(x => !keys.Contains(x.Name()));
@@ -74,7 +84,7 @@ public static class QueryHelper
             return Result.Fail(err);
         }
 
-        var (sorts, filters, pagination) = simpleRes;
+        var (sorts, filters, pagination, omitAssetDetails, distinct) = simpleRes;
         foreach (var input in args.Where(x => keys.Contains(x.Name())))
         {
             var res = input.Name() switch
@@ -93,16 +103,18 @@ public static class QueryHelper
             }
         }
 
-        return (sorts, filters, pagination);
+        return new QueryArgs(sorts, filters, pagination,omitAssetDetails, distinct);
     }
 
-    public static Result<(Sort[] sorts, Filter[] filters, Pagination pagination)> ParseSimpleArguments(
-        IEnumerable<IArgument> args)
+    public static Result<QueryArgs> ParseSimpleArguments( IEnumerable<IArgument> args)
     {
         var sorts = new List<Sort>();
         var filters = new List<Filter>();
         string? limit = null;
         string? offset = null;
+        bool omitAssetDetails = false;
+        bool distinct = false;
+        
         foreach (var input in args)
         {
             var name = input.Name();
@@ -110,6 +122,8 @@ public static class QueryHelper
             {
                 PaginationConstants.OffsetKey => Val(input).PipeAction(v => offset = v),
                 PaginationConstants.LimitKey => Val(input).PipeAction(v => limit = v),
+                QueryConstants.OmitAssetDetail => Val(input).PipeAction(v => omitAssetDetails = bool.Parse(v)),
+                QueryConstants.DistinctKey => Val(input).PipeAction(v => distinct = bool.Parse(v)),
                 SortConstant.SortKey => SortHelper.ParseSorts(input).PipeAction(s => sorts.AddRange(s)),
                 _ => GraphFilterResolver.Resolve(input).PipeAction(f => filters.Add(f)),
             };
@@ -119,7 +133,7 @@ public static class QueryHelper
             }
         }
 
-        return (sorts.ToArray(), filters.ToArray(), new Pagination(offset, limit));
+        return new QueryArgs(sorts.ToArray(), filters.ToArray(),new Pagination(offset, limit), omitAssetDetails, distinct);
 
         Result<string> Val(IArgument input) => input.GetString(out var val) && !string.IsNullOrWhiteSpace(val)
             ? val

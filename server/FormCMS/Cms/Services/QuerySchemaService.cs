@@ -87,10 +87,10 @@ public sealed class QuerySchemaService(
         PublicationStatus? status,
         CancellationToken ct = default)
     {
-        var entity = (await entitySchemaSvc.LoadEntity(query.EntityName,status, ct)).Ok();
-        var selection = (await ParseGraphFields("", entity, fields, null, status, ct)).Ok();
-        var sorts = (await query.Sorts.ToValidSorts(entity, entitySchemaSvc,status)).Ok();
-        var validFilter = (await query.Filters.ToValidFilters(entity,status, entitySchemaSvc, entitySchemaSvc)).Ok();
+        var entity = await entitySchemaSvc.LoadEntity(query.EntityName,status, ct).Ok();
+        var selection = await ParseGraphFields("", entity, fields, null, status, ct).Ok();
+        var sorts = await query.Sorts.ToValidSorts(entity, entitySchemaSvc,status).Ok();
+        var validFilter = await query.Filters.ToValidFilters(entity,status, entitySchemaSvc, entitySchemaSvc).Ok();
         return query.ToLoadedQuery(entity, selection, sorts, validFilter);
     }
 
@@ -101,7 +101,7 @@ public sealed class QuerySchemaService(
             throw new ResultException("query is null");
         }
 
-        var entity = (await entitySchemaSvc.LoadEntity(query.EntityName,status, ct)).Ok();
+        var entity = await entitySchemaSvc.LoadEntity(query.EntityName,status, ct).Ok();
         await query.Filters.ToValidFilters(entity, status, entitySchemaSvc, entitySchemaSvc).Ok();
 
         var fields = Converter.GetRootGraphQlFields(query.Source).Ok();
@@ -117,17 +117,18 @@ public sealed class QuerySchemaService(
         PublicationStatus? status,
         CancellationToken ct = default)
     {
-        return fields.ShortcutMap(async field => await entitySchemaSvc
-                .LoadSingleAttrByName(entity, field.Name.StringValue, status,ct)
-                .Map(attr => attr.ToGraph())
-                .Map(attr => attr with { Prefix = prefix })
-                .Bind(async attr =>
-                    attr.IsCompound()
-                        ? await LoadChildren( string.IsNullOrEmpty(prefix) ? attr.Field : $"{prefix}.{attr.Field}", attr, field)
-                        : attr)
-                .Bind(async attr => attr.DataType is DataType.Junction or DataType.Collection
-                    ? await LoadArgs(field, attr)
-                    : attr))
+        return fields.ShortcutMap( async field =>
+                    await entitySchemaSvc.LoadSingleAttrByName(entity, field.Name.StringValue, status, ct)
+                        .Map(attr => attr.ToGraph())
+                        .Map(attr => attr with { Prefix = prefix })
+                        .Bind(
+                            async attr => attr.IsCompound()
+                                ? await LoadChildren(
+                                    string.IsNullOrEmpty(prefix) ? attr.Field : $"{prefix}.{attr.Field}", attr, field)
+                                : attr)
+                        .Bind(async attr => attr.DataType is DataType.Junction or DataType.Collection
+                            ? await LoadArgs(field, attr)
+                            : attr))
             .Bind(x =>
             {
                 if (x.FirstOrDefault(f => f.Field == entity.PrimaryKey) is null)
@@ -147,11 +148,11 @@ public sealed class QuerySchemaService(
             var inputs = field.Arguments?.Select(x => new GraphArgument(x)) ?? [];
             if (!QueryHelper.ParseSimpleArguments(inputs).Try( out var res, out  err)) 
                 return Result.Fail(err);
-            if (!(await res.sorts.ToValidSorts(desc.TargetEntity, entitySchemaSvc,status)).Try(out var sorts, out err))
+            if (!(await res.Sorts.ToValidSorts(desc.TargetEntity, entitySchemaSvc,status)).Try(out var sorts, out err))
                 return Result.Fail(err);
-            if (!(await res.filters.ToValidFilters(desc.TargetEntity,status, entitySchemaSvc, entitySchemaSvc)).Try(
+            if (!(await res.Filters.ToValidFilters(desc.TargetEntity,status, entitySchemaSvc, entitySchemaSvc)).Try(
                     out var filters, out err)) return Result.Fail(err);
-            return graphAttr with { Pagination = res.pagination, Filters = [..filters], Sorts = [..sorts] };
+            return graphAttr with { Pagination = res.Pagination, Filters = [..filters], Sorts = [..sorts] };
         }
         
 
