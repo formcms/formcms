@@ -144,6 +144,12 @@ public static class Assets
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .WhereIn(nameof(Asset.Path).Camelize(), paths);
 
+    public static Query GetAssetsByPaths(IEnumerable<string> fields,IEnumerable<string> paths)
+        => new Query(TableName)
+            .Select(fields)
+            .Where(DefaultColumnNames.Deleted.Camelize(), false)
+            .WhereIn(nameof(Asset.Path).Camelize(), paths);
+
     public static Query Count() => new Query(TableName)
         .Where(DefaultColumnNames.Deleted.Camelize(), false);
 

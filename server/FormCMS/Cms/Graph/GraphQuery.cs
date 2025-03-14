@@ -33,7 +33,6 @@ public sealed class GraphQuery : ObjectGraphType
                 ResolvedType = graphInfo.SingleType,
                 Resolver = Resolvers.GetSingleResolver(queryService, entity.Name),
                 Arguments = new QueryArguments([
-                    Args.OmitAssetDetailArg,
                     ..Args.FilterArgs(entity,graphMap), 
                     Args.FilterExprArg
                 ])
@@ -46,7 +45,6 @@ public sealed class GraphQuery : ObjectGraphType
                 Resolver = Resolvers.GetListResolver(queryService, entity.Name),
                 Arguments = new QueryArguments([
                     Args.DistinctArg,
-                    Args.OmitAssetDetailArg,
                     Args.OffsetArg,
                     Args.LimitArg,
                     Args.SortArg(entity),

@@ -124,6 +124,9 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             services.AddScoped<SortOrderEnum>();
             services.AddScoped<FilterExpr>();
             services.AddScoped<SortExpr>();
+            services.AddScoped<SortExpr>();
+            services.AddScoped<AssetGraphType>();
+            services.AddScoped<JsonGraphType>();
 
             services.AddGraphQL(b =>
             {

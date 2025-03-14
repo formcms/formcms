@@ -83,18 +83,25 @@ public sealed class EntitySchemaService(
             ColumnType.Datetime => DataType.Datetime,
             _ => throw new ArgumentOutOfRangeException()
         };
-    
+
     public async Task<Entity?> GetTableDefine(string table, CancellationToken token)
     {
         var cols = await dao.GetColumnDefinitions(table, token);
         return new Entity
         (
-            PrimaryKey:"",Name:"",DisplayName:"",TableName:"",LabelAttributeName:"",
+            PrimaryKey: "", Name: "", DisplayName: "", TableName: "", LabelAttributeName: "",
             Attributes:
             [
-                ..cols.Select(x => AttributeHelper.ToAttribute( x.Name, ColumnTypeToDataType(x.Type) ))
+                ..cols.Select(x => ToAttribute(x.Name, ColumnTypeToDataType(x.Type)))
             ]
         );
+
+        Attribute ToAttribute(string name, DataType colType)
+            => new(
+                Field: name,
+                Header: name,
+                DataType: colType
+            );
     }
 
     public async Task SaveTableDefine(Entity entity, CancellationToken token = default)

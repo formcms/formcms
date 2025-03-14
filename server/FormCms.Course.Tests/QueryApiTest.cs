@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FormCMS.Auth.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Core.Descriptors;
@@ -39,6 +40,28 @@ public class QueryApiTest
         BlogsTestData.EnsureBlogEntities(_schema).GetAwaiter().GetResult();
         BlogsTestData.PopulateData(_entity).Wait();
     }
+
+    [Fact]
+    public async Task TestDistinct()
+    {
+        var items = await $$$"""
+                             query {
+                                  {{{TestEntityNames.TestPost.Camelize()}}}List(filterExpr:{field:"tags.name",clause:{startsWith:"Name-1"}} ){
+                                      id, title
+                                  }
+                             }
+                             """.GraphQlQuery<JsonElement[]>(_query).Ok();
+        Assert.True(items.Length > 1);
+        items = await $$$"""
+                             query {
+                                  {{{TestEntityNames.TestPost.Camelize()}}}List(distinct:true, filterExpr:{field:"tags.name",clause:{startsWith:"Name-1"}} ){
+                                      id, title
+                                  }
+                             }
+                             """.GraphQlQuery<JsonElement[]>(_query).Ok();
+        Assert.True(items.Length == 1);
+    }
+    
     
     [Fact]
     public async Task EnsureDraftEntitySchemaNotAffectQuery()

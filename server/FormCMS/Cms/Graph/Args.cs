@@ -128,11 +128,6 @@ public static class Args
         Name = QueryConstants.DistinctKey
     };
 
-    public static QueryArgument OmitAssetDetailArg => new QueryArgument<BooleanGraphType>
-    {
-        Name = QueryConstants.OmitAssetDetail
-    };
-
     public static QueryArgument SortExprArg => new QueryArgument<ListGraphType<SortExpr>>
     {
         Name = SortConstant.SortExprKey

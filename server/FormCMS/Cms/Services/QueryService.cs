@@ -1,9 +1,12 @@
 using FormCMS.Cms.Graph;
+using FormCMS.Core.Assets;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using FormCMS.Utils.StrArgsExt;
+using Humanizer;
 
 namespace FormCMS.Cms.Services;
 
@@ -57,7 +60,8 @@ public sealed class QueryService(
 
         await LoadItems(attribute.Selection, args, records, token);
         var sourceId = desc.TargetAttribute.GetValueOrLookup(records[0]);
-        SpanHelper.SetSpan(attribute.Selection, records, attribute.Sorts, sourceId);
+        new[] { attribute }.SetSpan(records, attribute.Sorts, sourceId);
+        await LoadAsset([..attribute.Selection],records);
         return records;
     }
 
@@ -107,8 +111,39 @@ public sealed class QueryService(
             }
         }
 
-        SpanHelper.SetSpan(query.Selection, items, query.Sorts, null);
+        await LoadAsset([..query.Selection], items);
+        query.Selection.SetSpan(items, query.Sorts, null);
         return items;
+    }
+
+    private async Task LoadAsset(GraphAttribute[] attributes, Record[] records)
+    {
+        var fields = attributes.GetAssetFields();
+        if (fields.Length == 0) return;
+        
+        var paths = attributes.GetAllAssetPath(records);
+        if (paths.Length == 0)
+        {
+            return;
+        }
+
+        if (fields.Length == 1 && fields[0] == nameof(Asset.Path).Camelize())
+        {
+            //no need to query asset table
+            var assets = paths.Select(x => new Asset(x,"","","",0,"",new Dictionary<string, object>(),""));
+            attributes.ReplaceAsset(records, assets.ToDictionary(x => x.Path));
+        }
+        else
+        {
+            if (!fields.Contains(nameof(Asset.Path).Camelize()))
+            {
+                fields =[..fields, nameof(Asset.Path).Camelize()];
+            }
+            
+            var assetRecords = await executor.Many(Assets.GetAssetsByPaths(fields,paths));
+            var assets = assetRecords.Select(x => x.ToObject<Asset>().Ok()).ToArray();
+            attributes.ReplaceAsset(records, assets.ToDictionary(x => x.Path));
+        }
     }
 
     private async Task<Record?> SingleWithAction(QueryContext ctx, StrArgs args, CancellationToken ct = default)
@@ -134,8 +169,10 @@ public sealed class QueryService(
             }
         }
 
-        if (item is not null) SpanHelper.SetSpan(query.Selection, [item], [], null);
+        if (item is null) return item;
         
+        query.Selection.SetSpan([item], [], null);
+        await LoadAsset([..query.Selection], [item]);
         return item;
     }
 

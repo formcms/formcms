@@ -119,7 +119,7 @@ public sealed class QuerySchemaService(
     {
         return fields.ShortcutMap( async field =>
                     await entitySchemaSvc.LoadSingleAttrByName(entity, field.Name.StringValue, status, ct)
-                        .Map(attr => attr.ToGraph())
+                        .Map(attr => attr.ToGraph(attr.IsAsset()?GetAssetFields(field): []))
                         .Map(attr => attr with { Prefix = prefix })
                         .Bind(
                             async attr => attr.IsCompound()
@@ -141,6 +141,9 @@ public sealed class QuerySchemaService(
                 return Result.Ok(x);
             });
 
+        string[] GetAssetFields(GraphQLField field)
+            =>field.SelectionSet!.Selections.OfType<GraphQLField>().Select(x => x.Name.StringValue).ToArray();
+        
         async Task<Result<GraphAttribute>> LoadArgs(GraphQLField field, GraphAttribute graphAttr)
         {
             if (!graphAttr.GetEntityLinkDesc().Try(out var desc, out var err))

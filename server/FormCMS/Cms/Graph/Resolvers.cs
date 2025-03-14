@@ -47,7 +47,7 @@ public static class Resolvers
         {
             throw new ResultException(string.Join(";", res.Errors.Select(x=>x.Message)));
         }
-        var (sorts,filters,pagination,omitAssetDetails,distinct) = res.Value;
+        var (sorts,filters,pagination,distinct) = res.Value;
         
         var query = new Query(
             Name: queryName, 
@@ -57,7 +57,6 @@ public static class Resolvers
             Filters: [..filters], 
             Sorts: [..sorts], 
             ReqVariables: [..context.Variables.GetRequiredNames()],
-            OmitAssetDetails: omitAssetDetails,
             Distinct: distinct
         );
         

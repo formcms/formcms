@@ -97,34 +97,9 @@ public static class SpanHelper
         return items;
     }
 
-    public static bool SetSpan(ImmutableArray<GraphAttribute> attrs, Record[] items,
-        IEnumerable<ValidSort> sortList, object? sourceId)
-    {
-        var sorts = sortList.ToArray();
-        if (HasPrevious(items)) SetCursor(sourceId, items.First(), sorts);
-        if (HasNext(items)) SetCursor(sourceId, items.Last(), sorts);
 
-        foreach (var attr in attrs)
-        {
-            if (!attr.IsCompound()) continue;
-            foreach (var item in items)
-            {
-                if (!item.TryGetValue(attr.Field, out var v))
-                    continue;
-                _ = v switch
-                {
-                    Record rec => SetSpan(attr.Selection, [rec], [], null),
-                    Record[] { Length: > 0 } records => SetSpan(attr.Selection, records, attr.Sorts,
-                        attr.GetEntityLinkDesc().Value.TargetAttribute.GetValueOrLookup(records[0])),
-                    _ => true
-                };
-            }
-        }
 
-        return true;
-    }
-
-    private static void SetCursor(object? sourceId, Record item, IEnumerable<ValidSort> sorts)
+    public static void SetCursor(object? sourceId, Record item, IEnumerable<ValidSort> sorts)
     {
         var dict = new Dictionary<string, object>();
         foreach (var sort in sorts)
