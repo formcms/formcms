@@ -104,6 +104,13 @@ public static class Assets
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .Where(nameof(Asset.Id).Camelize(),id)
             .Select(Entity.Attributes.Select(x => x.Field));
+
+    public static Query Single(string path)
+        => new Query(TableName)
+            .Where(DefaultColumnNames.Deleted.Camelize(), false)
+            .Where(nameof(Asset.Path).Camelize(), path)
+            .Select(Entity.Attributes.Select(x => x.Field));
+        
     public static Query List(int?offset = null, int? limit = null)
     {
         var q = new Query(TableName)

@@ -30,6 +30,8 @@ public class AssetApiClient(HttpClient client)
     public Task<Result<Asset>> Single(long id)
         => client.GetResult<Asset>($"/{id}".ToAssetApi());
 
+    public Task<Result<Asset>> Single(string path)
+        => client.GetResult<Asset>($"/path?path={path}".ToAssetApi());
     public async Task<Result> Replace(long id, string fileName, byte[] fileContent)
     {
        var res = await client.PostFileResult($"/{id}".ToAssetApi(),"files",[(fileName, fileContent)]);

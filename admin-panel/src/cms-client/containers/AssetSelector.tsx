@@ -11,6 +11,8 @@ import {Asset} from "../types/asset";
 import {SelectDataTable} from "../../components/data/SelectDataTable";
 import { GalleryView } from "../../components/data/GalleryView";
 import { AssetField } from "../types/assetUtils";
+import { Button } from "primereact/button";
+import { GallerySelector } from "../../components/data/GallerySelector";
 
 
 
@@ -38,6 +40,7 @@ enum DisplayMode {
     'List' = 'List',
     'Gallery' = 'Gallery',
 }
+const displayModes: DisplayMode[] = [DisplayMode.List, DisplayMode.Gallery];
 
 export function AssetSelectorComponent(
     {
@@ -55,8 +58,7 @@ export function AssetSelectorComponent(
         schema: XEntity
     }
 ) {
-    const modes: DisplayMode[] = [DisplayMode.List, DisplayMode.Gallery];
-    const [mode, setMode] = useState<DisplayMode>(modes[0]);
+    const [displayMode, setDisplayMode] = useState<DisplayMode>(displayModes[0]);
 
     const columns = schema?.attributes?.filter(column => column.inList) ?? [];
     const stateManager = useDataTableStateManager(schema.defaultPageSize, columns, undefined)
@@ -79,22 +81,24 @@ export function AssetSelectorComponent(
     
     
     return <Dialog maximizable
-                   header={<>
-                       <h2>{schema?.displayName} List</h2>
-                       <div className="card flex justify-content-center">
-                           <SelectButton value={mode} 
-                                         onChange={(e: SelectButtonChangeEvent) => setMode(e.value)}
-                                         options={modes}/>
-                       </div>
-                   </>}
+                   header={schema?.displayName + "List"}
                    visible={show}
                    style={{width: '80%'}}
                    modal className="p-fluid"
                    onHide={() => setShow(false)}>
+        <div className="flex gap-5 justify-between">
+            <Button icon={'pi pi-check'} onClick={()=>setShow(false)} style={{width: '70px'}}>OK</Button>
+            <SelectButton
+                value={displayMode}
+                onChange={(e: SelectButtonChangeEvent) => setDisplayMode(e.value)}
+                options={displayModes}
+            />
+        </div>
+       
         <FetchingStatus isLoading={isLoading} error={error}/>
         <div className="card">
             {
-                data && columns && mode === DisplayMode.List &&
+                data && columns && displayMode === DisplayMode.List &&
                 <SelectDataTable
                     selectionMode={path? 'single' : 'multiple'}
                     dataKey={"path"}
@@ -106,15 +110,29 @@ export function AssetSelectorComponent(
                 />
             }
             {
-                data && columns && mode === DisplayMode.Gallery &&
+                /*single select*/
+                data && columns && displayMode === DisplayMode.Gallery && setPath &&
                 <GalleryView 
                     state={stateManager.state} 
                     onPage={stateManager.handlers.onPage}
                     data={data} 
                     path={path} 
-                    setPath={(path)=> handleSetSelectItems({path})} 
-                    setPaths={setPaths} 
-                    paths={paths} 
+                    onSelect={(asset:any)=> handleSetSelectItems(asset)} 
+                    getAssetUrl={getCmsAssetUrl}
+                    nameField={AssetField('name')}
+                    pathField={AssetField('path')}
+                    titleField={AssetField('title')}
+                />
+            }
+            {
+                /*multiple select*/
+                data && columns && displayMode === DisplayMode.Gallery && setPaths &&
+                <GallerySelector
+                    paths={paths}
+                    setPaths={setPaths}
+                    state={stateManager.state}
+                    onPage={stateManager.handlers.onPage}
+                    data={data}
                     getAssetUrl={getCmsAssetUrl}
                     nameField={AssetField('name')}
                     pathField={AssetField('path')}

@@ -16,17 +16,23 @@ export function FileInput(props: {
     download?: boolean
     getFullAssetsURL: (arg: string) => string
     fileSelector?: React.ComponentType<{
-        selectionMode?: 'single' | 'multiple' | undefined;
-
         show: boolean;
         setShow: (show: boolean) => void;
 
         path: string;
         setPath: (paths: string) => void;
     }>
+    
+    metadataEditor?: React.ComponentType<{
+        path:string;    
+        show: boolean;
+        setShow: (show: boolean) => void;
+    }>
 }) {
     const FileSelectDialog = props.fileSelector;
+    const MetadataEditDialog = props.metadataEditor;
     const [showChooseLib,setShowChooseLib] = useState(false)
+    const [showEditMetadata,setShowEditMetadata] = useState(false)
 
     return <InputPanel  {...props} childComponent={(field: any) => {
         const {uploadUrl} = props
@@ -54,17 +60,23 @@ export function FileInput(props: {
                     onUpload={(e) => {
                         field.onChange(e.xhr.responseText);
                     }}
-                    chooseLabel="Choose file"
+                    chooseLabel="Upload"
                     name={'files'}
                 />
                 {FileSelectDialog && (
                     <Button type='button'
                             icon={'pi pi-database'}
-                            label="Choose Library"
+                            label="Choose"
                             onClick={()=>setShowChooseLib(true)}
                             className="p-button " // Match FileUpload styling
                     />
                 )}
+                {MetadataEditDialog && <Button type='button'
+                        icon={'pi pi-pencil'}
+                        label="Edit"
+                        onClick={()=>setShowEditMetadata(true)}
+                        className="p-button "
+                />}
                 <Button type='button'
                         icon={'pi pi-trash'}
                         label="Delete"
@@ -75,12 +87,19 @@ export function FileInput(props: {
             {
                 FileSelectDialog &&
                     <FileSelectDialog 
-                        selectionMode="single"
                         path={field.value}
                         setPath={path => field.onChange(path)}
                         show={showChooseLib}
                         setShow={setShowChooseLib}
                     />
+            }
+            {
+                MetadataEditDialog &&
+                <MetadataEditDialog
+                    path={field.value}
+                    show={showEditMetadata}
+                    setShow={setShowEditMetadata}
+                />
             }
         </>
     }}/>

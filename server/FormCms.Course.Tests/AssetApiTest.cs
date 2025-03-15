@@ -56,7 +56,17 @@ public class AssetApiTest
     {
         await _assetApiClient.GetEntityBaseUrl().Ok();
     }
-    
+
+    [Fact]
+    public async Task SingleByPath()
+    {
+         var txtFileName = $"{Ulid.NewUlid()}.txt";
+         var bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
+         var path = await _assetApiClient.AddAsset([(txtFileName, bs)]).Ok();
+         var rec = await _assetApiClient.Single(path).Ok();
+         Assert.NotNull(rec);
+
+    }
     [Fact]
     public async Task Replace()
     {

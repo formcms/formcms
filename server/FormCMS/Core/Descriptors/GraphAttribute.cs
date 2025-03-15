@@ -79,50 +79,47 @@ public static class GraphAttributeExtensions
 
         void Bfs(IEnumerable<GraphAttribute> attrs, Record[] records)
         {
-            foreach (var attr in attrs)
+            foreach (var record in records)
             {
-                if (attr.IsCompound())
+                foreach (var attr in attrs)
                 {
-                    var (_, _, linkDesc) = attr.GetEntityLinkDesc();
-                    foreach (var record in records)
+                    if (attr.IsCompound())
                     {
+                        var (_, _, linkDesc) = attr.GetEntityLinkDesc();
                         if (linkDesc.IsCollective)
                         {
                             if (record.TryGetValue(attr.Field, out var value) && value is Record[] sub)
                             {
                                 Bfs(attr.Selection, sub);
-                            }
+                            } 
                         }
                         else
                         {
                             if (record.TryGetValue(attr.Field, out var value) && value is Record sub)
                             {
                                 Bfs(attr.Selection, [sub]);
-                            }
+                            } 
                         }
                     }
-                }
-                else
-                {
-
-                    switch (attr.DisplayType)
+                    else
                     {
-                        case DisplayType.File or DisplayType.Image:
+                        switch (attr.DisplayType)
                         {
-                            foreach (var record in records)
+                            case DisplayType.File or DisplayType.Image:
                             {
                                 if (record.TryGetValue(attr.Field, out var value) && value is string s &&
                                     assets.TryGetValue(s, out var asset))
                                 {
                                     record[attr.Field] = asset;
                                 }
-                            }
+                                else
+                                {
+                                    record[attr.Field] = null;
+                                }
 
-                            break;
-                        }
-                        case DisplayType.Gallery:
-                        {
-                            foreach (var record in records)
+                                break;
+                            }
+                            case DisplayType.Gallery:
                             {
                                 if (!record.TryGetValue(attr.Field, out var value) || value is not string[] arr)
                                     continue;
@@ -136,10 +133,9 @@ public static class GraphAttributeExtensions
                                 }
 
                                 record[attr.Field] = list.ToArray();
+                                break;
                             }
-
-                            break;
-                        }
+                        } 
                     }
                 }
             }

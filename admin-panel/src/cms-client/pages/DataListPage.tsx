@@ -22,37 +22,40 @@ export const NewItemRoute = "new";
 export function DataListPageComponent({schema,baseRouter}:{schema:XEntity,baseRouter:string}) {
     const getCmsAssetUrl=useGetCmsAssetsUrl();
     const navigate = useNavigate();
+    const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
+    const {confirm, Confirm} = useConfirm("dataItemPage" + schema.name);
+    
 
     const columns = schema?.attributes?.filter(x => 
         x.inList &&  x.displayType != 'picklist' && x.displayType != "tree" && x.displayType != 'editTable') ?? [];
-    const stateManager = useDataTableStateManager(schema.defaultPageSize, columns, useLocation().search.replace("?",""))
+    const dataTableColumns = columns.map(x=>createColumn(x, getCmsAssetUrl, x.field==schema.labelAttributeName?onEdit:undefined))
     
+    const initQs = useLocation().search.replace("?","");
+    const stateManager = useDataTableStateManager(schema.defaultPageSize, columns, initQs );
     const qs = encodeDataTableState(stateManager.state);
     const {data, error, isLoading,mutate}= useListData(schema.name,qs)
+    useEffect(()=> window.history.replaceState(null,"", `?${qs}`),[stateManager.state]);
+    
 
-    const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
-    const {confirm, Confirm} = useConfirm("dataItemPage" + schema.name);
 
-    const onDuplicate = (rowData:any) => {
+    function onDuplicate  (rowData:any) {
         var id = rowData[schema.primaryKey];
         const url =`${baseRouter}/${schema.name}/${NewItemRoute}?sourceId=${id}&ref=${encodeURIComponent(window.location.href)}`;
         navigate(url);
     }
-    const onEdit = (rowData:any)=>{
+    
+    function onEdit(rowData:any){
         var id = rowData[schema.primaryKey];
         const url =`${baseRouter}/${schema.name}/${id}?ref=${encodeURIComponent(window.location.href)}`;
         navigate(url);
     }
 
-    const onDelete = async (rowData:any) => {
+    async function onDelete (rowData:any) {
         confirm(`Do you want to delete this item [${rowData[schema.labelAttributeName]}]?`, async () => {
             const {error} = await deleteItem(schema.name, rowData);
             await handleErrorOrSuccess(error, 'Delete Succeed', mutate);
         })
     }
-
-    const dataTableColumns = columns.map(x=>createColumn(x, getCmsAssetUrl, x.field==schema.labelAttributeName?onEdit:undefined))
-    useEffect(()=> window.history.replaceState(null,"", `?${qs}`),[stateManager.state]);
     
     return <>
         <FetchingStatus isLoading={isLoading} error={error}/>

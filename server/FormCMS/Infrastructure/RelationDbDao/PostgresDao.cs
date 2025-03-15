@@ -165,4 +165,19 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
 
         return await executeFunc(command);
     }
+    
+    public async Task CreateIndex(string table, string[] fields, bool isUnique, CancellationToken ct)
+    {
+        var indexType = isUnique ? "UNIQUE" : "";
+        var indexName = $"idx_{table}_{string.Join("_", fields)}";
+        var fieldList = string.Join(", ", fields.Select(f => $"\"{f}\""));
+
+        var sql = $"""
+                   CREATE {indexType} INDEX IF NOT EXISTS "{indexName}" 
+                   ON "{table}" ({fieldList});
+                   """;
+
+        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
+    }
+
 }

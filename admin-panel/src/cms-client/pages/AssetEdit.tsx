@@ -64,7 +64,7 @@ export function AssetEdit(
             document.body.removeChild(link);
         }
     }
-    const formId = schema.name
+    const formId = "AssetEdit" + schema.name
     const actionBodyTemplate = (rowData: AssetLink) => {
         return ( <Button icon="pi pi-eye" rounded outlined className="mr-2" onClick={() => navigate(`${baseRouter}/${rowData.entityName}/${rowData.recordId}`)}/>);
     };
@@ -118,12 +118,12 @@ export function AssetEdit(
         <form onSubmit={handleSubmit(onSubmit)} id={formId}>
             <div className="formgrid grid">
                 {
-                    columns.map((column: any) => createInput({
+                    columns.map(column  => createInput({
                         data,
                         column,
                         register,
                         control,
-                        id,
+                        id:column.field,
                         getFullAssetsURL: getCmsAssetUrl,
                         uploadUrl: ''
                     }))

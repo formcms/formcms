@@ -141,8 +141,10 @@ public sealed class QueryService(
             }
             
             var assetRecords = await executor.Many(Assets.GetAssetsByPaths(fields,paths));
-            var assets = assetRecords.Select(x => x.ToObject<Asset>().Ok()).ToArray();
-            attributes.ReplaceAsset(records, assets.ToDictionary(x => x.Path));
+            var assets = assetRecords
+                .Select(x => x.ToObject<Asset>().Ok())
+                .ToDictionary(x=>x.Path);
+            attributes.ReplaceAsset(records, assets);
         }
     }
 

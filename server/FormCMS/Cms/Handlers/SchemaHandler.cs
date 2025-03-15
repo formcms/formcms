@@ -87,62 +87,8 @@ public static class SchemaHandler
         return app;
     }
 
-    //these two APIs are availabe for any login user
-    public static RouteGroupBuilder MapAdminPanelSchemaHandlers(this RouteGroupBuilder app)
-    {
-        app.MapGet("/menu/{name}", async (
-            ISchemaService svc, 
-            IProfileService profileService, 
-            string name, 
-            CancellationToken ct
-        ) =>
-        {
-            if (profileService.GetInfo() is null) return Results.Unauthorized();
-            var schema = await svc.GetByNameDefault(name, SchemaType.Menu, null, ct) ??
-                         throw new ResultException($"Cannot find menu [{name}]");
-            return Results.Ok(schema.Settings.Menu);
-        });
-
-        app.MapGet("/entity/{name}", async (
-            IEntitySchemaService service, 
-            IProfileService profileService, 
-            string name, 
-            CancellationToken ct
-        ) =>
-        {
-            if (profileService.GetInfo() is null) return Results.Unauthorized();
-            var entity = await service.LoadEntity(name, null, ct).Ok();
-            return Results.Ok(entity.ToXEntity());
-        });
-        return app;
-    }
 
 
-    private static XEntity ToXEntity(this LoadedEntity entity)
-        => new(
-            Attributes: entity.Attributes.Select(x => x.ToXAttr()).ToArray(),
-            Name: entity.Name,
-            PrimaryKey: entity.PrimaryKey,
-            DisplayName: entity.DisplayName,
-            LabelAttributeName: entity.LabelAttributeName,
-            DefaultPageSize: entity.DefaultPageSize,
-            PreviewUrl:entity.PreviewUrl
-            
-        );
 
-    private static XAttr ToXAttr(this LoadedAttribute attribute)
-    {
-        return new(
-            Field: attribute.Field,
-            Header: attribute.Header,
-            DisplayType: Enum.Parse<DisplayType>(attribute.DisplayType.ToString()),
-            InList: attribute.InList,
-            InDetail: attribute.InDetail,
-            IsDefault: attribute.IsDefault,
-            Options: attribute.Options,
-            Junction: attribute.Junction?.TargetEntity.ToXEntity(),
-            Lookup: attribute.Lookup?.TargetEntity.ToXEntity(),
-            Collection: attribute.Collection?.TargetEntity.ToXEntity()
-        );
-    }
+   
 }

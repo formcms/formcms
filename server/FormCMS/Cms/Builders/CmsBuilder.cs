@@ -89,6 +89,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             
             services.AddScoped<IAssetService, AssetService>();
             
+            services.AddScoped<IAdminPanelSchemaService, AdminPanelSchemaService>();
             services.AddScoped<ISchemaService, SchemaService>();
             services.AddScoped<IEntitySchemaService, EntitySchemaService>();
             services.AddScoped<IQuerySchemaService, QuerySchemaService>();

@@ -28,11 +28,17 @@ public static class AssetHandler
             CancellationToken ct
         ) => s.List(QueryHelpers.ParseQuery(context.Request.QueryString.Value), offset, limit, linkCount ?? false, ct));
 
+        app.MapGet("/path", (
+            IAssetService svc,
+            string path,
+            CancellationToken ct
+        ) => svc.Single(path, false, ct));
+
         app.MapGet("/{id:long}", (
             IAssetService svc,
             long id,
             CancellationToken ct
-        ) => svc.Single(id, ct));
+        ) => svc.Single(id, true,ct));
 
         app.MapPost("/", async (
             IAssetService svc,

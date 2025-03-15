@@ -18,6 +18,7 @@ export function DictionaryInput(
         id: any;
     }) {
     const defaultValue = data[column.field] || {}; // e.g., { author: "John", tags: ["photo"] }
+    console.log("in dictionary input",{data,defaultValue});
 
     const {fields, append, remove, replace} = useFieldArray({
         control,
@@ -33,7 +34,7 @@ export function DictionaryInput(
             }));
             replace(initialPairs); // Replace empty fields with data from defaultValue
         }
-    }, [defaultValue, fields.length, replace]);
+    }, [defaultValue ]);
 
     return (!id || Object.keys(data).length > 0) ? (
         <div className={className}>

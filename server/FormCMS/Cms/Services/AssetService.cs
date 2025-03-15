@@ -28,6 +28,11 @@ public class AssetService(
     {
         await migrator.MigrateTable(Assets.TableName, Assets.Columns);
         await migrator.MigrateTable(AssetLinks.TableName, AssetLinks.Columns);
+        await dao.CreateIndex(
+            Assets.TableName, 
+            [nameof(Asset.Path).Camelize()], 
+            true, 
+            CancellationToken.None);
         await dao.CreateForeignKey(
             AssetLinks.TableName, nameof(AssetLink.AssetId).Camelize(),
             Assets.TableName, nameof(Asset.Id).Camelize(),
@@ -39,13 +44,20 @@ public class AssetService(
 
     public string GetBaseUrl() => systemSettings.AssetUrlPrefix;
 
-    public async Task<Asset> Single(long id, CancellationToken ct = default)
+    public  Task<Asset> Single(long id, bool loadLinks, CancellationToken ct = default)
+        => Single(Assets.Single(id),loadLinks, ct);
+
+    public Task<Asset> Single(string path, bool loadLinks, CancellationToken ct = default)
+        => Single(Assets.Single(path),loadLinks, ct);
+    
+    private async Task<Asset> Single(SqlKata.Query query, bool loadLink, CancellationToken ct = default)
     {
-        await hookRegistry.AssetPreSingle.Trigger(provider,new AssetPreSingleArgs(id));
-        
-        var record = await executor.Single(Assets.Single(id), ct);
+        var record = await executor.Single(query, ct);
         var asset = record?.ToObject<Asset>().Ok() ?? throw new ResultException("Asset not found");
-        var links = await executor.Many(AssetLinks.LinksByAssetId([id]), ct);
+        await hookRegistry.AssetPreSingle.Trigger(provider, new AssetPreSingleArgs(asset.Id));
+        if (!loadLink) return asset;
+        
+        var links = await executor.Many(AssetLinks.LinksByAssetId([asset.Id]), ct);
         var assetLinks = links.Select(x => x.ToObject<AssetLink>().Ok()).ToArray();
         return asset with { Links = assetLinks, LinkCount = links.Length };
     }
@@ -104,7 +116,7 @@ public class AssetService(
         await hookRegistry.AssetPreUpdate.Trigger(provider,new AssetPreUpdateArgs(id));
 
         //make sure the asset to replace existing
-        var asset = await Single(id, ct);
+        var asset = await Single(id, false,ct);
         file = resizer.CompressImage(file);
         using var trans = await dao.BeginTransaction();
         try
@@ -127,10 +139,11 @@ public class AssetService(
         await executor.Exec(asset.UpdateMetaData(), false, ct);
     }
 
+    //foreign key will ensure only orphan assets can be deleted
     public async Task Delete(long id, CancellationToken ct)
     {
         await hookRegistry.AssetPreUpdate.Trigger(provider,new AssetPreUpdateArgs(id));
-        var asset = await Single(id, ct);
+        var asset = await Single(id, false, ct);
         using var trans = await dao.BeginTransaction();
         try
         {
@@ -217,5 +230,4 @@ public class AssetService(
             item[nameof(Asset.LinkCount).Camelize()] = dict.TryGetValue(id, out var val) ? val : 0;
         }
     }
-
 }

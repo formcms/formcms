@@ -12,6 +12,20 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
     private readonly Compiler _compiler = new SqliteCompiler();
     private TransactionManager? _transaction;
 
+    public Task CreateIndex(string table, string[] fields, bool isUnique, CancellationToken ct)
+    {
+        var indexType = isUnique ? "UNIQUE" : "";
+        var indexName = $"idx_{table}_{string.Join("_", fields)}";
+        var fieldList = string.Join(", ", fields.Select(f => $"\"{f}\"")); // Use double quotes for SQLite compatibility
+
+        var sql = $"""
+                   CREATE {indexType} INDEX IF NOT EXISTS "{indexName}" 
+                   ON "{table}" ({fieldList});
+                   """;
+
+        return ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
+    }
+    
     public async ValueTask<TransactionManager> BeginTransaction()
     {
         var ret = new TransactionManager(await connection.BeginTransactionAsync());

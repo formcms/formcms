@@ -9,7 +9,8 @@ public interface IAssetService
     XEntity GetEntity(bool withLinkCount);
     string GetBaseUrl();
     Task<ListResponse> List(StrArgs args, int? offset, int? limit, bool withLinkCount, CancellationToken ct);
-    Task<Asset> Single(long id, CancellationToken ct = default);
+    Task<Asset> Single(long id, bool loadLinks, CancellationToken ct = default);
+    Task<Asset> Single(string path, bool loadLinks, CancellationToken ct = default);
     Task<string[]> Add(IFormFile[] files);
     Task Replace(long id, IFormFile file, CancellationToken ct = default);
     Task UpdateMetadata(Asset asset, CancellationToken ct);

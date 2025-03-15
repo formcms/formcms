@@ -11,6 +11,24 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
     private readonly Compiler _compiler = new SqlServerCompiler();
     private TransactionManager? _transaction;
 
+    public async Task CreateIndex(string table, string[]fields, bool isUnique, CancellationToken ct)
+    {
+        var indexName = $"idx_{table}_{string.Join("_", fields)}";
+        var unique = isUnique ? "UNIQUE" : "";
+        var columnList = string.Join(", ", fields.Select(field => $"[{field}]"));
+        var sql = $"""
+                   IF NOT EXISTS (
+                       SELECT 1 FROM sys.indexes
+                       WHERE name = '{indexName}' AND object_id = OBJECT_ID('{table}')
+                   )
+                   BEGIN
+                       CREATE {unique} INDEX [{indexName}] ON [{table}] ({columnList});
+                   END;
+                   """;
+
+        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
+    }
+
     public async ValueTask<TransactionManager> BeginTransaction()
     {
         var ret = new TransactionManager(await connection.BeginTransactionAsync());

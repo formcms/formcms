@@ -10,6 +10,12 @@ export function useSingleAsset(id: any){
     let res = useSWR<Asset>(fullCmsApiUrl(`/assets/${id}`), fetcher,swrConfig);
     return {...res, error:decodeError(res.error)}
 }
+
+export function useSingleAssetByPath(path: any){
+    var url = path ? fullCmsApiUrl(`/assets/path?path=${path}`):null;
+    let res = useSWR<Asset>(url, fetcher,swrConfig);
+    return {...res, error:decodeError(res.error)}
+}
 export  function useAssetEntityWithLink() {
     let res = useSWR<XEntity>(fullCmsApiUrl(`/assets/entity?linkCount=${true}`), fetcher,swrConfig);
     return {...res, error:decodeError(res.error)}

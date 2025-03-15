@@ -39,11 +39,18 @@ export function GalleryInput(props: {
         setPaths: (selectedPath: string[]) => void
         paths: string[]
     }>
-
+    metadataEditor?: React.ComponentType<{
+        path:string;
+        show: boolean;
+        setShow: (show: boolean) => void;
+    }>
 }) {
     const FileSelectDialog = props.fileSelector;
     const [showChooseLib,setShowChooseLib] = useState(false)
 
+    const MetadataEditor = props.metadataEditor;
+    const [showMetadataEditor,setShowMetadataEdtior] = useState(false)
+    
     return <InputPanel  {...props} childComponent={(field: any) => {
         const [activeIndex, setActiveIndex] = useState(0)
         const paths:string[] = field.value ?? [];
@@ -89,16 +96,27 @@ export function GalleryInput(props: {
                             url={props.uploadUrl}
                             onUpload={handleUploaded}
                             name={'files'}
-                            chooseLabel="Choose files"
+                            chooseLabel="Upload"
                 />
-                {FileSelectDialog && (
+                {
+                    FileSelectDialog && (
                     <Button type='button'
                             icon={'pi pi-database'}
-                            label="Choose Library"
+                            label="Choose"
                             onClick={()=>setShowChooseLib(true)}
                             className="p-button " // Match FileUpload styling
-                    />
-                )}
+                    />)
+                }
+                {
+                    MetadataEditor && paths.length > 0 &&(
+                        <Button type='button'
+                                icon={'pi pi-pencil'}
+                                label="Edit"
+                                onClick={()=>setShowMetadataEdtior(true)}
+                                className="p-button " // Match FileUpload styling
+                        />
+                    )
+                }
                 <Button type='button'
                         icon={'pi pi-trash'}
                         label="Delete"
@@ -114,6 +132,15 @@ export function GalleryInput(props: {
                     show={showChooseLib}
                     setShow={setShowChooseLib}
                 />
+            }
+            {
+                MetadataEditor && (
+                    <MetadataEditor
+                        show={showMetadataEditor}
+                        setShow={setShowMetadataEdtior}
+                        path ={paths[activeIndex]}
+                    />
+                )
             }
         </>
     }}/>
