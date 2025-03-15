@@ -36,45 +36,49 @@ export function DataItemPageComponent(
         baseRouter: string
     }
 ) {
+    //entrance 
     const {id} = useParams()
-    const getCmsAssetUrl = useGetCmsAssetsUrl();
-    const {data, error: useItemError, isLoading, mutate} = useItemData(schema.name, id)
-
-    const {handleErrorOrSuccess: handlePageErrorOrSucess, CheckErrorStatus: PageErrorStatus} = useCheckError();
-
-    const {handleErrorOrSuccess: handleSchedule, CheckErrorStatus: CheckScheduleErrorStatus} = useCheckError();
-    const {visible: scheduleVisible, showDialog: showSchedule, hideDialog: hideSchedule} = useDialogState()
-
-    const {handleErrorOrSuccess: handlePublish, CheckErrorStatus: CheckPublishErrorStatus} = useCheckError();
-    const {visible: publishVisible, showDialog: showPublish, hideDialog: hidePublish} = useDialogState()
-
-    const {confirm, Confirm} = useConfirm("dataItemPage" + schema.name);
-
     const referingUrl = new URLSearchParams(location.search).get("ref");
 
+    //data
+    const {data, error: useItemError, isLoading, mutate} = useItemData(schema.name, id)
+    const trees = schema.attributes.filter(x => x.displayType == DisplayType.Tree);
+
+
+    //variable and state    
+    const previewUrl = getPreviewUrl();
     const itemEditFormId = "editForm" + schema.name
     const scheduleFormId = "schedule" + schema.name
     const publishFormId = "publish" + schema.name
 
-    const inputColumns = schema?.attributes?.filter(
-        (x) => {
-            return x.inDetail && !x.isDefault && x.displayType != 'picklist' && x.displayType != "tree" && x.displayType != 'editTable'
-        }
-    ) ?? [];
-
-    const tables = schema?.attributes?.filter(attr =>
-        attr.displayType === DisplayType.Picklist
-        || attr.displayType == DisplayType.EditTable) ?? []
-
-    const trees = schema.attributes.filter(x => x.displayType == DisplayType.Tree);
-    const previewUrl = getPreviewUrl();
-
-    const showUnpublish = data && (data[DefaultAttributeNames.PublicationStatus] === PublicationStatus.Published
-        || data[DefaultAttributeNames.PublicationStatus] === PublicationStatus.Scheduled);
+    const {visible: scheduleVisible, showDialog: showSchedule, hideDialog: hideSchedule} = useDialogState()
+    const {visible: publishVisible, showDialog: showPublish, hideDialog: hidePublish} = useDialogState()
 
 
-    if (isLoading || useItemError) {
-        return <FetchingStatus isLoading={isLoading} error={useItemError}/>
+    //references
+    const getCmsAssetUrl = useGetCmsAssetsUrl();
+    const {confirm, Confirm} = useConfirm("dataItemPage" + schema.name);
+    const {handleErrorOrSuccess: handlePageErrorOrSucess, CheckErrorStatus: PageErrorStatus} = useCheckError();
+    const {handleErrorOrSuccess: handlePublish, CheckErrorStatus: CheckPublishErrorStatus} = useCheckError();
+    const {handleErrorOrSuccess: handleSchedule, CheckErrorStatus: CheckScheduleErrorStatus} = useCheckError();
+
+    function inputColumns() {
+        return schema?.attributes?.filter(
+            (x) => {
+                return x.inDetail && !x.isDefault && x.displayType != 'picklist' && x.displayType != "tree" && x.displayType != 'editTable'
+            }
+        ) ?? [];
+    }
+
+    function tables() {
+        return schema?.attributes?.filter(attr =>
+            attr.displayType === DisplayType.Picklist
+            || attr.displayType == DisplayType.EditTable) ?? []
+    }
+
+    function showUnpublish() {
+        return data && (data[DefaultAttributeNames.PublicationStatus] === PublicationStatus.Published
+            || data[DefaultAttributeNames.PublicationStatus] === PublicationStatus.Scheduled);
     }
 
     function getPreviewUrl() {
@@ -83,8 +87,7 @@ export function DataItemPageComponent(
         return `${schema.previewUrl}${id}${connChar}${SpecialQueryKeys.Preview}=1`;
     }
 
-
-    const onSubmit = async (formData: any) => {
+    async function onSubmit(formData: any) {
         formData[schema.primaryKey] = id
         formData[DefaultColumnNames.UpdatedAt] = data[DefaultColumnNames.UpdatedAt];
 
@@ -92,7 +95,7 @@ export function DataItemPageComponent(
         await handlePageErrorOrSucess(error, 'Save Succeed', mutate)
     }
 
-    const onDelete = async () => {
+    async function onDelete() {
         confirm('Do you want to delete this item?', async () => {
             const {error} = await deleteItem(schema.name, data)
             await handlePageErrorOrSucess(error, 'Delete Succeed', () => {
@@ -101,7 +104,7 @@ export function DataItemPageComponent(
         })
     }
 
-    const onPublish = async (formData: any) => {
+    async function onPublish(formData: any) {
         formData[schema.primaryKey] = data[schema.primaryKey];
         formData[DefaultAttributeNames.PublicationStatus] = PublicationStatus.Published;
 
@@ -112,7 +115,7 @@ export function DataItemPageComponent(
         })
     }
 
-    const onUnpublish = async () => {
+    async function onUnpublish() {
         var formData: any = {}
         formData[schema.primaryKey] = data[schema.primaryKey];
         formData[DefaultAttributeNames.PublicationStatus] = PublicationStatus.Unpublished;
@@ -121,7 +124,7 @@ export function DataItemPageComponent(
         await handlePageErrorOrSucess(error, 'Publish Succeed', mutate)
     }
 
-    const onSchedule = async (formData: any) => {
+    async function onSchedule(formData: any) {
         formData[schema.primaryKey] = data[schema.primaryKey];
         formData[DefaultAttributeNames.PublicationStatus] = PublicationStatus.Scheduled;
         const {error} = await savePublicationSettings(schema.name, formData)
@@ -131,8 +134,10 @@ export function DataItemPageComponent(
         })
     }
 
-
     return <>
+        <FetchingStatus isLoading={isLoading} error={useItemError}/>
+        <Confirm/>
+
         <ButtonGroup>
             <Button type={'submit'} label={`Save ${schema.displayName}`} icon="pi pi-check" form={itemEditFormId}/>
             <Button type={'button'} label={`Delete ${schema.displayName}`} icon="pi pi-trash" severity="danger"
@@ -144,47 +149,47 @@ export function DataItemPageComponent(
         <ButtonGroup>
             <Button type={'button'} label={"Publish / Update Publish Time"} icon="pi pi-cloud" onClick={showPublish}/>
             <Button type={'button'} label={"Schedule / Reschedule"} icon="pi pi-calendar" onClick={showSchedule}/>
-            {showUnpublish && <Button type={'button'} label={"Unpublish"} icon="pi pi-ban" onClick={onUnpublish}/>}
+            {showUnpublish() && <Button type={'button'} label={"Unpublish"} icon="pi pi-ban" onClick={onUnpublish}/>}
         </ButtonGroup>
         &nbsp;
         {previewUrl && <Button type={'button'} label={"Preview"} onClick={() => window.location.href = previewUrl}/>}
-        <div>
-            <PageErrorStatus/>
-        </div>
-        <Confirm/>
-        <div className="grid">
-            <div className={`col-12 md:col-12 lg:${trees.length > 0 ? "col-9" : "col-12"}`}>
-                <ItemForm uploadUrl={getFileUploadURL()} formId={itemEditFormId} columns={inputColumns} {...{
-                    schema,
-                    data,
-                    id,
-                    onSubmit,
-                    getFullAssetsURL: getCmsAssetUrl
-                }} />
-                {
-                    tables.map((column) => {
-                        const props = {schema, data, column, getFullAssetsURL: getCmsAssetUrl, baseRouter}
-                        return <div key={column.field}>
-                            <Divider/>
-                            {column.displayType === 'picklist' && <Picklist key={column.field} {...props}/>}
-                            {column.displayType === 'editTable' && <EditTable key={column.field} {...props}/>}
-                        </div>
-                    })
+        <div><PageErrorStatus/></div>
+
+        {data &&
+            <div className="grid">
+                <div className={`col-12 md:col-12 lg:${trees.length > 0 ? "col-9" : "col-12"}`}>
+                    <ItemForm uploadUrl={getFileUploadURL()} formId={itemEditFormId} columns={inputColumns()} {...{
+                        schema,
+                        data,
+                        id,
+                        onSubmit,
+                        getFullAssetsURL: getCmsAssetUrl
+                    }} />
+                    {
+                        tables().map((column) => {
+                            const props = {schema, data, column, getFullAssetsURL: getCmsAssetUrl, baseRouter}
+                            return <div key={column.field}>
+                                <Divider/>
+                                {column.displayType === 'picklist' && <Picklist key={column.field} {...props}/>}
+                                {column.displayType === 'editTable' && <EditTable key={column.field} {...props}/>}
+                            </div>
+                        })
+                    }
+                </div>
+                {trees.length > 0 && <div className="col-12 md:col-12 lg:col-3">
+                    {
+                        trees.map((column) => {
+                            return <div key={column.field}>
+                                <TreeContainer key={column.field} entity={schema} data={data}
+                                               column={column}></TreeContainer>
+                                <Divider/>
+                            </div>
+                        })
+                    }
+                </div>
                 }
             </div>
-            {trees.length > 0 && <div className="col-12 md:col-12 lg:col-3">
-                {
-                    trees.map((column) => {
-                        return <div key={column.field}>
-                            <TreeContainer key={column.field} entity={schema} data={data}
-                                           column={column}></TreeContainer>
-                            <Divider/>
-                        </div>
-                    })
-                }
-            </div>
-            }
-        </div>
+        }
         <SaveDialog
             width={'50%'}
             formId={publishFormId}

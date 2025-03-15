@@ -13,20 +13,29 @@ export function NewDataItemPage({baseRouter}:{baseRouter:string}) {
 }
 
 export function NewDataItemPageComponent({schema,baseRouter}:{schema:XEntity, baseRouter:string }) {
-    const getFullAssetsURL = useGetCmsAssetsUrl(); 
+    //entrance and data
     const id =  new URLSearchParams(location.search).get("sourceId");
     const {data} = useItemData(schema.name, id)
 
-    const referingUrl = new URLSearchParams(location.search).get("ref");
-
-    const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
+    //ui state
     const formId = "newForm" + schema.name
+    
+    //navigate
+    const getFullAssetsURL = useGetCmsAssetsUrl();
+    const referingUrl = new URLSearchParams(location.search).get("ref");
     const uploadUrl = getFileUploadURL()
-    const inputColumns = schema?.attributes?.filter(
-        x =>{
-            return x.inDetail &&!x.isDefault&& x.displayType != "editTable" && x.displayType != "tree" &&x.displayType != 'picklist';
-        }
-    ) ??[];
+
+    //error
+    const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
+    
+    function inputColumns () {
+        return schema?.attributes?.filter(
+            x => {
+                return x.inDetail && !x.isDefault && x.displayType != "editTable" && x.displayType != "tree" && x.displayType != 'picklist';
+            }
+        ) ?? [];
+    }
+    
     const onSubmit = async (formData: any) => {
         const {data, error} = await addItem(schema.name, formData)
         handleErrorOrSuccess(error, 'Save Succeed', ()=> {
@@ -40,6 +49,6 @@ export function NewDataItemPageComponent({schema,baseRouter}:{schema:XEntity, ba
         {referingUrl &&<Button type={'button'} label={"Back"}  onClick={()=>window.location.href = referingUrl}/>}
 
         <CheckErrorStatus/>
-        {(!id || data) && <ItemForm columns={inputColumns} {...{data:data??{} , onSubmit,  formId,uploadUrl,  getFullAssetsURL}}/>}
+        {(!id || data) && <ItemForm columns={inputColumns()} {...{data:data??{} , onSubmit,  formId,uploadUrl,  getFullAssetsURL}}/>}
     </>
 }

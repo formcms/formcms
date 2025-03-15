@@ -6,6 +6,7 @@ import { Button } from "primereact/button";
 
 export function EditDataTable(
     {
+        dataKey,
         columns, 
         data, 
         stateManager:{state,handlers:{onPage,onFilter,onSort}},
@@ -16,6 +17,7 @@ export function EditDataTable(
         canDelete
     }:
     {
+        dataKey:string,
         columns: React.JSX.Element[];
         data: ListResponse | undefined
         stateManager:{
@@ -50,6 +52,7 @@ export function EditDataTable(
   
 
     return columns && data && <DataTable
+        dataKey={dataKey}
         sortMode="multiple"
         value={data.items}
         paginator

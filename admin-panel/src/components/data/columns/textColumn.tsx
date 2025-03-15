@@ -1,5 +1,6 @@
 import {Column} from "primereact/column";
 import { XAttr } from "../../xEntity";
+import { Button } from "primereact/button";
 
 export function textColumn(
     column: XAttr,
@@ -24,7 +25,13 @@ export function textColumn(
                 val = val.join(", ")
             }
         }
-        return onClick?<a href={"#"} onClick={()=>onClick(item)}>{val}</a>:<>{val}</>
+        return onClick
+            ?<div style={{
+                cursor: 'pointer',
+                color: '#0000EE',
+                textDecoration: 'underline'
+            }} onClick={()=>onClick(item)}>{val}</div>
+            :<>{val}</>
     };
     
     return <Column

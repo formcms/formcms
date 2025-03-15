@@ -122,6 +122,7 @@ export function AssetSelectorComponent(
                     nameField={AssetField('name')}
                     pathField={AssetField('path')}
                     titleField={AssetField('title')}
+                    typeField={AssetField('type')}
                 />
             }
             {
@@ -137,6 +138,7 @@ export function AssetSelectorComponent(
                     nameField={AssetField('name')}
                     pathField={AssetField('path')}
                     titleField={AssetField('title')}
+                    typeField={AssetField('type')}
                 />
             }
         </div>

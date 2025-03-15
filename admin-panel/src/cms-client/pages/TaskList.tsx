@@ -18,13 +18,17 @@ import { Dialog } from "primereact/dialog";
 
 
 export function TaskList({schema}:{schema:XEntity}){
+    //data
     const columns = schema?.attributes?.filter(column => column.inList) ?? [];
     const stateManager = useDataTableStateManager(schema.defaultPageSize, columns,undefined )
     const {data,error,isLoading,mutate}= useTasks(encodeDataTableState(stateManager.state))
     const tableColumns = columns.map(x=>createColumn(x));
-    const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
+    
+    //state
     const {visible, showDialog, hideDialog} = useDialogState()
 
+    //error
+    const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
     async function handleAddExportTask(){
         const {error} = await addExportTask ();
         await handleErrorOrSuccess(error, 'Export task added!', mutate); 
@@ -71,7 +75,7 @@ export function TaskList({schema}:{schema:XEntity}){
         <Button onClick={handleImportDemoData}>Import Demo Data</Button>
         <CheckErrorStatus/>
         <div className="card">
-            {data && columns &&<EditDataTable columns={tableColumns} data={data} stateManager={stateManager}/>}
+            {data && columns &&<EditDataTable dataKey={schema.primaryKey} columns={tableColumns} data={data} stateManager={stateManager}/>}
         </div>
         <Dialog visible={visible} 
                 header={'Select a file to upload'} modal className="p-fluid" 

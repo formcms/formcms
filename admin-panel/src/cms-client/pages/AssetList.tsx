@@ -10,14 +10,15 @@ import {AssetField} from "../types/assetUtils";
 import {useConfirm} from "../../components/useConfirm";
 import {useCheckError} from "../../components/useCheckError";
 import {useLocation, useNavigate} from "react-router-dom";
-import { useEffect, useState } from "react";
-import { GalleryView } from "../../components/data/GalleryView";
-import { SelectButton, SelectButtonChangeEvent } from "primereact/selectbutton";
+import {useEffect, useState} from "react";
+import {GalleryView} from "../../components/data/GalleryView";
+import {SelectButton, SelectButtonChangeEvent} from "primereact/selectbutton";
 
 enum DisplayMode {
     'List' = 'List',
     'Gallery' = 'Gallery',
 }
+
 const displayModes: DisplayMode[] = [DisplayMode.List, DisplayMode.Gallery];
 
 export function AssetList(
@@ -29,30 +30,40 @@ export function AssetList(
         schema: XEntity
     }
 ) {
+    //entrance
     const location = useLocation();
-    const navigate = useNavigate();
-    const {confirm, Confirm} = useConfirm("dataItemPage" + schema.name);
-    const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
-    const getCmsAssetUrl = useGetCmsAssetsUrl();
-
     const initDisplayMode = new URLSearchParams(location.search).get("displayMode");
-    const [displayMode, setDisplayMode] = useState<DisplayMode>(initDisplayMode as DisplayMode ?? displayModes[0]);
-    
-    const columns = schema?.attributes?.filter(column => column.inList) ?? [];
-    const tableColumns = columns.map(x => createColumn(x, getCmsAssetUrl, undefined));
-    tableColumns.push(<Column key={AssetField("linkCount")} field={AssetField("linkCount")} header={"Link Count"}/>);
+    const initQs = location.search.replace("?", "");
 
-    const initQs = location.search.replace("?","");
+    //data
+    const columns = schema?.attributes?.filter(column => column.inList && column.field !== AssetField('linkCount')) ?? [];
     const stateManager = useDataTableStateManager(schema.defaultPageSize, columns, initQs);
     const qs = encodeDataTableState(stateManager.state);
     const {data, error, isLoading, mutate} = useAssets(qs, true)
-    
-    useEffect(()=> window.history.replaceState(null,"", `?displayMode=${displayMode}&${qs}`),[stateManager.state,displayMode]);
+
+    //state
+    const [displayMode, setDisplayMode] = useState<DisplayMode>(initDisplayMode as DisplayMode ?? displayModes[0]);
+
+    //navigate
+    useEffect(() => window.history.replaceState(null, "", `?displayMode=${displayMode}&${qs}`), [stateManager.state, displayMode]);
+
+    //ref
+    const getCmsAssetUrl = useGetCmsAssetsUrl();
+    const navigate = useNavigate();
+    const {confirm, Confirm} = useConfirm("dataItemPage" + schema.name);
+    const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
+
+    function tableColumns() {
+        const cols = columns.map(x =>
+            createColumn(x, getCmsAssetUrl, x.field === AssetField("title") ? onEdit : undefined)
+        );
+        cols.push(<Column key={AssetField("linkCount")} field={AssetField("linkCount")} header={"Link Count"}/>);
+        return cols;
+    }
 
     const onEdit = (rowData: any) => {
         var id = rowData[schema.primaryKey];
         const url = `${baseRouter}/${id}?ref=${encodeURIComponent(window.location.href)}`;
-        console.log(url);
         navigate(url);
     }
     const canDelete = (rowData: any) => {
@@ -80,11 +91,12 @@ export function AssetList(
         </div>
         <div className="card">
             {data && columns && displayMode === DisplayMode.List &&
-                <EditDataTable 
-                    columns={tableColumns} 
-                    data={data} 
-                    stateManager={stateManager} 
-                    canDelete={canDelete} 
+                <EditDataTable
+                    dataKey={schema.primaryKey}
+                    columns={tableColumns()}
+                    data={data}
+                    stateManager={stateManager}
+                    canDelete={canDelete}
                     onDelete={onDelete}
                     onEdit={onEdit}
                 />
@@ -97,9 +109,11 @@ export function AssetList(
                     onPage={stateManager.handlers.onPage}
                     data={data}
                     getAssetUrl={getCmsAssetUrl}
-                    nameField={AssetField('name')}
+
                     pathField={AssetField('path')}
+                    nameField={AssetField('name')}
                     titleField={AssetField('title')}
+                    typeField={AssetField('type')}
                 />
             }
         </div>

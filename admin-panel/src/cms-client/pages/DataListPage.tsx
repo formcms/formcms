@@ -20,23 +20,25 @@ export function DataListPage({baseRouter}:{baseRouter:string}){
 
 export const NewItemRoute = "new";
 export function DataListPageComponent({schema,baseRouter}:{schema:XEntity,baseRouter:string}) {
-    const getCmsAssetUrl=useGetCmsAssetsUrl();
-    const navigate = useNavigate();
-    const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
-    const {confirm, Confirm} = useConfirm("dataItemPage" + schema.name);
-    
+    //entrance
+    const initQs = useLocation().search.replace("?","");
 
+    //data
+    const getCmsAssetUrl=useGetCmsAssetsUrl();
     const columns = schema?.attributes?.filter(x => 
         x.inList &&  x.displayType != 'picklist' && x.displayType != "tree" && x.displayType != 'editTable') ?? [];
     const dataTableColumns = columns.map(x=>createColumn(x, getCmsAssetUrl, x.field==schema.labelAttributeName?onEdit:undefined))
-    
-    const initQs = useLocation().search.replace("?","");
     const stateManager = useDataTableStateManager(schema.defaultPageSize, columns, initQs );
     const qs = encodeDataTableState(stateManager.state);
     const {data, error, isLoading,mutate}= useListData(schema.name,qs)
+    
+    //navigate
+    const navigate = useNavigate();
     useEffect(()=> window.history.replaceState(null,"", `?${qs}`),[stateManager.state]);
     
-
+    //components
+    const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
+    const {confirm, Confirm} = useConfirm("dataItemPage" + schema.name);
 
     function onDuplicate  (rowData:any) {
         var id = rowData[schema.primaryKey];
@@ -47,6 +49,7 @@ export function DataListPageComponent({schema,baseRouter}:{schema:XEntity,baseRo
     function onEdit(rowData:any){
         var id = rowData[schema.primaryKey];
         const url =`${baseRouter}/${schema.name}/${id}?ref=${encodeURIComponent(window.location.href)}`;
+        console.log(url);
         navigate(url);
     }
 
@@ -66,6 +69,7 @@ export function DataListPageComponent({schema,baseRouter}:{schema:XEntity,baseRo
         <div className="card">
             {data &&
                 <EditDataTable 
+                    dataKey={schema.primaryKey}
                     columns={dataTableColumns} 
                     data={data} 
                     stateManager={stateManager} 

@@ -50,7 +50,7 @@ export function EditTable({column, data, schema, getFullAssetsURL}: {
         </label><br/>
         <Button outlined label={'Add ' + column.header} onClick={showDialog} size="small"/>
         {' '}
-        <EditDataTable columns={tableColumns} data={collectionData} stateManager={stateManager}/>
+        <EditDataTable dataKey={schema.primaryKey} columns={tableColumns} data={collectionData} stateManager={stateManager}/>
         <SaveDialog
             formId={formId}
             visible={visible}

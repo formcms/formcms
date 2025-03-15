@@ -11,6 +11,7 @@ export function GallerySelector(
         pathField,
         nameField,
         titleField,
+        typeField,
 
         paths,
         setPaths,
@@ -24,12 +25,15 @@ export function GallerySelector(
         pathField:string
         nameField:string
         titleField:string
+        typeField:string
         
         paths?:string[]|undefined,
         setPaths:(paths:string[]) => void,
     }) {
     const gridItem = (asset: any) => {
-
+        const defaultImage = 'https://placehold.co/600x400?text=' + asset[nameField];
+        const src = asset[typeField].startsWith('image') ? getAssetUrl(asset[pathField]): defaultImage;
+        
         // Handle multiple selection
         const isChecked = paths?.includes(asset[pathField]) || false;
 
@@ -54,7 +58,7 @@ export function GallerySelector(
                         <div className="flex align-items-center gap-2">
                             <input type="checkbox" checked={isChecked} onChange={toggleMultiSelect} />
                         </div>
-                        <img className="w-9 shadow-2 border-round" src={`${getAssetUrl(asset[pathField])}`}/>
+                        <img className="w-9 shadow-2 border-round" src={src}/>
                         <div className="text-1xl">{asset[nameField]}</div>
                         <div className="text-1xl">{asset[titleField]}</div>
                     </div>
