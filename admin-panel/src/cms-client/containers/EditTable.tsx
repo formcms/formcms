@@ -28,7 +28,7 @@ export function EditTable({column, data, schema, getFullAssetsURL}: {
     const toastRef = useRef<any>(null);
     const [error, setError] = useState('')
     
-    const stateManager= useDataTableStateManager(10, listColumns,"");
+    const stateManager= useDataTableStateManager(schema.primaryKey, 8, listColumns,"");
     const {data:collectionData,mutate} = useCollectionData(schema.name, id, column.field, encodeDataTableState(stateManager.state));
     
     const onSubmit =async (formData: any) => {

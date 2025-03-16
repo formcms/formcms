@@ -47,7 +47,6 @@ export function TopMenuBar({start, end, profile}:{start:any, end:any, profile: U
             }
             const url = x.url.replaceAll(entityPrefix, configs.entityBaseRouter);
             return {
-                url,
                 icon: 'pi ' + (x.icon === '' ? 'pi-bolt' : x.icon),
                 label: x.label,
                 command: () => {

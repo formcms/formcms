@@ -151,15 +151,19 @@ export function AssetEdit(
             <form onSubmit={handleSubmit(onSubmit)} id={getFormId()}>
                 <div className="formgrid grid">
                     {
-                        GetColumns().map(column => createInput({
-                            data,
-                            column,
-                            register,
-                            control,
-                            id: column.field,
-                            getFullAssetsURL: getCmsAssetUrl,
-                            uploadUrl: ''
-                        }))
+                        GetColumns().map(column => createInput(
+                            {
+                                data,
+                                column,
+                                register,
+                                control,
+                                id: column.field,
+                                getFullAssetsURL: getCmsAssetUrl,
+                                uploadUrl: ''
+                            },
+                            'col-4' 
+                            )
+                        )
                     }
                 </div>
             </form>

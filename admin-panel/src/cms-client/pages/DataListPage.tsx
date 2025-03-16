@@ -28,7 +28,7 @@ export function DataListPageComponent({schema,baseRouter}:{schema:XEntity,baseRo
     const columns = schema?.attributes?.filter(x => 
         x.inList &&  x.displayType != 'picklist' && x.displayType != "tree" && x.displayType != 'editTable') ?? [];
     const dataTableColumns = columns.map(x=>createColumn(x, getCmsAssetUrl, x.field==schema.labelAttributeName?onEdit:undefined))
-    const stateManager = useDataTableStateManager(schema.defaultPageSize, columns, initQs );
+    const stateManager = useDataTableStateManager(schema.primaryKey,schema.defaultPageSize, columns, initQs );
     const qs = encodeDataTableState(stateManager.state);
     const {data, error, isLoading,mutate}= useListData(schema.name,qs)
     
@@ -49,7 +49,6 @@ export function DataListPageComponent({schema,baseRouter}:{schema:XEntity,baseRo
     function onEdit(rowData:any){
         var id = rowData[schema.primaryKey];
         const url =`${baseRouter}/${schema.name}/${id}?ref=${encodeURIComponent(window.location.href)}`;
-        console.log(url);
         navigate(url);
     }
 

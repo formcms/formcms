@@ -24,76 +24,80 @@ export function createInput(props: {
     register: any,
     uploadUrl: string,
     getFullAssetsURL: (arg: string) => string
-}) {
+},  mdCols:'col-12' | 'col-4' | 'col-6' | 'col-3') {
     const {field, displayType, options} = props.column
+    
+    const mdClass= `field col-12 md:${mdCols}`
+    
     switch (displayType) {
         case 'dictionary':
-            return <DictionaryInput className={'field col-12 md:col-12'} 
+            return <DictionaryInput className={'field col-12'} 
                                     {...props} 
                                     key={field}/>
+        case 'editor':
+            return <EditorInput className={'field col-12'}
+                                key={field}
+                                {...props}/>
+
         case 'text':
-            return <TextInput className={'field col-12 md:col-4'} 
+            return <TextInput className={mdClass} 
                               key={field} 
                               {...props}/>
         case 'textarea':
-            return <TextAreaInput className={'field col-12  md:col-4'} 
+            return <TextAreaInput className={mdClass} 
                                   key={field} 
                                   {...props}/>
-        case 'editor':
-            return <EditorInput className={'field col-12'} 
-                                key={field} 
-                                {...props}/>
-        case 'number':
-            return <NumberInput className={'field col-12 md:col-4'} 
+       case 'number':
+            return <NumberInput className={mdClass} 
                                 key={field} 
                                 {...props}/>
         case 'datetime':
-            return <DatetimeInput className={'field col-12  md:col-4'} 
+            return <DatetimeInput className={mdClass} 
                                   inline={false} 
                                   key={field} 
                                   {...props}/>
         case 'date':
-            return <DateInput className={'field col-12  md:col-4'} 
+            return <DateInput className={mdClass} 
                               key={field} 
                               {...props}/>
         case 'image':
             return <FileInput fileSelector={AssetSelector}
                               metadataEditor={AssetMetadataEditor}
                               previewImage
-                              className={'field col-12  md:col-4'}
+                              className={mdClass}
                               key={field}
                               {...props} />
         case 'gallery':
             return <GalleryInput fileSelector={AssetSelector}
                                  metadataEditor={AssetMetadataEditor}
-                                 className={'field col-12  md:col-4'}
+                                 className={mdClass}
                                  key={field}
                                  {...props} />
         case 'file':
             return <FileInput fileSelector={AssetSelector}
                               metadataEditor={AssetMetadataEditor}
                               download
-                              className={'field col-12  md:col-4'}
+                              className={mdClass}
                               key={field}
                               {...props} />
         case 'dropdown':
             return <DropDownInput options={props.column.options.split(',')}
-                                  className={'field col-12 md:col-4'}
+                                  className={mdClass}
                                   key={field}
                                   {...props} />
         case 'lookup':
-            return <LookupContainer className={'field col-12 md:col-4'} key={field}{...props}/>
+            return <LookupContainer className={mdClass} key={field}{...props}/>
         case 'multiselect':
             return <MultiSelectInput options={(options ?? '').split(',')}
-                                     className={'field col-12  md:col-4'}
+                                     className={mdClass}
                                      key={field}
                                      {...props} />
         case 'treeSelect':
-            return <TreeSelectContainer className={'field col-12  md:col-4'} 
+            return <TreeSelectContainer className={mdClass} 
                                         key={field} 
                                         {...props}/>
         default:
-            return <TextInput className={'field col-12 md:col-4'} 
+            return <TextInput className={mdClass} 
                               key={field} 
                               {...props}/>
     }

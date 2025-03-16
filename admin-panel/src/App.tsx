@@ -16,6 +16,7 @@ import {AccountRouter, NotLoginAccountRouter} from "./auth/AccountRouter";
 import { AuditLogRouter } from './auditLog/AuditLogRouter';
 import { setAuditLogBaseUrl } from './auditLog/config';
 import { setAuthApiBaseUrl } from './auth/configs';
+import { DataListPage } from './cms-client/pages/DataListPage';
 
 setCmsApiBaseUrl(configs.apiURL)
 setAuditLogBaseUrl(configs.apiURL)
@@ -36,7 +37,6 @@ function App() {
             <TopMenuBar start={start} end={end} profile={profile}/>
             <Routes>
                 <Route path={`${configs.entityBaseRouter}/*`} element={<EntityRouter baseRouter={configs.entityBaseRouter}/>}/>
-                <Route path={configs.adminBaseRouter} element={<EntityRouter baseRouter={configs.entityBaseRouter} />} />
                 <Route path={`${configs.authBaseRouter}/*`} element={<AccountRouter baseRouter={configs.authBaseRouter}/>}/>
                 <Route path={`${configs.auditLogBaseRouter}/*`} element={<AuditLogRouter baseRouter={configs.auditLogBaseRouter}/>}/>
             </Routes>

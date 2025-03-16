@@ -3,8 +3,8 @@ import {FilterMatchMode} from "primereact/api";
 import { XAttr } from "../xEntity";
 import { decodeDataTableState } from "./dataTableStateUtil";
 
-export function useDataTableStateManager(rows:number, cols: XAttr[], qs?: string|undefined) {
-    const defaultState:any = createDefaultState(rows,cols,qs);
+export function useDataTableStateManager(primaryKey :string,rowCount:number, cols: XAttr[], qs?: string|undefined) {
+    const defaultState:any = createDefaultState(primaryKey,rowCount,cols,qs);
     const [state, dispatch] = useReducer(reducer, defaultState)
     return {
         state,
@@ -22,12 +22,15 @@ export function useDataTableStateManager(rows:number, cols: XAttr[], qs?: string
     }
 }
 
-function createDefaultState(rows:any, cols:XAttr[],qs: string|undefined) {
+function createDefaultState(primaryKey:string,rows:number, cols:XAttr[],qs: string|undefined) {
+    
     const defaultState :any= {
         first: 0,
         rows,
+        multiSortMeta:[{field:primaryKey,order:-1}],
         filters : createDefaultFilter(cols),
     }
+    
     if (qs){
         const s = decodeDataTableState(qs);
         defaultState.first = s.first;

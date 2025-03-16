@@ -30,7 +30,7 @@ export function SelectDataTable(
 
         actionBodyTemplate?: any
         dataKey?: string;
-        selectionMode?: 'single' | 'multiple' | undefined;
+        selectionMode: 'single' | 'multiple';
     }
 ) {
     const {items, totalRecords} = data ?? {}

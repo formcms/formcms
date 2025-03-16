@@ -21,7 +21,7 @@ export function ItemForm({columns, data, id, onSubmit, formId, uploadUrl, getFul
     return columns && <form onSubmit={handleSubmit(onSubmit)} id={formId}>
         <div className="formgrid grid">
             {
-                columns.map((column: any) => createInput({data, column, register, control, id, uploadUrl,getFullAssetsURL}))
+                columns.map((column: any) => createInput({data, column, register, control, id, uploadUrl,getFullAssetsURL},'col-4'))
             }
         </div>
     </form>

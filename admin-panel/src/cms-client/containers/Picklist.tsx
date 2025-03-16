@@ -6,7 +6,7 @@ import {usePicklist} from "./usePicklist";
 import {useDialogState} from "../../components/dialogs/useDialogState";
 import {SelectDataTable} from "../../components/data/SelectDataTable";
 import {SaveDialog} from "../../components/dialogs/SaveDialog";
-import { XAttr } from "../types/xEntity";
+import { XAttr, XEntity } from "../types/xEntity";
 import { useDataTableStateManager } from "../../components/data/useDataTableStateManager";
 import { encodeDataTableState } from "../../components/data/dataTableStateUtil";
 import { createColumn } from "../../components/data/columns/createColumn";
@@ -14,7 +14,7 @@ import { createColumn } from "../../components/data/columns/createColumn";
 export function Picklist({column, data, schema, getFullAssetsURL}: {
     data: any,
     column: XAttr,
-    schema: any
+    schema: XEntity,
     getFullAssetsURL : (arg:string) =>string
 }) {
     const {visible, showDialog, hideDialog} = useDialogState()
@@ -26,11 +26,11 @@ export function Picklist({column, data, schema, getFullAssetsURL}: {
     
     const tableColumns = listColumns.map(x=>createColumn(x,getFullAssetsURL));
     
-    const existingStateManager= useDataTableStateManager(10, listColumns,"");
+    const existingStateManager= useDataTableStateManager(schema.primaryKey,10, listColumns,"");
     const {data: subgridData, mutate: subgridMutate} = useJunctionData(schema.name, id, column.field, false, 
         encodeDataTableState(existingStateManager.state));
 
-    const excludedStateManager= useDataTableStateManager(10, listColumns,"");
+    const excludedStateManager= useDataTableStateManager(schema.primaryKey,10, listColumns,"");
     const {data: excludedSubgridData, mutate: execMutate} = useJunctionData(schema.name, id, column.field, true,
         encodeDataTableState(excludedStateManager.state));
     
@@ -72,6 +72,7 @@ export function Picklist({column, data, schema, getFullAssetsURL}: {
         {' '}
         <Button type={'button'} label={"Delete "} severity="danger" onClick={onDelete} outlined size="small"/>
         <SelectDataTable
+            selectionMode={'multiple'}
             data={subgridData}
             columns={tableColumns}
             selectedItems={existingItems}
@@ -84,9 +85,10 @@ export function Picklist({column, data, schema, getFullAssetsURL}: {
             handleSave={handleSave}
             header={'Select ' + column.header}>
             <SelectDataTable
+                selectionMode={'multiple'}
                 columns={tableColumns}
                 data={excludedSubgridData}
-                stateManager={existingStateManager}
+                stateManager={excludedStateManager}
                 
                 selectedItems={toAddItems}
                 setSelectedItems={setToAddItems}

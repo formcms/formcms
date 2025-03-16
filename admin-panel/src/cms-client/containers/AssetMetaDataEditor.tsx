@@ -1,13 +1,14 @@
 import { Dialog } from "primereact/dialog";
 import { XEntity } from "../types/xEntity";
 import { ArrayToObject } from "../../components/inputs/DictionaryInputUtils";
-import { AssetField } from "../types/assetUtils";
+import { AssetField, formatFileSize } from "../types/assetUtils";
 import {updateAssetMeta, useAssetEntity, useGetCmsAssetsUrl, useSingleAssetByPath } from "../services/asset";
 import { FetchingStatus } from "../../components/FetchingStatus";
 import { useCheckError } from "../../components/useCheckError";
 import { useForm } from "react-hook-form";
 import { createInput } from "./createInput";
 import { Button } from "primereact/button";
+import {Image} from 'primereact/image';
 
 type AssetMetaDataDialogProps = {
     path: string,
@@ -44,10 +45,10 @@ export function AssetMetadataEditorComponent(
         
     } = useForm()
 
-    const {data, isLoading, error,mutate} = useSingleAssetByPath(show ? path: null);
+    const {data, isLoading, error} = useSingleAssetByPath(show ? path: null);
     const {handleErrorOrSuccess, CheckErrorStatus} = useCheckError();
 
-    const handleClose =()=>{
+    function handleClose (){
         reset();
         setShow(false);
     }
@@ -59,8 +60,9 @@ export function AssetMetadataEditorComponent(
         }
         const {error} = await updateAssetMeta(payload)
         await handleErrorOrSuccess(error, 'Save Meta Data Succeed', ()=>{
-            mutate();
-            handleClose();
+            reset();
+            setShow(false);
+            // mutate();
         })
     }
     const columns = schema?.attributes?.filter(
@@ -71,11 +73,32 @@ export function AssetMetadataEditorComponent(
     return  <Dialog maximizable
                     header={'Edit Metadata'}
                     visible={show}
-                    style={{width: '80%'}}
+                    style={{width: '700px'}}
                     modal className="p-fluid"
                     onHide={handleClose}>
         <FetchingStatus isLoading={isLoading} error={error}/>
         <CheckErrorStatus/>
+        {data?.type?.startsWith("image") &&
+            <div className="card flex justify-content-start">
+                <Image src={getCmsAssetUrl(data.path)}
+                       indicatorIcon={<i className="pi pi-search"></i>} 
+                       alt="Image" 
+                       preview 
+                       width="650"></Image>
+            </div>
+        }
+        <br/>
+        {data &&  <div className="mt-2 flex gap-4">
+            <label className="block font-bold">File Name:</label>
+            <label>{data.name}</label>
+
+            <label className="block font-bold">Type:</label>
+            <label className="block">{data.type}</label>
+
+            <label className="block font-bold">Size:</label>
+            <label>{formatFileSize(data.size)}</label>
+
+        </div>}
         {data && <form onSubmit={handleSubmit(onSubmit)} id={formId}>
             <Button
                 label={'Save'}
@@ -93,7 +116,7 @@ export function AssetMetadataEditorComponent(
                         id:column.field,
                         getFullAssetsURL: getCmsAssetUrl,
                         uploadUrl: ''
-                    }))
+                    },'col-12'))
                 }
             </div>
         </form>

@@ -70,7 +70,7 @@ export function loadEditor(container,  components,styles) {
             ],
         },
         assetManager: {
-            assets: ['/files/{{image}}'],
+            assets: ['{{image.url}}'],
             uploadName: 'files'
 
             // options

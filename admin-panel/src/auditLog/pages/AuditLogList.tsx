@@ -16,7 +16,7 @@ export function AuditLogList({baseRouter,schema}: { baseRouter: string,schema:XE
     
     //data
     const columns = schema?.attributes?.filter(column => column.inList) ?? [];
-    const stateManager = useDataTableStateManager(schema.defaultPageSize, columns,initQs )
+    const stateManager = useDataTableStateManager(schema.primaryKey, schema.defaultPageSize, columns,initQs )
     const qs = encodeDataTableState(stateManager.state);
     const {data,error,isLoading}= useAuditLogs(qs)
     var tableColumns = columns.map(x=>createColumn(x,undefined,x.field == schema.labelAttributeName?onEdit:undefined));

@@ -61,7 +61,7 @@ export function AssetSelectorComponent(
     const [displayMode, setDisplayMode] = useState<DisplayMode>(displayModes[0]);
 
     const columns = schema?.attributes?.filter(column => column.inList) ?? [];
-    const stateManager = useDataTableStateManager(schema.defaultPageSize, columns, undefined)
+    const stateManager = useDataTableStateManager(AssetField('id'),schema.defaultPageSize, columns, undefined)
     const {data, error, isLoading} = useAssets(encodeDataTableState(stateManager.state),false)
     const getCmsAssetUrl = useGetCmsAssetsUrl();
 

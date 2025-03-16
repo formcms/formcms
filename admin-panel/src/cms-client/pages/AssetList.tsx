@@ -37,7 +37,7 @@ export function AssetList(
 
     //data
     const columns = schema?.attributes?.filter(column => column.inList && column.field !== AssetField('linkCount')) ?? [];
-    const stateManager = useDataTableStateManager(schema.defaultPageSize, columns, initQs);
+    const stateManager = useDataTableStateManager(schema.primaryKey,schema.defaultPageSize, columns, initQs);
     const qs = encodeDataTableState(stateManager.state);
     const {data, error, isLoading, mutate} = useAssets(qs, true)
 
