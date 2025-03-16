@@ -8,6 +8,7 @@ using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.jsonElementExt;
 using Microsoft.Extensions.Primitives;
+using Namotion.Reflection;
 using NUlid;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
@@ -18,6 +19,7 @@ public class QueryApiTest
     private readonly string _queryName = "qt_query_" + Ulid.NewUlid();
     private readonly  string _post = "qt_post_" + Ulid.NewUlid();
     
+    private readonly AssetApiClient _asset;
     private readonly QueryApiClient _query;
     private readonly EntityApiClient _entity;
     private readonly SchemaApiClient _schema;
@@ -31,6 +33,7 @@ public class QueryApiTest
         new AuthApiClient(webAppClient.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
         _schema = new SchemaApiClient(webAppClient.GetHttpClient());
 
+        _asset = new AssetApiClient(webAppClient.GetHttpClient());
         _entity= new EntityApiClient(webAppClient.GetHttpClient());
         _query = new QueryApiClient(webAppClient.GetHttpClient());
         _commonTestCases = new BlogsTestCases(_query, _queryName);
@@ -38,7 +41,33 @@ public class QueryApiTest
 
         if (_schema.ExistsEntity(TestEntityNames.TestPost.Camelize()).GetAwaiter().GetResult()) return;
         BlogsTestData.EnsureBlogEntities(_schema).GetAwaiter().GetResult();
-        BlogsTestData.PopulateData(_entity).Wait();
+        BlogsTestData.PopulateData(_entity,_asset).Wait();
+    }
+
+    [Fact]
+    public async Task TestAssets()
+    {
+        var items = await $$"""
+                            query {
+                                 {{TestEntityNames.TestPost.Camelize()}}List{
+                                     id, 
+                                     title, 
+                                     image {url, title},
+                                     gallery {url, title}
+                                 }
+                            }
+                            """.GraphQlQuery<JsonElement[]>(_query).Ok();
+        var first = items.First();
+        var image = first.GetProperty("image");
+        Assert.True(image.TryGetProperty("url",out var url));
+        Assert.True(image.TryGetProperty("title",out var title));
+        
+        var gallery = first.GetProperty("gallery");
+        foreach (var jsonElement in gallery.EnumerateArray())
+        {
+            Assert.True(jsonElement.TryGetProperty("url", out var url1));
+            Assert.True(jsonElement.TryGetProperty("title", out var title1));
+        }
     }
 
     [Fact]

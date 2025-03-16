@@ -77,9 +77,7 @@ public static class Web
     {
         if (builder.Configuration.GetConnectionString(Constants.Redis) is null) return;
         builder.AddRedisDistributedCache(connectionName: Constants.Redis);
-#pragma warning disable EXTEXP0018
         builder.Services.AddHybridCache();
-#pragma warning restore EXTEXP0018
     }
 
     private static async Task EnsureDbCreatedAsync(WebApplication app)

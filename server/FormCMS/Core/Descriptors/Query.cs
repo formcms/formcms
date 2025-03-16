@@ -108,7 +108,6 @@ public static class QueryHelper
         var filters = new List<Filter>();
         string? limit = null;
         string? offset = null;
-        bool omitAssetDetails = false;
         bool distinct = false;
         
         foreach (var input in args)

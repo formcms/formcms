@@ -461,4 +461,167 @@ Subfields also support cursor-based pagination. For instance, querying [https://
 To fetch the next two skills, use the cursor:  
 [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/part/skills?limit=2&last=eyJpZCI6Miwic291cmNlSWQiOjN9](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/part/skills?limit=2&last=eyJpZCI6Miwic291cmNlSWQiOjN9)
 
+Below is a rewritten version of the **Asset Type** and **Distinct** chapters from your GraphQL Query documentation. The rewrite aims to improve clarity, structure, and readability while preserving the technical details.
+
+---
+
+### Asset Type
+
+In FormCMS, attributes with display types such as `image`, `file`, or `gallery` are represented as **Asset Objects** in GraphQL query results. These objects correspond to assets stored in the system's centralized Asset Library (see the **Asset Library** section for details). When querying entities with these attributes, the response includes structured asset data, such as the asset’s `Path`, `Url`, `Name`, `Title`, and other metadata.
+
+#### Example Query
+Consider a `course` entity with an `image` field:
+```graphql
+{
+  courseList {
+    id
+    name
+    image {
+      id
+      path
+      url
+      name
+      title
+      size
+      type
+    }
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20image%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20path%0A%20%20%20%20%20%20url%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20title%0A%20%20%20%20%20%20size%0A%20%20%20%20%20%20type%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D)
+
+#### Response Example
+```json
+{
+  "data": {
+    "courseList": [
+      {
+        "id": 1,
+        "name": "Introduction to GraphQL",
+        "image": {
+          "id": "abc123",
+          "path": "2025-03-abc123",
+          "url": "/files/2025-03-abc123",
+          "name": "graphql_intro.jpg",
+          "title": "GraphQL Course Banner",
+          "size": 102400,
+          "type": "image/jpeg"
+        }
+      }
+    ]
+  }
+}
+```
+
+#### Benefits
+- **Consistency**: The `url` field provides a fixed access point to the asset, ensuring reliable retrieval across the application.
+- **Metadata**: Fields like `title` can be used as captions or `alt` text for images, enhancing accessibility and SEO.
+- **Flexibility**: The Asset Object structure supports various file types (`image`, `file`, `gallery`) with a uniform response format.
+
+---
+
+### Distinct
+
+When querying related entities in FormCMS, joining tables can result in duplicate records due to one-to-many relationships. The `DISTINCT` keyword helps eliminate these duplicates, but it has limitations that require careful query design.
+
+#### Why Use `DISTINCT`?
+Consider the following data structure:
+- **Posts**: `[{id: 1, title: "p1"}]`
+- **Tags**: `[{id: 1, name: "t1"}, {id: 2, name: "t2"}]`
+- **Post_Tag**: `[{post_id: 1, tag_id: 1}, {post_id: 1, tag_id: 2}]`
+
+A query joining these tables might look like this in SQL:
+```sql
+SELECT posts.id, posts.title
+FROM posts
+LEFT JOIN post_tag ON posts.id = post_tag.post_id
+LEFT JOIN tags ON post_tag.tag_id = tags.id
+WHERE tags.id > 0;
+```
+
+Without `DISTINCT`, the result duplicates the post for each tag:
+```json
+[
+  {"id": 1, "title": "p1"},  // For tag_id: 1
+  {"id": 1, "title": "p1"}   // For tag_id: 2
+]
+```
+
+Using `DISTINCT` ensures each post appears only once:
+```sql
+SELECT DISTINCT posts.id, posts.title
+FROM posts
+LEFT JOIN post_tag ON posts.id = post_tag.post_id
+LEFT JOIN tags ON post_tag.tag_id = tags.id
+WHERE tags.id > 0;
+```
+Result:
+```json
+[
+  {"id": 1, "title": "p1"}
+]
+```
+
+#### Limitation of `DISTINCT`
+In some databases, such as SQL Server, `DISTINCT` cannot be applied to fields of type `TEXT` (or large data types like `NTEXT` or `VARCHAR(MAX)`). Including such fields in a query with `DISTINCT` causes errors.
+
+#### Solution/Workaround
+To address this limitation, split the entity’s queries into two parts: 
+
+1. **List Query**: Retrieves a lightweight list of records without `TEXT` fields, using `DISTINCT` to avoid duplicates. 
+```
+{
+    postList {
+       id
+       title
+   }
+}
+```
+2. **Detail Query**: Retrieves full details, including `TEXT` fields, by querying a single record using its ID. 
+```
+{
+    post(idSet: 1) {
+       id
+       title
+       description  # TEXT field
+   }
+}
+```
+
+
+#### Example with GraphQL
+List query to avoid duplicates:
+```
+{
+  postList {
+    id
+    title
+    tags {
+      id
+      name
+    }
+  }
+}
+```
+Detail query for a specific post:
+```graphql
+{
+  post(idSet: 1) {
+    id
+    title
+    description  # TEXT field, only queried here
+    tags {
+      id
+      name
+    }
+  }
+}
+```
+
+#### Benefits
+- **Efficiency**: The list query remains lightweight and deduplicated.
+- **Compatibility**: Avoids database-specific limitations on `DISTINCT`.
+- **Flexibility**: Developers can fetch detailed data only when needed.
+
+---
 </details>

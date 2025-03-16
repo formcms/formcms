@@ -48,18 +48,18 @@ public class RealtimeQueryTest(QueryApiClient client, string queryName)
                                   title
                                   abstract
                                   body
-                                  image
+                                  image{url}
                                   authors {
-                                      id, name, image
+                                      id, name
                                   }
                                   tags {
-                                      id, name, image
+                                      id, name
                                   }
                                   category{
-                                      id, name, image
+                                      id, name
                                   }
                                   attachments {
-                                      id, name, image, post
+                                      id, name,post
                                   }
                               }
                             }

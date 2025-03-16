@@ -85,7 +85,7 @@ public class AssetService(
 
         files = files.Select(resizer.CompressImage).ToArray();
         var dir = DateTime.Now.ToString("yyyy-MM");
-        var pairs = files.Select(x => (Path.Join(dir, GetUniqName(x.FileName)), x)).ToArray();
+        var pairs = files.Select(x => (Path.Join(dir, UniqNameOmitYearAndMonth(x.FileName)), x)).ToArray();
         await store.Upload(pairs);
 
         var assets = new List<Asset>();
@@ -214,8 +214,8 @@ public class AssetService(
         return assetRecords;
     }
 
-    private static string GetUniqName(string fileName)
-        => string.Concat(Ulid.NewUlid().ToString().AsSpan(0, 12), Path.GetExtension(fileName));
+    private static string UniqNameOmitYearAndMonth(string fileName)
+        => string.Concat(Ulid.NewUlid().ToString().AsSpan(6, 20), Path.GetExtension(fileName));
 
     private async Task LoadLinkCount(Record[] items, CancellationToken ct)
     {

@@ -18,6 +18,7 @@
       <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
       <PackageReference Include="NSwag.AspNetCore" Version="14.2.0" />
       <PackageReference Include="NSwag.CodeGeneration.TypeScript" Version="14.2.0" />
+      <PackageReference Include="OpenTelemetry.Api" Version="1.11.2" />
       <PackageReference Include="Scalar.AspNetCore" Version="1.2.72" />
     </ItemGroup>
 

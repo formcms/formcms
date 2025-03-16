@@ -59,9 +59,10 @@ public sealed class QueryService(
         if (records.Length <= 0) return records;
 
         await LoadItems(attribute.Selection, args, records, token);
+        await LoadAsset([..attribute.Selection],records);
+        
         var sourceId = desc.TargetAttribute.GetValueOrLookup(records[0]);
         new[] { attribute }.SetSpan(records, attribute.Sorts, sourceId);
-        await LoadAsset([..attribute.Selection],records);
         return records;
     }
 
@@ -108,10 +109,10 @@ public sealed class QueryService(
             if (items.Length > 0)
             {
                 await LoadItems(query.Selection, args, items, ct);
+                await LoadAsset([..query.Selection], items);
             }
         }
 
-        await LoadAsset([..query.Selection], items);
         query.Selection.SetSpan(items, query.Sorts, null);
         return items;
     }
@@ -168,13 +169,13 @@ public sealed class QueryService(
             if (item is not null)
             {
                 await LoadItems(query.Selection, args, [item], ct);
+                await LoadAsset([..query.Selection], [item]);
             }
         }
 
         if (item is null) return item;
         
         query.Selection.SetSpan([item], [], null);
-        await LoadAsset([..query.Selection], [item]);
         return item;
     }
 

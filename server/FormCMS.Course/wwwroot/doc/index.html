@@ -917,14 +917,15 @@ If you want to preview how the content looks on a page before publishing, you ca
 <h4 id="add-asset-to-data">Add Asset to Data</h4>
 <p>In data management forms, fields for <code>image</code>, <code>file</code>, or <code>gallery</code> inputs provide the following options: </p>
 <ul>
-<li><strong>Choose File</strong>: Uploads a new file to the server. The system generates a unique <code>Path</code> (e.g., <code>2025-03-abc123</code>), assigns a fixed <code>Url</code> based on the <code>Path</code>, and records the <code>Name</code> (original filename), <code>Size</code>, <code>Type</code>, and <code>CreatedBy</code> metadata. For images, the system resizes the file to a maximum width of 1200 pixels (configurable via <code>ImageCompressionOptions.MaxWidth</code>) with a compression quality of 75 (configurable via <code>ImageCompressionOptions.Quality</code>) before saving, updating the <code>Size</code> accordingly. The <code>CreatedAt</code> timestamp is set to the upload time, and a default <code>Title</code> is derived from the <code>Name</code>. </li>
-<li><strong>Choose Library</strong>: Opens a dialog to select an existing asset from the library. The dialog offers: <ul>
+<li><strong>Upload</strong>: Upload a new file to the server. The system generates a unique <code>Path</code> (e.g., <code>2025-03-abc123</code>), assigns a fixed <code>Url</code> based on the <code>Path</code>, and records the <code>Name</code> (original filename), <code>Size</code>, <code>Type</code>, and <code>CreatedBy</code> metadata. For images, the system resizes the file to a maximum width of 1200 pixels (configurable via <code>ImageCompressionOptions.MaxWidth</code>) with a compression quality of 75 (configurable via <code>ImageCompressionOptions.Quality</code>) before saving, updating the <code>Size</code> accordingly. The <code>CreatedAt</code> timestamp is set to the upload time, and a default <code>Title</code> is derived from the <code>Name</code>. </li>
+<li><strong>Choose</strong>: Opens a dialog to select an existing asset from the library. The dialog offers: <ul>
 <li><code>Gallery View</code>: Displays assets as thumbnails (ideal for images). </li>
 <li><code>List View</code>: Shows assets in a tabular format with details like <code>Name</code>, <code>Title</code>, <code>Size</code>, <code>CreatedAt</code>, and <code>Type</code>. Users can filter by Name (e.g., search by keyword), Size (e.g., range of bytes), and CreatedAt (e.g., date range), and order the list by these fields in ascending or descending order. </li>
 <li>Selecting an asset links it to the current data entity, incrementing its <code>LinkCount</code> and adding an <code>AssetLink</code> entry. </li>
 </ul>
 </li>
 <li><strong>Delete</strong>: Removes the asset reference from the current data entity by clearing its path, potentially reducing the asset’s <code>LinkCount</code>. </li>
+<li><strong>Edit</strong>: Edit asset title and metadata.</li>
 </ul>
 <h4 id="delete-orphan-assets">Delete Orphan Assets</h4>
 <p>On the <strong>Asset List Page</strong>, users can view all assets with details such as <code>Name</code>, <code>Title</code>, <code>Size</code>, <code>Type</code>, <code>CreatedAt</code>, and <code>LinkCount</code> (the number of data entities referencing the asset). Assets with a <code>LinkCount</code> of 0 (orphans) can be deleted to free up storage. Deletion removes the asset’s file and its record from the system.</p>
@@ -944,11 +945,106 @@ If you want to preview how the content looks on a page before publishing, you ca
 <li><strong>Asset</strong>: Represents a stored file with fields like <code>Path</code> (unique identifier), <code>Url</code> (fixed access location), <code>Name</code>, <code>Title</code>, <code>Size</code>, <code>Type</code>, <code>Metadata</code>, <code>CreatedBy</code>, <code>CreatedAt</code>, <code>UpdatedAt</code>, <code>Id</code>, <code>LinkCount</code> (calculated), and <code>Links</code> (calculated array of <code>AssetLink</code>). </li>
 <li><strong>AssetLink</strong>: Tracks relationships between assets and data entities, with fields like <code>EntityName</code> (e.g., "BlogPost"), <code>RecordId</code> (entity’s ID), <code>AssetId</code>, <code>CreatedAt</code>, <code>UpdatedAt</code>, and <code>Id</code>. </li>
 </ul>
+<h3 id="permissions">Permissions</h3>
+<p>The Asset Library enforces a role-based permission system to control access and management of assets. Permissions determine what actions users can perform (e.g., upload, choose, edit, delete) and which assets they can interact with, based on their role or individual assignment.</p>
+<h4 id="permission-levels-and-roles">Permission Levels and Roles</h4>
+<ul>
+<li><strong>Super Admin</strong></li>
+<li>Full control over all assets in the system. </li>
+<li>Can upload, choose, edit, replace, and delete any asset, regardless of ownership. </li>
+<li>
+<p>Can assign assets to specific users or roles, granting them access as needed. </p>
+</li>
+<li>
+<p><strong>Users Without Asset Permissions</strong> </p>
+</li>
+<li>Cannot upload new assets or choose existing ones from the library. </li>
+<li>
+<p>Restricted from interacting with assets in any capacity. </p>
+</li>
+<li>
+<p><strong>Restricted Read (User or Role)</strong> </p>
+</li>
+<li>Can only choose assets that they personally uploaded. </li>
+<li>Limited to viewing and selecting their own assets in the library dialog (e.g., in <code>Gallery View</code> or <code>List View</code>). </li>
+<li>
+<p>Cannot edit, replace, or delete assets. </p>
+</li>
+<li>
+<p><strong>Full Read (User or Role)</strong> </p>
+</li>
+<li>Can choose any asset from the library, regardless of who uploaded it. </li>
+<li>Has access to the full asset catalog for selection purposes. </li>
+<li>
+<p>Cannot edit, replace, or delete assets. </p>
+</li>
+<li>
+<p><strong>Restricted Write (User or Role)</strong> </p>
+</li>
+<li>Can choose, edit, and delete only assets they uploaded themselves. </li>
+<li>Limited to managing their own assets, including updating metadata (e.g., <code>Title</code>, <code>Metadata Dictionary</code>) or replacing file content. </li>
+<li>
+<p>Cannot interact with assets uploaded by others. </p>
+</li>
+<li>
+<p><strong>Full Write (User or Role)</strong> </p>
+</li>
+<li>Can choose, edit, replace, and delete any asset in the system, regardless of ownership. </li>
+<li>Has comprehensive management capabilities, similar to a Super Admin, but without the ability to assign assets to other users or roles. </li>
+</ul>
+<h4 id="permission-enforcement">Permission Enforcement</h4>
+<ul>
+<li>Permissions are applied at the user level or inherited from the user’s role. </li>
+<li>When a user attempts an action (e.g., uploading, choosing, or editing an asset), the system checks their permissions against the asset’s ownership and their assigned access level. </li>
+<li>The library dialog (e.g., <code>Gallery View</code> or <code>List View</code>) dynamically filters visible assets based on the user’s read permissions (<code>Restricted Read</code> shows only self-uploaded assets; <code>Full Read</code> shows all assets). </li>
+</ul>
+<h4 id="example-scenarios">Example Scenarios</h4>
+<ol>
+<li><strong>User A (Restricted Read)</strong> </li>
+<li>Uploads an image (<code>2025-03-xyz789</code>). </li>
+<li>Can choose this image for a blog post but cannot see or select assets uploaded by others. </li>
+<li>
+<p>Cannot edit or delete the image after uploading. </p>
+</li>
+<li>
+<p><strong>User B (Full Read)</strong></p>
+</li>
+<li>Can browse and choose any asset in the library (e.g., <code>2025-03-xyz789</code> from User A). </li>
+<li>
+<p>Cannot edit or delete any assets, even those they might upload. </p>
+</li>
+<li>
+<p><strong>User C (Restricted Write)</strong></p>
+</li>
+<li>Uploads a file (<code>2025-03-abc123</code>). </li>
+<li>
+<p>Can choose, edit (e.g., update the <code>Title</code>), or delete this file, but cannot interact with assets uploaded by others. </p>
+</li>
+<li>
+<p><strong>User D (Full Write)</strong></p>
+</li>
+<li>
+<p>Can choose, edit, replace, or delete any asset, such as <code>2025-03-xyz789</code> or <code>2025-03-abc123</code>, regardless of who uploaded them. </p>
+</li>
+<li>
+<p><strong>Super Admin</strong></p>
+</li>
+<li>Uploads an asset (<code>2025-03-super456</code>). </li>
+<li>Assigns it to User A (Restricted Read) and User C (Restricted Write). </li>
+<li>Can still manage all assets, including those uploaded by Users A, B, C, and D. </li>
+</ol>
+<h4 id="benefits-of-permission-system">Benefits of Permission System</h4>
+<ul>
+<li><strong>Granular Control</strong>: Fine-tuned access levels ensure users only interact with assets appropriate to their role or responsibility. </li>
+<li><strong>Security</strong>: Restricting actions (e.g., editing or deleting) to authorized users prevents unauthorized modifications. </li>
+<li><strong>Collaboration</strong>: Super Admins can assign assets to facilitate teamwork while maintaining oversight. </li>
+<li><strong>Scalability</strong>: Role-based permissions adapt easily to growing teams and complex workflows. </li>
+</ul>
 <h3 id="configuration">Configuration</h3>
 <ul>
-<li><strong>Image Compression</strong>: Controlled via <code>ImageCompressionOptions</code> in <code>SystemSettings</code>: <ul>
-<li><code>MaxWidth</code>: Defaults to 1200 pixels; can be overridden to adjust the maximum width of resized images. </li>
-<li><code>Quality</code>: Defaults to 75 (on a 0-100 scale); can be adjusted to balance file size and image clarity. </li>
+<li><strong>Image Compression</strong>: Controlled via <code>ImageCompressionOptions</code> in <code>SystemSettings</code>:  <ul>
+<li><code>MaxWidth</code>: Defaults to 1200 pixels; can be overridden to adjust the maximum width of resized images.  </li>
+<li><code>Quality</code>: Defaults to 75 (on a 0-100 scale); can be adjusted to balance file size and image clarity.  </li>
 </ul>
 </li>
 <li><strong>Asset URL</strong>: The <code>Url</code> is prefixed with <code>/files</code> by default (configurable via <code>SystemSettings.AssetUrlPrefix</code>), ensuring a consistent access pattern (e.g., <code>/files/2025-03-abc123</code>). </li>
@@ -959,7 +1055,8 @@ If you want to preview how the content looks on a page before publishing, you ca
 <li><strong>Storage Optimization</strong>: Orphaned assets can be removed, and configurable image resizing (e.g., max width 1200px, quality 75) minimizes storage usage. </li>
 <li><strong>Consistency</strong>: The fixed <code>Url</code> ensures seamless updates when replacing files, maintaining all existing links. </li>
 <li><strong>Flexibility</strong>: Metadata, file replacement, and adjustable compression settings allow assets to evolve without breaking references. </li>
-<li><strong>Tracking</strong>: <code>LinkCount</code> and <code>AssetLink</code> provide visibility into asset usage. </li>
+<li><strong>Tracking</strong>: <code>LinkCount</code> and <code>AssetLink</code> provide visibility into asset usage.</li>
+<li><strong>SEO Improvement</strong>: The Title field can be used as the alt text for images, enhancing search engine optimization (SEO) by providing descriptive, keyword-rich text that improves accessibility and image discoverability on the web.</li>
 </ul>
 <hr />
 <h2 id="graphql-query"><strong>GraphQL Query</strong></h2>
@@ -1336,6 +1433,147 @@ Example response for <a href="https://fluent-cms-admin.azurewebsites.net/api/que
 </code></pre>
 <p>To fetch the next two skills, use the cursor:<br />
 <a href="https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/part/skills?limit=2&amp;last=eyJpZCI6Miwic291cmNlSWQiOjN9">https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/part/skills?limit=2&amp;last=eyJpZCI6Miwic291cmNlSWQiOjN9</a></p>
+<p>Below is a rewritten version of the <strong>Asset Type</strong> and <strong>Distinct</strong> chapters from your GraphQL Query documentation. The rewrite aims to improve clarity, structure, and readability while preserving the technical details.</p>
+<hr />
+<h3 id="asset-type">Asset Type</h3>
+<p>In FormCMS, attributes with display types such as <code>image</code>, <code>file</code>, or <code>gallery</code> are represented as <strong>Asset Objects</strong> in GraphQL query results. These objects correspond to assets stored in the system's centralized Asset Library (see the <strong>Asset Library</strong> section for details). When querying entities with these attributes, the response includes structured asset data, such as the asset’s <code>Path</code>, <code>Url</code>, <code>Name</code>, <code>Title</code>, and other metadata.</p>
+<h4 id="example-query">Example Query</h4>
+<p>Consider a <code>course</code> entity with an <code>image</code> field:</p>
+<pre><code class="language-graphql">{
+  courseList {
+    id
+    name
+    image {
+      id
+      path
+      url
+      name
+      title
+      size
+      type
+    }
+  }
+}
+</code></pre>
+<p><a href="https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20image%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20path%0A%20%20%20%20%20%20url%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20title%0A%20%20%20%20%20%20size%0A%20%20%20%20%20%20type%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D">Try it here</a></p>
+<h4 id="response-example">Response Example</h4>
+<pre><code class="language-json">{
+  &quot;data&quot;: {
+    &quot;courseList&quot;: [
+      {
+        &quot;id&quot;: 1,
+        &quot;name&quot;: &quot;Introduction to GraphQL&quot;,
+        &quot;image&quot;: {
+          &quot;id&quot;: &quot;abc123&quot;,
+          &quot;path&quot;: &quot;2025-03-abc123&quot;,
+          &quot;url&quot;: &quot;/files/2025-03-abc123&quot;,
+          &quot;name&quot;: &quot;graphql_intro.jpg&quot;,
+          &quot;title&quot;: &quot;GraphQL Course Banner&quot;,
+          &quot;size&quot;: 102400,
+          &quot;type&quot;: &quot;image/jpeg&quot;
+        }
+      }
+    ]
+  }
+}
+</code></pre>
+<h4 id="benefits_1">Benefits</h4>
+<ul>
+<li><strong>Consistency</strong>: The <code>url</code> field provides a fixed access point to the asset, ensuring reliable retrieval across the application.</li>
+<li><strong>Metadata</strong>: Fields like <code>title</code> can be used as captions or <code>alt</code> text for images, enhancing accessibility and SEO.</li>
+<li><strong>Flexibility</strong>: The Asset Object structure supports various file types (<code>image</code>, <code>file</code>, <code>gallery</code>) with a uniform response format.</li>
+</ul>
+<hr />
+<h3 id="distinct">Distinct</h3>
+<p>When querying related entities in FormCMS, joining tables can result in duplicate records due to one-to-many relationships. The <code>DISTINCT</code> keyword helps eliminate these duplicates, but it has limitations that require careful query design.</p>
+<h4 id="why-use-distinct">Why Use <code>DISTINCT</code>?</h4>
+<p>Consider the following data structure:
+- <strong>Posts</strong>: <code>[{id: 1, title: "p1"}]</code>
+- <strong>Tags</strong>: <code>[{id: 1, name: "t1"}, {id: 2, name: "t2"}]</code>
+- <strong>Post_Tag</strong>: <code>[{post_id: 1, tag_id: 1}, {post_id: 1, tag_id: 2}]</code></p>
+<p>A query joining these tables might look like this in SQL:</p>
+<pre><code class="language-sql">SELECT posts.id, posts.title
+FROM posts
+LEFT JOIN post_tag ON posts.id = post_tag.post_id
+LEFT JOIN tags ON post_tag.tag_id = tags.id
+WHERE tags.id &gt; 0;
+</code></pre>
+<p>Without <code>DISTINCT</code>, the result duplicates the post for each tag:</p>
+<pre><code class="language-json">[
+  {&quot;id&quot;: 1, &quot;title&quot;: &quot;p1&quot;},  // For tag_id: 1
+  {&quot;id&quot;: 1, &quot;title&quot;: &quot;p1&quot;}   // For tag_id: 2
+]
+</code></pre>
+<p>Using <code>DISTINCT</code> ensures each post appears only once:</p>
+<pre><code class="language-sql">SELECT DISTINCT posts.id, posts.title
+FROM posts
+LEFT JOIN post_tag ON posts.id = post_tag.post_id
+LEFT JOIN tags ON post_tag.tag_id = tags.id
+WHERE tags.id &gt; 0;
+</code></pre>
+<p>Result:</p>
+<pre><code class="language-json">[
+  {&quot;id&quot;: 1, &quot;title&quot;: &quot;p1&quot;}
+]
+</code></pre>
+<h4 id="limitation-of-distinct">Limitation of <code>DISTINCT</code></h4>
+<p>In some databases, such as SQL Server, <code>DISTINCT</code> cannot be applied to fields of type <code>TEXT</code> (or large data types like <code>NTEXT</code> or <code>VARCHAR(MAX)</code>). Including such fields in a query with <code>DISTINCT</code> causes errors.</p>
+<h4 id="solutionworkaround">Solution/Workaround</h4>
+<p>To address this limitation, split the entity’s queries into two parts: </p>
+<ol>
+<li><strong>List Query</strong>: Retrieves a lightweight list of records without <code>TEXT</code> fields, using <code>DISTINCT</code> to avoid duplicates. </li>
+</ol>
+<pre><code>{
+    postList {
+       id
+       title
+   }
+}
+</code></pre>
+<ol>
+<li><strong>Detail Query</strong>: Retrieves full details, including <code>TEXT</code> fields, by querying a single record using its ID. </li>
+</ol>
+<pre><code>{
+    post(idSet: 1) {
+       id
+       title
+       description  # TEXT field
+   }
+}
+</code></pre>
+<h4 id="example-with-graphql">Example with GraphQL</h4>
+<p>List query to avoid duplicates:</p>
+<pre><code>{
+  postList {
+    id
+    title
+    tags {
+      id
+      name
+    }
+  }
+}
+</code></pre>
+<p>Detail query for a specific post:</p>
+<pre><code class="language-graphql">{
+  post(idSet: 1) {
+    id
+    title
+    description  # TEXT field, only queried here
+    tags {
+      id
+      name
+    }
+  }
+}
+</code></pre>
+<h4 id="benefits_2">Benefits</h4>
+<ul>
+<li><strong>Efficiency</strong>: The list query remains lightweight and deduplicated.</li>
+<li><strong>Compatibility</strong>: Avoids database-specific limitations on <code>DISTINCT</code>.</li>
+<li><strong>Flexibility</strong>: Developers can fetch detailed data only when needed.</li>
+</ul>
+<hr />
 <hr />
 <h2 id="drag-and-drop-page-designer">Drag and Drop Page Designer</h2>
 <p>The page designer utilizes the open-source GrapesJS and Handlebars, enabling seamless binding of <code>GrapesJS Components</code> with <code>FormCMS Queries</code> for dynamic content rendering. </p>
@@ -1703,7 +1941,7 @@ builder.AddProject&lt;Projects.FormCMS_Course&gt;(name: &quot;web&quot;)
 
 builder.Build().Run();
 </code></pre>
-<h3 id="benefits_1">Benefits:</h3>
+<h3 id="benefits_3">Benefits:</h3>
 <ol>
 <li><strong>Simplified Configuration</strong>:<br />
    No need to manually specify endpoints for the database or Redis servers. Configuration values can be retrieved using:
@@ -2073,5 +2311,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-03-08 23:20:41.961133+00:00
+Build Date UTC : 2025-03-16 21:09:21.645279+00:00
 -->

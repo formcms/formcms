@@ -13,6 +13,7 @@ public enum TestFieldNames
     Name,
     Description,
     Image,
+    Gallery,
     Post,
     
     Title,
@@ -48,7 +49,7 @@ public record JunctionData(string EntityName,  string Attribute,string JunctionT
 /// a set of blog entities to test queries
 public static class BlogsTestData
 {
-    private static Attribute CreateAttr(this TestFieldNames fieldName) => new Attribute(fieldName.Camelize(), fieldName.Camelize());
+    private static Attribute CreateAttr(this TestFieldNames fieldName) => new (fieldName.Camelize(), fieldName.Camelize());
     public static async Task EnsureBlogEntities(SchemaApiClient client)
     {
         await EnsureBlogEntities(x => client.EnsureEntity(x).Ok());
@@ -61,9 +62,16 @@ public static class BlogsTestData
         }
     }
 
-    public static async Task PopulateData(EntityApiClient client)
+    public static async Task PopulateData(EntityApiClient client, AssetApiClient assetClient)
     {
-        await PopulateData(1, 100, async data =>
+        var list = new List<(string,byte[])>();
+        for (var i = 0; i < 100; i++)
+        {
+            list.Add(($"{i}.txt", [1]));
+        }
+        var paths = await assetClient.AddAsset(list.ToArray()).Ok();
+        
+        await PopulateData(1, 100,paths.Split(","), async data =>
         {
             foreach (var dataRecord in data.Records)
             {
@@ -79,7 +87,10 @@ public static class BlogsTestData
         });
     }
 
-    public static async Task PopulateData(int startId, int count, Func<EntityData,Task> insertEntity, Func<JunctionData,Task> insertJunction)
+    public static async Task PopulateData(int startId, int count, string[]assetPaths, 
+        Func<EntityData,Task> insertEntity, 
+        Func<JunctionData,Task> insertJunction
+        )
     {
         var tags = new List<Record>();
         var authors = new List<Record>();
@@ -94,15 +105,20 @@ public static class BlogsTestData
             tagsIds.Add(i);
             authorsIds.Add(i);
             
-            tags.Add(GetObject([TestFieldNames.Name, TestFieldNames.Description, TestFieldNames.Image], i));
-            authors.Add(GetObject([TestFieldNames.Name, TestFieldNames.Description, TestFieldNames.Image], i));
-            categories.Add(GetObject([TestFieldNames.Name, TestFieldNames.Description, TestFieldNames.Image], i));
+            tags.Add(GetObject([TestFieldNames.Name, TestFieldNames.Description], i));
+            authors.Add(GetObject([TestFieldNames.Name, TestFieldNames.Description], i));
+            categories.Add(GetObject([TestFieldNames.Name, TestFieldNames.Description], i));
             
-            var post = GetObject([TestFieldNames.Title, TestFieldNames.Abstract, TestFieldNames.Body, TestFieldNames.Image], i);
+            var post = GetObject([TestFieldNames.Title, TestFieldNames.Abstract, TestFieldNames.Body], i);
+            
             post[TestFieldNames.Category.Camelize()] = i;
+            
+            post[TestFieldNames.Image.Camelize()] = RandomGetString(1);
+            post[TestFieldNames.Gallery.Camelize()] = RandomGetString(4);
+            
             posts.Add(post);
             
-            var attachment = GetObject([TestFieldNames.Name, TestFieldNames.Description, TestFieldNames.Image], i);
+            var attachment = GetObject([TestFieldNames.Name, TestFieldNames.Description], i);
             attachment["post"] = startId;
             attachments.Add(attachment);
         }
@@ -113,6 +129,19 @@ public static class BlogsTestData
         await insertEntity(new EntityData(TestEntityNames.TestPost, TestTableNames.TestPosts, posts.ToArray()));
         await insertEntity(new EntityData(TestEntityNames.TestAttachment, TestTableNames.TestAttachments, attachments.ToArray()));
 
+        string RandomGetString(int i)
+        {
+            if (assetPaths.Length == 0)
+                return string.Empty;
+            i = Math.Min(i, assetPaths.Length);
+            Random rand = new Random();
+            var randomElements = assetPaths
+                .OrderBy(x => rand.Next())  // Randomize order
+                .Take(i)                   // Take first i elements
+                .ToArray();
+            return string.Join(",", randomElements);
+        }
+        
         await insertJunction(new JunctionData(
                 TestEntityNames.TestPost.Camelize(),
                 TestFieldNames.Tags.Camelize(),
@@ -152,71 +181,68 @@ public static class BlogsTestData
     private static readonly Entity[] Entities =
     [
         new(
+            Name: TestEntityNames.TestTag.Camelize(),
+            TableName: TestTableNames.TestTags.Camelize(),
+            DisplayName: TestEntityNames.TestTag.ToString(),
             PrimaryKey:DefaultAttributeNames.Id.Camelize(),
             Attributes:
             [
                 TestFieldNames.Name.CreateAttr(),
                 TestFieldNames.Description.CreateAttr(),
-                TestFieldNames.Image.CreateAttr() with{DisplayType = DisplayType.Image},
             ],
-            TableName: TestTableNames.TestTags.Camelize(),
-            DisplayName: TestEntityNames.TestTag.ToString(),
-            Name: TestEntityNames.TestTag.Camelize(),
             
             LabelAttributeName: TestFieldNames.Name.Camelize(),
             DefaultPageSize: EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published
         ),
         new(
+            Name: TestEntityNames.TestAttachment.Camelize(),
+            TableName: TestTableNames.TestAttachments.Camelize(),
+            DisplayName: TestEntityNames.TestAttachment.ToString(),
             PrimaryKey:DefaultAttributeNames.Id.Camelize(),
             Attributes:
             [
                 TestFieldNames.Name.CreateAttr(),
                 TestFieldNames.Description.CreateAttr(),
-                TestFieldNames.Image.CreateAttr() with{DisplayType = DisplayType.Image},
                 TestFieldNames.Post.CreateAttr() with{DataType = DataType.Int, DisplayType = DisplayType.Number}
                 
             ],
-            TableName: TestTableNames.TestAttachments.Camelize(),
-            DisplayName: TestEntityNames.TestAttachment.ToString(),
-            Name: TestEntityNames.TestAttachment.Camelize(),
             
             LabelAttributeName: TestFieldNames.Name.Camelize(),
             DefaultPageSize: EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published
         ),
         new(
+            Name: TestEntityNames.TestAuthor.Camelize(),
             PrimaryKey:DefaultAttributeNames.Id.Camelize(),
             Attributes:
             [
                 TestFieldNames.Name.CreateAttr(),
                 TestFieldNames.Description.CreateAttr(),
-                TestFieldNames.Image.CreateAttr() with{DisplayType = DisplayType.Image},
             ],
             TableName: TestTableNames.TestAuthors.Camelize(),
             DisplayName: TestEntityNames.TestAuthor.ToString(),
-            Name: TestEntityNames.TestAuthor.Camelize(),
             LabelAttributeName: TestFieldNames.Name.Camelize(),
             DefaultPageSize: EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published
         ),
         new (
+            Name: TestEntityNames.TestCategory.Camelize(),
             PrimaryKey:DefaultAttributeNames.Id.Camelize(),
             Attributes:
             [
                 TestFieldNames.Name.CreateAttr(),
                 TestFieldNames.Description.CreateAttr(),
-                TestFieldNames.Image.CreateAttr() with{DisplayType = DisplayType.Image},
             ],
             TableName: TestTableNames.TestCategories.Camelize(),
             DisplayName: TestEntityNames.TestCategory.ToString(),
-            Name: TestEntityNames.TestCategory.Camelize(),
             
             LabelAttributeName: TestFieldNames.Name.Camelize(),
             DefaultPageSize: EntityConstants.DefaultPageSize,
             DefaultPublicationStatus:PublicationStatus.Published
         ),
         new (
+            Name: TestEntityNames.TestPost.Camelize(),
             PrimaryKey:DefaultAttributeNames.Id.Camelize(),
             Attributes:
             [
@@ -224,6 +250,7 @@ public static class BlogsTestData
                 TestFieldNames.Abstract.CreateAttr(),
                 TestFieldNames.Body.CreateAttr(),
                 TestFieldNames.Image.CreateAttr() with{DisplayType = DisplayType.Image},
+                TestFieldNames.Gallery.CreateAttr() with{DisplayType = DisplayType.Gallery, DataType = DataType.Text},
 
                 TestFieldNames.Attachments.CreateAttr() with{DisplayType = DisplayType.EditTable, DataType = DataType.Collection,
                     Options = $"{TestEntityNames.TestAttachment.Camelize()}.{TestFieldNames.Post.Camelize()}"},
@@ -231,7 +258,6 @@ public static class BlogsTestData
                 TestFieldNames.Authors.CreateAttr() with{DisplayType = DisplayType.Picklist, DataType = DataType.Junction, Options = TestEntityNames.TestAuthor.Camelize() },
                 TestFieldNames.Category.CreateAttr() with{DataType = DataType.Lookup, DisplayType = DisplayType.Lookup, Options = TestEntityNames.TestCategory.Camelize() },
             ],
-            Name: TestEntityNames.TestPost.Camelize(),
             DisplayName: TestEntityNames.TestPost.ToString(),
             TableName: TestTableNames.TestPosts.Camelize(),
             

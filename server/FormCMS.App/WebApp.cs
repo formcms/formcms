@@ -76,6 +76,7 @@ public static class WebApp
         var service = scope.ServiceProvider.GetRequiredService<IQuerySchemaService>();
         var query = new Query
         (
+            Distinct:false,
             Name: "post_sync",
             EntityName: "post",
             Filters: [new Filter("id", MatchTypes.MatchAll, [new Constraint(Matches.In, ["$id"])])],
@@ -125,12 +126,12 @@ public static class WebApp
     private static async Task AddData(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();
-        var service = scope.ServiceProvider.GetRequiredService<KateQueryExecutor>();
+        var executor = scope.ServiceProvider.GetRequiredService<KateQueryExecutor>();
         for (var i = 0; i < 10000; i++)
         {
-            await BlogsTestData.PopulateData(i * 100 + 1, 100, async data =>
+            await BlogsTestData.PopulateData(i * 100 + 1, 100, [],async data =>
             {
-                await service.BatchInsert(data.TableName.Camelize(), data.Records);
+                await executor.BatchInsert(data.TableName.Camelize(), data.Records);
             }, async data =>
             {
                 var objs = data.TargetIds.Select(x => new Dictionary<string, object>
@@ -138,7 +139,7 @@ public static class WebApp
                     {data.SourceField, data.SourceId },
                     {data.TargetField,x}
                 });
-                await service.BatchInsert(data.JunctionTableName, [..objs]);
+                await executor.BatchInsert(data.JunctionTableName, [..objs]);
             });
         }
     }

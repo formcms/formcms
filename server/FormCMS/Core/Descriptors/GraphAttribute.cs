@@ -114,7 +114,7 @@ public static class GraphAttributeExtensions
                                 }
                                 else
                                 {
-                                    record[attr.Field] = null;
+                                    record[attr.Field] = null!;
                                 }
 
                                 break;

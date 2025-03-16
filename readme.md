@@ -515,12 +515,13 @@ The system maintains a centralized repository of assets, each represented by the
 #### Add Asset to Data
 In data management forms, fields for `image`, `file`, or `gallery` inputs provide the following options: 
 
-- **Choose File**: Upload a new file to the server. The system generates a unique `Path` (e.g., `2025-03-abc123`), assigns a fixed `Url` based on the `Path`, and records the `Name` (original filename), `Size`, `Type`, and `CreatedBy` metadata. For images, the system resizes the file to a maximum width of 1200 pixels (configurable via `ImageCompressionOptions.MaxWidth`) with a compression quality of 75 (configurable via `ImageCompressionOptions.Quality`) before saving, updating the `Size` accordingly. The `CreatedAt` timestamp is set to the upload time, and a default `Title` is derived from the `Name`. 
-- **Choose Library**: Opens a dialog to select an existing asset from the library. The dialog offers: 
+- **Upload**: Upload a new file to the server. The system generates a unique `Path` (e.g., `2025-03-abc123`), assigns a fixed `Url` based on the `Path`, and records the `Name` (original filename), `Size`, `Type`, and `CreatedBy` metadata. For images, the system resizes the file to a maximum width of 1200 pixels (configurable via `ImageCompressionOptions.MaxWidth`) with a compression quality of 75 (configurable via `ImageCompressionOptions.Quality`) before saving, updating the `Size` accordingly. The `CreatedAt` timestamp is set to the upload time, and a default `Title` is derived from the `Name`. 
+- **Choose**: Opens a dialog to select an existing asset from the library. The dialog offers: 
     - `Gallery View`: Displays assets as thumbnails (ideal for images). 
     - `List View`: Shows assets in a tabular format with details like `Name`, `Title`, `Size`, `CreatedAt`, and `Type`. Users can filter by Name (e.g., search by keyword), Size (e.g., range of bytes), and CreatedAt (e.g., date range), and order the list by these fields in ascending or descending order. 
     - Selecting an asset links it to the current data entity, incrementing its `LinkCount` and adding an `AssetLink` entry. 
 - **Delete**: Removes the asset reference from the current data entity by clearing its path, potentially reducing the asset’s `LinkCount`. 
+- **Edit**: Edit asset title and metadata.
 
 #### Delete Orphan Assets 
 On the **Asset List Page**, users can view all assets with details such as `Name`, `Title`, `Size`, `Type`, `CreatedAt`, and `LinkCount` (the number of data entities referencing the asset). Assets with a `LinkCount` of 0 (orphans) can be deleted to free up storage. Deletion removes the asset’s file and its record from the system.
@@ -542,10 +543,77 @@ The **Asset Detail Page** allows users to modify an asset’s metadata:
 - **Asset**: Represents a stored file with fields like `Path` (unique identifier), `Url` (fixed access location), `Name`, `Title`, `Size`, `Type`, `Metadata`, `CreatedBy`, `CreatedAt`, `UpdatedAt`, `Id`, `LinkCount` (calculated), and `Links` (calculated array of `AssetLink`). 
 - **AssetLink**: Tracks relationships between assets and data entities, with fields like `EntityName` (e.g., "BlogPost"), `RecordId` (entity’s ID), `AssetId`, `CreatedAt`, `UpdatedAt`, and `Id`. 
 
+### Permissions
+
+The Asset Library enforces a role-based permission system to control access and management of assets. Permissions determine what actions users can perform (e.g., upload, choose, edit, delete) and which assets they can interact with, based on their role or individual assignment.
+
+#### Permission Levels and Roles
+
+- **Super Admin**
+  - Full control over all assets in the system. 
+  - Can upload, choose, edit, replace, and delete any asset, regardless of ownership. 
+  - Can assign assets to specific users or roles, granting them access as needed. 
+
+- **Users Without Asset Permissions** 
+  - Cannot upload new assets or choose existing ones from the library. 
+  - Restricted from interacting with assets in any capacity. 
+
+- **Restricted Read (User or Role)** 
+  - Can only choose assets that they personally uploaded. 
+  - Limited to viewing and selecting their own assets in the library dialog (e.g., in `Gallery View` or `List View`). 
+  - Cannot edit, replace, or delete assets. 
+
+- **Full Read (User or Role)** 
+  - Can choose any asset from the library, regardless of who uploaded it. 
+  - Has access to the full asset catalog for selection purposes. 
+  - Cannot edit, replace, or delete assets. 
+
+- **Restricted Write (User or Role)** 
+  - Can choose, edit, and delete only assets they uploaded themselves. 
+  - Limited to managing their own assets, including updating metadata (e.g., `Title`, `Metadata Dictionary`) or replacing file content. 
+  - Cannot interact with assets uploaded by others. 
+
+- **Full Write (User or Role)** 
+  - Can choose, edit, replace, and delete any asset in the system, regardless of ownership. 
+  - Has comprehensive management capabilities, similar to a Super Admin, but without the ability to assign assets to other users or roles. 
+
+#### Permission Enforcement 
+- Permissions are applied at the user level or inherited from the user’s role. 
+- When a user attempts an action (e.g., uploading, choosing, or editing an asset), the system checks their permissions against the asset’s ownership and their assigned access level. 
+- The library dialog (e.g., `Gallery View` or `List View`) dynamically filters visible assets based on the user’s read permissions (`Restricted Read` shows only self-uploaded assets; `Full Read` shows all assets). 
+
+#### Example Scenarios 
+1. **User A (Restricted Read)** 
+  - Uploads an image (`2025-03-xyz789`). 
+  - Can choose this image for a blog post but cannot see or select assets uploaded by others. 
+  - Cannot edit or delete the image after uploading. 
+
+2. **User B (Full Read)**
+  - Can browse and choose any asset in the library (e.g., `2025-03-xyz789` from User A). 
+  - Cannot edit or delete any assets, even those they might upload. 
+
+3. **User C (Restricted Write)**
+  - Uploads a file (`2025-03-abc123`). 
+  - Can choose, edit (e.g., update the `Title`), or delete this file, but cannot interact with assets uploaded by others. 
+
+4. **User D (Full Write)**
+  - Can choose, edit, replace, or delete any asset, such as `2025-03-xyz789` or `2025-03-abc123`, regardless of who uploaded them. 
+
+5. **Super Admin**
+  - Uploads an asset (`2025-03-super456`). 
+  - Assigns it to User A (Restricted Read) and User C (Restricted Write). 
+  - Can still manage all assets, including those uploaded by Users A, B, C, and D. 
+
+#### Benefits of Permission System
+- **Granular Control**: Fine-tuned access levels ensure users only interact with assets appropriate to their role or responsibility. 
+- **Security**: Restricting actions (e.g., editing or deleting) to authorized users prevents unauthorized modifications. 
+- **Collaboration**: Super Admins can assign assets to facilitate teamwork while maintaining oversight. 
+- **Scalability**: Role-based permissions adapt easily to growing teams and complex workflows. 
+
 ### Configuration 
-- **Image Compression**: Controlled via `ImageCompressionOptions` in `SystemSettings`: 
-    - `MaxWidth`: Defaults to 1200 pixels; can be overridden to adjust the maximum width of resized images. 
-    - `Quality`: Defaults to 75 (on a 0-100 scale); can be adjusted to balance file size and image clarity. 
+- **Image Compression**: Controlled via `ImageCompressionOptions` in `SystemSettings`:  
+    - `MaxWidth`: Defaults to 1200 pixels; can be overridden to adjust the maximum width of resized images.  
+    - `Quality`: Defaults to 75 (on a 0-100 scale); can be adjusted to balance file size and image clarity.  
 - **Asset URL**: The `Url` is prefixed with `/files` by default (configurable via `SystemSettings.AssetUrlPrefix`), ensuring a consistent access pattern (e.g., `/files/2025-03-abc123`). 
 
 ### Benefits
@@ -553,8 +621,8 @@ The **Asset Detail Page** allows users to modify an asset’s metadata:
 - **Storage Optimization**: Orphaned assets can be removed, and configurable image resizing (e.g., max width 1200px, quality 75) minimizes storage usage. 
 - **Consistency**: The fixed `Url` ensures seamless updates when replacing files, maintaining all existing links. 
 - **Flexibility**: Metadata, file replacement, and adjustable compression settings allow assets to evolve without breaking references. 
-- **Tracking**: `LinkCount` and `AssetLink` provide visibility into asset usage. 
-
+- **Tracking**: `LinkCount` and `AssetLink` provide visibility into asset usage.
+- **SEO Improvement**: The Title field can be used as the alt text for images, enhancing search engine optimization (SEO) by providing descriptive, keyword-rich text that improves accessibility and image discoverability on the web.
 </details>
 
 
@@ -1020,6 +1088,169 @@ Subfields also support cursor-based pagination. For instance, querying [https://
 To fetch the next two skills, use the cursor:  
 [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/part/skills?limit=2&last=eyJpZCI6Miwic291cmNlSWQiOjN9](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery/part/skills?limit=2&last=eyJpZCI6Miwic291cmNlSWQiOjN9)
 
+Below is a rewritten version of the **Asset Type** and **Distinct** chapters from your GraphQL Query documentation. The rewrite aims to improve clarity, structure, and readability while preserving the technical details.
+
+---
+
+### Asset Type
+
+In FormCMS, attributes with display types such as `image`, `file`, or `gallery` are represented as **Asset Objects** in GraphQL query results. These objects correspond to assets stored in the system's centralized Asset Library (see the **Asset Library** section for details). When querying entities with these attributes, the response includes structured asset data, such as the asset’s `Path`, `Url`, `Name`, `Title`, and other metadata.
+
+#### Example Query
+Consider a `course` entity with an `image` field:
+```graphql
+{
+  courseList {
+    id
+    name
+    image {
+      id
+      path
+      url
+      name
+      title
+      size
+      type
+    }
+  }
+}
+```
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20image%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20path%0A%20%20%20%20%20%20url%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20title%0A%20%20%20%20%20%20size%0A%20%20%20%20%20%20type%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D)
+
+#### Response Example
+```json
+{
+  "data": {
+    "courseList": [
+      {
+        "id": 1,
+        "name": "Introduction to GraphQL",
+        "image": {
+          "id": "abc123",
+          "path": "2025-03-abc123",
+          "url": "/files/2025-03-abc123",
+          "name": "graphql_intro.jpg",
+          "title": "GraphQL Course Banner",
+          "size": 102400,
+          "type": "image/jpeg"
+        }
+      }
+    ]
+  }
+}
+```
+
+#### Benefits
+- **Consistency**: The `url` field provides a fixed access point to the asset, ensuring reliable retrieval across the application.
+- **Metadata**: Fields like `title` can be used as captions or `alt` text for images, enhancing accessibility and SEO.
+- **Flexibility**: The Asset Object structure supports various file types (`image`, `file`, `gallery`) with a uniform response format.
+
+---
+
+### Distinct
+
+When querying related entities in FormCMS, joining tables can result in duplicate records due to one-to-many relationships. The `DISTINCT` keyword helps eliminate these duplicates, but it has limitations that require careful query design.
+
+#### Why Use `DISTINCT`?
+Consider the following data structure:
+- **Posts**: `[{id: 1, title: "p1"}]`
+- **Tags**: `[{id: 1, name: "t1"}, {id: 2, name: "t2"}]`
+- **Post_Tag**: `[{post_id: 1, tag_id: 1}, {post_id: 1, tag_id: 2}]`
+
+A query joining these tables might look like this in SQL:
+```sql
+SELECT posts.id, posts.title
+FROM posts
+LEFT JOIN post_tag ON posts.id = post_tag.post_id
+LEFT JOIN tags ON post_tag.tag_id = tags.id
+WHERE tags.id > 0;
+```
+
+Without `DISTINCT`, the result duplicates the post for each tag:
+```json
+[
+  {"id": 1, "title": "p1"},  // For tag_id: 1
+  {"id": 1, "title": "p1"}   // For tag_id: 2
+]
+```
+
+Using `DISTINCT` ensures each post appears only once:
+```sql
+SELECT DISTINCT posts.id, posts.title
+FROM posts
+LEFT JOIN post_tag ON posts.id = post_tag.post_id
+LEFT JOIN tags ON post_tag.tag_id = tags.id
+WHERE tags.id > 0;
+```
+Result:
+```json
+[
+  {"id": 1, "title": "p1"}
+]
+```
+
+#### Limitation of `DISTINCT`
+In some databases, such as SQL Server, `DISTINCT` cannot be applied to fields of type `TEXT` (or large data types like `NTEXT` or `VARCHAR(MAX)`). Including such fields in a query with `DISTINCT` causes errors.
+
+#### Solution/Workaround
+To address this limitation, split the entity’s queries into two parts: 
+
+1. **List Query**: Retrieves a lightweight list of records without `TEXT` fields, using `DISTINCT` to avoid duplicates. 
+```
+{
+    postList {
+       id
+       title
+   }
+}
+```
+2. **Detail Query**: Retrieves full details, including `TEXT` fields, by querying a single record using its ID. 
+```
+{
+    post(idSet: 1) {
+       id
+       title
+       description  # TEXT field
+   }
+}
+```
+
+
+#### Example with GraphQL
+List query to avoid duplicates:
+```
+{
+  postList {
+    id
+    title
+    tags {
+      id
+      name
+    }
+  }
+}
+```
+Detail query for a specific post:
+```graphql
+{
+  post(idSet: 1) {
+    id
+    title
+    description  # TEXT field, only queried here
+    tags {
+      id
+      name
+    }
+  }
+}
+```
+
+#### Benefits
+- **Efficiency**: The list query remains lightweight and deduplicated.
+- **Compatibility**: Avoids database-specific limitations on `DISTINCT`.
+- **Flexibility**: Developers can fetch detailed data only when needed.
+
+---
 </details>
 
 ---
