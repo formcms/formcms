@@ -84,7 +84,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             services.AddSingleton(new ResizeOptions(systemSettings.ImageCompression.MaxWidth,systemSettings.ImageCompression.Quality));
             services.AddSingleton<IResizer,ImageSharpResizer>();
             
-            services.AddSingleton(new LocalFileStoreOptions( Path.Join(Directory.GetCurrentDirectory(), "wwwroot/files"), systemSettings.AssetUrlPrefix));
+            services.AddSingleton(new LocalFileStoreOptions( Path.Join(Directory.GetCurrentDirectory(), "wwwroot/files"), "/files"));
             services.AddSingleton<IFileStore,LocalFileStore>();
             
             services.AddScoped<IAssetService, AssetService>();
@@ -237,7 +237,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
 
             var schemaService = serviceScope.ServiceProvider.GetRequiredService<ISchemaService>();
             await schemaService.EnsureSchemaTable();
-            await schemaService.EnsureTopMenuBar();
+            await schemaService.EnsureTopMenuBar(CancellationToken.None);
             
             await serviceScope.ServiceProvider.GetRequiredService<ITaskService>().EnsureTable();
             await serviceScope.ServiceProvider.GetRequiredService<IAssetService>().EnsureTable();

@@ -25,7 +25,7 @@ public sealed class QuerySchemaService(
             return await ToLoadedQuery(query, fields,null);
         }
 
-        var schema = await schemaSvc.GetByNameDefault(query.Name, SchemaType.Query, null);
+        var schema = await schemaSvc.GetByNameDefault(query.Name, SchemaType.Query, null,CancellationToken.None);
         if (schema == null || schema.Settings.Query != null && schema.Settings.Query.Source != query.Source)
         {
             await SaveQuery(query, null);

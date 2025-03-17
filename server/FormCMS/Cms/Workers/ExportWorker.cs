@@ -37,7 +37,7 @@ public class ExportWorker(
         await ExportAssetLinks();
         
         task.GetPaths().Zip();
-        await fileStore.Upload(task.GetPaths().FullZip,task.GetPaths().Zip);
+        await fileStore.Upload(task.GetPaths().FullZip,task.GetPaths().Zip,ct);
         task.GetPaths().Clean();
         return;
 
@@ -54,7 +54,7 @@ public class ExportWorker(
                 {
                     foreach (string path in records.Select(x => x[nameof(Asset.Path).Camelize()]))
                     {
-                        await fileStore.Download(path, Path.Join(task.GetPaths().Folder, path));
+                        await fileStore.Download(path, Path.Join(task.GetPaths().Folder, path),ct);
                     }
                 },
                 ct

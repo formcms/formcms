@@ -31,7 +31,7 @@ public static class Assets
     private const int DefaultPageSize = 48;
 
     public static readonly XEntity Entity = XEntityExtensions.CreateEntity<Asset>(
-        nameof(Asset.Type),
+        nameof(Asset.Title),
         defaultPageSize: DefaultPageSize,
         attributes:
         [

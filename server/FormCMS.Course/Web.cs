@@ -1,4 +1,5 @@
 using FormCMS.Auth;
+using FormCMS.Infrastructure.FileStore;
 using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -6,42 +7,33 @@ using Scalar.AspNetCore;
 
 namespace FormCMS.Course;
 
-public static class Web
+public class WebApp(
+    WebApplicationBuilder builder,
+    string databaseProvider, 
+    string databaseConnectionString, 
+    string? redisConnectionString, 
+    AzureBlobStoreOptions? azureBlobStoreOptions
+    )
 {
     private const string Cors = "cors";
 
-    public static async Task<WebApplication> Build(string[] args)
+    public async Task<WebApplication> Build()
     {
-        var builder = WebApplication.CreateBuilder(args);
-
-        var provider = builder.Configuration.GetValue<string>(Constants.DatabaseProvider) ??
-                       throw new Exception("DatabaseProvider not found");
-        var conn = builder.Configuration.GetConnectionString(provider) ??
-                   throw new Exception($"Connection string {provider} not found");
-
-        _ = provider switch
-        {
-            Constants.Sqlite => builder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlite(conn))
-                .AddSqliteCms(conn),
-            Constants.Postgres => builder.Services.AddDbContext<CmsDbContext>(options => options.UseNpgsql(conn))
-                .AddPostgresCms(conn),
-            Constants.SqlServer => builder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlServer(conn))
-                .AddSqlServerCms(conn),
-            _ => throw new Exception("Database provider not found")
-        };
-
+        AddDabaseService();
         builder.Services.AddCmsAuth<IdentityUser, IdentityRole, CmsDbContext>();
         builder.Services.AddAuditLog();
         
-        AddHybridCache(builder);
-        AddOutputCachePolicy(builder);
+        AddOutputCachePolicy();
         builder.AddServiceDefaults();
         if (builder.Environment.IsDevelopment())
         {
             builder.Services.AddOpenApi();
-            AddCorsPolicy(builder);
+            AddCorsPolicy();
         }
 
+        TryAddHybridCache();
+        TryAzureBlobStore();
+        
         var app = builder.Build();
         app.MapDefaultEndpoints();
         app.UseOutputCache();
@@ -52,16 +44,54 @@ public static class Web
             app.UseCors(Cors);
         }
 
-        await EnsureDbCreatedAsync(app);
+        await EnsureDbCreatedAsync();
         await app.UseCmsAsync();
-
-
-        await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]).Ok();
-        await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
+        await EnsureUserCreatedAsync();
+        
         return app;
+
+        async Task EnsureDbCreatedAsync()
+        {
+            using var scope = app.Services.CreateScope();
+            var ctx = scope.ServiceProvider.GetRequiredService<CmsDbContext>();
+            await ctx.Database.EnsureCreatedAsync();
+        }
+
+        async Task EnsureUserCreatedAsync()
+        {
+            await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]).Ok();
+            await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
+        }
     }
 
-    private static void AddOutputCachePolicy(WebApplicationBuilder builder)
+    private void AddDabaseService()
+    {
+        _ = databaseProvider switch
+        {
+            Constants.Sqlite => builder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlite(databaseConnectionString))
+                .AddSqliteCms(databaseConnectionString),
+            Constants.Postgres => builder.Services.AddDbContext<CmsDbContext>(options => options.UseNpgsql(databaseConnectionString))
+                .AddPostgresCms(databaseConnectionString),
+            Constants.SqlServer => builder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlServer(databaseConnectionString))
+                .AddSqlServerCms(databaseConnectionString),
+            _ => throw new Exception("Database provider not found")
+        };
+    }
+    private void TryAzureBlobStore()
+    {
+        if (azureBlobStoreOptions is null) return;
+        builder.Services.AddSingleton(azureBlobStoreOptions);
+        builder.Services.AddSingleton<IFileStore, AzureBlobStore>();
+    }
+
+    private void TryAddHybridCache()
+    {
+        if (redisConnectionString is null) return;
+        builder.AddRedisDistributedCache(connectionName: Constants.Redis);
+        builder.Services.AddHybridCache();
+    }
+
+    private void AddOutputCachePolicy()
     {
         builder.Services.AddOutputCache(cacheOption =>
         {
@@ -73,21 +103,7 @@ public static class Web
         });
     }
 
-    private static void AddHybridCache(WebApplicationBuilder builder)
-    {
-        if (builder.Configuration.GetConnectionString(Constants.Redis) is null) return;
-        builder.AddRedisDistributedCache(connectionName: Constants.Redis);
-        builder.Services.AddHybridCache();
-    }
-
-    private static async Task EnsureDbCreatedAsync(WebApplication app)
-    {
-        using var scope = app.Services.CreateScope();
-        var ctx = scope.ServiceProvider.GetRequiredService<CmsDbContext>();
-        await ctx.Database.EnsureCreatedAsync();
-    }
-
-    private static void AddCorsPolicy(WebApplicationBuilder builder)
+    private  void AddCorsPolicy()
     {
         builder.Services.AddCors(options =>
         {

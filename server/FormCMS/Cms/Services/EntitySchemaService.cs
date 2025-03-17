@@ -84,9 +84,9 @@ public sealed class EntitySchemaService(
             _ => throw new ArgumentOutOfRangeException()
         };
 
-    public async Task<Entity?> GetTableDefine(string table, CancellationToken token)
+    public async Task<Entity?> GetTableDefine(string table, CancellationToken ct)
     {
-        var cols = await dao.GetColumnDefinitions(table, token);
+        var cols = await dao.GetColumnDefinitions(table, ct);
         return new Entity
         (
             PrimaryKey: "", Name: "", DisplayName: "", TableName: "", LabelAttributeName: "",

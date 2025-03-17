@@ -1,5 +1,3 @@
-using FluentResults;
-using FormCMS.Infrastructure.ImageUtil;
 using Microsoft.AspNetCore.StaticFiles;
 
 namespace FormCMS.Infrastructure.FileStore;
@@ -8,32 +6,57 @@ public record LocalFileStoreOptions(string PathPrefix, string UrlPrefix);
 
 public class LocalFileStore(
     LocalFileStoreOptions options
-    ):IFileStore
+) : IFileStore
 {
-    public string GetUrl(string file)=> Path.Join(options.UrlPrefix,file);
-    
-    public Task<long> GetFileSize(string file)
+    private readonly FileExtensionContentTypeProvider _provider = new();
+
+    public Task Upload(string localPath, string path, CancellationToken ct)
     {
-        string fullPath = Path.Join(options.PathPrefix, file);
-        if (!File.Exists(fullPath))
+        var dest = Path.Join(options.PathPrefix, path);
+        if (File.Exists(localPath))
         {
-            return Task.FromResult(0L);
+            CreateDirAndCopy(localPath, dest);
         }
-        
-        var sysFileInfo = new FileInfo(fullPath);
-        return Task.FromResult(sysFileInfo.Length);
-    }
-    
-    public Task<string> GetContentType(string filePath)
-    {
-        var provider = new FileExtensionContentTypeProvider();
-        var tp = provider.TryGetContentType(filePath, out var contentType) 
-            ? contentType 
-            : "application/octet-stream"; // Default fallback
-        return Task.FromResult(tp);
+
+        return Task.CompletedTask;
     }
 
-    public Task Download(string path, string localPath)
+    public async Task Upload(IEnumerable<(string, IFormFile)> files, CancellationToken ct)
+    {
+        var set = new HashSet<string>();
+        foreach (var (fileName, file) in files)
+        {
+            var dest = Path.Join(options.PathPrefix, fileName);
+            var dir = Path.GetDirectoryName(dest);
+
+            if (!string.IsNullOrEmpty(dir) && !set.Contains(dir) && !Directory.Exists(dir))
+            {
+                Directory.CreateDirectory(dir);
+                set.Add(dir);
+            }
+
+            await using var fileStream = new FileStream(dest, FileMode.Create, FileAccess.Write);
+            await file.CopyToAsync(fileStream);
+        }
+    }
+
+
+    public Task<FileMetadata?> GetMetadata(string filePath, CancellationToken ct)
+    {
+        string fullPath = Path.Join(options.PathPrefix, filePath);
+        if (!File.Exists(fullPath))
+        {
+            return Task.FromResult<FileMetadata?>(null);
+        }
+
+        var sysFileInfo = new FileInfo(fullPath);
+        var ret = new FileMetadata(sysFileInfo.Length, GetContentType(filePath));
+        return Task.FromResult<FileMetadata?>(ret);
+    }
+
+    public string GetUrl(string file) => Path.Join(options.UrlPrefix, file);
+
+    public Task Download(string path, string localPath, CancellationToken ct)
     {
         path = Path.Join(options.PathPrefix, path);
         if (File.Exists(path))
@@ -44,12 +67,18 @@ public class LocalFileStore(
         return Task.CompletedTask;
     }
 
-    public Task Del(string file)
+    public Task Del(string file, CancellationToken ct)
     {
         file = Path.Join(options.PathPrefix, file);
         File.Delete(file);
         return Task.CompletedTask;
     }
+
+    private string GetContentType(string filePath)
+        => _provider.TryGetContentType(filePath, out var contentType)
+            ? contentType
+            : "application/octet-stream"; // Default fallback
+
 
     private void CreateDirAndCopy(string source, string dest)
     {
@@ -60,35 +89,5 @@ public class LocalFileStore(
         }
 
         File.Copy(source, dest, true);
-    }
-
-    public Task Upload(string localPath, string path)
-    {
-        var dest = Path.Join(options.PathPrefix, path);
-        if (File.Exists(localPath))
-        {
-            CreateDirAndCopy(localPath, dest);
-        }
-
-        return Task.CompletedTask;
-    }
-    
-    public async Task Upload(IEnumerable<(string,IFormFile)> files)
-    {
-        var set = new HashSet<string>();
-        foreach (var (fileName, file) in files)
-        {
-            var dest = Path.Join(options.PathPrefix, fileName);
-            var dir = Path.GetDirectoryName(dest);
-            
-            if (!string.IsNullOrEmpty(dir) && !set.Contains(dir) && !Directory.Exists(dir))
-            {
-                Directory.CreateDirectory(dir);
-                set.Add(dir);
-            }
-
-            await using var fileStream = new FileStream(dest, FileMode.Create, FileAccess.Write);
-            await file.CopyToAsync(fileStream);
-        }
     }
 }

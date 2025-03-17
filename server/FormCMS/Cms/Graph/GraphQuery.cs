@@ -10,7 +10,7 @@ public sealed class GraphQuery : ObjectGraphType
 {
     public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService, IRelationDbDao dao)
     {
-        var entities = entitySchemaService.AllEntities().GetAwaiter().GetResult();
+        var entities = entitySchemaService.AllEntities(CancellationToken.None).GetAwaiter().GetResult();
         var graphMap = new Dictionary<string, GraphInfo>();
         
         foreach (var entity in entities)

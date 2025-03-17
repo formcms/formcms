@@ -23,7 +23,7 @@ public class TaskService(
         EnsureHasPermission();
         var record =await executor.Single(TaskHelper.ById(id),ct)?? throw new ResultException("Task not found");
         var task = record.ToObject<SystemTask>().Ok();
-        await store.Del(task.GetPaths().Zip);
+        await store.Del(task.GetPaths().Zip,ct);
         
         var query = TaskHelper.UpdateTaskStatus(new SystemTask(Id: id, TaskStatus: TaskStatus.Archived));
         await executor.Exec(query,false,ct);

@@ -44,10 +44,10 @@ public static class WebApp
         {
             using var scope = app.Services.CreateScope();
             var entitySchemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
-            var post = await entitySchemaService.LoadEntity("post",null);
+            var post = await entitySchemaService.LoadEntity("post",null,CancellationToken.None);
             if (post.IsFailed)
             {
-                await BlogsTestData.EnsureBlogEntities(x => entitySchemaService.SaveTableDefine(x));
+                await BlogsTestData.EnsureBlogEntities(x => entitySchemaService.SaveTableDefine(x,CancellationToken.None));
                 await app.AddQuery();
                 await app.AddData();
             }
@@ -120,7 +120,7 @@ public static class WebApp
             }
             """
         );
-        await service.SaveQuery(query,null);
+        await service.SaveQuery(query,null,CancellationToken.None);
     }
 
     private static async Task AddData(this WebApplication app)

@@ -17,7 +17,6 @@ public class AssetService(
     DatabaseMigrator migrator,
     KateQueryExecutor executor,
     IProfileService profileService,
-    SystemSettings systemSettings,
     IRelationDbDao dao,
     IResizer resizer,
     IServiceProvider provider,
@@ -42,7 +41,7 @@ public class AssetService(
 
     public XEntity GetEntity(bool withLinkCount) => withLinkCount ? Assets.EntityWithLinkCount : Assets.Entity;
 
-    public string GetBaseUrl() => systemSettings.AssetUrlPrefix;
+    public string GetBaseUrl() => store.GetUrl("");
 
     public  Task<Asset> Single(long id, bool loadLinks, CancellationToken ct = default)
         => Single(Assets.Single(id),loadLinks, ct);
@@ -76,7 +75,7 @@ public class AssetService(
         return new ListResponse(items, count);
     }
 
-    public async Task<string[]> Add(IFormFile[] files)
+    public async Task<string[]> Add(IFormFile[] files, CancellationToken ct)
     {
         foreach (var formFile in files)
         {
@@ -86,7 +85,7 @@ public class AssetService(
         files = files.Select(resizer.CompressImage).ToArray();
         var dir = DateTime.Now.ToString("yyyy-MM");
         var pairs = files.Select(x => (Path.Join(dir, UniqNameOmitYearAndMonth(x.FileName)), x)).ToArray();
-        await store.Upload(pairs);
+        await store.Upload(pairs,ct);
 
         var assets = new List<Asset>();
         foreach (var (fileName, file) in pairs)
@@ -123,7 +122,7 @@ public class AssetService(
         {
             var updateQuery = Assets.UpdateFile(asset.Id, file.FileName, file.Length, file.ContentType);
             await executor.Exec(updateQuery, false, ct);
-            await store.Upload([(asset.Path, file)]);
+            await store.Upload([(asset.Path, file)],ct);
             trans.Commit();
         }
         catch (Exception e)
@@ -148,7 +147,7 @@ public class AssetService(
         try
         {
             await executor.Exec(Assets.Deleted(id), false, ct);
-            await store.Del(asset.Path);
+            await store.Del(asset.Path,ct);
             trans.Commit();
         }
         catch (Exception e)
@@ -191,8 +190,8 @@ public class AssetService(
         {
             if (set.Contains(s) || !Assets.IsValidPath(s)) continue;
 
-            var size = await store.GetFileSize(s);
-            if (size == 0) continue;
+            var metadata = await store.GetMetadata(s,ct);
+            if (metadata is null) continue;
 
             var asset = new Asset(
                 CreatedBy: profileService.GetInfo()?.Name ?? "",
@@ -200,8 +199,8 @@ public class AssetService(
                 Url: store.GetUrl(s),
                 Name: s,
                 Title: s,
-                Size: size,
-                Type: await store.GetContentType(s),
+                Size: metadata.Size,
+                Type: metadata.ContentType,
                 Metadata: new Dictionary<string, object>()
             );
             list.Add(asset);

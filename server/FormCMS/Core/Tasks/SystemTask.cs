@@ -80,9 +80,14 @@ public static class TaskHelper
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
     ];
-    
-    public static SystemTask InitTask(TaskType t ,string userName)
-        =>new SystemTask(Type:t,TaskStatus:TaskStatus.Init,TaskId:  Ulid.NewUlid().ToString() ,CreatedBy: userName);
+
+    public static SystemTask InitTask(TaskType t, string userName)
+        => new(
+            Type: t,
+            TaskStatus: TaskStatus.Init,
+            TaskId: Ulid.NewUlid().ToString(),
+            CreatedBy: userName
+        );
     
     public static SqlKata.Query AddTask(SystemTask task)
     {

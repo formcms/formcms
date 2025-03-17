@@ -1,36 +1,27 @@
 using FormCMS.Cms.Builders;
+using FormCMS.Infrastructure.FileStore;
 
 namespace FormCMS.Course;
 
-public static class Worker
+public  class Worker(string databaseProvider, string databaseConnectionString, 
+    AzureBlobStoreOptions? azureBlobStoreOptions, 
+    TaskTimingSeconds? taskTimingSeconds)
 {
-    public static IHost? Build(string[] args)
+    public IHost Build()
     {
-        var builder = Host.CreateApplicationBuilder(args);
-        if (builder.Configuration.GetValue<bool>("enable-worker") is not true)
+        var builder = Host.CreateApplicationBuilder();
+        _ = databaseProvider switch
         {
-            return null;
-        }
-
-        var provider = builder.Configuration.GetValue<string>(Constants.DatabaseProvider) ??
-                       throw new Exception("DatabaseProvider not found");
-        var conn = builder.Configuration.GetConnectionString(provider) ??
-                   throw new Exception($"Connection string {provider} not found");
-
-        var taskTimingSeconds = new TaskTimingSeconds(
-            builder.Configuration.GetValue<int>("QueryTimeout"),
-            builder.Configuration.GetValue<int>("ExportDelay"),
-            builder.Configuration.GetValue<int>("ImportDelay"),
-            builder.Configuration.GetValue<int>("PublishDelay")
-            );
-        _ = provider switch
-        {
-            Constants.Sqlite => builder.Services.AddSqliteCmsWorker(conn,taskTimingSeconds),
-            Constants.Postgres => builder.Services.AddPostgresCmsWorker(conn,taskTimingSeconds),
-            Constants.SqlServer => builder.Services.AddSqlServerCmsWorker(conn,taskTimingSeconds),
+            Constants.Sqlite => builder.Services.AddSqliteCmsWorker(databaseConnectionString,taskTimingSeconds),
+            Constants.Postgres => builder.Services.AddPostgresCmsWorker(databaseConnectionString,taskTimingSeconds),
+            Constants.SqlServer => builder.Services.AddSqlServerCmsWorker(databaseConnectionString,taskTimingSeconds),
             _ => throw new Exception("Database provider not found")
         };
-        
+
+        if (azureBlobStoreOptions == null) return builder.Build();
+        builder.Services.AddSingleton(azureBlobStoreOptions);
+        builder.Services.AddSingleton<IFileStore, AzureBlobStore>();
+
         return builder.Build();
     }
 }

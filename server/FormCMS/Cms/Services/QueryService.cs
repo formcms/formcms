@@ -22,8 +22,8 @@ public sealed class QueryService(
     public async Task<Record[]> ListWithAction(GraphQlRequestDto dto)
         => await ListWithAction(await FromGraphQlRequest(dto, dto.Args), new Span(),  dto.Args);
 
-    public async Task<Record[]> ListWithAction(string name, Span span, Pagination pagination, StrArgs args, CancellationToken token)
-        => await ListWithAction(await FromSavedQuery(name,pagination, !span.IsEmpty(),args,token), span, args, token);
+    public async Task<Record[]> ListWithAction(string name, Span span, Pagination pagination, StrArgs args, CancellationToken ct)
+        => await ListWithAction(await FromSavedQuery(name,pagination, !span.IsEmpty(),args,ct), span, args, ct);
 
     public async Task<Record?> SingleWithAction(GraphQlRequestDto dto)
         => await SingleWithAction(await FromGraphQlRequest(dto,dto.Args), dto.Args);
@@ -32,11 +32,11 @@ public sealed class QueryService(
         => await SingleWithAction(await FromSavedQuery(name, null, false,args, ct),args,ct);
 
     public async Task<Record[]> Partial(string name, string attr, Span span, int limit, StrArgs args,
-        CancellationToken token)
+        CancellationToken ct)
     {
         if (span.IsEmpty()) throw new ResultException("cursor is empty, can not partially execute query");
 
-        var query = await schemaSvc.ByNameAndCache(name, PublicationStatusHelper.GetSchemaStatus(args), token);
+        var query = await schemaSvc.ByNameAndCache(name, PublicationStatusHelper.GetSchemaStatus(args), ct);
         var attribute = query.Selection.RecursiveFind(attr)?? throw new ResultException("can not find attribute");
         var desc = attribute.GetEntityLinkDesc().Ok();
         
@@ -52,13 +52,13 @@ public sealed class QueryService(
 
         var kateQuery = desc.GetQuery(fields, [validSpan.SourceId()],
             new CollectiveQueryArgs(filters, sorts, pagination.PlusLimitOne(), validSpan), PublicationStatusHelper.GetDataStatus(args));
-        var records = await executor.Many(kateQuery, token);
+        var records = await executor.Many(kateQuery, ct);
 
         records = span.ToPage(records, pagination.Limit);
         
         if (records.Length <= 0) return records;
 
-        await LoadItems(attribute.Selection, args, records, token);
+        await LoadItems(attribute.Selection, args, records, ct);
         await LoadAsset([..attribute.Selection],records);
         
         var sourceId = desc.TargetAttribute.GetValueOrLookup(records[0]);

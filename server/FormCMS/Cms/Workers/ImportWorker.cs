@@ -61,10 +61,14 @@ public class ImportWorker(
                     RenamePrimaryKeyToImportKey(records, nameof(Asset.Id).Camelize());
                     ConvertDateTime(records, [nameof(Asset.CreatedAt).Camelize(),nameof(Asset.UpdatedAt).Camelize()]);
                     
-                    foreach (string path in records.Select(x => x[nameof(Asset.Path).Camelize()]))
+                    foreach (var rec in records)
                     {
+                        var path = rec.StrOrEmpty(nameof(Asset.Path).Camelize());
+                        if (string.IsNullOrEmpty(path)) continue;
+                        
                         var local = Path.Join(task.GetPaths().Folder, path);
-                        await fileStore.Upload(local, path);
+                        await fileStore.Upload(local, path,ct);
+                        rec[nameof(Asset.Url).Camelize()] = fileStore.GetUrl(path);
                     } 
                 },
                 ct

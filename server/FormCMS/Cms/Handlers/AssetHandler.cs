@@ -42,14 +42,16 @@ public static class AssetHandler
 
         app.MapPost("/", async (
             IAssetService svc,
-            HttpContext context
-        ) => string.Join(",", await svc.Add(context.Request.Form.Files.ToArray())));
+            HttpContext context,
+            CancellationToken ct
+        ) => string.Join(",", await svc.Add(context.Request.Form.Files.ToArray(),ct)));
 
         app.MapPost("/{id:long}", async (
             IAssetService svc,
             HttpContext context,
-            long id
-        ) => await svc.Replace(id, context.Request.Form.Files[0]));
+            long id,
+            CancellationToken ct
+        ) => await svc.Replace(id, context.Request.Form.Files[0],ct));
 
         app.MapPost("/meta", (
             IAssetService svc,

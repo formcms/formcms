@@ -30,11 +30,11 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
         return await RenderPage(ctx, data, strArgs, ct);
     }
 
-    public async Task<string> Get(string name, StrArgs strArgs, CancellationToken token)
+    public async Task<string> Get(string name, StrArgs strArgs, CancellationToken ct)
     {
-        if ((await GetContext(name, false, strArgs,token)).Try(out var ctx, out var error))
+        if ((await GetContext(name, false, strArgs,ct)).Try(out var ctx, out var error))
         {
-            return await RenderPage(ctx.ToPageContext(), new Dictionary<string, object>(), strArgs, token);
+            return await RenderPage(ctx.ToPageContext(), new Dictionary<string, object>(), strArgs, ct);
         }
 
         var msg = string.Join(",", error!.Select(x => x.Message));
@@ -50,23 +50,23 @@ public sealed class PageService(ILogger<PageService> logger,ISchemaService schem
                 """;
     }
 
-    public async Task<string> GetPart(string partStr, CancellationToken token)
+    public async Task<string> GetPart(string partStr, CancellationToken ct)
     {
         var part = PagePartHelper.Parse(partStr) ?? throw new ResultException("Invalid Partial Part");
         var cursor = new Span(part.First, part.Last);
         
         var args = QueryHelpers.ParseQuery(part.DataSource.QueryString);
-        var ctx = (await GetContext(part.Page, false,args, token)).Ok().ToPartialContext(part.NodeId);
+        var ctx = (await GetContext(part.Page, false,args, ct)).Ok().ToPartialContext(part.NodeId);
 
         Record[] items;
         if (!string.IsNullOrWhiteSpace(part.DataSource.Query))
         {
             var pagination = new Pagination(null, part.DataSource.Limit.ToString());
-            items = await querySvc.ListWithAction(part.DataSource.Query, cursor, pagination, args, token);
+            items = await querySvc.ListWithAction(part.DataSource.Query, cursor, pagination, args, ct);
         }
         else
         {
-            items = await querySvc.Partial(ctx.Page.Query!, part.DataSource.Field, cursor, part.DataSource.Limit, args, token);
+            items = await querySvc.Partial(ctx.Page.Query!, part.DataSource.Field, cursor, part.DataSource.Limit, args, ct);
         }
 
         var flatField = RenderUtil.Flat(part.DataSource.Field);

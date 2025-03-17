@@ -86,7 +86,7 @@ public class SchemaAuthService(
     private async Task<bool> IsCreatedByCurrentUser(Schema schema)
     {
         var access = profileService.GetInfo();
-        var find = await schemaService.ById(schema.Id)
+        var find = await schemaService.ById(schema.Id,CancellationToken.None)
             ?? throw new ResultException($"Can not verify schema is created by you, can not find schema by id [{schema.Id}]");
         return find.CreatedBy == access?.Id;
     }
