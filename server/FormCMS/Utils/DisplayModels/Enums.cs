@@ -8,8 +8,9 @@ public enum DisplayType
 
     Number ,
 
-    Datetime ,
     Date ,
+    Datetime,
+    LocalDatetime ,
 
     Image ,
     Gallery,

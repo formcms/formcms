@@ -21,6 +21,7 @@ public static class DataTypeHelper
     [
         (DataType.Int, DisplayType.Number),
 
+        (DataType.Datetime, DisplayType.LocalDatetime),
         (DataType.Datetime, DisplayType.Datetime),
         (DataType.Datetime, DisplayType.Date),
 

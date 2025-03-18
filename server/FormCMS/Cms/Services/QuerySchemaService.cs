@@ -90,7 +90,7 @@ public sealed class QuerySchemaService(
         var entity = await entitySchemaSvc.LoadEntity(query.EntityName,status, ct).Ok();
         var selection = await ParseGraphFields("", entity, fields, null, status, ct).Ok();
         var sorts = await query.Sorts.ToValidSorts(entity, entitySchemaSvc,status).Ok();
-        var validFilter = await query.Filters.ToValidFilters(entity,status, entitySchemaSvc, entitySchemaSvc).Ok();
+        var validFilter = await query.Filters.ToValidFilters(entity,status, entitySchemaSvc).Ok();
         return query.ToLoadedQuery(entity, selection, sorts, validFilter);
     }
 
@@ -102,7 +102,7 @@ public sealed class QuerySchemaService(
         }
 
         var entity = await entitySchemaSvc.LoadEntity(query.EntityName,status, ct).Ok();
-        await query.Filters.ToValidFilters(entity, status, entitySchemaSvc, entitySchemaSvc).Ok();
+        await query.Filters.ToValidFilters(entity, status, entitySchemaSvc).Ok();
 
         var fields = Converter.GetRootGraphQlFields(query.Source).Ok();
         await ParseGraphFields("", entity, fields,null,status, ct).Ok();
@@ -153,7 +153,7 @@ public sealed class QuerySchemaService(
                 return Result.Fail(err);
             if (!(await res.Sorts.ToValidSorts(desc.TargetEntity, entitySchemaSvc,status)).Try(out var sorts, out err))
                 return Result.Fail(err);
-            if (!(await res.Filters.ToValidFilters(desc.TargetEntity,status, entitySchemaSvc, entitySchemaSvc)).Try(
+            if (!(await res.Filters.ToValidFilters(desc.TargetEntity,status, entitySchemaSvc)).Try(
                     out var filters, out err)) return Result.Fail(err);
             return graphAttr with { Pagination = res.Pagination, Filters = [..filters], Sorts = [..sorts] };
         }

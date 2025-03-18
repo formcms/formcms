@@ -116,7 +116,7 @@ public class AssetApiTest
     private async Task<AssetLink?> EntityHasAsset(string assetName, string entityName, long recordId)
     {
         var list = await _assetApiClient.List(false,$"name[equals]={assetName}").Ok();
-        var id = list.Items[0].MustGetLong("id");
+        var id = list.Items[0].LongOrZero("id");
         var asset = await _assetApiClient.Single(id).Ok();
         return asset.Links?.FirstOrDefault(x => x.EntityName == entityName && x.RecordId == recordId);
     }

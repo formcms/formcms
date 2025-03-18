@@ -44,7 +44,7 @@ public static class Args
         var arg = displayType switch
         {
             DisplayType.Number => new QueryArgument<ListGraphType<IntGraphType>>(),
-            DisplayType.Datetime => new QueryArgument<ListGraphType<DateGraphType>>(),
+            DisplayType.LocalDatetime => new QueryArgument<ListGraphType<DateGraphType>>(),
             DisplayType.Dropdown => new QueryArgument(new ListGraphType(GetAttributeOptionEnum(attr))),
             DisplayType.Multiselect => new QueryArgument(new ListGraphType(GetAttributeOptionEnum(attr))),
             _ => new QueryArgument<ListGraphType<StringGraphType>>()

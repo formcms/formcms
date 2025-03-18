@@ -157,24 +157,6 @@ public sealed class EntitySchemaService(
         }
     }
 
-    public bool ResolveVal(LoadedAttribute attr, string v, out ValidValue? result)
-    {
-        var dataType = attr.DataType == DataType.Lookup
-            ? attr.Lookup!.TargetEntity.PrimaryKeyAttribute.DataType
-            : attr.DataType;
-        var options = dao.GetConvertOptions();
-        result = new ValidValue(S: v);
-        result = dataType switch
-        {
-            DataType.Text or DataType.String => result,
-            DataType.Int => !options.ParseInt ? result : long.TryParse(v, out var l) ? new ValidValue(L: l) : null,
-            DataType.Datetime => !options.ParseDate ? result :
-                DateTime.TryParse(v, out var d) ? new ValidValue(D: d) : null,
-            _ => null
-        };
-        return result != null;
-    }
-
     public async Task<Result<AttributeVector>> ResolveVector(LoadedEntity entity, string fieldName, PublicationStatus? status)
     {
         var fields = fieldName.Split(".");

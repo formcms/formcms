@@ -12,7 +12,7 @@ public class AssetApiClient(HttpClient client)
     public async Task<long> GetAssetIdByName(string name)
     {
         var list = await List(false, $"name[equals]={name}").Ok();
-        return list.Items[0].MustGetLong("id");
+        return list.Items[0].LongOrZero("id");
     }
 
     public Task<Result<string>> GetEntityBaseUrl()

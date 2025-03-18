@@ -14,14 +14,13 @@ public static class ConstraintsHelper
 {
     public static Result<ValidConstraint[]> ResolveValues(
         this IEnumerable<Constraint> constraints,
-        LoadedAttribute attribute,
-        IAttributeValueResolver resolver
+        LoadedAttribute attribute
     )
     {
         var ret = new List<ValidConstraint>();
         foreach (var (match, fromValues) in constraints)
         {
-            if (!ResolveValues(fromValues, attribute, resolver).Try(out var values, out var err))
+            if (!ResolveValues(fromValues, attribute).Try(out var values, out var err))
             {
                 return Result.Fail(err);
             }
@@ -35,7 +34,7 @@ public static class ConstraintsHelper
         return ret.ToArray();
     }
     
-    private static Result<ValidValue[]> ResolveValues(IEnumerable<string?> fromValues, LoadedAttribute attribute, IAttributeValueResolver resolver)
+    private static Result<ValidValue[]> ResolveValues(IEnumerable<string?> fromValues, LoadedAttribute attribute)
     {
         var list = new List<ValidValue>();
 
@@ -47,7 +46,7 @@ public static class ConstraintsHelper
             }
             else
             {
-                if (!ValidValueHelper.Resolve(attribute, fromValue, resolver).Try(out var val,out _))
+                if (!ValidValueHelper.Resolve(attribute, fromValue).Try(out var val,out _))
                 {
                     return Result.Fail(
                         $"Resolve constraint value fail: can not cast value [{fromValue}] to [{attribute.DataType}]");
@@ -61,14 +60,13 @@ public static class ConstraintsHelper
     public static Result<ValidConstraint[]> ReplaceVariables(
         this IEnumerable<ValidConstraint> constraints,
         LoadedAttribute attribute,
-        StrArgs? args,
-        IAttributeValueResolver resolver
+        StrArgs? args
     )
     {
         var ret = new List<ValidConstraint>();
         foreach (var (match, fromValues) in constraints)
         {
-            if (!ReplaceVariables(fromValues, attribute, args, resolver).Try(out var values, out var err))
+            if (!ReplaceVariables(fromValues, attribute, args).Try(out var values, out var err))
             {
                 return Result.Fail(err);
             }
@@ -83,7 +81,7 @@ public static class ConstraintsHelper
     }
     
     private static Result<ValidValue[]> ReplaceVariables(IEnumerable<ValidValue> fromValues, LoadedAttribute attribute,
-        StrArgs? args, IAttributeValueResolver resolver)
+        StrArgs? args)
     {
         var list = new List<ValidValue>();
 
@@ -98,7 +96,7 @@ public static class ConstraintsHelper
                 
                 foreach (var str in args.ResolveVariable(s, QueryConstants.VariablePrefix))
                 {
-                    if (str is not null && resolver.ResolveVal(attribute, str, out var obj))
+                    if (str is not null && attribute.ResolveVal(str, out var obj))
                     {
                         list.Add(obj!.Value);
                     }

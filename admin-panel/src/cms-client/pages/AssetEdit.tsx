@@ -7,7 +7,7 @@ import {Button} from "primereact/button";
 import {FetchingStatus} from "../../components/FetchingStatus";
 import {FileUpload} from "primereact/fileupload";
 import {Image} from 'primereact/image';
-import {AssetField, AssetLinkField, formatFileSize} from "../types/assetUtils";
+import {AssetField, AssetLinkField} from "../types/assetUtils";
 import {useState} from "react";
 import {useCheckError} from "../../components/useCheckError";
 import {DataTable} from "primereact/datatable";
@@ -15,6 +15,7 @@ import {Column} from "primereact/column";
 import {AssetLink} from "../types/asset";
 import {ArrayToObject} from "../../components/inputs/DictionaryInputUtils";
 import { useConfirm } from "../../components/useConfirm";
+import { formatFileSize } from "../../components/formatter";
 
 export function AssetEdit(
     {

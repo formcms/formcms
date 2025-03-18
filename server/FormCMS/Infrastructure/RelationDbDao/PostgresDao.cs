@@ -19,8 +19,8 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         return ret;
     }
     public bool InTransaction() => _transaction?.Transaction() != null;
-    public ConvertOptions GetConvertOptions()
-        => new (ParseInt: true, ParseDate: true, ReturnDateAsString: false);
+    public bool ReturnDateUsesDateType() => true;
+    
 
     public Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
     {
@@ -57,7 +57,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                     CREATE OR REPLACE FUNCTION __update_{updateAtField}_column()
                         RETURNS TRIGGER AS $$
                     BEGIN
-                        NEW."{updateAtField}" = NOW();
+                        NEW."{updateAtField}" = timezone('UTC', now()); 
                         RETURN NEW;
                     END;
                     $$ LANGUAGE plpgsql;
@@ -133,7 +133,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
             ColumnType.String => "varchar(255)",
             
             ColumnType.Datetime => "TIMESTAMP",
-            ColumnType.CreatedTime or ColumnType.UpdatedTime=> "TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
+            ColumnType.CreatedTime or ColumnType.UpdatedTime=> "TIMESTAMP  DEFAULT timezone('UTC', now())",
             _ => throw new NotSupportedException($"Type {t} is not supported")
         };
     }

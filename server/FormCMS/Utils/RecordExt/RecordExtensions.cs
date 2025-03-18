@@ -17,7 +17,7 @@ public static class RecordExtensions
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
 
-    public static long MustGetLong(this Record record, string fieldName)
+    public static long LongOrZero(this Record record, string fieldName)
     {
         var value = record[fieldName];
         if (value is JsonElement { ValueKind: JsonValueKind.Number } jsonElement)
@@ -25,33 +25,6 @@ public static class RecordExtensions
             return jsonElement.GetInt64();
         }
         return Convert.ToInt64(value);
-    }
-
-    public static bool GetAndParseDateTime(
-        this Record record,
-        string field,
-        out DateTime e)
-    {
-        e = default;
-        if (!record.TryGetValue(field, out var o) || o is not string s)
-        {
-            return false;
-        }
-        return DateTime.TryParse(s, out e);
-    }
-
-    public static bool GetAndParseEnum<TEnum>(
-        this Record record,
-        string field,
-        out TEnum e)
-        where TEnum : struct
-    {
-        e = default;
-        if (!record.TryGetValue(field.Camelize(), out var o) || o is not string s)
-        {
-            return false;
-        }
-        return Enum.TryParse(s, true, out e);
     }
 
     public static string StrOrEmpty(this Record r, string field)

@@ -115,7 +115,7 @@ public static class SpanHelper
         item[SpanConstants.Cursor] = dict.ToToken();
     }
 
-    public static Result<ValidSpan> ToValid(this Span c, IEnumerable<LoadedAttribute> attrs, IAttributeValueResolver resolver)
+    public static Result<ValidSpan> ToValid(this Span c, IEnumerable<LoadedAttribute> attrs)
     {
         if (c.IsEmpty()) return new ValidSpan(c);
 
@@ -127,7 +127,7 @@ public static class SpanHelper
             foreach (var (key, value) in dict)
             {
                 if (value is not string s || arr.FirstOrDefault(x => x.Field == key) is not { } attr) continue;
-                if (!resolver.ResolveVal(attr, s, out var result))
+                if (!attr.ResolveVal( s, out var result))
                 {
                     return Result.Fail($"Fail to cast s to {attr.DataType}");
                 }

@@ -39,7 +39,7 @@ public static class Resolvers
             ? ""
             : context.ExecutionContext.Operation.Name.StringValue;
 
-        IArgument[] args = context.FieldAst.Arguments
+        var args = context.FieldAst.Arguments
             ?.Select(x => new GraphArgument(x))
             .ToArray<IArgument>() ?? [];
         var res = QueryHelper.ParseArguments(args);

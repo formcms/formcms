@@ -11,6 +11,8 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
     private readonly Compiler _compiler = new SqlServerCompiler();
     private TransactionManager? _transaction;
 
+    public bool ReturnDateUsesDateType() => true;
+    
     public async Task CreateIndex(string table, string[]fields, bool isUnique, CancellationToken ct)
     {
         var indexName = $"idx_{table}_{string.Join("_", fields)}";
@@ -37,9 +39,8 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
     }
     
     public bool InTransaction() => _transaction?.Transaction() != null;
+    
 
-    public ConvertOptions GetConvertOptions()
-        => new (ParseInt: true, ParseDate: true, ReturnDateAsString: false);
 
     public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
     {
@@ -74,7 +75,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
                    BEGIN
                        SET NOCOUNT ON;
                        UPDATE [{table}]
-                       SET [{updateAtField}] = GETDATE()
+                       SET [{updateAtField}] = GETUTCDATE()
                        FROM inserted i
                        WHERE [{table}].[id] = i.[id];
                    END;
@@ -140,7 +141,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
             ColumnType.String => "NVARCHAR(255)",
 
             ColumnType.Datetime => "DATETIME",
-            ColumnType.CreatedTime or ColumnType.UpdatedTime=> "DATETIME DEFAULT GETDATE()",
+            ColumnType.CreatedTime or ColumnType.UpdatedTime=> "DATETIME DEFAULT GETUTCDATE()",
             _ => throw new NotSupportedException($"Type {dataType} is not supported")
         };
 

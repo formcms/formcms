@@ -51,11 +51,12 @@ export function createInput(props: {
             return <NumberInput className={mdClass} 
                                 key={field} 
                                 {...props}/>
-        case 'datetime':
+        case 'localDatetime':
             return <DatetimeInput className={mdClass} 
                                   inline={false} 
                                   key={field} 
                                   {...props}/>
+        
         case 'date':
             return <DateInput className={mdClass} 
                               key={field} 

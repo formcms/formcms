@@ -1,27 +1,26 @@
 import {Column} from "primereact/column";
-import { XAttr } from "../../xEntity";
-import { Button } from "primereact/button";
+import {DisplayType } from "../../xEntity";
+import { formatDate } from "../../formatter";
 
 export function textColumn(
-    column: XAttr,
+    field:string,
+    header:string,
+    displayType: DisplayType,
     onClick?: (rowData:any) => void,
 ) {
-    let field = (column.displayType == "lookup" || column.displayType === "treeSelect") 
-        ? column.field + "." + column.lookup!.labelAttributeName
-        : column.field;
-
-    var colType = column.displayType == 'number' 
+    
+    var colType = displayType == 'number' 
         ? 'numeric'
-        : (column.displayType == 'datetime' || column.displayType == 'date') 
+        : (displayType == 'datetime' || displayType == 'date' || displayType === 'localDatetime') 
             ? 'date'
             : 'text';
     
     const bodyTemplate = (item: any) => {
-        let val = item[column.field]
+        let val = item[field];
         if (val) {
-            if (column.displayType === "lookup" || column.displayType === "treeSelect") {
-                val = val[column.lookup!.labelAttributeName]
-            } else if (column.displayType === 'multiselect') {
+            if (displayType ==="localDatetime") {
+                val =  formatDate(val) 
+            } else if (displayType === 'multiselect') {
                 val = val.join(", ")
             }
         }
@@ -36,9 +35,9 @@ export function textColumn(
     
     return <Column
         dataType={colType}
-        key={column.field}
+        key={field}
         field={field}
-        header={column.header}
+        header={header}
         sortable filter body={bodyTemplate}>
     </Column>
 }

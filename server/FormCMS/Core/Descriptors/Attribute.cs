@@ -101,7 +101,7 @@ public static class AttributeHelper
                 InDetail: false,
                 IsDefault: true,
                 DataType: DataType.Datetime,
-                DisplayType: DisplayType.Datetime)
+                DisplayType: DisplayType.LocalDatetime)
         );
 
         return ret.ToArray();

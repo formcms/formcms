@@ -91,14 +91,13 @@ public static class FilterHelper
 {
     public static Result<ValidFilter[]> ReplaceVariables(
         IEnumerable<ValidFilter> filters,
-        StrArgs? args,
-        IAttributeValueResolver valueResolver
+        StrArgs? args
     )
     {
         var ret = new List<ValidFilter>();
         foreach (var filter in filters)
         {
-            if (!filter.Constraints.ReplaceVariables(filter.Vector.Attribute, args, valueResolver)
+            if (!filter.Constraints.ReplaceVariables(filter.Vector.Attribute, args)
                     .Try(out var constraints, out var err))
             {
                 return Result.Fail(err);
@@ -117,8 +116,7 @@ public static class FilterHelper
         this IEnumerable<Filter> filters,
         LoadedEntity entity,
         PublicationStatus? schemaStatus,
-        IEntityVectorResolver vectorResolver,
-        IAttributeValueResolver valueResolver
+        IEntityVectorResolver vectorResolver
     )
     {
         var ret = new List<ValidFilter>();
@@ -130,7 +128,7 @@ public static class FilterHelper
                 return Result.Fail(resolveErr);
             }
 
-            if (!filter.Constraints.ResolveValues(vector.Attribute, valueResolver)
+            if (!filter.Constraints.ResolveValues(vector.Attribute)
                     .Try(out var constraints, out var constraintsErr))
             {
                 return Result.Fail(constraintsErr);

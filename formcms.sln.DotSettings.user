@@ -183,46 +183,11 @@
   &lt;Assembly Path="/Users/jingshunchen/.nuget/packages/fluentcms/0.3.4/lib/net9.0/FluentCms.dll" /&gt;
   &lt;Assembly Path="/Users/jingshunchen/.nuget/packages/formcms/0.3.6/lib/net9.0/FormCMS.dll" /&gt;
 &lt;/AssemblyExplorer&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=2760e77c_002D4559_002D4855_002Db66e_002D606488a9fcd9/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="EntityAuthTest" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;TestAncestor&gt;
-    &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.EntityAuthTest&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetAuthTest&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.SchemaAuthTest.AnonymousCanNotGetSchema&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.QueryApiTest.TestDistinct&lt;/TestId&gt;
-    &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.QueryApiTest.TestAssets&lt;/TestId&gt;
-  &lt;/TestAncestor&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=2760e77c_002D4559_002D4855_002Db66e_002D606488a9fcd9/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="EntityAuthTest" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;Project Location="/Users/jingshunchen/repos/formcms/server/FormCms.Course.Tests" Presentation="&amp;lt;FormCms.Course.Tests&amp;gt;" /&gt;
 &lt;/SessionState&gt;</s:String>
-	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=2bee4511_002D9cf5_002D4754_002D9226_002D4e1712300f89/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" IsActive="True" Name="All tests from &amp;lt;FormCMS.App.Tests&amp;gt;" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
-  &lt;Or&gt;
-    &lt;And&gt;
-      &lt;Or&gt;
-        &lt;Project Location="/Users/jingshunchen/repos/formcms/server/FormCMS.App.Tests" Presentation="&amp;lt;FormCMS.App.Tests&amp;gt;" /&gt;
-        &lt;TestAncestor&gt;
-          &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetApiTest.CreateAsset&lt;/TestId&gt;
-        &lt;/TestAncestor&gt;
-      &lt;/Or&gt;
-      &lt;Not&gt;
-        &lt;TestAncestor&gt;
-          &lt;TestId&gt;xUnit::9BD38EDA-5C4E-4C6D-96CA-C8955DB35C57::net9.0::FormCMS.App.Tests.QueryTest&lt;/TestId&gt;
-        &lt;/TestAncestor&gt;
-      &lt;/Not&gt;
-    &lt;/And&gt;
-    &lt;TestAncestor&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetApiTest.AddDataWithFileAsset&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetApiTest.GetEntity&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetApiTest.ListWithLinkCount&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetApiTest.Replace&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetApiTest.TestBaseUrl&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetApiTest.TestMeta&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetAuthTest.AnonymousAddAssetFail&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetAuthTest&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.EntityAuthTest&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.QueryApiTest.TestDistinct&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.AssetApiTest.SingleByPath&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.QueryApiTest.TestAssets&lt;/TestId&gt;
-      &lt;TestId&gt;xUnit::AB78C514-3519-41D1-9234-9E9151B1A548::net9.0::FormCMS.Course.Tests.PageApiTest&lt;/TestId&gt;
-    &lt;/TestAncestor&gt;
-  &lt;/Or&gt;
+	<s:String x:Key="/Default/Environment/UnitTesting/UnitTestSessionStore/Sessions/=2bee4511_002D9cf5_002D4754_002D9226_002D4e1712300f89/@EntryIndexedValue">&lt;SessionState ContinuousTestingMode="0" Name="All tests from &amp;lt;FormCMS.App.Tests&amp;gt;" xmlns="urn:schemas-jetbrains-com:jetbrains-ut-session"&gt;
+  &lt;Project Location="/Users/jingshunchen/repos/formcms/server/FormCms.Course.Tests" Presentation="&amp;lt;FormCms.Course.Tests&amp;gt;" /&gt;
 &lt;/SessionState&gt;</s:String>
 	
 	

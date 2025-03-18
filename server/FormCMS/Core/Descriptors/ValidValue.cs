@@ -20,11 +20,11 @@ public static class PreservedValues
 
 public static class ValidValueHelper
 {
-    public static Result<ValidValue> Resolve(LoadedAttribute attribute, string? s, IAttributeValueResolver resolver)
+    public static Result<ValidValue> Resolve(LoadedAttribute attribute, string? s)
         => s switch
         {
             null or PreservedValues.Null => Result.Ok(ValidValue.NullValue),
-            _ when resolver.ResolveVal(attribute, s, out var validValue) => Result.Ok(validValue!.Value),
+            _ when attribute.ResolveVal(s, out var validValue) => Result.Ok(validValue!.Value),
             _ => Result.Fail($"Resolve value for [{attribute.Field}] failed, can not convert [{s}] to {attribute.DataType}")
         };
 

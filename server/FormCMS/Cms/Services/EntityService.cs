@@ -4,7 +4,6 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Core.Assets;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
-using FormCMS.Utils.jsonElementExt;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
@@ -84,7 +83,6 @@ public sealed class EntityService(
         return await InsertWithAction(await GetRecordCtx(name, ele, ct), ct);
     }
 
-
     public async Task<Record> UpdateWithAction(string name, JsonElement ele, CancellationToken ct)
     {
         return await UpdateWithAction(await GetRecordCtx(name, ele, ct), ct);
@@ -103,7 +101,7 @@ public sealed class EntityService(
             throw new ResultException($"Failed to get Record Id, cannot find [{name}]");
         }
 
-        var query = entity.SavePublicationStatus(id, ele.ToDictionary()).Ok();
+        var query = entity.SavePublicationStatus(id, record).Ok();
         await executor.Exec(query, false, ct);
     }
 
@@ -124,7 +122,7 @@ public sealed class EntityService(
         {
             var constraint = new Constraint(Matches.StartsWith, [startsVal]);
             var filter = new Filter(entity.LabelAttributeName, MatchTypes.MatchAll, [constraint]);
-            filters = (await FilterHelper.ToValidFilters([filter], entity, null, entitySchemaSvc, entitySchemaSvc))
+            filters = (await FilterHelper.ToValidFilters([filter], entity, null, entitySchemaSvc))
                 .Ok();
         }
 
@@ -138,7 +136,7 @@ public sealed class EntityService(
     {
         var ctx = await GetJunctionCtx(name, id, attr, ct);
         var items = elements.Select(ele =>
-            ctx.Junction.TargetEntity.Parse(ele, entitySchemaSvc).Ok()).ToArray();
+            ctx.Junction.TargetEntity.Parse(ele).Ok()).ToArray();
 
         var res = await hookRegistry.JunctionPreDel.Trigger(provider,
             new JunctionPreDelArgs(ctx.Entity, ctx.Id, ctx.Attribute, items));
@@ -154,7 +152,7 @@ public sealed class EntityService(
         var ctx = await GetJunctionCtx(name, id, attr, ct);
 
         var items = elements
-            .Select(ele => ctx.Junction.TargetEntity.Parse(ele, entitySchemaSvc).Ok()).ToArray();
+            .Select(ele => ctx.Junction.TargetEntity.Parse(ele).Ok()).ToArray();
         var res = await hookRegistry.JunctionPreAdd.Trigger(provider,
             new JunctionPreAddArgs(ctx.Entity, ctx.Id, ctx.Attribute, items));
         var query = ctx.Junction.Insert(ctx.Id, res.RefItems);
@@ -201,7 +199,7 @@ public sealed class EntityService(
         CancellationToken ct = default)
     {
         var (collection, id) = await GetCollectionCtx(name, sid, attr, ct);
-        var item = collection.TargetEntity.Parse(element, entitySchemaSvc).Ok();
+        var item = collection.TargetEntity.Parse(element).Ok();
         item[collection.LinkAttribute.Field] = id.ObjectValue!;
         return await InsertWithAction(new RecordContext(collection.TargetEntity, item), ct);
     }
@@ -422,7 +420,7 @@ public sealed class EntityService(
     private async Task<IdContext> GetIdCtx(string entityName, string id, CancellationToken token)
     {
         var entity = (await entitySchemaSvc.LoadEntity(entityName, null, token)).Ok();
-        if (!entitySchemaSvc.ResolveVal(entity.PrimaryKeyAttribute, id, out var idValue))
+        if (!entity.PrimaryKeyAttribute.ResolveVal(id, out var idValue))
         {
             throw new ResultException($"Failed to cast {id} to {entity.PrimaryKeyAttribute.DataType}");
         }
@@ -439,7 +437,7 @@ public sealed class EntityService(
                          throw new ResultException(
                              $"Failed to get Collection Context, cannot find [{attr}] in [{entity}]");
 
-        if (!entitySchemaSvc.ResolveVal(loadedEntity.PrimaryKeyAttribute, sid, out var id))
+        if (!loadedEntity.PrimaryKeyAttribute.ResolveVal( sid, out var id))
         {
             throw new ResultException($"Failed to cast {sid} to {loadedEntity.PrimaryKeyAttribute.DataType}");
         }
@@ -459,7 +457,7 @@ public sealed class EntityService(
                         throw new ResultException(errMessage);
 
         var junction = attribute.Junction ?? throw new ResultException(errMessage);
-        if (!entitySchemaSvc.ResolveVal(junction.SourceAttribute, sid, out var id))
+        if (!junction.SourceAttribute.ResolveVal( sid, out var id))
         {
             throw new ResultException($"Failed to cast {sid} to {junction.SourceAttribute.DataType}");
         }
@@ -472,7 +470,7 @@ public sealed class EntityService(
     private async Task<RecordContext> GetRecordCtx(string name, JsonElement ele, CancellationToken token)
     {
         var entity = (await entitySchemaSvc.LoadEntity(name, null, token)).Ok();
-        var record = entity.Parse(ele, entitySchemaSvc).Ok();
+        var record = entity.Parse(ele).Ok();
         return new RecordContext(entity, record);
     }
 
@@ -496,7 +494,7 @@ public sealed class EntityService(
     private async Task<ListArgs> GetListArgs(LoadedEntity entity, StrArgs args, Pagination pagination)
     {
         var (filters, sorts) = QueryStringParser.Parse(args);
-        var validFilters = await filters.ToValidFilters(entity, null, entitySchemaSvc, entitySchemaSvc).Ok();
+        var validFilters = await filters.ToValidFilters(entity, null, entitySchemaSvc).Ok();
         var validSort = await sorts.ToValidSorts(entity, entitySchemaSvc, null).Ok();
 
         var validPagination = PaginationHelper.ToValid(pagination, entity.DefaultPageSize);

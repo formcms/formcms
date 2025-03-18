@@ -26,9 +26,9 @@ public static class JunctionHelper
         var tableName = GetJunctionTableName(sourceEntity.Name, targetEntity.Name);
         var id = DefaultAttributeNames.Id.CreateLoadedAttribute(tableName, DataType.Int, DisplayType.Number);
         var deleted =  DefaultColumnNames.Deleted.CreateLoadedAttribute(tableName,DataType.Int, DisplayType.Number);
-        var publicationStatusAttr = DefaultAttributeNames.PublicationStatus.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.Datetime);
-        var updatedAtAttr = DefaultColumnNames.UpdatedAt.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.Datetime);
-        var createdAtAttr = DefaultColumnNames.CreatedAt.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.Datetime);
+        var publicationStatusAttr = DefaultAttributeNames.PublicationStatus.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.LocalDatetime);
+        var updatedAtAttr = DefaultColumnNames.UpdatedAt.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.LocalDatetime);
+        var createdAtAttr = DefaultColumnNames.CreatedAt.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.LocalDatetime);
         sourceEntity = sourceEntity with
         {
             Attributes =

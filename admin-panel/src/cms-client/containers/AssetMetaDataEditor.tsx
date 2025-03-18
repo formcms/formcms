@@ -1,7 +1,7 @@
 import { Dialog } from "primereact/dialog";
 import { XEntity } from "../types/xEntity";
 import { ArrayToObject } from "../../components/inputs/DictionaryInputUtils";
-import { AssetField, formatFileSize } from "../types/assetUtils";
+import { AssetField } from "../types/assetUtils";
 import {updateAssetMeta, useAssetEntity, useGetCmsAssetsUrl, useSingleAssetByPath } from "../services/asset";
 import { FetchingStatus } from "../../components/FetchingStatus";
 import { useCheckError } from "../../components/useCheckError";
@@ -9,6 +9,7 @@ import { useForm } from "react-hook-form";
 import { createInput } from "./createInput";
 import { Button } from "primereact/button";
 import {Image} from 'primereact/image';
+import { formatFileSize } from "../../components/formatter";
 
 type AssetMetaDataDialogProps = {
     path: string,

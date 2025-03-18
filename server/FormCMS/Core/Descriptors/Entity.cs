@@ -204,7 +204,7 @@ public static class EntityHelper
         item[DefaultAttributeNames.PublicationStatus.Camelize()] = e.DefaultPublicationStatus.Camelize();
         if (e.DefaultPublicationStatus == PublicationStatus.Published)
         {
-            item[DefaultAttributeNames.PublishedAt.Camelize()] = DateTime.Now;
+            item[DefaultAttributeNames.PublishedAt.Camelize()] = DateTime.UtcNow;
         }
 
         return new SqlKata.Query(e.TableName).AsInsert(item, true);
@@ -212,15 +212,20 @@ public static class EntityHelper
 
     public static Result<SqlKata.Query> SavePublicationStatus(this LoadedEntity e, object id, Record record)
     {
-        if (!record.GetAndParseEnum<PublicationStatus>(DefaultAttributeNames.PublicationStatus.Camelize(), out var status))
+        if (!record.TryGetValue(DefaultAttributeNames.PublicationStatus.Camelize(), out var value)
+            || value is not string str || !Enum.TryParse<PublicationStatus>(str,true, out var status))
+        {
             return Result.Fail("Cannot save publication status, unknown status");
+        }
 
-        var updatingRecord = new Dictionary<string, object>();
-        updatingRecord[DefaultAttributeNames.PublicationStatus.Camelize()]=status.Camelize();
+        var updatingRecord = new Dictionary<string, object>
+        {
+            [DefaultAttributeNames.PublicationStatus.Camelize()] = status.Camelize()
+        };
 
         if (status is PublicationStatus.Published or PublicationStatus.Scheduled)
         {
-            if (!record.GetAndParseDateTime(DefaultAttributeNames.PublishedAt.Camelize(), out var dateTime))
+            if (!record.TryGetValue(DefaultAttributeNames.PublishedAt.Camelize(), out var dateTime))
             {
                 return Result.Fail("Cannot save publication status, invalidate publish time");
             }
@@ -328,14 +333,14 @@ public static class EntityHelper
         }
     }
 
-    public static Result<Record> Parse (this LoadedEntity entity, JsonElement element, IAttributeValueResolver resolver)
+    public static Result<Record> Parse (this LoadedEntity entity, JsonElement element)
     {
         Dictionary<string, object> ret = new();
         foreach (var attribute in entity.Attributes.Where(x=>x.IsLocal()))
         {
             
             if (!element.TryGetProperty(attribute.Field, out var value)) continue;
-            var res = attribute.ParseJsonElement(value, resolver);
+            var res = attribute.ParseJsonElement(value);
             if (res.IsFailed)
             {
                 return Result.Fail(res.Errors);

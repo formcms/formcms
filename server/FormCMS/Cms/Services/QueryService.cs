@@ -45,9 +45,9 @@ public sealed class QueryService(
             desc.TargetEntity.DefaultPageSize, true, args);
 
         var fields = attribute.Selection.Where(x => x.IsLocal()).ToArray();
-        var validSpan = span.ToValid(fields, resolver).Ok();
+        var validSpan = span.ToValid(fields).Ok();
 
-        var filters = FilterHelper.ReplaceVariables(attribute.Filters,args, resolver).Ok();
+        var filters = FilterHelper.ReplaceVariables(attribute.Filters,args).Ok();
         var sorts = (await SortHelper.ReplaceVariables(attribute.Sorts, args, desc.TargetEntity, resolver, PublicationStatusHelper.GetSchemaStatus(args))).Ok();
 
         var kateQuery = desc.GetQuery(fields, [validSpan.SourceId()],
@@ -87,7 +87,7 @@ public sealed class QueryService(
     private async Task<Record[]> ListWithAction(QueryContext ctx, Span span, StrArgs args, CancellationToken ct = default)
     {
         var (query, filters, sorts, pagination) = ctx;
-        var validSpan = span.ToValid(query.Entity.Attributes, resolver).Ok();
+        var validSpan = span.ToValid(query.Entity.Attributes).Ok();
 
         var hookParam = new QueryPreGetListArgs(query,  [..filters], query.Sorts, validSpan,
             pagination.PlusLimitOne());
@@ -205,7 +205,7 @@ public sealed class QueryService(
         CollectiveQueryArgs? collectionArgs = null;
         if (desc.IsCollective)
         {
-            var filters = FilterHelper.ReplaceVariables(attr.Filters, args, resolver).Ok();
+            var filters = FilterHelper.ReplaceVariables(attr.Filters, args).Ok();
             var sorts = await SortHelper.ReplaceVariables(attr.Sorts, args, desc.TargetEntity, resolver,PublicationStatusHelper.GetSchemaStatus(args)).Ok();
             var fly = PaginationHelper.ResolvePagination(attr, args) ?? attr.Pagination;
             var validPagination = fly.IsEmpty()
@@ -295,7 +295,7 @@ public sealed class QueryService(
     {
         var validPagination = PaginationHelper.ToValid(fly, query.Pagination, query.Entity.DefaultPageSize, haveCursor,args);
         var sort =(await SortHelper.ReplaceVariables(query.Sorts,args, query.Entity, resolver,PublicationStatusHelper.GetSchemaStatus(args))).Ok();
-        var filters = FilterHelper.ReplaceVariables(query.Filters,args, resolver).Ok();
+        var filters = FilterHelper.ReplaceVariables(query.Filters,args).Ok();
         return new QueryContext(query, filters, sort,validPagination);
     }
 }

@@ -38,7 +38,7 @@ public static class XAttrExtensions
         {
             { } t when t == typeof(string) => DisplayType.Text,
             { } t when t == typeof(int) || t == typeof(long) => DisplayType.Number,
-            { } t when t == typeof(DateTime) => DisplayType.Datetime,
+            { } t when t == typeof(DateTime) => DisplayType.LocalDatetime,
             _ => DisplayType.Text
         };
         

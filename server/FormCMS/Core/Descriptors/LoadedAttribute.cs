@@ -105,8 +105,7 @@ public static class LoadedAttributeExtensions
         _ => Result.Fail($"Cannot get entity link desc for attribute [{attribute.Field}]")
     };
     
-    public static Result<object> ParseJsonElement(this LoadedAttribute attribute, JsonElement value,
-        IAttributeValueResolver resolver)
+    public static Result<object> ParseJsonElement(this LoadedAttribute attribute, JsonElement value)
     {
         return attribute switch
         {
@@ -128,7 +127,7 @@ public static class LoadedAttributeExtensions
 
             return ele.Value.ValueKind switch
             {
-                JsonValueKind.String when resolver.ResolveVal(attr, ele.Value.GetString()!, out var caseVal) => caseVal!
+                JsonValueKind.String when attr.ResolveVal(ele.Value.GetString()!, out var caseVal) => caseVal!
                     .Value.ObjectValue!,
                 JsonValueKind.Number when ele.Value.TryGetInt64(out var longValue) => longValue,
                 JsonValueKind.Number when ele.Value.TryGetDouble(out var doubleValue) => doubleValue,
@@ -142,6 +141,34 @@ public static class LoadedAttributeExtensions
         }
 
     } 
+    
+    public static bool ResolveVal(this LoadedAttribute attr, string v, out ValidValue? result)
+    {
+        var dataType = attr.DataType == DataType.Lookup
+            ? attr.Lookup!.TargetEntity.PrimaryKeyAttribute.DataType
+            : attr.DataType;
+        result = new ValidValue(S: v);
+        result = dataType switch
+        {
+            DataType.Text or DataType.String => result,
+            DataType.Int => long.TryParse(v, out var l) ? new ValidValue(L: l) : null,
+            DataType.Datetime => ParseDate(v, out var d)? new ValidValue(D:d): null,
+            _ => null
+        };
+        return result != null;
+
+        bool ParseDate(string s, out DateTime date)
+        {
+            if (s.IndexOf('/') == -1)
+            {
+                // to support yyyy-MM-dd hh:mm:ss
+                s = s.Replace(" ", "T");
+            }
+
+            date = default;
+            return DateTime.TryParse(s, out date);
+        }
+    }
     
     public static object GetValueOrLookup(this LoadedAttribute attribute, Record rec)
         => attribute.DataType switch

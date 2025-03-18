@@ -16,8 +16,8 @@ export interface UserAccess {
     name: string;
     roles: string[];
     readWriteEntities: string[];
-    restrictedReadWriteEntities: string[];
     readonlyEntities: string[];
+    restrictedReadWriteEntities: string[];
     restrictedReadonlyEntities: string[];
     allowedMenus: string[];
 }

@@ -11,7 +11,9 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
 {
     private readonly Compiler _compiler = new SqliteCompiler();
     private TransactionManager? _transaction;
-
+   
+    public bool ReturnDateUsesDateType() => false;
+    
     public Task CreateIndex(string table, string[] fields, bool isUnique, CancellationToken ct)
     {
         var indexType = isUnique ? "UNIQUE" : "";
@@ -34,10 +36,9 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
     }
     
     public bool InTransaction() => _transaction?.Transaction() != null;
-
-    public ConvertOptions GetConvertOptions()
-        => new (ParseInt: true, ParseDate: false, ReturnDateAsString: true);
     
+
+
     public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory,IDbTransaction?, Task<T>> queryFunc)
     {
         var db = new QueryFactory(connection, _compiler);
@@ -68,7 +69,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
                 BEFORE UPDATE ON {tableName} 
                 FOR EACH ROW
             BEGIN 
-                UPDATE {tableName} SET {updateAtField} = (datetime('now','localtime')) WHERE id = OLD.id; 
+                UPDATE {tableName} SET {updateAtField} = (datetime('now')) WHERE id = OLD.id; 
             END;";
        }
        await ExecuteQuery(sql,async cmd => await cmd.ExecuteNonQueryAsync(ct));
@@ -119,7 +120,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
            ColumnType.String => "TEXT",
            
            ColumnType.Datetime => "INTEGER",
-           ColumnType.CreatedTime or ColumnType.UpdatedTime=> "integer default (datetime('now','localtime'))",
+           ColumnType.CreatedTime or ColumnType.UpdatedTime=> "integer default (datetime('now'))",
            
            _ => throw new NotSupportedException($"Type {dataType} is not supported")
        };

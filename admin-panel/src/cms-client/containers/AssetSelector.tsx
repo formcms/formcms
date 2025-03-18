@@ -14,8 +14,6 @@ import { AssetField } from "../types/assetUtils";
 import { Button } from "primereact/button";
 import { GallerySelector } from "../../components/data/GallerySelector";
 
-
-
 type AssetSelectorProps = {
 
     show: boolean;
@@ -68,7 +66,6 @@ export function AssetSelectorComponent(
     const tableColumns = columns.map(x => createColumn(x, getCmsAssetUrl, undefined));
     
     const handleSetSelectItems=(item:any)=>{
-        console.log("handleSetSelectItems",item);
         if (setPath){
             setPath(item.path);
             setShow(false);
@@ -100,8 +97,8 @@ export function AssetSelectorComponent(
             {
                 data && columns && displayMode === DisplayMode.List &&
                 <SelectDataTable
-                    selectionMode={path? 'single' : 'multiple'}
-                    dataKey={"path"}
+                    selectionMode={setPath? 'single' : 'multiple'}
+                    dataKey={AssetField('path')}
                     columns={tableColumns}
                     data={data}
                     stateManager={stateManager}

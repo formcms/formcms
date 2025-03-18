@@ -15,7 +15,7 @@ public sealed class GraphQuery : ObjectGraphType
         
         foreach (var entity in entities)
         {
-            var t = FieldTypes.PlainType(entity, dao.GetConvertOptions().ReturnDateAsString);
+            var t = FieldTypes.PlainType(entity, !dao.ReturnDateUsesDateType());
             graphMap[entity.Name] = new GraphInfo(entity, t, new ListGraphType(t));
         }
         

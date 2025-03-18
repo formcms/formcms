@@ -4,7 +4,7 @@ using FormCMS.Core.Descriptors;
 
 namespace FormCMS.Cms.Services;
 
-public interface IEntitySchemaService: IEntityVectorResolver, IAttributeValueResolver
+public interface IEntitySchemaService: IEntityVectorResolver
 {
     Task<Result<LoadedEntity>> LoadEntity(string name, PublicationStatus?status, CancellationToken ct);
     Task<Entity?> GetTableDefine(string table, CancellationToken ct);

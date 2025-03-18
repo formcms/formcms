@@ -4,11 +4,12 @@ import {Column} from "primereact/column";
 
 
 export function imageColumn(
-    column: {field:string,header:string},
+    field:string,
+    header:string,
     getFullAssetsURL ?: (arg:string) =>string | undefined
 ){
     const bodyTemplate = (item:any) => {
-        var value = item[column.field];
+        var value = item[field];
         const urls:string[] = Array.isArray(value) ? value : [value];
         const fullURLs =  getFullAssetsURL?urls.map(x=>getFullAssetsURL(x )):urls;
         
@@ -18,5 +19,5 @@ export function imageColumn(
             }
         </AvatarGroup>
     };
-    return <Column key={column.field} field={column.field} header={column.header} body={bodyTemplate}></Column>
+    return <Column key={field} field={field} header={header} body={bodyTemplate}></Column>
 }
