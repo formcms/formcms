@@ -19,9 +19,7 @@ test_postgres_container() {
   local container_name="FormCMS-db-postgres"
   
   remove_container $container_name
-  local docker_run_command="docker run -d --name $container_name -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_DB=cms_integration_tests -p 5432:5432"
-
-  docker_run_command+=" postgres:latest"
+  local docker_run_command="docker run -d --name $container_name -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_DB=cms_integration_tests -p 5432:5432 postgres:latest"
   eval "$docker_run_command"
   
   export DatabaseProvider=Postgres

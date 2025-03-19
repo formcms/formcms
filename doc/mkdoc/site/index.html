@@ -108,6 +108,11 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-bs-level="2"><a href="#date-and-time" class="nav-link">Date and Time</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#graphql-query" class="nav-link">GraphQL Query</a>
               <ul class="nav flex-column">
               </ul>
@@ -910,153 +915,174 @@ If you want to preview how the content looks on a page before publishing, you ca
 <li>Click <code>Add Import Task</code>, then select the zip file you wish to import.</li>
 <li>Wait a few minutes, then refresh the page to check if the task was successful.</li>
 </ol>
+<hr />
 <h2 id="asset-library">Asset Library</h2>
-<p>The Asset Library tracks uploaded assets (images, files, etc.), enabling reuse across the system, optimizing storage, and providing robust management capabilities.</p>
-<p>The system maintains a centralized repository of assets, each represented by the <code>Asset</code> record with metadata, usage tracking, and linking capabilities. Assets are uniquely identified by a <code>Path</code> (e.g., a combination of a <code>yyyy-MM</code> date and ULID), and their relationships to other data entities are tracked via <code>AssetLink</code> records. For images, the system automatically resizes them to optimize storage space, using a default maximum width of 1200 pixels and a compression quality of 75, configurable via system settings.</p>
-<h3 id="key-features">Key Features</h3>
-<h4 id="add-asset-to-data">Add Asset to Data</h4>
-<p>In data management forms, fields for <code>image</code>, <code>file</code>, or <code>gallery</code> inputs provide the following options: </p>
+<p>The Asset Library centralizes the management of uploaded assets (e.g., images, files), supporting both local and cloud storage. It enables reuse, optimizes storage, and provides robust permissions and extensibility for various cloud providers.</p>
+<h3 id="overview">Overview</h3>
+<p>Assets are stored in a repository, each identified by a unique <code>Path</code> (e.g., <code>2025-03/abc123</code>, where <code>2025-03</code> is a folder based on <code>yyyy-MM</code> and <code>abc123</code> is a ULID) and a fixed <code>Url</code> (e.g., <code>/files/2025-03/abc123</code> or a cloud-specific URL). Relationships to data entities are tracked via <code>AssetLink</code> records. The system supports local storage by default and integrates with cloud storage providers (e.g., Azure Cloud Storage) via the <code>IFileStore</code> interface. For images, uploads are resized to a default maximum width of 1200 pixels and a compression quality of 75, configurable in <code>SystemSettings</code>.</p>
+<hr />
+<h3 id="core-features">Core Features</h3>
+<h4 id="adding-assets-to-data">Adding Assets to Data</h4>
+<p>In forms with <code>image</code>, <code>file</code>, or <code>gallery</code> fields, users can: <br />
+- <strong>Upload</strong>: Upload a new file via <code>IFileStore.Upload</code>. The system generates a unique <code>Path</code> (e.g., <code>2025-03/abc123</code>), sets a <code>Url</code> (local or cloud-based), and records metadata (<code>Name</code>, <code>Size</code>, <code>Type</code>, <code>CreatedBy</code>, <code>CreatedAt</code>). Images are resized (max width: 1200px, quality: 75) before saving to the chosen storage provider in the <code>2025-03</code> folder. A default <code>Title</code> is derived from <code>Name</code>.<br />
+  - <strong>Choose</strong>: Select an existing asset from a dialog with:    <br />
+    - <code>Gallery View</code>: Thumbnails for images.  <br />
+    - <code>List View</code>: Table with <code>Name</code>, <code>Title</code>, <code>Size</code>, <code>CreatedAt</code>, and <code>Type</code>. Filterable by keyword, size range, or date range; sortable in ascending/descending order.  <br />
+    - Selection links the asset, incrementing <code>LinkCount</code> and adding an <code>AssetLink</code>.  <br />
+- <strong>Delete</strong>: Remove the asset reference from the entity, reducing <code>LinkCount</code>.  <br />
+- <strong>Edit</strong>: Update <code>Title</code> or metadata.    </p>
+<h4 id="managing-orphan-assets">Managing Orphan Assets</h4>
+<p>The <strong>Asset List Page</strong> lists assets with <code>Name</code>, <code>Title</code>, <code>Size</code>, <code>Type</code>, <code>CreatedAt</code>, and <code>LinkCount</code>. Assets with <code>LinkCount</code> of 0 (orphans) can be deleted via <code>IFileStore.Del</code>, removing them from storage (e.g., the <code>2025-03</code> folder) and the system.   </p>
+<h4 id="replacing-files">Replacing Files</h4>
+<p>On the <strong>Asset Detail Page</strong>, users can replace content: <br />
+- Upload a new file via <code>IFileStore.Upload</code> to the same <code>Path</code> (e.g., <code>2025-03/abc123</code>), updating <code>Size</code>, <code>Type</code>, and <code>UpdatedAt</code>. <br />
+- Images are resized per settings (max width: 1200px, quality: 75). <br />
+- <code>Path</code> and <code>Url</code> remain unchanged, ensuring continuity for linked entities.   </p>
+<h4 id="updating-metadata">Updating Metadata</h4>
+<p>On the <strong>Asset Detail Page</strong>, users can modify: <br />
+- <strong>Title</strong>: Change the display name (defaults to <code>Name</code>). <br />
+- <strong>Metadata</strong>: Update key-value pairs (e.g., <code>{"AltText": "Description"}</code>), updating <code>UpdatedAt</code>.   </p>
+<hr />
+<h3 id="cloud-storage-integration">Cloud Storage Integration</h3>
+<p>The Asset Library supports cloud storage through the <code>IFileStore</code> interface, with Azure Cloud Storage as an example. Other providers (e.g., Google Cloud Storage, AWS S3) can be integrated by implementing this interface and registering it in the dependency injection container.   </p>
+<h4 id="ifilestore-interface"><code>IFileStore</code> Interface</h4>
+<pre><code class="language-csharp">namespace FormCMS.Infrastructure.FileStore;   
+
+public record FileMetadata(long Size, string ContentType);
+
+public interface IFileStore
+{
+    Task Upload(IEnumerable&lt;(string, IFormFile)&gt; files, CancellationToken ct);
+    Task Upload(string localPath, string path, CancellationToken ct);
+    Task&lt;FileMetadata?&gt; GetMetadata(string filePath, CancellationToken ct);
+    string GetUrl(string file);
+    Task Download(string path, string localPath, CancellationToken ct);
+    Task Del(string file, CancellationToken ct);
+}
+</code></pre>
+<h4 id="functionality">Functionality</h4>
 <ul>
-<li><strong>Upload</strong>: Upload a new file to the server. The system generates a unique <code>Path</code> (e.g., <code>2025-03-abc123</code>), assigns a fixed <code>Url</code> based on the <code>Path</code>, and records the <code>Name</code> (original filename), <code>Size</code>, <code>Type</code>, and <code>CreatedBy</code> metadata. For images, the system resizes the file to a maximum width of 1200 pixels (configurable via <code>ImageCompressionOptions.MaxWidth</code>) with a compression quality of 75 (configurable via <code>ImageCompressionOptions.Quality</code>) before saving, updating the <code>Size</code> accordingly. The <code>CreatedAt</code> timestamp is set to the upload time, and a default <code>Title</code> is derived from the <code>Name</code>. </li>
-<li><strong>Choose</strong>: Opens a dialog to select an existing asset from the library. The dialog offers: <ul>
-<li><code>Gallery View</code>: Displays assets as thumbnails (ideal for images). </li>
-<li><code>List View</code>: Shows assets in a tabular format with details like <code>Name</code>, <code>Title</code>, <code>Size</code>, <code>CreatedAt</code>, and <code>Type</code>. Users can filter by Name (e.g., search by keyword), Size (e.g., range of bytes), and CreatedAt (e.g., date range), and order the list by these fields in ascending or descending order. </li>
-<li>Selecting an asset links it to the current data entity, incrementing its <code>LinkCount</code> and adding an <code>AssetLink</code> entry. </li>
+<li><strong>Upload</strong>: Stores files in the provider, using the folder structure (e.g., <code>2025-03/abc123</code>).   </li>
+<li><strong>GetMetadata</strong>: Retrieves <code>Size</code> and <code>ContentType</code>.   </li>
+<li><strong>GetUrl</strong>: Returns the asset’s URL (e.g., <code>https://&lt;account&gt;.blob.core.windows.net/&lt;container&gt;/2025-03/abc123</code> for Azure).   </li>
+<li><strong>Download</strong>: Retrieves the file to a local path.   </li>
+<li><strong>Del</strong>: Deletes the file from its folder.   </li>
 </ul>
-</li>
-<li><strong>Delete</strong>: Removes the asset reference from the current data entity by clearing its path, potentially reducing the asset’s <code>LinkCount</code>. </li>
-<li><strong>Edit</strong>: Edit asset title and metadata.</li>
-</ul>
-<h4 id="delete-orphan-assets">Delete Orphan Assets</h4>
-<p>On the <strong>Asset List Page</strong>, users can view all assets with details such as <code>Name</code>, <code>Title</code>, <code>Size</code>, <code>Type</code>, <code>CreatedAt</code>, and <code>LinkCount</code> (the number of data entities referencing the asset). Assets with a <code>LinkCount</code> of 0 (orphans) can be deleted to free up storage. Deletion removes the asset’s file and its record from the system.</p>
-<h4 id="replace-file">Replace File</h4>
-<p>On the <strong>Asset Detail Page</strong>, users can upload a new file to replace an existing asset’s content:<br />
-- The new file updates the asset’s <code>Size</code>, <code>Type</code>, and <code>UpdatedAt</code> timestamp.<br />
-- For images, the system resizes the new file to a maximum width of 1200 pixels (configurable via <code>ImageCompressionOptions.MaxWidth</code>) with a compression quality of 75 (configurable via <code>ImageCompressionOptions.Quality</code>) before saving.<br />
-- The <code>Path</code> and <code>Url</code> remain unchanged, ensuring existing references remain valid.<br />
-- All data entities linked to the asset (via <code>AssetLink</code>) automatically use the new file content when accessing the fixed <code>Url</code>.   </p>
-<h4 id="update-metadata">Update Metadata</h4>
-<p>The <strong>Asset Detail Page</strong> allows users to modify an asset’s metadata:<br />
-- <strong>Title</strong>: Edit the <code>Title</code> field (defaults to <code>Name</code> on creation). This can serve as a display name, link title, or caption (e.g., for images in galleries).<br />
-- <strong>Metadata Dictionary</strong>: Add or update key-value pairs in the <code>Metadata</code> record to store custom information (e.g., <code>{"AltText": "Description", "Category": "Marketing"}</code>).<br />
-- Changes to metadata update the <code>UpdatedAt</code> timestamp.  </p>
-<h3 id="data-structure">Data Structure</h3>
+<h4 id="extending-to-other-providers">Extending to Other Providers</h4>
+<p>To use Google Cloud Storage, AWS S3, or others: <br />
+1. Implement <code>IFileStore</code> with provider-specific logic (e.g., S3’s <code>PutObject</code> for uploads to <code>2025-03/abc123</code>). <br />
+2. Register it in dependency injection (e.g., <code>services.AddScoped&lt;IFileStore, AwsS3FileStore&gt;()</code>).   </p>
+<h4 id="example-azure-cloud-storage">Example: Azure Cloud Storage</h4>
 <ul>
-<li><strong>Asset</strong>: Represents a stored file with fields like <code>Path</code> (unique identifier), <code>Url</code> (fixed access location), <code>Name</code>, <code>Title</code>, <code>Size</code>, <code>Type</code>, <code>Metadata</code>, <code>CreatedBy</code>, <code>CreatedAt</code>, <code>UpdatedAt</code>, <code>Id</code>, <code>LinkCount</code> (calculated), and <code>Links</code> (calculated array of <code>AssetLink</code>). </li>
-<li><strong>AssetLink</strong>: Tracks relationships between assets and data entities, with fields like <code>EntityName</code> (e.g., "BlogPost"), <code>RecordId</code> (entity’s ID), <code>AssetId</code>, <code>CreatedAt</code>, <code>UpdatedAt</code>, and <code>Id</code>. </li>
+<li>Uploads files to Azure Blob Storage under the <code>2025-03</code> folder (e.g., <code>2025-03/abc123</code>).   </li>
+<li>Generates URLs like <code>https://&lt;account&gt;.blob.core.windows.net/&lt;container&gt;/2025-03/abc123</code>.   </li>
+<li>Supports metadata retrieval and deletion via Azure APIs.   </li>
 </ul>
+<hr />
 <h3 id="permissions">Permissions</h3>
-<p>The Asset Library enforces a role-based permission system to control access and management of assets. Permissions determine what actions users can perform (e.g., upload, choose, edit, delete) and which assets they can interact with, based on their role or individual assignment.</p>
-<h4 id="permission-levels-and-roles">Permission Levels and Roles</h4>
-<ul>
-<li><strong>Super Admin</strong></li>
-<li>Full control over all assets in the system. </li>
-<li>Can upload, choose, edit, replace, and delete any asset, regardless of ownership. </li>
-<li>
-<p>Can assign assets to specific users or roles, granting them access as needed. </p>
-</li>
-<li>
-<p><strong>Users Without Asset Permissions</strong> </p>
-</li>
-<li>Cannot upload new assets or choose existing ones from the library. </li>
-<li>
-<p>Restricted from interacting with assets in any capacity. </p>
-</li>
-<li>
-<p><strong>Restricted Read (User or Role)</strong> </p>
-</li>
-<li>Can only choose assets that they personally uploaded. </li>
-<li>Limited to viewing and selecting their own assets in the library dialog (e.g., in <code>Gallery View</code> or <code>List View</code>). </li>
-<li>
-<p>Cannot edit, replace, or delete assets. </p>
-</li>
-<li>
-<p><strong>Full Read (User or Role)</strong> </p>
-</li>
-<li>Can choose any asset from the library, regardless of who uploaded it. </li>
-<li>Has access to the full asset catalog for selection purposes. </li>
-<li>
-<p>Cannot edit, replace, or delete assets. </p>
-</li>
-<li>
-<p><strong>Restricted Write (User or Role)</strong> </p>
-</li>
-<li>Can choose, edit, and delete only assets they uploaded themselves. </li>
-<li>Limited to managing their own assets, including updating metadata (e.g., <code>Title</code>, <code>Metadata Dictionary</code>) or replacing file content. </li>
-<li>
-<p>Cannot interact with assets uploaded by others. </p>
-</li>
-<li>
-<p><strong>Full Write (User or Role)</strong> </p>
-</li>
-<li>Can choose, edit, replace, and delete any asset in the system, regardless of ownership. </li>
-<li>Has comprehensive management capabilities, similar to a Super Admin, but without the ability to assign assets to other users or roles. </li>
-</ul>
-<h4 id="permission-enforcement">Permission Enforcement</h4>
-<ul>
-<li>Permissions are applied at the user level or inherited from the user’s role. </li>
-<li>When a user attempts an action (e.g., uploading, choosing, or editing an asset), the system checks their permissions against the asset’s ownership and their assigned access level. </li>
-<li>The library dialog (e.g., <code>Gallery View</code> or <code>List View</code>) dynamically filters visible assets based on the user’s read permissions (<code>Restricted Read</code> shows only self-uploaded assets; <code>Full Read</code> shows all assets). </li>
-</ul>
-<h4 id="example-scenarios">Example Scenarios</h4>
-<ol>
-<li><strong>User A (Restricted Read)</strong> </li>
-<li>Uploads an image (<code>2025-03-xyz789</code>). </li>
-<li>Can choose this image for a blog post but cannot see or select assets uploaded by others. </li>
-<li>
-<p>Cannot edit or delete the image after uploading. </p>
-</li>
-<li>
-<p><strong>User B (Full Read)</strong></p>
-</li>
-<li>Can browse and choose any asset in the library (e.g., <code>2025-03-xyz789</code> from User A). </li>
-<li>
-<p>Cannot edit or delete any assets, even those they might upload. </p>
-</li>
-<li>
-<p><strong>User C (Restricted Write)</strong></p>
-</li>
-<li>Uploads a file (<code>2025-03-abc123</code>). </li>
-<li>
-<p>Can choose, edit (e.g., update the <code>Title</code>), or delete this file, but cannot interact with assets uploaded by others. </p>
-</li>
-<li>
-<p><strong>User D (Full Write)</strong></p>
-</li>
-<li>
-<p>Can choose, edit, replace, or delete any asset, such as <code>2025-03-xyz789</code> or <code>2025-03-abc123</code>, regardless of who uploaded them. </p>
-</li>
-<li>
-<p><strong>Super Admin</strong></p>
-</li>
-<li>Uploads an asset (<code>2025-03-super456</code>). </li>
-<li>Assigns it to User A (Restricted Read) and User C (Restricted Write). </li>
-<li>Can still manage all assets, including those uploaded by Users A, B, C, and D. </li>
-</ol>
-<h4 id="benefits-of-permission-system">Benefits of Permission System</h4>
-<ul>
-<li><strong>Granular Control</strong>: Fine-tuned access levels ensure users only interact with assets appropriate to their role or responsibility. </li>
-<li><strong>Security</strong>: Restricting actions (e.g., editing or deleting) to authorized users prevents unauthorized modifications. </li>
-<li><strong>Collaboration</strong>: Super Admins can assign assets to facilitate teamwork while maintaining oversight. </li>
-<li><strong>Scalability</strong>: Role-based permissions adapt easily to growing teams and complex workflows. </li>
-</ul>
+<p>A role-based system controls asset access: <br />
+- <strong>Super Admin</strong>: Full control over all assets, including those in cloud folders (e.g., <code>2025-03</code>). <br />
+- <strong>No Permissions</strong>: No asset interaction. <br />
+- <strong>Restricted Read</strong>: Choose only self-uploaded assets. <br />
+- <strong>Full Read</strong>: Choose any asset. <br />
+- <strong>Restricted Write</strong>: Manage only self-uploaded assets. <br />
+- <strong>Full Write</strong>: Manage all assets (except assigning).   </p>
+<p>Permissions filter the library dialog and validate actions against ownership and storage location.   </p>
+<hr />
 <h3 id="configuration">Configuration</h3>
 <ul>
-<li><strong>Image Compression</strong>: Controlled via <code>ImageCompressionOptions</code> in <code>SystemSettings</code>:  <ul>
-<li><code>MaxWidth</code>: Defaults to 1200 pixels; can be overridden to adjust the maximum width of resized images.  </li>
-<li><code>Quality</code>: Defaults to 75 (on a 0-100 scale); can be adjusted to balance file size and image clarity.  </li>
+<li><strong>Image Compression</strong> (<code>ImageCompressionOptions</code>):   </li>
+<li><code>MaxWidth</code>: Default 1200px.   </li>
+<li><code>Quality</code>: Default 75 (0-100).   </li>
+<li><strong>Asset URL</strong>: Local prefix defaults to <code>/files</code> (e.g., <code>/files/2025-03/abc123</code>); cloud URLs depend on the provider (via <code>IFileStore.GetUrl</code>).   </li>
+<li><strong>Storage Provider</strong>: Set via dependency injection (e.g., Azure, local).   </li>
 </ul>
-</li>
-<li><strong>Asset URL</strong>: The <code>Url</code> is prefixed with <code>/files</code> by default (configurable via <code>SystemSettings.AssetUrlPrefix</code>), ensuring a consistent access pattern (e.g., <code>/files/2025-03-abc123</code>). </li>
-</ul>
+<hr />
 <h3 id="benefits">Benefits</h3>
 <ul>
-<li><strong>Reuse</strong>: Assets can be shared across multiple data entities, reducing redundancy. </li>
-<li><strong>Storage Optimization</strong>: Orphaned assets can be removed, and configurable image resizing (e.g., max width 1200px, quality 75) minimizes storage usage. </li>
-<li><strong>Consistency</strong>: The fixed <code>Url</code> ensures seamless updates when replacing files, maintaining all existing links. </li>
-<li><strong>Flexibility</strong>: Metadata, file replacement, and adjustable compression settings allow assets to evolve without breaking references. </li>
-<li><strong>Tracking</strong>: <code>LinkCount</code> and <code>AssetLink</code> provide visibility into asset usage.</li>
-<li><strong>SEO Improvement</strong>: The Title field can be used as the alt text for images, enhancing search engine optimization (SEO) by providing descriptive, keyword-rich text that improves accessibility and image discoverability on the web.</li>
+<li><strong>Reuse</strong>: Assets are shared across entities, reducing redundancy.   </li>
+<li><strong>Storage</strong>: Orphan deletion, image resizing, and folder-based organization (e.g., <code>2025-03</code>) optimize usage; cloud storage scales capacity.   </li>
+<li><strong>Consistency</strong>: Fixed <code>Url</code> ensures seamless updates.   </li>
+<li><strong>Flexibility</strong>: Metadata, replacements, and cloud extensibility adapt to needs.   </li>
+<li><strong>Tracking</strong>: <code>LinkCount</code> and <code>AssetLink</code> monitor usage.   </li>
+<li><strong>SEO</strong>: <code>Title</code> as alt text enhances image discoverability.   </li>
+<li><strong>Scalability</strong>: Cloud integration (e.g., Azure) and <code>IFileStore</code> support growing storage demands.   </li>
+</ul>
+<hr />
+<h2 id="date-and-time">Date and Time</h2>
+<p>The Date and Time system in FormCMS manages how dates and times are displayed and stored, supporting three distinct formats: <code>localDatetime</code>, <code>datetime</code>, and <code>date</code>. It ensures accurate representation across time zones and consistent storage in the database.</p>
+<h3 id="overview_1">Overview</h3>
+<p>FormCMS provides three display formats for handling date and time data, each serving a specific purpose:  <br />
+<code>localDatetime</code>: Displays dates and times adjusted to the user's browser time zone (e.g., a start time that varies by location).  <br />
+<code>datetime</code>: Zone-agnostic, showing the same date and time universally (e.g., a fixed event time).  <br />
+<code>date</code>: Zone-agnostic, displaying only the date without time (e.g., a birthday).    </p>
+<hr />
+<h3 id="display-formats">Display Formats</h3>
+<h4 id="localdatetime"><code>localDatetime</code></h4>
+<ul>
+<li><strong>Purpose</strong>: Represents a date and time that adjusts to the user's local time zone, ideal for events like start times where the local context matters.</li>
+<li><strong>Behavior</strong>: The system converts the stored UTC <code>datetime</code> to the browser's time zone for display. For example, an event starting at <code>2025-03-19 14:00 UTC</code> would appear as <code>2025-03-19 09:00 EST</code> for a user in New York (UTC-5) or <code>2025-03-19 23:00 JST</code> for a user in Tokyo (UTC+9).</li>
+<li><strong>Storage</strong>: When entered, the system converts the user’s local input to UTC before saving. For instance, <code>2025-03-19 09:00 EST</code> is stored as <code>2025-03-19 14:00 UTC</code>.</li>
+<li><strong>Use Case</strong>: Event schedules, deadlines, or anything requiring local time awareness.</li>
+</ul>
+<h4 id="datetime"><code>datetime</code></h4>
+<ul>
+<li><strong>Purpose</strong>: Displays a fixed date and time that remains consistent regardless of the user’s time zone, suitable for universal reference points.</li>
+<li><strong>Behavior</strong>: No conversion occurs; the stored value is shown as-is. For example, <code>2025-03-19 14:00</code> is displayed as <code>2025-03-19 14:00</code> everywhere.</li>
+<li><strong>Storage</strong>: Saved exactly as input, without time zone adjustments, assuming it’s a universal time.</li>
+<li><strong>Use Case</strong>: Logs, publication timestamps, or system events where a single point in time applies globally.</li>
+</ul>
+<h4 id="date"><code>date</code></h4>
+<ul>
+<li><strong>Purpose</strong>: Represents only a date without time, zone-agnostic, and consistent across all users.</li>
+<li><strong>Behavior</strong>: Displayed as a date only (e.g., <code>2025-03-19</code>), with no time component or zone consideration.</li>
+<li><strong>Storage</strong>: Stored as a <code>datetime</code> with the time set to <code>00:00:00</code> (midnight), typically in UTC for consistency, but the time portion is ignored in display.</li>
+<li><strong>Use Case</strong>: Birthdays, anniversaries, or any date-specific data where time is irrelevant.</li>
+</ul>
+<hr />
+<h3 id="storage-in-database">Storage in Database</h3>
+<ul>
+<li><strong>System-Generated Timestamps</strong>: All automatically generated times (e.g., <code>CreatedAt</code>, <code>UpdatedAt</code>) are stored as UTC <code>datetime</code> values (e.g., <code>2025-03-19 14:00:00Z</code>). This ensures a universal reference point for auditing and synchronization.</li>
+<li><strong><code>localDatetime</code> Handling</strong>:   <br />
+  Input: Converted from the user’s local time (based on browser settings) to UTC before storage.  <br />
+  Output: Converted from UTC back to the user’s local time zone for display.</li>
+<li><strong><code>datetime</code> Handling</strong>: Stored and retrieved as entered, with no conversion, assuming it’s a fixed point in time.</li>
+<li><strong><code>date</code> Handling</strong>: Stored as a <code>datetime</code> with the time component set to <code>00:00:00</code> (e.g., <code>2025-03-19 00:00:00Z</code>), though only the date part is used in display.</li>
+</ul>
+<hr />
+<h3 id="examples">Examples</h3>
+<ol>
+<li>
+<p><strong>Event Start (<code>localDatetime</code>)</strong>:</p>
+<ul>
+<li>User in New York enters: <code>2025-03-19 09:00 EST</code>.</li>
+<li>Stored as: <code>2025-03-19 14:00:00Z</code> (UTC).</li>
+<li>Displayed in Tokyo: <code>2025-03-19 23:00 JST</code>.</li>
+</ul>
+</li>
+<li>
+<p><strong>Log Entry (<code>datetime</code>)</strong>:</p>
+<ul>
+<li>Entered and stored as: <code>2025-03-19 14:00</code>.</li>
+<li>Displayed everywhere as: <code>2025-03-19 14:00</code>.</li>
+</ul>
+</li>
+<li>
+<p><strong>Birthday (<code>date</code>)</strong>:</p>
+<ul>
+<li>Entered as: <code>2025-03-19</code>.</li>
+<li>Stored as: <code>2025-03-19 00:00:00Z</code>.</li>
+<li>Displayed as: <code>2025-03-19</code>.</li>
+</ul>
+</li>
+</ol>
+<hr />
+<h3 id="benefits_1">Benefits</h3>
+<ul>
+<li><strong>Consistency</strong>: UTC storage for system times ensures reliable auditing and cross-time-zone integrity.</li>
+<li><strong>Flexibility</strong>: <code>localDatetime</code> adapts to user locations, while <code>datetime</code> and <code>date</code> provide universal clarity.</li>
+<li><strong>Simplicity</strong>: Clear separation of use cases reduces confusion in data entry and display.</li>
+<li><strong>Scalability</strong>: Standardized UTC storage supports global applications without time zone conflicts.</li>
 </ul>
 <hr />
 <h2 id="graphql-query"><strong>GraphQL Query</strong></h2>
@@ -1477,7 +1503,7 @@ Example response for <a href="https://fluent-cms-admin.azurewebsites.net/api/que
   }
 }
 </code></pre>
-<h4 id="benefits_1">Benefits</h4>
+<h4 id="benefits_2">Benefits</h4>
 <ul>
 <li><strong>Consistency</strong>: The <code>url</code> field provides a fixed access point to the asset, ensuring reliable retrieval across the application.</li>
 <li><strong>Metadata</strong>: Fields like <code>title</code> can be used as captions or <code>alt</code> text for images, enhancing accessibility and SEO.</li>
@@ -1567,7 +1593,7 @@ WHERE tags.id &gt; 0;
   }
 }
 </code></pre>
-<h4 id="benefits_2">Benefits</h4>
+<h4 id="benefits_3">Benefits</h4>
 <ul>
 <li><strong>Efficiency</strong>: The list query remains lightweight and deduplicated.</li>
 <li><strong>Compatibility</strong>: Avoids database-specific limitations on <code>DISTINCT</code>.</li>
@@ -1941,7 +1967,7 @@ builder.AddProject&lt;Projects.FormCMS_Course&gt;(name: &quot;web&quot;)
 
 builder.Build().Run();
 </code></pre>
-<h3 id="benefits_3">Benefits:</h3>
+<h3 id="benefits_4">Benefits:</h3>
 <ol>
 <li><strong>Simplified Configuration</strong>:<br />
    No need to manually specify endpoints for the database or Redis servers. Configuration values can be retrieved using:
@@ -2152,7 +2178,7 @@ app.RegisterMessageProducerHook();
 <hr />
 <h2 id="development-guide">Development Guide</h2>
 <p>The backend is written in ASP.NET Core, the Admin Panel uses React, and the Schema Builder is developed with jQuery.</p>
-<h3 id="overview">Overview</h3>
+<h3 id="overview_2">Overview</h3>
 <p>The system comprises three main components:<br />
 1. <strong>Backend</strong> - Developed in ASP.NET Core.<br />
 2. <strong>Admin Panel</strong> - Built using React.<br />
@@ -2311,5 +2337,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-03-16 21:09:21.645279+00:00
+Build Date UTC : 2025-03-19 23:24:13.109242+00:00
 -->
