@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form"
-import { DatetimeInput } from "../../components/inputs/DatetimeInput"
 import { DefaultAttributeNames } from "../types/defaultAttributeNames"
+import { LocalDatetimeInput } from "../../components/inputs/LocalDatetimeInput";
 
 export function PublicationSettings(
     {formId,data,  onSubmit}:
@@ -16,7 +16,7 @@ export function PublicationSettings(
     const formData = {[DefaultAttributeNames.PublishedAt]: publishedAt}
     
     return <form  onSubmit={handleSubmit(onSubmit)} id={formId}>
-        <DatetimeInput inline className="col-10" data={formData} column={{
+        <LocalDatetimeInput inline className="col-10" data={formData} column={{
             field: DefaultAttributeNames.PublishedAt,
             header: "Published at",
         }} register={register} control={control} id={'publishedAt'}/>

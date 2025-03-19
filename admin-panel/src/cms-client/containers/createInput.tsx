@@ -6,7 +6,6 @@ import {TextAreaInput} from "../../components/inputs/TextAreaInput";
 import {EditorInput} from "../../components/inputs/EditorInput";
 import {NumberInput} from "../../components/inputs/NumberInput";
 import {DatetimeInput} from "../../components/inputs/DatetimeInput";
-import {DateInput} from "../../components/inputs/DateInput";
 import {FileInput} from "../../components/inputs/FileInput";
 import {GalleryInput} from "../../components/inputs/GalleryInput";
 import {DropDownInput} from "../../components/inputs/DropDownInput";
@@ -15,6 +14,7 @@ import {XAttr} from "../types/xEntity";
 import {AssetSelector} from "./AssetSelector";
 import {DictionaryInput} from "../../components/inputs/DictionaryInput";
 import {AssetMetadataEditor} from "./AssetMetaDataEditor";
+import { LocalDatetimeInput } from "../../components/inputs/LocalDatetimeInput";
 
 export function createInput(props: {
     column: XAttr,
@@ -52,13 +52,20 @@ export function createInput(props: {
                                 key={field} 
                                 {...props}/>
         case 'localDatetime':
-            return <DatetimeInput className={mdClass} 
+            return <LocalDatetimeInput className={mdClass} 
                                   inline={false} 
                                   key={field} 
                                   {...props}/>
-        
+        case 'datetime':
+            return <DatetimeInput className={mdClass}
+                                  showTime={true}
+                                  inline={false}
+                                  key={field}
+                                  {...props}/>
         case 'date':
-            return <DateInput className={mdClass} 
+            return <DatetimeInput className={mdClass}
+                                  inline={false}
+                                  showTime={false}
                               key={field} 
                               {...props}/>
         case 'image':

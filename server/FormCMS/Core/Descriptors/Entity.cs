@@ -240,7 +240,7 @@ public static class EntityHelper
     public static SqlKata.Query PublishAllScheduled(this Entity e)
         => new SqlKata.Query(e.TableName)
             .Where(DefaultAttributeNames.PublicationStatus.Camelize(), PublicationStatus.Scheduled.Camelize())
-            .WhereDate(DefaultAttributeNames.PublishedAt.Camelize(), "<", DateTime.Now)
+            .Where(DefaultAttributeNames.PublishedAt.Camelize(), "<", DateTime.UtcNow)
             .AsUpdate([DefaultAttributeNames.PublicationStatus.Camelize()], [PublicationStatus.Published.Camelize()]);
     
     public static Result<SqlKata.Query> UpdateQuery(this LoadedEntity e, long id, Record item)

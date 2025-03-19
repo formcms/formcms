@@ -1,3 +1,4 @@
+using System.Reflection;
 using FormCMS.Core.Tasks;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.RelationDbDao;
@@ -56,7 +57,11 @@ public class TaskService(
     public async Task<long> ImportDemoData()
     {
         EnsureHasPermission();
-        const string url = "https://github.com/FormCMS/FormCMS/raw/refs/heads/doc/etc/demo-data.zip";
+        
+        var assembly = Assembly.GetExecutingAssembly();
+        var title = assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
+        var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split("+").First();
+        var url = $"https://github.com/FormCMS/FormCMS/raw/refs/heads/doc/etc/{title}-demo-data-{version}.zip";
         var task = TaskHelper.InitTask(TaskType.Import, profileService.GetInfo()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
         var id = await executor.Exec(query,true);

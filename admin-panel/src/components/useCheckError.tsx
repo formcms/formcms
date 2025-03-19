@@ -20,7 +20,7 @@ export function useCheckError(){
         CheckErrorStatus: ()=>{
             return <>
                 <Toast ref={toast} />
-                {error&& error.split('\n').map(e =>(<><Message severity={'error'} text={e}/>&nbsp;&nbsp;</>))}
+                {error&& error.split('\n').map(e =>(<><Message key={e} severity={'error'} text={e}/>&nbsp;&nbsp;</>))}
             </>
         }
     }

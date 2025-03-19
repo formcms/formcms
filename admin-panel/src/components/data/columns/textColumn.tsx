@@ -1,6 +1,6 @@
 import {Column} from "primereact/column";
 import {DisplayType } from "../../xEntity";
-import { formatDate } from "../../formatter";
+import {toDateStr, toDatetimeStr, utcStrToDatetimeStr} from "../../formatter";
 
 export function textColumn(
     field:string,
@@ -19,7 +19,11 @@ export function textColumn(
         let val = item[field];
         if (val) {
             if (displayType ==="localDatetime") {
-                val =  formatDate(val) 
+                val =  utcStrToDatetimeStr(val) 
+            } else if (displayType=== 'datetime') {
+                val =  toDatetimeStr(val)
+            } else if (displayType==='date') {
+                val = toDateStr(val)
             } else if (displayType === 'multiselect') {
                 val = val.join(", ")
             }

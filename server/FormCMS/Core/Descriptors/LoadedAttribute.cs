@@ -127,8 +127,7 @@ public static class LoadedAttributeExtensions
 
             return ele.Value.ValueKind switch
             {
-                JsonValueKind.String when attr.ResolveVal(ele.Value.GetString()!, out var caseVal) => caseVal!
-                    .Value.ObjectValue!,
+                JsonValueKind.String when attr.ResolveVal(ele.Value.GetString()!, out var v) => v!.Value.ObjectValue!,
                 JsonValueKind.Number when ele.Value.TryGetInt64(out var longValue) => longValue,
                 JsonValueKind.Number when ele.Value.TryGetDouble(out var doubleValue) => doubleValue,
                 JsonValueKind.Number => ele.Value.GetDecimal(),
@@ -139,7 +138,6 @@ public static class LoadedAttributeExtensions
                 _ => Result.Fail<object>($"Fail to convert [{attr.Field}], input valueKind is [{ele.Value.ValueKind}]")
             };
         }
-
     } 
     
     public static bool ResolveVal(this LoadedAttribute attr, string v, out ValidValue? result)
@@ -159,14 +157,12 @@ public static class LoadedAttributeExtensions
 
         bool ParseDate(string s, out DateTime date)
         {
-            if (s.IndexOf('/') == -1)
+            if (DateTime.TryParse(s,  out date))
             {
-                // to support yyyy-MM-dd hh:mm:ss
-                s = s.Replace(" ", "T");
+                if (s.EndsWith('Z')) date = date.ToUniversalTime();
+                return true;
             }
-
-            date = default;
-            return DateTime.TryParse(s, out date);
+            return false;
         }
     }
     

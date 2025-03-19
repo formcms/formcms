@@ -376,7 +376,9 @@ public class ImportWorker(
 
         async Task PreInsert(LoadedEntity entity, Record[] records)
         {
-            ConvertDateTime(records, entity.Attributes.Where(x => x.DataType == DataType.Datetime).Select(x=>x.Field));
+            ConvertDateTime(records, entity.Attributes
+                .Where(x => x.DataType == DataType.Datetime)
+                .Select(x=>x.Field));
             RenamePrimaryKeyToImportKey(records, entity.PrimaryKey);
             await ReplaceLookupFields();
             async Task ReplaceLookupFields()

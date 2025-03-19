@@ -172,7 +172,7 @@ public static class BlogsTestData
             returnValue.Add(field.Camelize(), $"{field}-{i}");
         }
         returnValue[DefaultAttributeNames.PublicationStatus.Camelize()] =PublicationStatus.Published.Camelize();
-        returnValue[DefaultAttributeNames.PublishedAt.Camelize()] = DateTime.Now;
+        returnValue[DefaultAttributeNames.PublishedAt.Camelize()] = DateTime.UtcNow;
         return returnValue; 
 
     }
