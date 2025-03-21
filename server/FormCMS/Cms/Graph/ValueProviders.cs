@@ -2,6 +2,7 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Utils.GraphTypeConverter;
 using GraphQLParser.AST;
 using Microsoft.Extensions.Primitives;
+using Converter = FormCMS.Utils.GraphTypeConverter.Converter;
 
 namespace FormCMS.Cms.Graph;
 

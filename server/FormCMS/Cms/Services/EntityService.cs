@@ -44,7 +44,7 @@ public sealed class EntityService(
             "Can not compose list result as tree, not find an collection attribute whose target is the entity.");
 
         parentField.GetCollectionTarget(out _, out var linkField);
-        var attributes = entity.Attributes.Where(x => x.Field == entity.PrimaryKey || x.InList && x.IsLocal());
+        var attributes = entity.Attributes.Where(x => x.Field == entity.PrimaryKey || x.InList && x.DataType.IsLocal());
         var items = await executor.Many(entity.AllQueryForTree(attributes), ct);
         return items.ToTree(entity.PrimaryKey, linkField);
     }
@@ -65,7 +65,7 @@ public sealed class EntityService(
                 || x.Field == DefaultAttributeNames.PublishedAt.Camelize()
                 || x.Field == DefaultAttributeNames.PublicationStatus.Camelize()
                 || x.Field == DefaultColumnNames.UpdatedAt.Camelize()
-                || x.InDetail && x.IsLocal())
+                || x.InDetail && x.DataType.IsLocal())
             .ToArray();
 
         var query = ctx.Entity.ByIdsQuery(
@@ -177,7 +177,7 @@ public sealed class EntityService(
         var target = junction.TargetEntity;
 
         var attrs = target.Attributes
-            .Where(x => x.Field == target.PrimaryKey || x.IsLocal() && x.InList)
+            .Where(x => x.Field == target.PrimaryKey || x.DataType.IsLocal() && x.InList)
             .ToArray();
 
         var (filters, sorts, validPagination) = await GetListArgs(target, args, pagination);
@@ -211,7 +211,7 @@ public sealed class EntityService(
         var (filters, sorts, validPagination) = await GetListArgs(collection.TargetEntity, args, pagination);
 
         var attributes = collection.TargetEntity.Attributes
-            .Where(x => x.Field == collection.TargetEntity.PrimaryKey || x.IsLocal() && x.InList)
+            .Where(x => x.Field == collection.TargetEntity.PrimaryKey || x.DataType.IsLocal() && x.InList)
             .ToArray();
 
         var listQuery = collection.List(filters, sorts, validPagination, null, attributes, [id], null);
@@ -241,7 +241,7 @@ public sealed class EntityService(
 
         var res = await hookRegistry.EntityPreGetList.Trigger(provider, args);
         var attributes = entity.Attributes
-            .Where(x => x.Field == entity.PrimaryKey || x.InList && x.IsLocal())
+            .Where(x => x.Field == entity.PrimaryKey || x.InList && x.DataType.IsLocal())
             .ToArray();
 
         var countQuery = entity.CountQuery([..res.RefFilters], null);
@@ -271,9 +271,9 @@ public sealed class EntityService(
             {
                 await LoadLookupData(attribute, items, ct);
             }
-            else if (attribute.IsCsv())
+            else 
             {
-                attribute.SpreadCsv(items);
+                attribute.FormatForDisplay(items);
             }
         }
     }

@@ -17,6 +17,14 @@ public enum DataType
 
 public static class DataTypeHelper
 {
+    
+    public static bool IsCompound(this DataType d)
+        => d is DataType.Lookup or DataType.Junction or DataType.Collection;
+
+
+    public static bool IsLocal(this DataType d)
+        => d != DataType.Junction && d != DataType.Collection;
+    
     public static readonly HashSet<(DataType, DisplayType)> ValidTypeMap =
     [
         (DataType.Int, DisplayType.Number),

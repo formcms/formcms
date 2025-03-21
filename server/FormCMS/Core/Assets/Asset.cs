@@ -92,8 +92,10 @@ public static class Assets
 
     public static Query UpdateMetaData(this Asset asset)
     {
-        var record = RecordExtensions.FormObject(asset, 
-            whiteList: [nameof(Asset.Title), nameof(Asset.Metadata)]);
+        var record = RecordExtensions.FormObject(
+            asset,
+            whiteList: [nameof(Asset.Title), nameof(Asset.Metadata)]
+        );
         return new Query(TableName)
             .Where(nameof(Asset.Id).Camelize(), asset.Id)
             .AsUpdate(record);

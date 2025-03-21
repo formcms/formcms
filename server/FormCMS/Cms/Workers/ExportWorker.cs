@@ -117,7 +117,7 @@ public class ExportWorker(
 
         async Task ExportEntity(LoadedEntity entity)
         {
-            var attrs = entity.Attributes.Where(x => x.IsLocal());
+            var attrs = entity.Attributes.Where(x => x.DataType.IsLocal());
             var cols = attrs.ToColumns(entityDict);
             await destMigrator.MigrateTable(entity.TableName, cols.EnsureColumn(DefaultColumnNames.Deleted,ColumnType.Boolean));
             await KateQueryExecutor.GetPageDataAndInsert(sourceExecutor,destExecutor, entity.TableName, entity.PrimaryKey, cols.Select(x=>x.Name),null,ct);

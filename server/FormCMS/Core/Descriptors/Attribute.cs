@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
@@ -144,19 +145,17 @@ public static class AttributeHelper
         return !string.IsNullOrWhiteSpace(a.Options);
     }
 
-    public static bool IsCompound(this Attribute a)
-        => a.DataType is DataType.Lookup or DataType.Junction or DataType.Collection;
-
-    public static bool IsCsv(this Attribute a)
-        => a.DisplayType is DisplayType.Gallery or DisplayType.Multiselect;
-
-    public static bool IsLocal(this Attribute a)
-        => a.DataType != DataType.Junction && a.DataType != DataType.Collection;
-
-    public static bool IsAsset(this Attribute a)
-        => a.DisplayType is DisplayType.File or DisplayType.Image or DisplayType.Gallery;
-  
-
+    public static void FormatForDisplay(this Attribute a, Record[] records)
+    {
+        if (!Converter.NeedFormatDisplay(a.DataType, a.DisplayType)) return;
+        foreach (var record in records)
+        {
+            if (record.TryGetValue(a.Field, out var value) && value is string valueStr)
+            {
+                record[a.Field] = Converter.DbObjToDisplayObj(a.DataType, a.DisplayType, valueStr)!;
+            }
+        }
+    }
 
     public static ValidValue[] GetUniq<T>(this T a, IEnumerable<Record> records)
         where T : Attribute
@@ -176,16 +175,7 @@ public static class AttributeHelper
         return ret.ToArray();
     }
 
-    public static void SpreadCsv(this Attribute attribute, Record[] records)
-    {
-        foreach (var record in records)
-        {
-            if (record.TryGetValue(attribute.Field, out var value) && value is string stringValue)
-            {
-                record[attribute.Field] = stringValue.Split(",");
-            }
-        }
-    }
+    
 
     public static Column[] ToColumns(this IEnumerable<Attribute> attributes, Dictionary<string, LoadedEntity> dictEntity)
     {

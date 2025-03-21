@@ -83,7 +83,7 @@ public static class GraphAttributeExtensions
             {
                 foreach (var attr in attrs)
                 {
-                    if (attr.IsCompound())
+                    if (attr.DataType.IsCompound())
                     {
                         var (_, _, linkDesc) = attr.GetEntityLinkDesc();
                         if (linkDesc.IsCollective)
@@ -152,7 +152,7 @@ public static class GraphAttributeExtensions
         {
             foreach (var attr in attrs)
             {
-                if (attr.IsCompound())
+                if (attr.DataType.IsCompound())
                 {
                     Bfs(attr.Selection);
                 }
@@ -179,7 +179,7 @@ public static class GraphAttributeExtensions
             {
                 foreach (var attr in attrs)
                 {
-                    if (attr.IsCompound())
+                    if (attr.DataType.IsCompound())
                     {
                         var (_, _, linkDesc) = attr.GetEntityLinkDesc();
                         if (linkDesc.IsCollective)
@@ -237,7 +237,7 @@ public static class GraphAttributeExtensions
 
         foreach (var attr in attrs)
         {
-            if (!attr.IsCompound()) continue;
+            if (!attr.DataType.IsCompound()) continue;
             foreach (var item in items)
             {
                 if (!item.TryGetValue(attr.Field, out var v))

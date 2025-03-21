@@ -32,7 +32,8 @@ public static class JasonElementExtensions
             JsonValueKind.True => true,
             JsonValueKind.False => false,
             JsonValueKind.Null => null,
-            _ => "",
+            JsonValueKind.Undefined => null,
+            _ => throw new FormatException($"Unexpected JsonValueKind {element.ValueKind}"),
          })!;
    }
 }

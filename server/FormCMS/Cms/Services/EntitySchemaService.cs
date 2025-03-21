@@ -224,7 +224,7 @@ public sealed class EntitySchemaService(
         if (columns.Length > 0) //if table exists, alter table adds columns
         {
             var set = columns.Select(x => x.Name).ToHashSet();
-            var missing = entity.Attributes.Where(c => c.IsLocal()&& !set.Contains(c.Field)).ToArray();
+            var missing = entity.Attributes.Where(c => c.DataType.IsLocal()&& !set.Contains(c.Field)).ToArray();
             if (missing.Length > 0)
             {
                 var missingCols = missing.ToColumns(dict);
@@ -233,7 +233,7 @@ public sealed class EntitySchemaService(
         }
         else
         {
-            var newColumns = entity.Attributes.Where(x=>x.IsLocal()).ToColumns(dict);
+            var newColumns = entity.Attributes.Where(x=>x.DataType.IsLocal()).ToColumns(dict);
             await dao.CreateTable(entity.TableName, newColumns.EnsureColumn(DefaultColumnNames.Deleted,ColumnType.Boolean), ct);
         }
     }

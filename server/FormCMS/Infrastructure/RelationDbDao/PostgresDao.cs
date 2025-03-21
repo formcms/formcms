@@ -13,21 +13,37 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     private readonly Compiler _compiler = new PostgresCompiler();
 
     public async ValueTask<TransactionManager> BeginTransaction()
-    {
-        var ret = new TransactionManager(await connection.BeginTransactionAsync());
-        _transaction = ret;
-        return ret;
-    }
-    public bool InTransaction() => _transaction?.Transaction() != null;
-    public bool ReturnDateUsesDateType() => true;
+        =>_transaction= new TransactionManager(await connection.BeginTransactionAsync());
     
-
+    public bool InTransaction() => _transaction?.Transaction() != null;
+    
     public Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
     {
         var db = new QueryFactory(connection, _compiler);
         db.Logger = result => logger.LogInformation(result.ToString());
             
         return queryFunc(db,_transaction?.Transaction());
+    }
+
+    public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct)
+    {
+        var sql = $"""
+                   SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
+                   FROM information_schema.columns
+                   WHERE table_name = '{table}';
+                   """;
+
+        return await ExecuteQuery(sql, async command =>
+        {
+            await using var reader = command.ExecuteReader();
+            var columnDefinitions = new List<Column>();
+            while (await reader.ReadAsync(ct))
+            {
+                columnDefinitions.Add(new Column(reader.GetString(0), StringToColType(reader.GetString(1))));
+            }
+
+            return columnDefinitions.ToArray();
+        });
     }
 
     public async Task CreateTable(string table, IEnumerable<Column> cols,CancellationToken ct)
@@ -101,24 +117,18 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         await ExecuteQuery(sql, cmd => cmd.ExecuteNonQueryAsync(ct));
     }
     
-    public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct)
+    public async Task CreateIndex(string table, string[] fields, bool isUnique, CancellationToken ct)
     {
-        var sql = $"""
-                  SELECT column_name, data_type, character_maximum_length, is_nullable, column_default
-                  FROM information_schema.columns
-                  WHERE table_name = '{table}';
-                  """;
+        var indexType = isUnique ? "UNIQUE" : "";
+        var indexName = $"idx_{table}_{string.Join("_", fields)}";
+        var fieldList = string.Join(", ", fields.Select(f => $"\"{f}\""));
 
-        return await ExecuteQuery(sql, async command =>
-        {
-            await using var reader = command.ExecuteReader();
-            var columnDefinitions = new List<Column>();
-            while (await reader.ReadAsync(ct))
-            {
-                columnDefinitions.Add(new Column(reader.GetString(0),StringToColType(reader.GetString(1))));
-            }
-            return columnDefinitions.ToArray();
-        } );
+        var sql = $"""
+                   CREATE {indexType} INDEX IF NOT EXISTS "{indexName}" 
+                   ON "{table}" ({fieldList});
+                   """;
+
+        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
     }
 
     private string ColTypeToString(ColumnType t)
@@ -165,19 +175,4 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
 
         return await executeFunc(command);
     }
-    
-    public async Task CreateIndex(string table, string[] fields, bool isUnique, CancellationToken ct)
-    {
-        var indexType = isUnique ? "UNIQUE" : "";
-        var indexName = $"idx_{table}_{string.Join("_", fields)}";
-        var fieldList = string.Join(", ", fields.Select(f => $"\"{f}\""));
-
-        var sql = $"""
-                   CREATE {indexType} INDEX IF NOT EXISTS "{indexName}" 
-                   ON "{table}" ({fieldList});
-                   """;
-
-        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
-    }
-
 }

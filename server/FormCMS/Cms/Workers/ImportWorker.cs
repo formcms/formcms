@@ -297,7 +297,7 @@ public class ImportWorker(
 
         async Task ImportEntity(LoadedEntity entity, bool circleReference)
         {
-            var attrs = entity.Attributes.Where(x => x.IsLocal());
+            var attrs = entity.Attributes.Where(x => x.DataType.IsLocal());
             var cols = attrs.ToColumns(entityNameToEntity.ToDictionary());
             var fields = cols.Select(x => x.Name).ToArray();
             await destMigrator.MigrateTable(entity.TableName, cols

@@ -9,7 +9,7 @@ using FluentResults;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
-using FormCMS.Utils.RecordExt;
+using FormCMS.Utils.jsonElementExt;
 using GraphQL.Client.Abstractions.Utilities;
 
 namespace FormCMS.Core.Descriptors;
@@ -56,7 +56,7 @@ public static class EntityHelper
     public static string[] GetAssets(this LoadedEntity entity, Record record)
     {
         var paths = new List<string>();
-        foreach (var attribute in entity.Attributes.Where(x => x.IsAsset()))
+        foreach (var attribute in entity.Attributes.Where(x => x.DisplayType.IsAsset()))
         {
             if (record.TryGetValue(attribute.Field, out var value) 
                 && value is string stringValue )
@@ -293,7 +293,7 @@ public static class EntityHelper
     {
         var interpreter = new Interpreter().Reference(typeof(Regex));
         var result = Result.Ok();
-        foreach (var localAttribute in e.Attributes.Where(x=>x.IsLocal() && !string.IsNullOrWhiteSpace(x.Validation)))
+        foreach (var localAttribute in e.Attributes.Where(x=>x.DataType.IsLocal() && !string.IsNullOrWhiteSpace(x.Validation)))
         {
             if (!Validate(localAttribute).Try(out var err))
             {
@@ -335,20 +335,24 @@ public static class EntityHelper
 
     public static Result<Record> Parse (this LoadedEntity entity, JsonElement element)
     {
-        Dictionary<string, object> ret = new();
-        foreach (var attribute in entity.Attributes.Where(x=>x.IsLocal()))
+        var rec = element.ToDictionary();
+        foreach (var attribute in entity.Attributes)
         {
+            if (!rec.TryGetValue(attribute.Field, out var value)) continue;
+            var dataType = attribute.DataType is DataType.Lookup ? attribute.Lookup!.TargetEntity.PrimaryKeyAttribute.DataType: attribute.DataType;
             
-            if (!element.TryGetProperty(attribute.Field, out var value)) continue;
-            var res = attribute.ParseJsonElement(value);
-            if (res.IsFailed)
+            if (attribute.Lookup is not null && value is Record record)
             {
-                return Result.Fail(res.Errors);
+                 value = record[attribute.Lookup.TargetEntity.PrimaryKeyAttribute.Field];
             }
-            ret[attribute.Field] = res.Value; 
-           
+            var (_,fail, obj,errors) = Converter.DisplayObjToDbObj(dataType, attribute.DisplayType, value);
+            if (fail)
+            {
+                return Result.Fail(errors);
+            }
+            rec[attribute.Field] = obj;
         }
-        return ret;
+        return rec;
     }
 
     internal static SqlKata.Query GetCommonCountQuery(this LoadedEntity e, IEnumerable<ValidFilter> filters)

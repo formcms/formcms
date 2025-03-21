@@ -64,7 +64,9 @@
         "image",
         "gallery",
         "file",
-
+        
+        "dictionary",
+        
         "dropdown",
         "multiselect",
 

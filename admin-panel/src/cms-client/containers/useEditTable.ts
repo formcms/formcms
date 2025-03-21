@@ -1,4 +1,3 @@
-import {useState} from "react";
 import {XAttr, XEntity } from "../types/xEntity";
 
 export function useEditTable(data :any, schema:XEntity, column: XAttr )
@@ -20,10 +19,7 @@ export function useEditTable(data :any, schema:XEntity, column: XAttr )
         }
     ) ??[];
 
-    const [existingItems, setExistingItems] = useState(null)
-    const [toAddItems, setToAddItems] = useState(null)
     return {
-        id, listColumns, inputColumns,
-        existingItems, setExistingItems, toAddItems, setToAddItems
+        id, listColumns, inputColumns, targetSchema
     }
 }

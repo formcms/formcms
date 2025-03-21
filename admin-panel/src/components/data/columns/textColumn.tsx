@@ -1,33 +1,24 @@
 import {Column} from "primereact/column";
-import {DisplayType } from "../../xEntity";
-import {toDateStr, toDatetimeStr, utcStrToDatetimeStr} from "../../formatter";
 
 export function textColumn(
     field:string,
     header:string,
-    displayType: DisplayType,
+    formatter:any,
+    colType: 'numeric'|'date'|'text',
     onClick?: (rowData:any) => void,
 ) {
     
-    var colType = displayType == 'number' 
-        ? 'numeric'
-        : (displayType == 'datetime' || displayType == 'date' || displayType === 'localDatetime') 
-            ? 'date'
-            : 'text';
-    
     const bodyTemplate = (item: any) => {
-        let val = item[field];
-        if (val) {
-            if (displayType ==="localDatetime") {
-                val =  utcStrToDatetimeStr(val) 
-            } else if (displayType=== 'datetime') {
-                val =  toDatetimeStr(val)
-            } else if (displayType==='date') {
-                val = toDateStr(val)
-            } else if (displayType === 'multiselect') {
-                val = val.join(", ")
-            }
+        var val = item;
+        for(const f of field.split('.')){
+            if (!val) break;
+            val = val[f]
         }
+        
+        if (val && formatter) {
+            val = formatter(val)
+        }
+        
         return onClick
             ?<div style={{
                 cursor: 'pointer',

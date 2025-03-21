@@ -11,42 +11,39 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
 {
     private readonly Compiler _compiler = new SqliteCompiler();
     private TransactionManager? _transaction;
-   
-    public bool ReturnDateUsesDateType() => false;
-    
-    public Task CreateIndex(string table, string[] fields, bool isUnique, CancellationToken ct)
-    {
-        var indexType = isUnique ? "UNIQUE" : "";
-        var indexName = $"idx_{table}_{string.Join("_", fields)}";
-        var fieldList = string.Join(", ", fields.Select(f => $"\"{f}\"")); // Use double quotes for SQLite compatibility
-
-        var sql = $"""
-                   CREATE {indexType} INDEX IF NOT EXISTS "{indexName}" 
-                   ON "{table}" ({fieldList});
-                   """;
-
-        return ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
-    }
-    
     public async ValueTask<TransactionManager> BeginTransaction()
-    {
-        var ret = new TransactionManager(await connection.BeginTransactionAsync());
-        _transaction = ret;
-        return ret;
-    }
-    
+        => _transaction= new TransactionManager(await connection.BeginTransactionAsync());
     public bool InTransaction() => _transaction?.Transaction() != null;
-    
-
-
+   
     public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory,IDbTransaction?, Task<T>> queryFunc)
     {
         var db = new QueryFactory(connection, _compiler);
         db.Logger = result => logger.LogInformation(result.ToString());
         return await queryFunc(db, _transaction?.Transaction());
     }
-    
-   public async Task CreateTable(string tableName, IEnumerable<Column> cols, CancellationToken ct)
+
+    public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct)
+    {
+        var sql = $"PRAGMA table_info({table})";
+        return await ExecuteQuery(sql, async command =>
+        {
+            await using var reader = await command.ExecuteReaderAsync(ct);
+            var columnDefinitions = new List<Column>();
+            while (await reader.ReadAsync(ct))
+            {
+                /*cid, name, type, notnull, default_value, pk */
+                columnDefinitions.Add(new Column
+                (
+                    Name: reader.GetString(1),
+                    Type: StringToColType(reader.GetString(2))
+                ));
+            }
+
+            return columnDefinitions.ToArray();
+        });
+    }
+
+    public async Task CreateTable(string tableName, IEnumerable<Column> cols, CancellationToken ct)
    {
        var parts = new List<string>();
        var updateAtField = "";
@@ -83,30 +80,25 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
        var sql = string.Join(";", parts.ToArray());
        await ExecuteQuery(sql,async cmd => await cmd.ExecuteNonQueryAsync(ct));
    }
+   
    public  Task CreateForeignKey(string table, string col, string refTable, string refCol, CancellationToken ct)
    {
        //Sqlite doesn't support alter table add constraint, since we are just using sqlite do demo or dev,
        //we just ignore this request
        return Task.CompletedTask;
    }
-   public async Task<Column[]> GetColumnDefinitions(string table,CancellationToken ct)
+
+   public Task CreateIndex(string table, string[] fields, bool isUnique, CancellationToken ct)
    {
-      var sql = $"PRAGMA table_info({table})";
-      return await ExecuteQuery(sql, async command =>
-      {
-         await using var reader = await command.ExecuteReaderAsync(ct);
-         var columnDefinitions = new List<Column>();
-         while (await reader.ReadAsync(ct))
-         {
-            /*cid, name, type, notnull, default_value, pk */
-            columnDefinitions.Add(new Column
-           ( 
-                Name : reader.GetString(1),
-                Type : StringToColType(reader.GetString(2))
-            ));
-         }
-         return columnDefinitions.ToArray();
-      });
+       var indexType = isUnique ? "UNIQUE" : "";
+       var indexName = $"idx_{table}_{string.Join("_", fields)}";
+       var fieldList = string.Join(", ", fields.Select(f => $"\"{f}\"")); // Use double quotes for SQLite compatibility
+
+       var sql = $"""
+                  CREATE {indexType} INDEX IF NOT EXISTS "{indexName}" 
+                  ON "{table}" ({fieldList});
+                  """;
+       return ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
    }
 
    private static string ColumnTypeToString(ColumnType dataType)

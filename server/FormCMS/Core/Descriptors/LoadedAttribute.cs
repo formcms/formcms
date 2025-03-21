@@ -1,5 +1,5 @@
-using System.Text.Json;
 using FluentResults;
+using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
 
 namespace FormCMS.Core.Descriptors;
@@ -105,41 +105,6 @@ public static class LoadedAttributeExtensions
         _ => Result.Fail($"Cannot get entity link desc for attribute [{attribute.Field}]")
     };
     
-    public static Result<object> ParseJsonElement(this LoadedAttribute attribute, JsonElement value)
-    {
-        return attribute switch
-        {
-            _ when attribute.IsCsv() && value.ValueKind is JsonValueKind.Array => string.Join(",",
-                value.EnumerateArray().Select(x => x.ToString())),
-            _ when attribute.DataType is DataType.Lookup && value.ValueKind is JsonValueKind.Object =>
-                ResolveValue(value.GetProperty(attribute.Lookup!.TargetEntity.PrimaryKey),
-                    attribute.Lookup!.TargetEntity.PrimaryKeyAttribute),
-            _ => ResolveValue(value, attribute)
-        };
-
-
-        Result<object> ResolveValue(JsonElement? ele, LoadedAttribute attr)
-        {
-            if (ele is null)
-            {
-                return Result.Ok<object>(null!);
-            }
-
-            return ele.Value.ValueKind switch
-            {
-                JsonValueKind.String when attr.ResolveVal(ele.Value.GetString()!, out var v) => v!.Value.ObjectValue!,
-                JsonValueKind.Number when ele.Value.TryGetInt64(out var longValue) => longValue,
-                JsonValueKind.Number when ele.Value.TryGetDouble(out var doubleValue) => doubleValue,
-                JsonValueKind.Number => ele.Value.GetDecimal(),
-                JsonValueKind.True => Result.Ok<object>(true),
-                JsonValueKind.False => Result.Ok<object>(false),
-                JsonValueKind.Null => Result.Ok<object>(null!),
-                JsonValueKind.Undefined => Result.Ok<object>(null!),
-                _ => Result.Fail<object>($"Fail to convert [{attr.Field}], input valueKind is [{ele.Value.ValueKind}]")
-            };
-        }
-    } 
-    
     public static bool ResolveVal(this LoadedAttribute attr, string v, out ValidValue? result)
     {
         var dataType = attr.DataType == DataType.Lookup
@@ -150,20 +115,10 @@ public static class LoadedAttributeExtensions
         {
             DataType.Text or DataType.String => result,
             DataType.Int => long.TryParse(v, out var l) ? new ValidValue(L: l) : null,
-            DataType.Datetime => ParseDate(v, out var d)? new ValidValue(D:d): null,
+            DataType.Datetime => Converter.TryParseTime(v, out var d)? new ValidValue(D:d): null,
             _ => null
         };
         return result != null;
-
-        bool ParseDate(string s, out DateTime date)
-        {
-            if (DateTime.TryParse(s,  out date))
-            {
-                if (s.EndsWith('Z')) date = date.ToUniversalTime();
-                return true;
-            }
-            return false;
-        }
     }
     
     public static object GetValueOrLookup(this LoadedAttribute attribute, Record rec)

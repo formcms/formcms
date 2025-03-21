@@ -114,7 +114,7 @@ public static class BlogsTestData
             post[TestFieldNames.Category.Camelize()] = i;
             
             post[TestFieldNames.Image.Camelize()] = RandomGetString(1);
-            post[TestFieldNames.Gallery.Camelize()] = RandomGetString(4);
+            post[TestFieldNames.Gallery.Camelize()] = RandomGetString(4).Split(',');
             
             posts.Add(post);
             

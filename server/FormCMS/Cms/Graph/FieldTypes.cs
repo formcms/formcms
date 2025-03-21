@@ -8,14 +8,14 @@ namespace FormCMS.Cms.Graph;
 
 public static  class FieldTypes
 {
-    public static ObjectGraphType PlainType(Entity entity, bool dateAsStr)
+    public static ObjectGraphType PlainType(Entity entity)
     {
         var entityType = new ObjectGraphType
         {
             Name = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(entity.Name)
         };
 
-        foreach (var attr in entity.Attributes.Where(x => !x.IsCompound()))
+        foreach (var attr in entity.Attributes.Where(x => !x.DataType.IsCompound()))
         {
 
             var fieldType = new FieldType
@@ -33,7 +33,7 @@ public static  class FieldTypes
                     fieldType.Type = typeof(ListGraphType<AssetGraphType>);
                     break;
                 default:
-                    fieldType.ResolvedType = PlainGraphType(attr,dateAsStr);
+                    fieldType.ResolvedType = PlainGraphType(attr);
                     break;
             }
             entityType.AddField(fieldType);
@@ -45,7 +45,7 @@ public static  class FieldTypes
     public static void SetCompoundType(Entity entity, Dictionary<string, GraphInfo> graphMap)
     {
         var current = graphMap[entity.Name].SingleType;
-        foreach (var attribute in entity.Attributes.Where(x => x.IsCompound()))
+        foreach (var attribute in entity.Attributes.Where(x => x.DataType.IsCompound()))
         {
             if (!attribute.TryResolveTarget(out var entityName, out var isCollection) ||
                 !graphMap.TryGetValue(entityName, out var info)) continue;
@@ -66,13 +66,13 @@ public static  class FieldTypes
         }
     }
 
-    private static IGraphType PlainGraphType( Attribute attribute, bool dateAsStr)
+    private static IGraphType PlainGraphType( Attribute attribute)
     {
         return attribute.DataType switch
         {
             DataType.Int => new IntGraphType(),
-            DataType.Datetime => dateAsStr ? new StringGraphType(): new DateTimeGraphType(),
-            _ => attribute.IsCsv()? new ListGraphType(new StringGraphType()): new StringGraphType()
+            DataType.Datetime => new DateTimeGraphType(),
+            _ => attribute.DisplayType.IsCsv()? new ListGraphType(new StringGraphType()): new StringGraphType()
         };
     }
 }

@@ -44,7 +44,7 @@ public sealed class QueryService(
         var pagination = PaginationHelper.ToValid(flyPagination, attribute.Pagination,
             desc.TargetEntity.DefaultPageSize, true, args);
 
-        var fields = attribute.Selection.Where(x => x.IsLocal()).ToArray();
+        var fields = attribute.Selection.Where(x => x.DataType.IsLocal()).ToArray();
         var validSpan = span.ToValid(fields).Ok();
 
         var filters = FilterHelper.ReplaceVariables(attribute.Filters,args).Ok();
@@ -100,7 +100,7 @@ public sealed class QueryService(
         }
         else
         {
-            var fields = query.Selection.Where(x => x.IsLocal());
+            var fields = query.Selection.Where(x => x.DataType.IsLocal());
             var status = PublicationStatusHelper.GetDataStatus(args);
             var kateQuery = query.Entity.ListQuery( filters, sorts, pagination.PlusLimitOne(), validSpan, fields, status);
             if (query.Distinct) kateQuery = kateQuery.Distinct();
@@ -162,7 +162,7 @@ public sealed class QueryService(
         }
         else
         {
-            var fields = query.Selection.Where(x => x.IsLocal());
+            var fields = query.Selection.Where(x => x.DataType.IsLocal());
             PublicationStatus? pubStatus = args.ContainsEnumKey(SpecialQueryKeys.Preview) ? null : PublicationStatus.Published;
             var kateQuery = query.Entity.SingleQuery(filters, sorts,fields ,pubStatus).Ok();
             item = await executor.Single(kateQuery, ct);
@@ -185,12 +185,13 @@ public sealed class QueryService(
         
         foreach (var attr in attrs)
         {
-            if (attr.IsCompound())
+            if (attr.DataType.IsCompound())
             {
                 await AttachRelated(attr, args, items, ct);
-            }else if (attr.IsCsv())
+            }
+            else
             {
-                attr.SpreadCsv(items);
+                attr.FormatForDisplay(items);
             }
         }
     }
@@ -217,7 +218,7 @@ public sealed class QueryService(
         if (collectionArgs?.Pagination is null)
         {
             //get all items and no pagination
-            var query = desc.GetQuery(attr.Selection.Where(x=>x.IsLocal()) ,ids, collectionArgs, 
+            var query = desc.GetQuery(attr.Selection.Where(x=>x.DataType.IsLocal()) ,ids, collectionArgs, 
                 PublicationStatusHelper.GetDataStatus(args));
             var targetRecords = await executor.Many(query, ct);
             
@@ -239,7 +240,7 @@ public sealed class QueryService(
         }
         else
         {
-            var fields = attr.Selection.Where(x => x.IsLocal()).ToArray();
+            var fields = attr.Selection.Where(x => x.DataType.IsLocal()).ToArray();
             var pubStatus = PublicationStatusHelper.GetDataStatus(args);
             var plusOneArgs = collectionArgs with { Pagination = collectionArgs.Pagination.PlusLimitOne() };
             foreach (var id in ids)

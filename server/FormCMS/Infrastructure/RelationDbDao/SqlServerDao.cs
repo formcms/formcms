@@ -10,43 +10,38 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
 {
     private readonly Compiler _compiler = new SqlServerCompiler();
     private TransactionManager? _transaction;
-
-    public bool ReturnDateUsesDateType() => true;
-    
-    public async Task CreateIndex(string table, string[]fields, bool isUnique, CancellationToken ct)
-    {
-        var indexName = $"idx_{table}_{string.Join("_", fields)}";
-        var unique = isUnique ? "UNIQUE" : "";
-        var columnList = string.Join(", ", fields.Select(field => $"[{field}]"));
-        var sql = $"""
-                   IF NOT EXISTS (
-                       SELECT 1 FROM sys.indexes
-                       WHERE name = '{indexName}' AND object_id = OBJECT_ID('{table}')
-                   )
-                   BEGIN
-                       CREATE {unique} INDEX [{indexName}] ON [{table}] ({columnList});
-                   END;
-                   """;
-
-        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
-    }
-
     public async ValueTask<TransactionManager> BeginTransaction()
-    {
-        var ret = new TransactionManager(await connection.BeginTransactionAsync());
-        _transaction = ret;
-        return ret;
-    }
-    
+            => _transaction = new TransactionManager(await connection.BeginTransactionAsync());
     public bool InTransaction() => _transaction?.Transaction() != null;
-    
-
-
     public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
     {
         var db = new QueryFactory(connection, _compiler);
         db.Logger = result => logger.LogInformation(result.ToString());
         return await queryFunc(db, _transaction?.Transaction());
+    }
+
+    public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct)
+    {
+        var sql = @"
+                SELECT COLUMN_NAME, DATA_TYPE
+                FROM INFORMATION_SCHEMA.COLUMNS
+                WHERE TABLE_NAME = @tableName";
+
+        return await ExecuteQuery(sql, async command =>
+        {
+            var columnDefinitions = new List<Column>();
+            await using var reader = await command.ExecuteReaderAsync(ct);
+            while (await reader.ReadAsync(ct))
+            {
+                columnDefinitions.Add(new Column
+                (
+                    Name: reader.GetString(0),
+                    Type: StringToDataType(reader.GetString(1))
+                ));
+            }
+
+            return columnDefinitions.ToArray();
+        }, ("tableName", table));
     }
 
     public async Task CreateTable(string table, IEnumerable<Column> cols,  CancellationToken ct)
@@ -106,28 +101,23 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
                    """;
         await ExecuteQuery(sql, cmd => cmd.ExecuteNonQueryAsync(ct));
     }
-    public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct)
+    
+    public async Task CreateIndex(string table, string[] fields, bool isUnique, CancellationToken ct)
     {
-        var sql = @"
-                SELECT COLUMN_NAME, DATA_TYPE
-                FROM INFORMATION_SCHEMA.COLUMNS
-                WHERE TABLE_NAME = @tableName";
+        var indexName = $"idx_{table}_{string.Join("_", fields)}";
+        var unique = isUnique ? "UNIQUE" : "";
+        var columnList = string.Join(", ", fields.Select(field => $"[{field}]"));
+        var sql = $"""
+                   IF NOT EXISTS (
+                       SELECT 1 FROM sys.indexes
+                       WHERE name = '{indexName}' AND object_id = OBJECT_ID('{table}')
+                   )
+                   BEGIN
+                       CREATE {unique} INDEX [{indexName}] ON [{table}] ({columnList});
+                   END;
+                   """;
 
-        return await ExecuteQuery(sql, async command =>
-        {
-            var columnDefinitions = new List<Column>();
-            await using var reader = await command.ExecuteReaderAsync(ct);
-            while (await reader.ReadAsync(ct))
-            {
-                columnDefinitions.Add(new Column
-                ( 
-                    Name : reader.GetString(0),
-                    Type : StringToDataType(reader.GetString(1))
-                ));
-            }
-
-            return columnDefinitions.ToArray();
-        }, ("tableName", table));
+        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
     }
 
     private static string ColumnTypeToString(ColumnType dataType)

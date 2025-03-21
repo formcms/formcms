@@ -12,7 +12,7 @@ public static class Args
     public static QueryArgument[] FilterArgs(Entity entity, Dictionary<string, GraphInfo> graphMap)
     {
         var args = new List<QueryArgument>();
-        var arr = entity.Attributes.Where(x => x.IsLocal()).ToArray();
+        var arr = entity.Attributes.Where(x => x.DataType.IsLocal()).ToArray();
         args.AddRange(arr.Select(a=>SimpleFilter(a,graphMap)));
         args.AddRange(arr.Select(ComplexFilter));
         return args.ToArray();
@@ -65,7 +65,7 @@ public static class Args
         {
             Name = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(entity.Name) + "SortEnum"
         };
-        var arr = entity.Attributes.Where(x=>x.IsLocal()).ToArray();
+        var arr = entity.Attributes.Where(x=>x.DataType.IsLocal()).ToArray();
         foreach (var attribute in arr)
         {
             type.Add(new EnumValueDefinition(attribute.Field, attribute.Field));

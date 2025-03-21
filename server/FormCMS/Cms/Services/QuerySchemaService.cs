@@ -3,9 +3,11 @@ using FormCMS.Cms.Graph;
 using FluentResults;
 using FluentResults.Extensions;
 using FormCMS.Core.Descriptors;
+using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.GraphTypeConverter;
 using FormCMS.Utils.ResultExt;
 using GraphQLParser.AST;
+using Converter = FormCMS.Utils.GraphTypeConverter.Converter;
 using Query = FormCMS.Core.Descriptors.Query;
 using Schema = FormCMS.Core.Descriptors.Schema;
 
@@ -119,10 +121,10 @@ public sealed class QuerySchemaService(
     {
         return fields.ShortcutMap( async field =>
                     await entitySchemaSvc.LoadSingleAttrByName(entity, field.Name.StringValue, status, ct)
-                        .Map(attr => attr.ToGraph(attr.IsAsset()?GetAssetFields(field): []))
+                        .Map(attr => attr.ToGraph(attr.DisplayType.IsAsset()?GetAssetFields(field): []))
                         .Map(attr => attr with { Prefix = prefix })
                         .Bind(
-                            async attr => attr.IsCompound()
+                            async attr => attr.DataType.IsCompound()
                                 ? await LoadChildren(
                                     string.IsNullOrEmpty(prefix) ? attr.Field : $"{prefix}.{attr.Field}", attr, field)
                                 : attr)

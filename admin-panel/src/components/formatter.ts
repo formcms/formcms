@@ -19,7 +19,6 @@ export const toZonelessStr = (date : Date|undefined|null) => {
 export const toDatetime = (s:string) => {
     s = s.replaceAll(' ', 'T');
     var d = new Date(s);
-    console.log("todatetime",{d});
     return d;
 }
 
