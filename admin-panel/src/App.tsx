@@ -5,18 +5,17 @@ import 'primeflex/primeflex.css'; // flex
 import './App.css';
 import {TopMenuBar} from "./layout/TopMenuBar";
 import React  from "react";
-import {setCmsApiBaseUrl} from "./cms-client/configs";
+import {setCmsApiBaseUrl} from "../lib/admin-panel-lib/cms/configs";
 import {configs} from "./config";
-import {EntityRouter} from "./cms-client/EntityRouter";
+import {EntityRouter} from "../lib/admin-panel-lib/cms/EntityRouter";
 import {Route, Routes} from "react-router-dom";
 import axios from "axios";
-import {useUserInfo} from "./auth/services/auth";
+import {useUserInfo} from "../lib/admin-panel-lib/auth/services/auth";
 import UserAvatarDropdown from "./layout/UserAvatarDropDown";
-import {AccountRouter, NotLoginAccountRouter} from "./auth/AccountRouter";
-import { AuditLogRouter } from './auditLog/AuditLogRouter';
-import { setAuditLogBaseUrl } from './auditLog/config';
-import { setAuthApiBaseUrl } from './auth/configs';
-import { DataListPage } from './cms-client/pages/DataListPage';
+import {AccountRouter, NotLoginAccountRouter} from "../lib/admin-panel-lib/auth/AccountRouter";
+import { AuditLogRouter } from '../lib/admin-panel-lib/auditLog/AuditLogRouter';
+import { setAuditLogBaseUrl } from '../lib/admin-panel-lib/auditLog/config';
+import { setAuthApiBaseUrl } from '../lib/admin-panel-lib/auth/configs';
 
 setCmsApiBaseUrl(configs.apiURL)
 setAuditLogBaseUrl(configs.apiURL)

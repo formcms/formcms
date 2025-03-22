@@ -1,12 +1,12 @@
 import {Menubar} from 'primereact/menubar';
 import React from "react";
-import {useTopMenuBar} from "../auth/services/menu";
+import {useTopMenuBar} from "../../lib/admin-panel-lib/auth/services/menu";
 import { useNavigate} from "react-router-dom";
 import {configs} from "../config";
-import {RoleRoute, UserRoute} from "../auth/AccountRouter";
-import { UserAccess } from '../auth/types/userAccess';
-import {AssetsRouter, TasksRouter } from '../cms-client/EntityRouter';
-import { useAssetEntity } from '../cms-client/services/asset';
+import {RoleRoute, UserRoute} from "../../lib/admin-panel-lib/auth/AccountRouter";
+import { UserAccess } from '../../lib/admin-panel-lib/auth/types/userAccess';
+import {AssetsRouter, TasksRouter } from '../../lib/admin-panel-lib/cms/EntityRouter';
+import { useAssetEntity } from '../../lib/admin-panel-lib/cms/services/asset';
 
 
 const entityPrefix = '/entities'

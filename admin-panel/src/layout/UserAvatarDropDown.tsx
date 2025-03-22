@@ -2,10 +2,10 @@ import React, {useRef} from 'react';
 import {Avatar} from 'primereact/avatar';
 import {Menu} from 'primereact/menu';
 import CryptoJS from 'crypto-js';
-import {logout, useUserInfo} from "../auth/services/auth";
+import {logout, useUserInfo} from "../../lib/admin-panel-lib/auth/services/auth";
 import { useNavigate} from "react-router-dom";
 import {configs} from "../config";
-import {ChangePasswordRoute} from "../auth/AccountRouter";
+import {ChangePasswordRoute} from "../../lib/admin-panel-lib/auth/AccountRouter";
 
 const getGravatarUrl = (email: string) => {
     const trimmedEmail = email.trim().toLowerCase();
