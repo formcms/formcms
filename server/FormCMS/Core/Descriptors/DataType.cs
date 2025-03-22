@@ -49,6 +49,7 @@ public static class DataTypeHelper
         (DataType.Text, DisplayType.Gallery),
         (DataType.Text, DisplayType.Textarea),
         (DataType.Text, DisplayType.Editor),
+        (DataType.Text, DisplayType.Dictionary),
 
         (DataType.Lookup, DisplayType.Lookup),
         (DataType.Lookup, DisplayType.TreeSelect),

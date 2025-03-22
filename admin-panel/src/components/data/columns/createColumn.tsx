@@ -9,6 +9,7 @@ const formmater :any = {
     [DisplayType.LocalDatetime]: utcStrToDatetimeStr,
     [DisplayType.Date]: toDateStr,
     [DisplayType.Multiselect]: (x:any)=>x.join(','),
+    [DisplayType.Dictionary]: (x:any)=> Object.entries(x).map(([k,v])=>(`${k}:${v}`)).join(', ')
 }
 
 export function createColumn(

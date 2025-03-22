@@ -4,8 +4,9 @@ import {Button} from "primereact/button";
 import {useCheckError} from "../../components/useCheckError";
 import {useParams} from "react-router-dom";
 import {PageLayout} from "./PageLayout";
-import { XEntity } from "../types/xEntity";
+import {DisplayType, XEntity } from "../types/xEntity";
 import { getFileUploadURL, useGetCmsAssetsUrl } from "../services/asset";
+import { ArrayToObject } from "../../components/inputs/DictionaryInputUtils";
 
 export function NewDataItemPage({baseRouter}:{baseRouter:string}) {
     const {schemaName} = useParams()
@@ -37,6 +38,10 @@ export function NewDataItemPageComponent({schema,baseRouter}:{schema:XEntity, ba
     }
     
     const onSubmit = async (formData: any) => {
+        schema.attributes.filter(x=>x.displayType == DisplayType.Dictionary).forEach(a=>{
+            formData[a.field] = ArrayToObject(formData[a.field]);
+        });
+        
         const {data, error} = await addItem(schema.name, formData)
         handleErrorOrSuccess(error, 'Save Succeed', ()=> {
             window.location.href = `${baseRouter}/${schema.name}/${data[schema.primaryKey]}`;

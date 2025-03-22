@@ -24,8 +24,6 @@ public class SortTest(QueryApiClient client, string queryName)
         SimpleAssert.IsTrue(items[0].Id() < items[1].Id(), "Test ascending Fail");
     }
 
-   
-
     public async Task VerifySortExpression()
     {
         var items = await $$"""

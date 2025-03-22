@@ -21,6 +21,7 @@ import {PublicationStatus} from "../types/publicationStatus";
 import {SpecialQueryKeys} from "../types/specialQueryKeys";
 import {getFileUploadURL, useGetCmsAssetsUrl} from "../services/asset";
 import {DefaultColumnNames} from "../types/defaultColumnNames";
+import { ArrayToObject } from "../../components/inputs/DictionaryInputUtils";
 
 export function DataItemPage({baseRouter}: { baseRouter: string }) {
     const {schemaName} = useParams()
@@ -90,6 +91,10 @@ export function DataItemPageComponent(
     async function onSubmit(formData: any) {
         formData[schema.primaryKey] = id
         formData[DefaultColumnNames.UpdatedAt] = data[DefaultColumnNames.UpdatedAt];
+        
+        schema.attributes.filter(x=>x.displayType == DisplayType.Dictionary).forEach(a=>{
+            formData[a.field] = ArrayToObject(formData[a.field]);
+        });
 
         const {error} = await updateItem(schema.name, formData)
         await handlePageErrorOrSucess(error, 'Save Succeed', mutate)

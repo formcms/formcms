@@ -14,6 +14,8 @@ public enum TestFieldNames
     Description,
     Image,
     Gallery,
+    Language,
+    MetaData,
     Post,
     
     Title,
@@ -115,6 +117,9 @@ public static class BlogsTestData
             
             post[TestFieldNames.Image.Camelize()] = RandomGetString(1);
             post[TestFieldNames.Gallery.Camelize()] = RandomGetString(4).Split(',');
+            
+            post[TestFieldNames.MetaData.Camelize()] = new { Key = "Value" };
+            post[TestFieldNames.Language.Camelize()] = new string[]{"English","French"};
             
             posts.Add(post);
             
@@ -251,6 +256,8 @@ public static class BlogsTestData
                 TestFieldNames.Body.CreateAttr(),
                 TestFieldNames.Image.CreateAttr() with{DisplayType = DisplayType.Image},
                 TestFieldNames.Gallery.CreateAttr() with{DisplayType = DisplayType.Gallery, DataType = DataType.Text},
+                TestFieldNames.Language.CreateAttr() with{DisplayType = DisplayType.Multiselect, DataType = DataType.Text,Options = "English,French"},
+                TestFieldNames.MetaData.CreateAttr() with{DisplayType = DisplayType.Dictionary, DataType = DataType.Text},
 
                 TestFieldNames.Attachments.CreateAttr() with{DisplayType = DisplayType.EditTable, DataType = DataType.Collection,
                     Options = $"{TestEntityNames.TestAttachment.Camelize()}.{TestFieldNames.Post.Camelize()}"},

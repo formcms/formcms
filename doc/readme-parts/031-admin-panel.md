@@ -16,8 +16,10 @@ The Admin Panel supports various UI controls to display attributes:
 - `"text"`: Single-line text input.
 - `"textarea"`: Multi-line text input.
 - `"editor"`: Rich text input.
+- `"dictionary"`: Key-Value pairs
 
 - `"number"`: Single-line text input for numeric values only.
+- `"localDatetime"`: Datetime picker for date and time inputs, displayed as the browser's timezone.
 - `"datetime"`: Datetime picker for date and time inputs.
 - `"date"`: Date picker for date-only inputs.
 
@@ -44,6 +46,7 @@ Below is a mapping of valid `DataType` and `DisplayType` combinations:
 | **DataType**  | **DisplayType** | **Description**                               |
 |---------------|-----------------|-----------------------------------------------|
 | Int           | Number          | Input for integers.                           |
+| Datetime      | LocalDatetime   | Datetime picker for local datetime.           |
 | Datetime      | Datetime        | Datetime picker for date and time inputs.     |
 | Datetime      | Date            | Date picker for date-only inputs.             |
 | String        | Number          | Input for numeric values.                     |
@@ -60,6 +63,7 @@ Below is a mapping of valid `DataType` and `DisplayType` combinations:
 | Text          | Gallery         | Multiple image uploads.                       |
 | Text          | Textarea        | Multi-line text input.                        |
 | Text          | Editor          | Rich text editor.                             |
+| Text          | Dictionary      | Key-Value Pair                                |
 | Lookup        | Lookup          | Select an item from another entity.           |
 | Lookup        | TreeSelect      | Select an item from another entity.           |
 | Junction      | Picklist        | Select multiple items from another entity.    |

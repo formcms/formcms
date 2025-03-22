@@ -72,7 +72,9 @@ public static  class FieldTypes
         {
             DataType.Int => new IntGraphType(),
             DataType.Datetime => new DateTimeGraphType(),
-            _ => attribute.DisplayType.IsCsv()? new ListGraphType(new StringGraphType()): new StringGraphType()
+            _ when attribute.DisplayType is DisplayType.Dictionary=> new JsonGraphType(),
+            _ when attribute.DisplayType.IsCsv()=> new ListGraphType(new StringGraphType()),
+            _ => new StringGraphType()
         };
     }
 }
