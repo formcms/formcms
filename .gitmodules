@@ -1,0 +1,3 @@
+[submodule "admin-panel/lib/admin-panel-lib"]
+	path = admin-panel/lib/admin-panel-lib
+	url = https://github.com/FormCMS/formcms-admin-panel.git
