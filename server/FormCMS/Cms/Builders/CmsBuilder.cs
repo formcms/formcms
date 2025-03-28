@@ -44,6 +44,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         Action<SystemSettings>? optionsAction = null)
     {
 
+        
         //only set options to FormCMS enum types.
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<DataType>);
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<DisplayType>);
@@ -107,7 +108,11 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             services.AddSingleton<PageTemplate>(p =>
             {
                 var provider = p.GetRequiredService<IWebHostEnvironment>().WebRootFileProvider;
-                var fileInfo = provider.GetFileInfo($"{FormCmsContentRoot}/static-assets/templates/template.html");
+                var fileInfo = provider.GetFileInfo("/static-assets/templates/template.html");
+                if (!fileInfo.Exists)
+                {
+                    fileInfo =provider.GetFileInfo($"{FormCmsContentRoot}/static-assets/templates/template.html");
+                }
                 return new PageTemplate(new PageTemplateConfig(fileInfo.PhysicalPath!));
             });
         }
@@ -162,7 +167,16 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
     public async Task UseCmsAsync(WebApplication app)
     {
         var options = app.Services.GetRequiredService<SystemSettings>();
-        var dbOptions = app.Services.GetRequiredService<DbOption>();
+        var webRootFileProvider = app.Services.GetRequiredService<IWebHostEnvironment>().WebRootFileProvider;
+        var (adminPath, schemaBuilderPath) = ("/admin", "/schema-ui/list.html");
+        if (!webRootFileProvider.GetFileInfo(adminPath+"/index.html").Exists)
+        {
+            adminPath = FormCmsContentRoot + adminPath;
+        }
+        if (!webRootFileProvider.GetFileInfo(schemaBuilderPath).Exists)
+        {
+            schemaBuilderPath = FormCmsContentRoot + schemaBuilderPath;
+        }
 
         PrintVersion();
         await InitTables();
@@ -183,8 +197,11 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         void UserRedirects()
         {
             var rewriteOptions = new RewriteOptions();
-            rewriteOptions.AddRedirect(@"^admin$", $"{FormCmsContentRoot}/admin");
-            rewriteOptions.AddRedirect(@"^schema$", $"{FormCmsContentRoot}/schema-ui/list.html");
+            if (adminPath.StartsWith(FormCmsContentRoot))
+            {
+                rewriteOptions.AddRedirect(@"^admin$", adminPath);
+            }
+            rewriteOptions.AddRedirect(@"^schema$", schemaBuilderPath);
             app.UseRewriter(rewriteOptions);
         }
 
@@ -209,24 +226,22 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             apiGroup.MapGroup("/tasks").MapTasksHandler();
 
             app.MapGroup(options.RouteOptions.PageBaseUrl)
-                .MapPages("doc","files","favicon.ico", options.RouteOptions.ApiBaseUrl)
+                .MapPages("admin", "doc", "files", "favicon.ico", options.RouteOptions.ApiBaseUrl)
                 .CacheOutput(options.PageCachePolicy);
             if (options.MapCmsHomePage) app.MapHomePage().CacheOutput(options.PageCachePolicy);
         }
 
         void UseAdminPanel()
         {
-            const string adminPanel = "/admin";
-            app.MapWhen(context => context.Request.Path.StartsWithSegments($"{FormCmsContentRoot}{adminPanel}"),
+            app.MapWhen(context => context.Request.Path.StartsWithSegments(adminPath),
                 subApp =>
                 {
                     subApp.UseRouting();
                     subApp.UseEndpoints(endpoints =>
                     {
-                        endpoints.MapFallbackToFile($"{FormCmsContentRoot}{adminPanel}",
-                            $"{FormCmsContentRoot}{adminPanel}/index.html");
-                        endpoints.MapFallbackToFile($"{FormCmsContentRoot}{adminPanel}/{{*path:nonfile}}",
-                            $"{FormCmsContentRoot}{adminPanel}/index.html");
+                        endpoints.MapFallbackToFile(adminPath, $"{adminPath}/index.html");
+                        endpoints.MapFallbackToFile($"{adminPath}/{{*path:nonfile}}",
+                            $"{adminPath}/index.html");
                     });
                 });
         }
@@ -270,21 +285,24 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             var title = assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
             var informationalVersion =
                 assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            var dbOptions = app.Services.GetRequiredService<DbOption>();
             var parts = dbOptions.ConnectionString.Split(";").Where(x => !x.StartsWith("Password"));
 
             logger.LogInformation(
-                $$$"""
+                $"""
                    *********************************************************
-                   Using {{{title}}}, Version {{{informationalVersion?.Split("+").First()}}}
-                   Database : {{{dbOptions.Provider}}} - {{{string.Join(";", parts)}}}
-                   Client App is Enabled :{{{options.EnableClient}}}
-                   Use CMS' home page: {{{options.MapCmsHomePage}}}
-                   GraphQL Client Path: {{{options.GraphQlPath}}}
-                   RouterOption: API Base URL={{{options.RouteOptions.ApiBaseUrl}}} Page Base URL={{{options.RouteOptions.PageBaseUrl}}}
-                   Image Compression: MaxWidth={{{options.ImageCompression.MaxWidth}}}, Quality={{{options.ImageCompression.Quality}}}
-                   Schema Cache Settings: Entity Schema Expiration={{{options.EntitySchemaExpiration}}}, Query Schema Expiration = {{{options.QuerySchemaExpiration}}}
-                   Output Cache Settings: Page CachePolicy={{{options.PageCachePolicy}}}, Query Cache Policy={{{options.QueryCachePolicy}}}
-                   DOTNET_ENVIRONMENT: {{{Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")}}}
+                   Using {title}, Version {informationalVersion?.Split("+").First()}
+                   Database : {dbOptions.Provider} - {string.Join(";", parts)}
+                   Client App is Enabled :{options.EnableClient}
+                   Use CMS' home page: {options.MapCmsHomePage}
+                   Admin Panel Path: {adminPath}
+                   Schema Builder Path: {schemaBuilderPath}
+                   GraphQL Client Path: {options.GraphQlPath}
+                   RouterOption: API Base URL={options.RouteOptions.ApiBaseUrl} Page Base URL={options.RouteOptions.PageBaseUrl}
+                   Image Compression: MaxWidth={options.ImageCompression.MaxWidth}, Quality={options.ImageCompression.Quality}
+                   Schema Cache Settings: Entity Schema Expiration={options.EntitySchemaExpiration}, Query Schema Expiration = {options.QuerySchemaExpiration}
+                   Output Cache Settings: Page CachePolicy={options.PageCachePolicy}, Query Cache Policy={options.QueryCachePolicy}
+                   DOTNET_ENVIRONMENT: {Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")}
                    *********************************************************
                    """);
         }
