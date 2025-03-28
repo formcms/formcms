@@ -9,30 +9,24 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@monaco-editor/react": "^4.6.0",
-    "@types/qs": "^6.9.9",
-    "axios": "1.7.4",
-    "crypto-js": "^4.2.0",
-    "js-cookie": "^3.0.5",
-    "lodash": "^4.17.21",
-    "primeflex": "^3.3.1",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "axios": "^1.8.4",
+    "primeflex": "^4.0.0",
     "primeicons": "^7.0.0",
-    "primereact": "^10.8.0",
+    "primereact": "^10.9.3",
     "qs": "^6.11.2",
-    "quill": "2.0.0-rc.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-helmet": "^6.1.0",
+    "quill": "^2.0.3",
     "react-hook-form": "^7.47.0",
     "react-router-dom": "^6.17.0",
-    "swr": "^2.2.4"
+    "swr": "^2.3.3"
   },
   "devDependencies": {
+    "@types/qs": "^6.9.9",
     "@types/crypto-js": "^4.2.2",
     "@types/react": "latest",
     "@types/react-dom": "latest",
-    "@types/react-helmet": "^6.1.11",
-    "@vitejs/plugin-react": "latest",
+    "@vitejs/plugin-react": "^4.3.4",
     "typescript": "latest",
     "vite": "5.4.6"
   }

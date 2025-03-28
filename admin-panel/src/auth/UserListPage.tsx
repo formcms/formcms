@@ -1,10 +1,11 @@
 import {useUserListPage} from "../../lib/admin-panel-lib/auth/pages/useUserListPage";
+import {GlobalStateKeys, useGlobalState} from "../globalState";
 
 export function UserListPage() {
+    const [layout, _] = useGlobalState<string>( GlobalStateKeys.Layout, 'sidebar');
     const {UserListPageMain} = useUserListPage()
     return <>
-        <h2>User list</h2>
-        <div className="card"></div>
+        {layout !=='sidebar' && <h2>User list</h2>}
         <UserListPageMain/>
     </>
 }

@@ -2,17 +2,32 @@ import {Button} from "primereact/button";
 import {FileUpload} from "primereact/fileupload";
 import {useAssetEditPage} from "../../lib/admin-panel-lib/cms/pages/useAssetEditPage";
 import {EntityPageProps} from "../../lib/admin-panel-lib/cms/EntityRouter";
+import {GlobalStateKeys, useGlobalState} from "../globalState";
 
 export function AssetEditPage({schema,baseRouter}:EntityPageProps) {
     const {
-        formId, replaceAssetUrl,
+        asset,formId, replaceAssetUrl,
         handleDownload, handleUpload, handleDelete,
-        FeaturedImage, AssetLinkTable, MetaDataForm,FileInfo
+        FeaturedImage, AssetLinkTable, MetaDataForm
     } = useAssetEditPage(baseRouter,schema);
+    const [lan] = useGlobalState<string>( GlobalStateKeys.Language, 'en');
     return <>
+        <h3>{lan==='en'?'Edit ':'编辑'} {asset.name}</h3>
         <FeaturedImage/>
         <br/>
-        <FileInfo/>
+        {
+            asset && <div className="mt-2 flex gap-4">
+                <label className="block font-bold">File Name:</label>
+                <label>{asset.name}</label>
+
+                <label className="block font-bold">Type:</label>
+                <label className="block">{asset.type}</label>
+
+                <label className="block font-bold">Size:</label>
+                <label>{asset.size}</label>
+
+            </div>
+        }
         <br/>
         <div style={{display: "flex", gap: "10px", alignItems: "center"}}>
             <Button

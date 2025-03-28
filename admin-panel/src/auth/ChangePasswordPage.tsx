@@ -7,8 +7,11 @@ import 'primereact/resources/themes/saga-blue/theme.css';
 import 'primereact/resources/primereact.min.css';
 import 'primeicons/primeicons.css';
 import {useChangePasswordPage} from "../../lib/admin-panel-lib/auth/pages/useChangePasswordPage";
+import {GlobalStateKeys, useGlobalState} from "../globalState";
 
 export const ChangePasswordPage: React.FC = () => {
+    const [lan] = useGlobalState<string>( GlobalStateKeys.Language, 'en');
+
     const {
         errors, success,
         oldPassword, setOldPassword,
@@ -31,7 +34,7 @@ export const ChangePasswordPage: React.FC = () => {
 
     return (
         <div style={containerStyle}>
-            <Card title="Change Password" className="p-shadow-5" style={cardStyle}>
+            <Card title={lan === 'en' ?'Change Password': '更改密码'} className="p-shadow-5" style={cardStyle}>
                 <div className="p-fluid">
                     {errors.map(error => (
                         <div className="p-field" key={error}><span className="p-error">{error}</span></div>))}
@@ -44,7 +47,7 @@ export const ChangePasswordPage: React.FC = () => {
                     ) : (
                         <>
                             <div className="p-field">
-                                <label htmlFor="oldPassword">Password</label>
+                                <label htmlFor="oldPassword">{lan === 'en' ?'Password': '密码'}</label>
                                 <Password
                                     id="username"
                                     value={oldPassword} toggleMask
@@ -52,7 +55,7 @@ export const ChangePasswordPage: React.FC = () => {
                                 />
                             </div>
                             <div className="p-field">
-                                <label htmlFor="password">New Password</label>
+                                <label htmlFor="password">{lan === 'en' ?'New Password':'新密码'}</label>
                                 <Password
                                     id="password"
                                     value={password}
@@ -61,7 +64,7 @@ export const ChangePasswordPage: React.FC = () => {
                                 />
                             </div>
                             <div className="p-field">
-                                <label htmlFor="confirmPassword">Confirm New Password</label>
+                                <label htmlFor="confirmPassword">{lan === 'en' ?'Confirm New Password': '确认新密码'}</label>
                                 <Password
                                     id="confirmPassword"
                                     value={confirmPassword} toggleMask
@@ -70,7 +73,7 @@ export const ChangePasswordPage: React.FC = () => {
                                 />
                             </div>
                             <Button
-                                label="Submit"
+                                label={lan === 'en' ?'Submit': '提交'}
                                 icon="pi pi-check"
                                 onClick={handleChangePassword}
                                 className="p-mt-2"
