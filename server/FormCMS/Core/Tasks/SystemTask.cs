@@ -58,12 +58,12 @@ public static class TaskHelper
             XAttrExtensions.CreateAttr<SystemTask, long>(x => x.Id, isDefault: true),
             XAttrExtensions.CreateAttr<SystemTask, object>(x => x.Type),
             XAttrExtensions.CreateAttr<SystemTask, object>(x => x.TaskStatus),
-            XAttrExtensions.CreateAttr<SystemTask, string>(x => x.TaskId),
-            XAttrExtensions.CreateAttr<SystemTask, string>(x => x.CreatedBy),
+            XAttrExtensions.CreateAttr<SystemTask, string>(x => x.TaskId, inList: false,isDefault:true),
+            XAttrExtensions.CreateAttr<SystemTask, string>(x => x.CreatedBy,inList:false,isDefault:true),
             XAttrExtensions.CreateAttr<SystemTask, int>(x => x.Progress),
             XAttrExtensions.CreateAttr<SystemTask, string>(x => x.Error),
             XAttrExtensions.CreateAttr<SystemTask, DateTime>(x => x.CreatedAt, isDefault: true),
-            XAttrExtensions.CreateAttr<SystemTask, DateTime>(x => x.UpdatedAt, isDefault: true),
+            XAttrExtensions.CreateAttr<SystemTask, DateTime>(x => x.UpdatedAt, isDefault: true,inList:false),
         ]);
     
     public static readonly Column[] Columns =
@@ -127,7 +127,7 @@ public static class TaskHelper
         => new SqlKata.Query(TableName)
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .Where(nameof(SystemTask.Id).Camelize(), id)
-            .Select(Entity.Attributes.Where(x => x.InList).Select(x => x.Field));
+            .Select(Entity.Attributes.Select(x => x.Field));
 
     public static SqlKata.Query List(int?offset = null, int? limit = null)
     {

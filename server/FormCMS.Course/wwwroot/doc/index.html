@@ -113,6 +113,11 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-bs-level="2"><a href="#customizing-the-admin-panel" class="nav-link">Customizing the Admin Panel</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#graphql-query" class="nav-link">GraphQL Query</a>
               <ul class="nav flex-column">
               </ul>
@@ -1096,6 +1101,41 @@ public interface IFileStore
 <li><strong>Simplicity</strong>: Clear separation of use cases reduces confusion in data entry and display.</li>
 <li><strong>Scalability</strong>: Standardized UTC storage supports global applications without time zone conflicts.</li>
 </ul>
+<hr />
+<h2 id="customizing-the-admin-panel">Customizing the Admin Panel</h2>
+<p>FormCms' Modular Component Structure simplifies modifying UI text, replacing UI components, and swapping entire pages.</p>
+<h3 id="using-submodules-instead-of-npm">Using Submodules Instead of NPM</h3>
+<p>A <strong>Git submodule</strong> is a feature in Git that allows you to embed one Git repository inside another as a subdirectory. It’s a way to include an external repository’s code (like the FormCms SDK, available at <a href="https://github.com/FormCms/FormCmsAdminSdk">https://github.com/FormCms/FormCmsAdminSdk</a>) within your project while keeping its history and updates separate. Unlike installing a package via <code>npm</code>, which provides a bundled, often minified version, a submodule gives you the full, readable source code. The submodule is an independent repository pinned to a specific commit, ensuring consistency until you choose to update it. This makes it ideal for customization, debugging, or upgrading the SDK version directly in your project.</p>
+<p>To update a submodule to a newer version, you can run:</p>
+<pre><code>git submodule update --remote
+</code></pre>
+<p>Then commit the updated reference in your parent repository.</p>
+<h3 id="creating-your-own-adminpanelapp">Creating Your Own AdminPanelApp</h3>
+<p>To set up your custom AdminPanelApp with submodules, use the example repository <a href="https://github.com/FormCms/FormCmsAdminApp">https://github.com/FormCms/FormCmsAdminApp</a> and follow these steps:</p>
+<pre><code>git clone --recurse-submodules https://github.com/FormCms/FormCmsAdminApp.git
+cd FormCmsAdminApp
+pnpm install
+pnpm dev
+</code></pre>
+<p>The <code>--recurse-submodules</code> flag ensures the submodules (including the SDK from <a href="https://github.com/FormCms/FormCmsAdminSdk">https://github.com/FormCms/FormCmsAdminSdk</a>) are cloned along with the main repository.</p>
+<h3 id="replacing-the-default-adminpanel-with-your-customized-version">Replacing the Default AdminPanel with Your Customized Version</h3>
+<p>After customizing your AdminPanelApp, build it using:</p>
+<pre><code>pnpm build
+</code></pre>
+<p>Then, copy all files from the <code>dist</code> directory to <code>&lt;your backend project&gt;\wwwroot\admin</code>.</p>
+<h3 id="customizing-the-app-layout-and-logo">Customizing the App Layout and Logo</h3>
+<p>The router is integrated into the SDK (<a href="https://github.com/FormCms/FormCmsAdminSdk">https://github.com/FormCms/FormCmsAdminSdk</a>), and <code>FormCmsAdminSdk</code> provides three hooks to retrieve menu items:
+- <code>useEntityMenuItems</code>
+- <code>useAssetMenuItems</code>
+- <code>useSystemMenuItems</code></p>
+<p>You can use these menu items to design your app’s entry layout UI and update the app logo within this structure.</p>
+<h3 id="modifying-page-language">Modifying Page Language</h3>
+<p>For each page (a root-level component tied to the router), you can use a <code>use***Page</code> hook from the SDK (<a href="https://github.com/FormCms/FormCmsAdminSdk">https://github.com/FormCms/FormCmsAdminSdk</a>). This hook manages state and API calls, returning UI components for you to build your interface.</p>
+<p>To customize text:
+- Pass prompt and label text via the <code>pageConfig</code> argument in the hook.
+- For shared prompts or labels across multiple pages, use the <code>componentConfig</code> argument.</p>
+<h3 id="replacing-ui-components">Replacing UI Components</h3>
+<p>You can swap out table column components or input components with your own custom components as needed.</p>
 <hr />
 <h2 id="graphql-query"><strong>GraphQL Query</strong></h2>
 <p>FormCMS simplifies frontend development by offering robust GraphQL support.</p>
@@ -2349,5 +2389,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-03-22 12:29:58.036162+00:00
+Build Date UTC : 2025-03-28 20:24:41.730424+00:00
 -->
