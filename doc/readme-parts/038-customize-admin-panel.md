@@ -2,55 +2,87 @@
 
 
 
+
 ---
 
 ## Customizing the Admin Panel
-<details>
-<summary>
-FormCms' Modular Component Structure simplifies modifying UI text, replacing UI components, and swapping entire pages.
-</summary>
+<details>  
+<summary>  
+FormCms' modular component structure makes it easy to modify UI text, replace components, or swap entire pages.  
+</summary>  
 
-### Using Submodules Instead of NPM
-A **Git submodule** is a feature in Git that allows you to embed one Git repository inside another as a subdirectory. It’s a way to include an external repository’s code (like the FormCms SDK, available at [https://github.com/FormCms/FormCmsAdminSdk](https://github.com/FormCms/FormCmsAdminSdk)) within your project while keeping its history and updates separate. Unlike installing a package via `npm`, which provides a bundled, often minified version, a submodule gives you the full, readable source code. The submodule is an independent repository pinned to a specific commit, ensuring consistency until you choose to update it. This makes it ideal for customization, debugging, or upgrading the SDK version directly in your project.
+### FormCmsAdminSdk and FormCmsAdminApp
 
-To update a submodule to a newer version, you can run:
+The FormCms Admin Panel is built with React and split into two projects:
+
+- **[FormCmsAdminSdk](https://github.com/FormCms/FormCmsAdminSdk)**  
+  This SDK handles backend interactions and complex state management. It is intended to be a submodule of your own React App. It follows a minimalist approach, relying only on:
+  - `"react"`, `"react-dom"`, `"react-router-dom"`: Essential React and routing dependencies.
+  - `"axios"` and `"swr"`: For API access and state management.
+  - `"qs"`: Converts query objects to strings.
+  - `"react-hook-form"`: Manages form inputs.
+
+- **[FormCmsAdminApp](https://github.com/FormCms/FormCmsAdminApp)**  
+  A demo implementation showing how to build a React app with the FormCmsAdminSdk. Fork this project to customize the layout, UI text, or add features.
+
+### Why is FormCmsAdminSdk a Submodule Instead of an NPM package?
+
+A **Git submodule** embeds an external repository (e.g., [FormCmsAdminSdk](https://github.com/FormCms/FormCmsAdminSdk)) as a subdirectory in your project. Unlike NPM packages, which deliver bundled code, submodules provide the full, readable source, pinned to a specific commit. This offers flexibility for customization, debugging, or upgrading the SDK directly in your repository.
+
+To update a submodule:
 ```
 git submodule update --remote
 ```  
 Then commit the updated reference in your parent repository.
 
-### Creating Your Own AdminPanelApp
-To set up your custom AdminPanelApp with submodules, use the example repository [https://github.com/FormCms/FormCmsAdminApp](https://github.com/FormCms/FormCmsAdminApp) and follow these steps:
+### Setting Up Your Custom AdminPanelApp
+
+To create a custom AdminPanelApp with submodules, start with the example repo [FormCmsAdminApp](https://github.com/FormCms/FormCmsAdminApp):
 ```
 git clone --recurse-submodules https://github.com/FormCms/FormCmsAdminApp.git
+```  
+The `--recurse-submodules` flag ensures the SDK submodule is cloned alongside the main repo.
+```
 cd FormCmsAdminApp
 pnpm install
-pnpm dev
 ```  
-The `--recurse-submodules` flag ensures the submodules (including the SDK from [https://github.com/FormCms/FormCmsAdminSdk](https://github.com/FormCms/FormCmsAdminSdk)) are cloned along with the main repository.
+Start the formCms backend, you might need to modify .env.development, change the Api url to your backend.
+```
+VITE_REACT_APP_API_URL='http://127.0.0.1:5000/api'
+```  
+Start the React App
+```
+pnpm dev
+```
 
-### Replacing the Default AdminPanel with Your Customized Version
-After customizing your AdminPanelApp, build it using:
+### Deploying Your Customized Admin Panel
+
+After customizing, build your app:
 ```
 pnpm build
 ```  
-Then, copy all files from the `dist` directory to `<your backend project>\wwwroot\admin`.
+Copy the contents of the `dist` folder to `<your backend project>\wwwroot\admin` to replace the default Admin Panel.
 
-### Customizing the App Layout and Logo
-The router is integrated into the SDK ([https://github.com/FormCms/FormCmsAdminSdk](https://github.com/FormCms/FormCmsAdminSdk)), and `FormCmsAdminSdk` provides three hooks to retrieve menu items:
+### Customizing Layout and Logo
+
+The SDK ([FormCmsAdminSdk](https://github.com/FormCms/FormCmsAdminSdk)) includes an integrated router and provides three hooks for menu items:
 - `useEntityMenuItems`
 - `useAssetMenuItems`
 - `useSystemMenuItems`
 
-You can use these menu items to design your app’s entry layout UI and update the app logo within this structure.
+Use these to design your app’s layout and update the logo within this structure.
 
-### Modifying Page Language
-For each page (a root-level component tied to the router), you can use a `use***Page` hook from the SDK ([https://github.com/FormCms/FormCmsAdminSdk](https://github.com/FormCms/FormCmsAdminSdk)). This hook manages state and API calls, returning UI components for you to build your interface.
+### Modifying Page Text
+
+Each page (a root-level component tied to the router) can use a corresponding `use***Page` hook from the SDK. These hooks handle state and API calls, returning components for your UI.
 
 To customize text:
-- Pass prompt and label text via the `pageConfig` argument in the hook.
-- For shared prompts or labels across multiple pages, use the `componentConfig` argument.
+- Pass specific prompts and labels via the `pageConfig` argument in the hook.
+- For text shared across pages, use the `componentConfig` argument.
 
-### Replacing UI Components
-You can swap out table column components or input components with your own custom components as needed.
-</details>
+### Swapping UI Components
+
+Replace table columns, input fields, or other UI components with your custom versions as needed.
+</details>  
+
+---

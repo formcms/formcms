@@ -207,10 +207,10 @@ public class AccountService<TUser, TRole,TCtx>(
         await EnsureRoles([roleAccess.Name]).Ok();
         var role = await roleManager.FindByNameAsync(roleAccess.Name);
         var claims =await roleManager.GetClaimsAsync(role!);
-        await AddClaimsToRole(role!, claims, AccessScope.FullAccess, roleAccess.ReadWriteEntities).Ok();
-        await AddClaimsToRole(role!, claims, AccessScope.RestrictedAccess, roleAccess.RestrictedReadWriteEntities).Ok();
-        await AddClaimsToRole(role!, claims, AccessScope.FullRead, roleAccess.ReadonlyEntities).Ok();
-        await AddClaimsToRole(role!, claims, AccessScope.RestrictedRead, roleAccess.RestrictedReadonlyEntities).Ok();
+        await AddClaimsToRole(role!, claims, AccessScope.FullAccess, roleAccess.ReadWriteEntities??[]).Ok();
+        await AddClaimsToRole(role!, claims, AccessScope.RestrictedAccess, roleAccess.RestrictedReadWriteEntities??[]).Ok();
+        await AddClaimsToRole(role!, claims, AccessScope.FullRead, roleAccess.ReadonlyEntities??[]).Ok();
+        await AddClaimsToRole(role!, claims, AccessScope.RestrictedRead, roleAccess.RestrictedReadonlyEntities??[]).Ok();
     }
 
 

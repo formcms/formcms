@@ -60,7 +60,7 @@ public class ProfileService<TUser>(
             return AccessLevel.Restricted;
         }
 
-        throw new ResultException("You don't have permission to read [" + entityName + "]");
+        throw new ResultException("You don't have permission to write [" + entityName + "]");
     }
 
     public AccessLevel MustGetReadLevel(string entityName)

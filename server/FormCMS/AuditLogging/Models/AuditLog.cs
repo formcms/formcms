@@ -39,12 +39,13 @@ public static class AuditLogHelper
         attributes:
         [
             XAttrExtensions.CreateAttr<AuditLog, long>(x => x.Id, isDefault: true),
-            XAttrExtensions.CreateAttr<AuditLog, string>(x => x.RecordId),
-            XAttrExtensions.CreateAttr<AuditLog, string>(x => x.RecordLabel),
             XAttrExtensions.CreateAttr<AuditLog, object>(x => x.Action),
             XAttrExtensions.CreateAttr<AuditLog, string>(x => x.EntityName),
-            XAttrExtensions.CreateAttr<AuditLog, string>(x => x.UserId),
+            XAttrExtensions.CreateAttr<AuditLog, string>(x => x.RecordLabel),
             XAttrExtensions.CreateAttr<AuditLog, string>(x => x.UserName),
+            
+            XAttrExtensions.CreateAttr<AuditLog, string>(x => x.RecordId, inList:false),
+            XAttrExtensions.CreateAttr<AuditLog, string>(x => x.UserId, inList:false),
             XAttrExtensions.CreateAttr<AuditLog, DateTime>(x => x.CreatedAt,isDefault:true),
             XAttrExtensions.CreateAttr<AuditLog, object>(x => x.Payload, inList: false)
         ]);

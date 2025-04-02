@@ -34,11 +34,11 @@ public static class QueryStringParser
         {
             if (key == Operator)
             {
-                m = key == "or" ? MatchTypes.MatchAny : MatchTypes.MatchAll;
+                m = value == "or" ? MatchTypes.MatchAny : MatchTypes.MatchAll;
             }
             else
             {
-                constraints.Add(new Constraint(key, value.ToArray()));
+                constraints.AddRange(value.Select(stringValue => new Constraint(key, [stringValue])));
             }
         }
 

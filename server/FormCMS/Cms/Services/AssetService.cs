@@ -63,7 +63,6 @@ public class AssetService(
 
     public async Task<ListResponse> List(StrArgs args, int? offset, int? limit, bool withLinkCount, CancellationToken ct)
     {
-
         var (filters, sorts) = QueryStringParser.Parse(args);
         var res =await hookRegistry.AssetPreList.Trigger(provider,new AssetPreListArgs([..filters]));
         filters = [..res.RefFilters];
@@ -85,7 +84,6 @@ public class AssetService(
         files = files.Select(resizer.CompressImage).ToArray();
         var dir = DateTime.Now.ToString("yyyy-MM");
         var pairs = files.Select(x => (Path.Join(dir, UniqNameOmitYearAndMonth(x.FileName)), x)).ToArray();
-        await store.Upload(pairs,ct);
 
         var assets = new List<Asset>();
         foreach (var (fileName, file) in pairs)
@@ -104,6 +102,7 @@ public class AssetService(
             assets.Add(asset);
         }
 
+        await store.Upload(pairs,ct);
         //track those assets to reuse later
         await executor.BatchInsert(Assets.TableName, assets.ToInsertRecords());
         return assets.Select(x => x.Path).ToArray();

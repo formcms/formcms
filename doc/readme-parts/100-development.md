@@ -23,7 +23,8 @@ The system comprises three main components:
 
 ### Repository Links  
 - [**Backend Server**](https://github.com/formcms/formcms/tree/main/server/FormCMS)  
-- [**Admin Panel UI**](https://github.com/formcms/formcms/tree/main/admin-panel)  
+- [**Admin Panel Sdk**](https://github.com/FormCms/FormCmsAdminSdk)
+- [**Admin Panel App**](https://github.com/FormCms/FormCmsAdminApp)
 - [**Schema Builder**](https://github.com/formcms/formcms/tree/main/server/FormCMS/wwwroot/schema-ui)  
 
 ---

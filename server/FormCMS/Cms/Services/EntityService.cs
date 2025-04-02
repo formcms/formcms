@@ -44,7 +44,11 @@ public sealed class EntityService(
             "Can not compose list result as tree, not find an collection attribute whose target is the entity.");
 
         parentField.GetCollectionTarget(out _, out var linkField);
-        var attributes = entity.Attributes.Where(x => x.Field == entity.PrimaryKey || x.InList && x.DataType.IsLocal());
+        var attributes = entity.Attributes.Where(
+            x => 
+                x.Field == entity.PrimaryKey ||
+                x.Field == DefaultColumnNames.UpdatedAt.Camelize()
+                || x.InList && x.DataType.IsLocal());
         var items = await executor.Many(entity.AllQueryForTree(attributes), ct);
         return items.ToTree(entity.PrimaryKey, linkField);
     }
@@ -241,8 +245,11 @@ public sealed class EntityService(
 
         var res = await hookRegistry.EntityPreGetList.Trigger(provider, args);
         var attributes = entity.Attributes
-            .Where(x => x.Field == entity.PrimaryKey || x.InList && x.DataType.IsLocal())
-            .ToArray();
+            .Where(x =>
+                x.Field == entity.PrimaryKey
+                || x.Field == DefaultColumnNames.UpdatedAt.Camelize()
+                || x.InList && x.DataType.IsLocal()
+            ).ToArray();
 
         var countQuery = entity.CountQuery([..res.RefFilters], null);
         return mode switch
