@@ -25,7 +25,7 @@ public class ProfileService<TUser>(
 
         string[] roles = [..claimsPrincipal.FindAll(ClaimTypes.Role).Select(x => x.Value)];
 
-        return new UserAccess
+        var user = new UserAccess
         (
             Id: claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "",
             Name: claimsPrincipal.Identity.Name ?? "",
@@ -39,6 +39,7 @@ public class ProfileService<TUser>(
                 ? restrictedFeatures.Menus.ToArray()
                 : []
         );
+        return user.CanAccessAdmin();
     }
 
     public async Task ChangePassword(ProfileDto dto)

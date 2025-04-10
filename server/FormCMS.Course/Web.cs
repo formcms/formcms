@@ -19,9 +19,10 @@ public class WebApp(
 
     public async Task<WebApplication> Build()
     {
-        AddDabaseService();
+        AddDbService();
         builder.Services.AddCmsAuth<IdentityUser, IdentityRole, CmsDbContext>();
         builder.Services.AddAuditLog();
+        builder.Services.AddActivity();
         
         AddOutputCachePolicy();
         builder.AddServiceDefaults();
@@ -64,7 +65,7 @@ public class WebApp(
         }
     }
 
-    private void AddDabaseService()
+    private void AddDbService()
     {
         _ = databaseProvider switch
         {

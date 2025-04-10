@@ -1,28 +1,28 @@
-$(document).ready(function() {
-    var loadingDict = new Map();
+$(document).ready(function () {
+    let loadingDict = new Map();
     $('[data-command="previous"]').click(e => handlePaginationButton(e, e.target, false));
-    $('[data-command="next"]').click(e=> handlePaginationButton(e, e.target, true));
-    
+    $('[data-command="next"]').click(e => handlePaginationButton(e, e.target, true));
+
     initIntersectionObserver();
     setPaginationStatus();
-    
-    function setPaginationStatus(){
-        $('[data-source="data-list"]').each(function() {
+
+    function setPaginationStatus() {
+        $('[data-source="data-list"]').each(function () {
             let pagination = $(this).attr('pagination');
             let first = $(this).attr('first');
             let last = $(this).attr('last');
-            
+
             let nav = $(this).parent().find(':has([data-command="previous"])');
-            if (pagination !== 'Button' || !first && ! last){
+            if (pagination !== 'Button' || !first && !last) {
                 nav.remove();
-            }else{
+            } else {
                 if (first && first.length > 0) {
                     nav.find('[data-command="previous"]').show();
-                }else {
+                } else {
                     nav.find('[data-command="previous"]').hide();
                 }
-                
-                if (last && last.length > 0){
+
+                if (last && last.length > 0) {
                     nav.find('[data-command="next"]').show();
                 } else {
                     nav.find('[data-command="next"]').hide();
@@ -31,7 +31,7 @@ $(document).ready(function() {
         });
     }
 
-    function handlePaginationButton(event,button, isNext) {
+    function handlePaginationButton(event, button, isNext) {
         event.preventDefault();
         let container = button.parentElement.parentElement;
         let list = container.querySelector('[data-source="data-list"]');

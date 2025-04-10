@@ -16,11 +16,11 @@ namespace FormCMS.Course.Tests;
 public class EntityApiTest
 {
     private const string Name = "name";
-    private readonly string _post = "et_post_" + Ulid.NewUlid();
-    private readonly string _author = "et_auth_" + Ulid.NewUlid();
-    private readonly string _tag = "et_tag_" + Ulid.NewUlid();
-    private readonly string _attachment = "et_att_" + Ulid.NewUlid();
-    private readonly string _category = "et_cat_" + Ulid.NewUlid();
+    private readonly string _post = "post_" + Ulid.NewUlid();
+    private readonly string _author = "author_" + Ulid.NewUlid();
+    private readonly string _tag = "tag_" + Ulid.NewUlid();
+    private readonly string _attachment = "att_" + Ulid.NewUlid();
+    private readonly string _category = "cat_" + Ulid.NewUlid();
 
     private readonly EntityApiClient _entityApiClient;
     private readonly SchemaApiClient _schemaApiClient;

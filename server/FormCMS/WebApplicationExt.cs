@@ -2,6 +2,7 @@ using FormCMS.Auth.Builders;
 using FormCMS.Cms.Builders;
 using FormCMS.Core.HookFactory;
 using FluentResults;
+using FormCMS.Activities.Builders;
 using FormCMS.AuditLogging.Builders;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -16,11 +17,8 @@ public static class WebApplicationExt
         app.Services.GetService<IAuthBuilder>()?.UseCmsAuth(app);
         app.Services.GetService<MongoQueryBuilder>()?.UseMongoDbQuery(app);
         app.Services.GetService<MessageProduceBuilder>()?.UseEventProducer(app);
-        var auditLog =  app.Services.GetService<AuditLogBuilder>();
-        if (auditLog != null)
-        {
-            await auditLog.UseAuditLog(app);
-        }
+        app.Services.GetService<AuditLogBuilder>()?.UseAuditLog(app);
+        app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
     }
 
     public static HookRegistry GetHookRegistry(this WebApplication app) =>
@@ -55,6 +53,9 @@ public static class WebApplicationExt
     public static IServiceCollection AddAuditLog(this IServiceCollection services)
         => AuditLogBuilder.AddAuditLog(services);
 
+    public static IServiceCollection AddActivity(this IServiceCollection services)
+        => ActivityBuilder.AddActivity(services);
+    
     public static IServiceCollection AddKafkaMessageProducer(
         this IServiceCollection services, string[] entities
     ) => MessageProduceBuilder.AddKafkaMessageProducer(services, entities);

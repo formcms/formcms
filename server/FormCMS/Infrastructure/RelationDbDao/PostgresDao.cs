@@ -1,6 +1,5 @@
 using System.Data;
 using FormCMS.Utils.DataModels;
-using Humanizer;
 using Npgsql;
 using SqlKata.Compilers;
 using SqlKata.Execution;
@@ -32,18 +31,18 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                    FROM information_schema.columns
                    WHERE table_name = '{table}';
                    """;
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
 
-        return await ExecuteQuery(sql, async command =>
+        await using var reader = command.ExecuteReader();
+        var columnDefinitions = new List<Column>();
+        while (await reader.ReadAsync(ct))
         {
-            await using var reader = command.ExecuteReader();
-            var columnDefinitions = new List<Column>();
-            while (await reader.ReadAsync(ct))
-            {
-                columnDefinitions.Add(new Column(reader.GetString(0), StringToColType(reader.GetString(1))));
-            }
+            columnDefinitions.Add(new Column(reader.GetString(0), StringToColType(reader.GetString(1))));
+        }
 
-            return columnDefinitions.ToArray();
-        });
+        return columnDefinitions.ToArray();
     }
 
     public async Task CreateTable(string table, IEnumerable<Column> cols,CancellationToken ct)
@@ -84,7 +83,10 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                     EXECUTE FUNCTION __update_{updateAtField}_column();
                     """;
         }
-        await ExecuteQuery(sql, cmd => cmd.ExecuteNonQueryAsync(ct));
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
+        await command.ExecuteNonQueryAsync(ct);
     }
 
     public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct)
@@ -95,7 +97,10 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
             """
         );
         var sql = string.Join(";", parts.ToArray());
-        await ExecuteQuery(sql, cmd => cmd.ExecuteNonQueryAsync(ct));
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
+        await command.ExecuteNonQueryAsync(ct);
     }
 
     public async Task CreateForeignKey(string table, string col, string refTable, string refCol, CancellationToken ct)
@@ -114,24 +119,107 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                         END 
                    $$
                    """;
-        await ExecuteQuery(sql, cmd => cmd.ExecuteNonQueryAsync(ct));
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
+        await command.ExecuteNonQueryAsync(ct);
     }
     
     public async Task CreateIndex(string table, string[] fields, bool isUnique, CancellationToken ct)
     {
         var indexType = isUnique ? "UNIQUE" : "";
         var indexName = $"idx_{table}_{string.Join("_", fields)}";
-        var fieldList = string.Join(", ", fields.Select(f => $"\"{f}\""));
+        var fieldList = string.Join(", ", fields.Select(Quote));
 
         var sql = $"""
                    CREATE {indexType} INDEX IF NOT EXISTS "{indexName}" 
                    ON "{table}" ({fieldList});
                    """;
-
-        await ExecuteQuery(sql, async cmd => await cmd.ExecuteNonQueryAsync(ct));
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
+        await command.ExecuteNonQueryAsync(ct);
     }
 
-    private string ColTypeToString(ColumnType t)
+    public Task<long> GetValue(string tableName, string[] keyFields, string[] keyValues, string valueField, CancellationToken ct)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<long> IncreaseValue(string tableName, string[] keyFields, string[] values, string valueField, long delta,
+        CancellationToken ct)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<bool> UpdateOnConflict(string tableName,
+        string[] keyFields, object[] keyValues,
+        string statusField, bool active,
+        CancellationToken ct)
+    {
+        if (keyFields.Length != keyValues.Length)
+        {
+            throw new ArgumentException("Key fields and values must have the same length.");
+        }
+
+        var quotedKeyFields = keyFields.Select(Quote);
+        var insertColumns = string.Join(", ", quotedKeyFields.Concat([Quote(statusField)]));
+        var paramPlaceholders = string.Join(", ", keyFields.Select((_, i) => $"@p{i}").Concat(["@desiredStatus"]));
+        var conflictFields = string.Join(", ", quotedKeyFields);
+        var updateCondition = $"{Quote(statusField)} IS DISTINCT FROM @desiredStatus";
+
+        var sql = $"""
+                           INSERT INTO "{tableName}" ({insertColumns})
+                           VALUES ({paramPlaceholders})
+                           ON CONFLICT ({conflictFields}) 
+                           DO UPDATE SET {Quote(statusField)} = @desiredStatus
+                           WHERE {updateCondition}
+                           RETURNING CASE 
+                           WHEN xmax = 0 THEN 1  -- Insert occurred
+                           WHEN {Quote(statusField)} = @desiredStatus THEN 0  -- No change needed
+                           ELSE 1  -- DbLoggerCategory.Update occurred
+                               END;
+                           
+                   """;
+
+        await using var command = new NpgsqlCommand(sql, connection);
+        command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
+
+        // Add parameters
+        for (var i = 0; i < keyValues.Length; i++)
+        {
+            command.Parameters.AddWithValue($"@p{i}", keyValues[i]);
+        }
+        command.Parameters.AddWithValue("@desiredStatus", active);
+
+        // Execute and get affected rows indication
+        var result = (int)(await command.ExecuteScalarAsync(ct)??0);
+        return result > 0;
+    }
+
+    public Task UpdateOnConflict(string tableName, string[] keyFields, object[] keyValues, string valueField, object value,
+        CancellationToken ct)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<T> GetValue<T>(string tableName, string[] keyFields, object[] keyValues, string valueField, CancellationToken ct) where T : struct
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<long> GetValue(string tableName, string[] keyFields, object[] keyValues, string valueField, CancellationToken ct)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<long> IncreaseValue(string tableName, string[] keyFields, object[] keyValues, string valueField, long delta,
+        CancellationToken ct)
+    {
+        throw new NotImplementedException();
+    }
+
+    private static string ColTypeToString(ColumnType t)
     {
         return t switch
         {
@@ -147,6 +235,8 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
             _ => throw new NotSupportedException($"Type {t} is not supported")
         };
     }
+
+    private static string Quote(string s) => "\"" + s + "\"";
     
     private ColumnType StringToColType(string s)
     {
@@ -158,21 +248,5 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
             "timestamp" => ColumnType.Datetime,
             _ => ColumnType.String
         };
-    }
-
-    //use callback instead of return QueryFactory to ensure proper disposing connection
-    private async Task<T> ExecuteQuery<T>(string sql, Func<NpgsqlCommand, Task<T>> executeFunc, params (string, object)[] parameters)
-    {
-        logger.LogInformation(sql);
-        await using var command = connection.CreateCommand();
-        command.CommandText = sql;
-        command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
-       
-        foreach (var (paramName, paramValue) in parameters)
-        {
-            command.Parameters.AddWithValue(paramName, paramValue);
-        }
-
-        return await executeFunc(command);
     }
 }

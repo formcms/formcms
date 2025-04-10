@@ -61,7 +61,7 @@ public class AccountService<TUser, TRole,TCtx>(
         // use client calculation to support Sqlite
         var item = await query.FirstOrDefaultAsync(ct)
             ?? throw new ResultException($"Cannot find user by id [{id}]");
-        return new UserAccess
+        var userAcc = new UserAccess
         (
             Email: item.Key.Email!,
             Id: item.Key.Id,
@@ -93,6 +93,7 @@ public class AccountService<TUser, TRole,TCtx>(
             ],
             AllowedMenus: []
         );
+        return userAcc.CanAccessAdmin();
     }
 
     public async Task<UserAccess[]> GetUsers(CancellationToken ct)
@@ -121,7 +122,7 @@ public class AccountService<TUser, TRole,TCtx>(
             ReadWriteEntities:[],
             RestrictedReadonlyEntities:[],
             RestrictedReadWriteEntities:[]
-        ))];
+        ).CanAccessAdmin() )];
     }
 
     public async Task<Result> EnsureUser(string email, string password, string[] roles)
