@@ -17,9 +17,9 @@ public class RedisStatusBuffer : IStatusBuffer
     private static string StatusKey(string userId, string recordId) => $"{userId}:{recordId}:status";
     private static string LockKey(string key) => $"{key}:lock";
 
-    public async Task<bool> Get(string userId, string recordId, Func<Task<bool>> getStatusAsync)
+    public async Task<bool> Get(string userId, string recordKey, Func<Task<bool>> getStatusAsync)
     {
-        var key = StatusKey(userId, recordId);
+        var key = StatusKey(userId, recordKey);
         var lockKey = LockKey(key);
 
         bool lockAcquired = await _redisDb.StringSetAsync(lockKey, "locked", _settings.LockTimeout, When.NotExists);
@@ -55,9 +55,9 @@ public class RedisStatusBuffer : IStatusBuffer
         }
     }
 
-    public async Task<bool> Toggle(string userId, string recordId, bool isActive, Func<Task<bool>> getStatusAsync)
+    public async Task<bool> Toggle(string userId, string recordKey, bool isActive, Func<Task<bool>> getStatusAsync)
     {
-        var key = StatusKey(userId, recordId);
+        var key = StatusKey(userId, recordKey);
         var lockKey = LockKey(key);
 
         bool lockAcquired = await _redisDb.StringSetAsync(lockKey, "locked", _settings.LockTimeout, When.NotExists);
@@ -115,9 +115,9 @@ public class RedisStatusBuffer : IStatusBuffer
         }
     }
 
-    public async Task Set(string userId, string recordId)
+    public async Task Set(string userId, string recordKey)
     {
-        var key = StatusKey(userId, recordId);
+        var key = StatusKey(userId, recordKey);
         await _redisDb.StringSetAsync(key, true, _settings.Expiration);
     }
 

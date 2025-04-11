@@ -15,13 +15,13 @@ public class MemoryStatusBuffer(BufferSettings settings): IStatusBuffer
         return Task.FromResult(values);
     } 
 
-    public Task<bool> Get(string userId,string recordId, Func<Task<bool>> getAsync)
-        => _buffer.SafeGet(GetKey(userId , recordId), getAsync);
+    public Task<bool> Get(string userId,string recordKey, Func<Task<bool>> getAsync)
+        => _buffer.SafeGet(GetKey(userId , recordKey), getAsync);
     
     // Set or update the activity status
-    public async Task<bool> Toggle(string userId, string recordId, bool status, Func<Task<bool>> getStatusAsync)
+    public async Task<bool> Toggle(string userId, string recordKey, bool status, Func<Task<bool>> getStatusAsync)
     {
-        var statusKey =GetKey(userId, recordId);
+        var statusKey =GetKey(userId, recordKey);
         var semaphore = _buffer.GetSemaphore(statusKey);
         await semaphore.WaitAsync();
         try
@@ -37,9 +37,9 @@ public class MemoryStatusBuffer(BufferSettings settings): IStatusBuffer
         }
     }
 
-    public Task Set(string userId, string recordId)
+    public Task Set(string userId, string recordKey)
     {
-        var statusKey = GetKey(userId, recordId);
+        var statusKey = GetKey(userId, recordKey);
         _buffer.Set(statusKey, true);
         return Task.CompletedTask;
     }

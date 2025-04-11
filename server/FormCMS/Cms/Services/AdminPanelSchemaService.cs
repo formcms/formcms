@@ -12,7 +12,7 @@ public class AdminPanelSchemaService(
 {
     public async Task<IResult> GetMenu(string name, CancellationToken ct)
     {
-        if (profileService.GetInfo()?.CanAccessAdmin ?? false) return Results.Unauthorized();
+        if (profileService.GetInfo()?.CanAccessAdmin != true) return Results.Unauthorized();
         var schema = await svc.GetByNameDefault(name, SchemaType.Menu, null, ct) ??
                      throw new ResultException($"Cannot find menu [{name}]");
         return Results.Ok(schema.Settings.Menu);
@@ -20,7 +20,7 @@ public class AdminPanelSchemaService(
 
     public async Task<IResult> GetEntity(string name, CancellationToken ct)
     {
-        if (profileService.GetInfo()?.CanAccessAdmin ?? false) return Results.Unauthorized();
+        if (profileService.GetInfo()?.CanAccessAdmin != true) return Results.Unauthorized();
         var entity = await entitySchemaService.LoadEntity(name, null, ct).Ok();
         return Results.Ok(ToXEntity(entity));
     }

@@ -15,7 +15,7 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         services.AddSingleton<ICountBuffer,MemoryCountBuffer>();
         services.AddSingleton<IStatusBuffer,MemoryStatusBuffer>();
         
-        services.AddSingleton(new ActivitySettings(["like","save"], ["view","share"]));
+        services.AddSingleton(new ActivitySettings(["like","save"], ["share"],["view"]));
         services.AddScoped<IActivityService, ActivityService>();
         services.AddHostedService<BufferFlushWorker>();
         return services;

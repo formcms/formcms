@@ -20,7 +20,7 @@ public static class UserActivities
 {
     public const string TableName = "__activities";
     
-    public static string GetRecordKey(string entityName, long recordId, string activityType)
+    public static string GetCacheKey(string entityName, long recordId, string activityType)
         => $"{entityName}.{recordId}.{activityType}";
     
     public static (string, long, string) SplitRecordKey(string recordKey)

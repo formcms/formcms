@@ -17,7 +17,7 @@ export const customTypes = {
         }
     ],
     ['activity-bar']:[
-        {name:"entityName", label:'Entity Name'},
-        {name:"recordId", label:'Record Id'},
+        {name:"data-entity", label:'Entity Name'},
+        {name:"data-record-id", label:'Record Id'},
     ]
 };
