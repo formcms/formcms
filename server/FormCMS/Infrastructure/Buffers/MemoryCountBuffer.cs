@@ -2,7 +2,7 @@ namespace FormCMS.Infrastructure.Buffers;
 
 public class MemoryCountBuffer(BufferSettings settings) : ICountBuffer
 {
-    private readonly TrackingBuffer<long> _buffer = new (settings);
+    private readonly MemoryTrackingBuffer<long> _buffer = new (settings);
 
     public Task<(string, long)[]> GetAfterLastFlush(DateTime lastFlushTime)
         => Task.FromResult(_buffer.GetAfterLastFlush(lastFlushTime));

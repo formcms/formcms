@@ -19,7 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FromCms.Course\FormCMS.Course.csproj" />
+    <ProjectReference Include="..\FormCms.Course\FormCMS.Course.csproj" />
     <ProjectReference Include="..\FormCMS.Course\FormCMS.Course.csproj" IsAspireProjectResource="false"/>
   </ItemGroup>
 

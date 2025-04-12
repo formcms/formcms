@@ -54,7 +54,7 @@ public class ActivityService(
             ret[activity] = new StatusDto(true, await Record(entityName, recordId, activity, ct));
         }
         
-        string[] types = [..settings.ToggleActivities, ..settings.RecordActivities, ..settings.AutoRecordActivities];
+        string[] types = [..settings.ToggleActivities, ..settings.RecordActivities];
         foreach (var activityType in types)
         {
             ret[activityType] = await GetByType(activityType);
@@ -89,7 +89,7 @@ public class ActivityService(
             await statusBuffer.Set(userId, recordKey);
         }
         
-        var (_,getCount) = GetFactory(entityName, recordId, activityType,userId,ct);
+        var (_,getCount) = GetFactory(entityName, recordId, activityType,userId??"",ct);
         return await countBuffer.Increase(recordKey, 1,getCount);
     }
 

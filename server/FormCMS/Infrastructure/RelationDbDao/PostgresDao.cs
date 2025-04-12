@@ -1,6 +1,7 @@
 using System.Data;
 using FormCMS.Utils.DataModels;
 using Npgsql;
+using NpgsqlTypes;
 using SqlKata.Compilers;
 using SqlKata.Execution;
 
@@ -141,82 +142,86 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         await command.ExecuteNonQueryAsync(ct);
     }
 
-    public Task<long> GetValue(string tableName, string[] keyFields, string[] keyValues, string valueField, CancellationToken ct)
+    public async Task<bool> UpdateOnConflict(string tableName, string[] keyFields, object[] keyValues,
+        string valueField, object value, CancellationToken ct)
     {
-        throw new NotImplementedException();
+        if (keyFields.Length != keyValues.Length)
+            throw new ArgumentException("Key fields and values must have the same length.");
+
+        var quotedKeyFields = keyFields.Select(Quote).ToArray();
+        var insertColumns = string.Join(", ", quotedKeyFields.Concat([Quote(valueField)]));
+        var paramPlaceholders = string.Join(", ", keyFields.Select((_, i) => $"@p{i}").Concat(["@value"]));
+        var conflictFields = string.Join(", ", quotedKeyFields);
+
+        var sql = $"""
+                   INSERT INTO "{tableName}" AS t ({insertColumns})
+                   VALUES ({paramPlaceholders})
+                   ON CONFLICT ({conflictFields}) 
+                   DO UPDATE SET {Quote(valueField)} = EXCLUDED.{Quote(valueField)}
+                   WHERE t.{Quote(valueField)} IS DISTINCT FROM EXCLUDED.{Quote(valueField)}
+                   RETURNING xmax;
+                   """;
+
+        await using var command = new NpgsqlCommand(sql, connection);
+        for (var i = 0; i < keyValues.Length; i++)
+        {
+            var param = command.Parameters.Add($"@p{i}", GetNpgsqlDbType(keyValues[i]));
+            param.Value = keyValues[i] ?? DBNull.Value;
+        }
+
+        var valueParam = command.Parameters.Add("@value", GetNpgsqlDbType(value));
+        valueParam.Value = value ?? DBNull.Value;
+
+        var result = await command.ExecuteScalarAsync(ct);
+    
+        // xmax = 0 → insert, else update
+        return result != null;
     }
 
-    public Task<long> IncreaseValue(string tableName, string[] keyFields, string[] values, string valueField, long delta,
-        CancellationToken ct)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<bool> UpdateOnConflict(string tableName,
-        string[] keyFields, object[] keyValues,
-        string statusField, bool active,
-        CancellationToken ct)
+    public async Task<T> GetValue<T>(string tableName, string[] keyFields, object[] keyValues,
+        string valueField, CancellationToken ct) where T : struct
     {
         if (keyFields.Length != keyValues.Length)
         {
             throw new ArgumentException("Key fields and values must have the same length.");
         }
 
-        var quotedKeyFields = keyFields.Select(Quote);
-        var insertColumns = string.Join(", ", quotedKeyFields.Concat([Quote(statusField)]));
-        var paramPlaceholders = string.Join(", ", keyFields.Select((_, i) => $"@p{i}").Concat(["@desiredStatus"]));
-        var conflictFields = string.Join(", ", quotedKeyFields);
-        var updateCondition = $"{Quote(statusField)} IS DISTINCT FROM @desiredStatus";
-
+        // Build WHERE clause
+        var whereClause = string.Join(" AND ", keyFields.Select((k, i) => $"{Quote(k)} = @p{i}"));
         var sql = $"""
-                           INSERT INTO "{tableName}" ({insertColumns})
-                           VALUES ({paramPlaceholders})
-                           ON CONFLICT ({conflictFields}) 
-                           DO UPDATE SET {Quote(statusField)} = @desiredStatus
-                           WHERE {updateCondition}
-                           RETURNING CASE 
-                           WHEN xmax = 0 THEN 1  -- Insert occurred
-                           WHEN {Quote(statusField)} = @desiredStatus THEN 0  -- No change needed
-                           ELSE 1  -- DbLoggerCategory.Update occurred
-                               END;
-                           
+                   SELECT {Quote(valueField)}
+                   FROM "{tableName}"
+                   WHERE {whereClause};
                    """;
 
         await using var command = new NpgsqlCommand(sql, connection);
-        command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
-
         // Add parameters
         for (var i = 0; i < keyValues.Length; i++)
         {
-            command.Parameters.AddWithValue($"@p{i}", keyValues[i]);
+            var param = command.Parameters.Add($"@p{i}", GetNpgsqlDbType(keyValues[i])); // Adjust type as needed
+            param.Value = keyValues[i] ?? DBNull.Value;
         }
-        command.Parameters.AddWithValue("@desiredStatus", active);
 
-        // Execute and get affected rows indication
-        var result = (int)(await command.ExecuteScalarAsync(ct)??0);
-        return result > 0;
+        var result = await command.ExecuteScalarAsync(ct);
+        if (result == null || result == DBNull.Value)
+        {
+            return default(T);
+        }
+        return (T)Convert.ChangeType(result, typeof(T));
     }
 
-    public Task UpdateOnConflict(string tableName, string[] keyFields, object[] keyValues, string valueField, object value,
-        CancellationToken ct)
+    private static NpgsqlDbType GetNpgsqlDbType(object? value)
     {
-        throw new NotImplementedException();
-    }
+        if (value == null)
+            return NpgsqlDbType.Unknown;
 
-    public Task<T> GetValue<T>(string tableName, string[] keyFields, object[] keyValues, string valueField, CancellationToken ct) where T : struct
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<long> GetValue(string tableName, string[] keyFields, object[] keyValues, string valueField, CancellationToken ct)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<long> IncreaseValue(string tableName, string[] keyFields, object[] keyValues, string valueField, long delta,
-        CancellationToken ct)
-    {
-        throw new NotImplementedException();
+        return value switch
+        {
+            long => NpgsqlDbType.Bigint,
+            bool => NpgsqlDbType.Boolean,
+            string => NpgsqlDbType.Varchar,
+            _ => NpgsqlDbType.Unknown
+        };
     }
 
     private static string ColTypeToString(ColumnType t)

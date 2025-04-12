@@ -111,38 +111,9 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
         await command.ExecuteNonQueryAsync(ct);
     }
     
-    public async Task UpdateOnConflict(string tableName,
-        string[] keyFields, object[] keyValues,
-        string valueField, object value,
-        CancellationToken ct)
-    {
-        EnsureMatch(keyFields, keyValues);
-        
-        // Build UPSERT SQL dynamically
-        var insertColumns = string.Join(", ", keyFields.Concat([valueField]));
-        var insertParams = string.Join(", ", keyFields.Select(f => $"@{f}").Concat([$"@{valueField}"]));
-        var conflictFields = string.Join(", ", keyFields);
-
-        // Single command with conditional update and custom affected rows logic
-        var sql = $"""
-                   INSERT INTO {tableName} ({insertColumns})
-                      VALUES ({insertParams})
-                      ON CONFLICT({conflictFields}) DO UPDATE 
-                      SET {valueField} =@{valueField}
-                   """;
-
-        await using var command = new SqliteCommand(sql, connection);
-        for (var i = 0; i < keyFields.Length; i++)
-        {
-            command.Parameters.AddWithValue($"@{keyFields[i]}", keyValues[i]);
-        }
-        command.Parameters.AddWithValue("@" + valueField, value);
-        await command.ExecuteNonQueryAsync(ct);
-    }
-
     public async Task<bool> UpdateOnConflict(string tableName,
         string[] keyFields, object[] keyValues,
-        string statusField, bool active,
+        string statusField, object value,
         CancellationToken ct)
     {
         EnsureMatch(keyFields, keyValues);
@@ -151,7 +122,11 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
         var insertColumns = string.Join(", ", keyFields.Concat([statusField]));
         var insertParams = string.Join(", ", keyFields.Select(f => $"@{f}").Concat([$"@{statusField}"]));
         var conflictFields = string.Join(", ", keyFields);
-        var desiredStatus = active ? 1 : 0;
+        var desiredStatus = value switch
+        {
+            bool b => b ? 1 : 0, //sqlite use bool
+            _ => value
+        };
 
         // Single command with conditional update and custom affected rows logic
         var sql = $@"

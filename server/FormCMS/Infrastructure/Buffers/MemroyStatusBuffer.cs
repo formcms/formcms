@@ -2,7 +2,7 @@ namespace FormCMS.Infrastructure.Buffers;
 
 public class MemoryStatusBuffer(BufferSettings settings): IStatusBuffer
 {
-    private readonly TrackingBuffer<bool> _buffer = new (settings);
+    private readonly MemoryTrackingBuffer<bool> _buffer = new (settings);
     private static string GetKey (string userId, string recordId) => $"{userId}:{recordId}";
 
     public Task<(string, string, bool)[]> GetAfterLastFlush(DateTime lastFlushTime)

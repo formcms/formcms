@@ -42,6 +42,7 @@
         <PackageReference Include="NJsonSchema.CodeGeneration.TypeScript" Version="11.1.0" />
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
         <PackageReference Include="NUlid" Version="1.7.2" />
+        <PackageReference Include="RedLock.net" Version="2.3.2" />
         <PackageReference Include="SixLabors.ImageSharp" Version="3.1.7" />
         <PackageReference Include="SkiaSharp" Version="3.116.1" />
         <PackageReference Include="SqlKata" Version="2.4.0" />

@@ -1,128 +1,53 @@
-namespace FormCMS.Infrastructure.Buffers;
 using StackExchange.Redis;
+
+namespace FormCMS.Infrastructure.Buffers;
+
 using System.Threading.Tasks;
 
-
-public class RedisStatusBuffer : IStatusBuffer
+public class RedisStatusBuffer(IConnectionMultiplexer redis, BufferSettings settings) : IStatusBuffer
 {
-    private readonly IDatabase _redisDb;
-    private readonly BufferSettings _settings;
+    private readonly RedisTrackingBuffer<bool> _buffer = new (redis, settings,"status-buffer");
+    private static string GetKey(string userId, string recordId) => $"{userId}:{recordId}";
 
-    public RedisStatusBuffer(IConnectionMultiplexer redis, BufferSettings settings)
+
+    public Task<bool> Get(string userId, string recordKey, Func<Task<bool>> getStatusAsync)
     {
-        _redisDb = redis.GetDatabase();
-        _settings = settings;
+        return _buffer.SafeGet(GetKey(userId, recordKey), getStatusAsync);
     }
 
-    private static string StatusKey(string userId, string recordId) => $"{userId}:{recordId}:status";
-    private static string LockKey(string key) => $"{key}:lock";
-
-    public async Task<bool> Get(string userId, string recordKey, Func<Task<bool>> getStatusAsync)
+    public Task<bool> Toggle(string userId, string recordKey, bool isActive, Func<Task<bool>> getStatusAsync)
     {
-        var key = StatusKey(userId, recordKey);
-        var lockKey = LockKey(key);
-
-        bool lockAcquired = await _redisDb.StringSetAsync(lockKey, "locked", _settings.LockTimeout, When.NotExists);
-        if (lockAcquired)
+        var key = GetKey(userId, recordKey);
+        //the key is for per user, lock won't affect system performance
+        return _buffer.DoTaskInLock(key, async () =>
         {
-            try
-            {
-                var value = await _redisDb.StringGetAsync(key);
-                if (!value.HasValue)
-                {
-                    var status = await getStatusAsync();
-                    await _redisDb.StringSetAsync(key, status, _settings.Expiration);
-                    return status;
-                }
-                return (bool)value;
-            }
-            finally
-            {
-                await _redisDb.KeyDeleteAsync(lockKey);
-            }
-        }
-        else
-        {
-            await Task.Delay(50);
-            var value = await _redisDb.StringGetAsync(key);
-            if (!value.HasValue)
-            {
-                var status = await getStatusAsync();
-                await _redisDb.StringSetAsync(key, status, _settings.Expiration, When.NotExists);
-                return status;
-            }
-            return (bool)value;
-        }
-    }
-
-    public async Task<bool> Toggle(string userId, string recordKey, bool isActive, Func<Task<bool>> getStatusAsync)
-    {
-        var key = StatusKey(userId, recordKey);
-        var lockKey = LockKey(key);
-
-        bool lockAcquired = await _redisDb.StringSetAsync(lockKey, "locked", _settings.LockTimeout, When.NotExists);
-        if (lockAcquired)
-        {
-            try
-            {
-                var value = await _redisDb.StringGetAsync(key);
-                bool currentStatus;
-                if (!value.HasValue)
-                {
-                    currentStatus = await getStatusAsync();
-                    await _redisDb.StringSetAsync(key, currentStatus, _settings.Expiration);
-                }
-                else
-                {
-                    currentStatus = (bool)value;
-                }
-
-                if (currentStatus == isActive)
-                {
-                    return false;
-                }
-
-                await _redisDb.StringSetAsync(key, isActive, _settings.Expiration);
-                return true;
-            }
-            finally
-            {
-                await _redisDb.KeyDeleteAsync(lockKey);
-            }
-        }
-        else
-        {
-            await Task.Delay(50);
-            var value = await _redisDb.StringGetAsync(key);
-            bool currentStatus;
-            if (!value.HasValue)
-            {
-                currentStatus = await getStatusAsync();
-                await _redisDb.StringSetAsync(key, currentStatus, _settings.Expiration, When.NotExists);
-            }
-            else
-            {
-                currentStatus = (bool)value;
-            }
-
+            var res = await _buffer.GetAndParse(key);
+            var currentStatus = res.IsSuccess ? res.Value : await getStatusAsync();
             if (currentStatus == isActive)
             {
+                if (res.IsFailed) await _buffer.SetValue(recordKey, isActive);
                 return false;
             }
 
-            await _redisDb.StringSetAsync(key, isActive, _settings.Expiration);
+            await _buffer.SetValue(recordKey, isActive);
+            await _buffer.SetFlushKey(key);
             return true;
-        }
+        });
     }
 
     public async Task Set(string userId, string recordKey)
     {
-        var key = StatusKey(userId, recordKey);
-        await _redisDb.StringSetAsync(key, true, _settings.Expiration);
+        await _buffer.SetValue(GetKey(userId, recordKey), true);
+        await _buffer.SetFlushKey(recordKey);
     }
 
-    public Task<(string, string, bool)[]> GetAfterLastFlush(DateTime lastFlushTime)
+    public async Task<(string, string, bool)[]> GetAfterLastFlush(DateTime lastFlushTime)
     {
-        throw new NotImplementedException();
+        var values = await _buffer.GetAfterLastFlush(lastFlushTime);
+        return values.Select(k =>
+        {
+            var parts = k.Item1.Split(':');
+            return (parts[0], parts[1], k.Item2);
+        }).ToArray();
     }
 }

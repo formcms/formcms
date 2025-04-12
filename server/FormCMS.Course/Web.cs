@@ -1,4 +1,5 @@
 using FormCMS.Auth;
+using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
@@ -32,7 +33,7 @@ public class WebApp(
             AddCorsPolicy();
         }
 
-        TryAddHybridCache();
+        TryUserRedis();
         TryAzureBlobStore();
         
         var app = builder.Build();
@@ -85,12 +86,16 @@ public class WebApp(
         builder.Services.AddSingleton<IFileStore, AzureBlobStore>();
     }
 
-    private void TryAddHybridCache()
+    private void TryUserRedis()
     {
         if (redisConnectionString is null) return;
         builder.AddRedisDistributedCache(connectionName: Constants.Redis);
         builder.Services.AddHybridCache();
+
+        builder.Services.AddSingleton<ICountBuffer, RedisCountBuffer>();
+        builder.Services.AddSingleton<IStatusBuffer, RedisStatusBuffer>();
     }
+    
 
     private void AddOutputCachePolicy()
     {

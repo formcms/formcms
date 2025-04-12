@@ -22,6 +22,7 @@
     },
     "http0": {
       "commandName": "Project",
+      "commandLineArgs": "--enable-worker true",
       "dotnetRunMessages": true,
       "launchBrowser": false,
       "applicationUrl": "http://localhost:5134",

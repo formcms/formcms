@@ -51,7 +51,7 @@ public static class UserActivities
 
     
     public static readonly Column[] Columns =  [
-        ColumnHelper.CreateCamelColumn<UserActivity>(x=>x.Id,ColumnType.Id),
+        ColumnHelper.CreateCamelColumn<UserActivity>(x=>x.Id!,ColumnType.Id),
         ColumnHelper.CreateCamelColumn<UserActivity,string>(x=>x.EntityName),
         ColumnHelper.CreateCamelColumn<UserActivity,long>(x=>x.RecordId),
         ColumnHelper.CreateCamelColumn<UserActivity,string>(x=>x.ActivityType),

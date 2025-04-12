@@ -23,10 +23,9 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
     public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct)
     {
         var sql = $"""
-                  
-                                  SELECT COLUMN_NAME, DATA_TYPE
-                                  FROM INFORMATION_SCHEMA.COLUMNS
-                                  WHERE TABLE_NAME = {table}
+                  SELECT COLUMN_NAME, DATA_TYPE
+                  FROM INFORMATION_SCHEMA.COLUMNS
+                  WHERE TABLE_NAME = '{table}'
                   """;
 
         await using var command = new SqlCommand(sql, connection);
@@ -61,8 +60,8 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
 
         var colDefine = string.Join(", ", parts);
         var sql = $"CREATE TABLE [{table}] ({colDefine});";
+        logger.LogInformation(sql);
         await using var command = new SqlCommand(sql, connection);
-        command.Transaction = _transaction?.Transaction() as SqlTransaction;
         await command.ExecuteNonQueryAsync(ct);
  
         if (updateAtField != "")
@@ -81,8 +80,8 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
                    END;
                    """;
 
+            logger.LogInformation(sql);
             await using var cmd = new SqlCommand(sql, connection);
-            cmd.Transaction = _transaction?.Transaction() as SqlTransaction;
             await cmd.ExecuteNonQueryAsync(ct);
         }
     }
@@ -132,79 +131,70 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
         await command.ExecuteNonQueryAsync(ct);
     }
 
-    public async Task<bool> UpdateOnConflict(string tableName, string[] keyFields, object[] keyValues,
-        string statusField, bool active, CancellationToken ct)
+    public async Task<bool> UpdateOnConflict(string tableName, string[] keyFields, object[] keyValues, 
+        string valueField, object value, CancellationToken ct)
     {
         if (keyFields.Length != keyValues.Length)
         {
             throw new ArgumentException("Key fields and values must have the same length.");
         }
 
-        var desiredStatus = active ? 1 : 0;
-
-        // Build MERGE statement for SQL Server
+        // Build MERGE statement
         var keyConditions = string.Join(" AND ", keyFields.Select(k => $"t.[{k}] = s.[{k}]"));
-        var insertColumns = string.Join(", ", keyFields.Concat([statusField]).Select(c => $"[{c}]"));
-        var insertValues = string.Join(", ", keyFields.Select(k => $"s.[{k}]").Concat([$"@desiredStatus"]));
+        var insertColumns = string.Join(", ", keyFields.Concat([valueField]).Select(c => $"[{c}]"));
+        var insertValues = string.Join(", ", keyFields.Select(k => $"s.[{k}]").Concat([$"s.[{valueField}]"]));
 
-        var sql = $@"
-            MERGE [{tableName}] AS t
-            USING (
-                SELECT {string.Join(", ", keyFields.Select((k, i) => $"@src_{k} AS [{k}]"))}, 
-                       @desiredStatus AS [{statusField}]
-            ) AS s
-            ON ({keyConditions})
-            WHEN MATCHED AND t.[{statusField}] != @desiredStatus THEN
-                UPDATE SET t.[{statusField}] = @desiredStatus
-            WHEN NOT MATCHED THEN
-                INSERT ({insertColumns})
-                VALUES ({insertValues});
-                
-            SELECT @@ROWCOUNT;
-        ";
+        var sql = $$"""
+                    MERGE [{{tableName}}] AS t
+                    USING (
+                        SELECT {{string.Join(", ", keyFields.Select((k, i) => $"@src_{k} AS [{k}]"))}}, 
+                                       @value AS [{{valueField}}]
+                    ) AS s
+                    ON ({{keyConditions}})
+                    WHEN MATCHED  AND t.[{{valueField}}] != @value THEN
+                        UPDATE SET t.[{{valueField}}] = s.[{{valueField}}]
+                    WHEN NOT MATCHED THEN
+                        INSERT ({{insertColumns}})
+                        VALUES ({{insertValues}});
+                        SELECT @@ROWCOUNT;
+                    """;
 
         await using var command = new SqlCommand(sql, connection);
-        command.Transaction = _transaction?.Transaction() as SqlTransaction;
 
         // Add parameters
         for (var i = 0; i < keyFields.Length; i++)
         {
             command.Parameters.AddWithValue($"@src_{keyFields[i]}", keyValues[i]);
         }
-
-        command.Parameters.AddWithValue("@desiredStatus", desiredStatus);
+        command.Parameters.AddWithValue("@value", value);
 
         // Execute and return affected rows
         var affectedRows = (int)(await command.ExecuteScalarAsync(ct)??0);
         return affectedRows > 0;
     }
 
-    public Task UpdateOnConflict(string tableName, string[] keyFields, object[] keyValues, string valueField, object value,
-        CancellationToken ct)
+    public async Task<T> GetValue<T>(string tableName, string[] keyFields, object[] keyValues, 
+        string valueField, CancellationToken ct) where T : struct
     {
-        throw new NotImplementedException();
+        if (keyFields.Length != keyValues.Length)
+        {
+            throw new ArgumentException("Key fields and values must have the same length.");
+        }
+
+        var conditions = keyFields.Select((t, i) => $"[{t}] = @p{i}");
+        var sql = $"SELECT [{valueField}] FROM [{tableName}] WHERE {string.Join(" AND ", conditions)}";
+
+        await using var command = new SqlCommand(sql, connection);
+        command.Transaction = _transaction?.Transaction() as SqlTransaction;
+        command.Parameters.AddRange(keyValues.Select((x, i) => new SqlParameter($"@p{i}", x)).ToArray());
+
+        var result = await command.ExecuteScalarAsync(ct);
+
+        return result == DBNull.Value || result == null
+            ? default(T)
+            : (T)Convert.ChangeType(result, typeof(T));
     }
 
-    public Task<T> GetValue<T>(string tableName, string[] keyFields, object[] keyValues, string valueField, CancellationToken ct) where T : struct
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<long> GetValue(string tableName, string[] keyFields, object[] keyValues, string valueField, CancellationToken ct)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<long> IncreaseValue(string tableName, string[] keyFields, object[] keyValues, string valueField, long delta,
-        CancellationToken ct)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<long> GetValue(string tableName, string[] KeyFields, string[] keyValues, string valueField, CancellationToken ct)
-    {
-        throw new NotImplementedException();
-    }
 
     private static string ColumnTypeToString(ColumnType dataType)
         => dataType switch
@@ -232,15 +222,4 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
             _ => ColumnType.String
         };
     }
-
-    // // Use callback instead of return QueryFactory to ensure proper disposing connection
-    // private async Task<T> ExecuteQuery<T>( string sql, Func<SqlCommand, Task<T>> executeFunc)
-    // {
-    //     logger.LogInformation(sql);
-    //     await using var command = new SqlCommand(sql, connection);
-    //     command.Transaction = _transaction?.Transaction() as SqlTransaction;
-    //     return await executeFunc(command);
-    // }
-    
-    
 }

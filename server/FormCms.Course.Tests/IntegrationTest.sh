@@ -31,7 +31,8 @@ test_sqlserver_container(){
   local container_name="FormCMS-db-sql-edge"
   local password=Admin12345678!
   remove_container $container_name
-
+  
+#  docker run --cap-add SYS_PTRACE -e 'ACCEPT_EULA=1' -e 'MSSQL_SA_PASSWORD=Admin12345678!' -p 1433:1433 --name FormCMS-db-sql-edge -d mcr.microsoft.com/mssql/server:2022-latest 
   docker run --cap-add SYS_PTRACE -e 'ACCEPT_EULA=1' -e "MSSQL_SA_PASSWORD=$password" -p 1433:1433 --name $container_name -d mcr.microsoft.com/mssql/server:2022-latest 
   sleep 10
   
