@@ -18,6 +18,11 @@ public interface IRelationDbDao
         string[] keyFields, object[] keyValues, 
         string valueField, object value,
         CancellationToken ct);
+    Task<long> Increase(string tableName,
+        string[] keyFields, object[] keyValues,
+        string valueField, long delta,
+        CancellationToken ct);
+    
     Task<T> GetValue<T>(string tableName, 
         string[] keyFields, object[] keyValues, string valueField,
         CancellationToken ct) where T : struct;

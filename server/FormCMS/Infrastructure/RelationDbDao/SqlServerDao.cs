@@ -60,7 +60,6 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
 
         var colDefine = string.Join(", ", parts);
         var sql = $"CREATE TABLE [{table}] ({colDefine});";
-        logger.LogInformation(sql);
         await using var command = new SqlCommand(sql, connection);
         await command.ExecuteNonQueryAsync(ct);
  
@@ -80,7 +79,6 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
                    END;
                    """;
 
-            logger.LogInformation(sql);
             await using var cmd = new SqlCommand(sql, connection);
             await cmd.ExecuteNonQueryAsync(ct);
         }
@@ -171,6 +169,48 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
         // Execute and return affected rows
         var affectedRows = (int)(await command.ExecuteScalarAsync(ct)??0);
         return affectedRows > 0;
+    }
+
+    public async Task<long> Increase(string tableName, string[] keyFields, object[] keyValues, string valueField, long delta, CancellationToken ct)
+    {
+        if (keyFields.Length != keyValues.Length)
+        {
+            throw new ArgumentException("Key fields and values must have the same length.");
+        }
+
+        var keyCondition = string.Join(" AND ", keyFields.Select(k => $"t.[{k}] = s.[{k}]"));
+        var insertColumns = string.Join(", ", keyFields.Concat([valueField]).Select(c => $"[{c}]"));
+        var insertValues = string.Join(", ", keyFields.Select(k => $"s.[{k}]").Concat(["s.[valueField]"]));
+
+        var sql = $"""
+                   MERGE [{tableName}] AS t
+                   USING (
+                       SELECT {string.Join(", ", keyFields.Select((k, i) => $"@p{i} AS [{k}]"))},
+                              @delta AS [valueField]
+                   ) AS s
+                   ON ({keyCondition})
+                   WHEN MATCHED THEN
+                       UPDATE SET t.[{valueField}] = ISNULL(t.[{valueField}], 0) + s.[valueField]
+                   WHEN NOT MATCHED THEN
+                       INSERT ({insertColumns})
+                       VALUES ({insertValues});
+
+                   SELECT [{valueField}] FROM [{tableName}]
+                   WHERE {string.Join(" AND ", keyFields.Select((k, i) => $"[{k}] = @p{i}"))};
+                   """;
+
+        await using var command = new SqlCommand(sql, connection);
+        command.Transaction = _transaction?.Transaction() as SqlTransaction;
+
+        for (int i = 0; i < keyFields.Length; i++)
+        {
+            command.Parameters.AddWithValue($"@p{i}", keyValues[i]);
+        }
+
+        command.Parameters.AddWithValue("@delta", delta);
+
+        var result = await command.ExecuteScalarAsync(ct);
+        return result is DBNull or null ? delta : Convert.ToInt64(result);
     }
 
     public async Task<T> GetValue<T>(string tableName, string[] keyFields, object[] keyValues, 

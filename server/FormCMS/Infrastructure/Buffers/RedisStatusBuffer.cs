@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 public class RedisStatusBuffer(IConnectionMultiplexer redis, BufferSettings settings) : IStatusBuffer
 {
-    private readonly RedisTrackingBuffer<bool> _buffer = new (redis, settings,"status-buffer");
+    private readonly RedisTrackingBuffer<bool> _buffer = new (redis, settings,"status-buffer:");
     private static string GetKey(string userId, string recordId) => $"{userId}:{recordId}";
 
 
@@ -18,6 +18,7 @@ public class RedisStatusBuffer(IConnectionMultiplexer redis, BufferSettings sett
     public Task<bool> Toggle(string userId, string recordKey, bool isActive, Func<Task<bool>> getStatusAsync)
     {
         var key = GetKey(userId, recordKey);
+        
         //the key is for per user, lock won't affect system performance
         return _buffer.DoTaskInLock(key, async () =>
         {
@@ -25,11 +26,11 @@ public class RedisStatusBuffer(IConnectionMultiplexer redis, BufferSettings sett
             var currentStatus = res.IsSuccess ? res.Value : await getStatusAsync();
             if (currentStatus == isActive)
             {
-                if (res.IsFailed) await _buffer.SetValue(recordKey, isActive);
+                if (res.IsFailed) await _buffer.SetValue(key, isActive);
                 return false;
             }
 
-            await _buffer.SetValue(recordKey, isActive);
+            await _buffer.SetValue(key, isActive);
             await _buffer.SetFlushKey(key);
             return true;
         });
@@ -37,8 +38,9 @@ public class RedisStatusBuffer(IConnectionMultiplexer redis, BufferSettings sett
 
     public async Task Set(string userId, string recordKey)
     {
-        await _buffer.SetValue(GetKey(userId, recordKey), true);
-        await _buffer.SetFlushKey(recordKey);
+        var key = GetKey(userId, recordKey);
+        await _buffer.SetValue(key, true);
+        await _buffer.SetFlushKey(key);
     }
 
     public async Task<(string, string, bool)[]> GetAfterLastFlush(DateTime lastFlushTime)

@@ -157,7 +157,35 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
         var affectedRows = (long)(await command.ExecuteScalarAsync(ct) ?? 0);
         return affectedRows > 0;
     }
-    
+
+    public async Task<long> Increase(string tableName, string[] keyFields, object[] keyValues, string valueField, long delta, CancellationToken ct)
+    {
+        EnsureMatch(keyFields, keyValues);
+
+        var insertColumns = string.Join(", ", keyFields.Concat([valueField]));
+        var insertParams = string.Join(", ", keyFields.Select((_, i) => $"@p{i}").Concat(["@delta"]));
+        var conflictFields = string.Join(", ", keyFields);
+
+        var sql = $"""
+                   INSERT INTO {tableName} ({insertColumns})
+                   VALUES ({insertParams})
+                   ON CONFLICT ({conflictFields}) DO UPDATE
+                   SET {valueField} = COALESCE({tableName}.{valueField}, 0) + @delta
+                   RETURNING {valueField};
+                   """;
+
+        await using var cmd = new SqliteCommand(sql, connection);
+        cmd.Transaction = _transaction?.Transaction() as SqliteTransaction;
+
+        for (int i = 0; i < keyValues.Length; i++)
+            cmd.Parameters.AddWithValue($"@p{i}", keyValues[i]);
+
+        cmd.Parameters.AddWithValue("@delta", delta);
+
+        var scalar = await cmd.ExecuteScalarAsync(ct);
+        return scalar != null && scalar != DBNull.Value ? (long)scalar : delta;
+    }
+
     public async Task<T> GetValue<T>(string tableName, string[] keyFields, object[] keyValues, string valueField,
         CancellationToken ct) where T : struct
     {

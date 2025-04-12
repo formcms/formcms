@@ -23,7 +23,6 @@ public class BufferFlushWorker(
 
                 using var scope = scopeFactory.CreateScope();
                 var activityService = scope.ServiceProvider.GetRequiredService<IActivityService>();
-                logger.LogInformation("Flushing buffer at {FlushTime}, flushing all items after {lastFlushTime}", nextMinute, lastFlushTime);
                 await activityService.Flush(lastFlushTime,stoppingToken);
                 lastFlushTime = nextMinute;
             }

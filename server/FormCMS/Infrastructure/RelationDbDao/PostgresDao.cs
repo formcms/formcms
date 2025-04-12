@@ -177,6 +177,40 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         // xmax = 0 → insert, else update
         return result != null;
     }
+    
+    public async Task<long> Increase(string tableName, string[] keyFields, object[] keyValues, string valueField, long delta, CancellationToken ct)
+    {
+        if (keyFields.Length != keyValues.Length)
+            throw new ArgumentException("Key fields and values must have the same length.");
+
+        var keyFieldQuoted = keyFields.Select(Quote).ToArray();
+        var insertColumns = string.Join(", ", keyFieldQuoted.Append(Quote(valueField)));
+        var insertParams = string.Join(", ", keyFields.Select((_, i) => $"@p{i}").Append("@initValue"));
+        var conflictTarget = string.Join(", ", keyFieldQuoted);
+        var updateSet = $"{Quote(valueField)} = \"{tableName}\".{Quote(valueField)} + @delta";
+
+        var sql = $"""
+                       INSERT INTO "{tableName}" ({insertColumns})
+                       VALUES ({insertParams})
+                       ON CONFLICT ({conflictTarget})
+                       DO UPDATE SET {updateSet}
+                       RETURNING {Quote(valueField)};
+                   """;
+
+        await using var command = new NpgsqlCommand(sql, connection);
+
+        for (var i = 0; i < keyValues.Length; i++)
+        {
+            var param = command.Parameters.Add($"@p{i}", GetNpgsqlDbType(keyValues[i]));
+            param.Value = keyValues[i] ?? DBNull.Value;
+        }
+
+        command.Parameters.AddWithValue("@initValue", NpgsqlDbType.Bigint, 1);
+        command.Parameters.AddWithValue("@delta", NpgsqlDbType.Bigint, delta);
+
+        var result = await command.ExecuteScalarAsync(ct);
+        return result is long value ? value : throw new InvalidOperationException("Insert/Update failed or value is null.");
+    }
 
     public async Task<T> GetValue<T>(string tableName, string[] keyFields, object[] keyValues,
         string valueField, CancellationToken ct) where T : struct

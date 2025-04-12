@@ -1,6 +1,7 @@
 namespace FormCMS.Activities.Services;
 
 public record ActivitySettings(
+    bool EnableBuffering,
     HashSet<string> ToggleActivities,
     HashSet<string> RecordActivities,
     HashSet<string> AutoRecordActivities

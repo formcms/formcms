@@ -7,6 +7,7 @@ using FormCMS.Utils.ResultExt;
 namespace FormCMS.Activities.Services;
 
 public class ActivityService(
+    ILogger<ActivityService> logger,
     ICountBuffer countBuffer,
     IStatusBuffer statusBuffer,
     IProfileService profileService,
@@ -17,18 +18,29 @@ public class ActivityService(
 {
     public async Task Flush(DateTime lastFlushTime, CancellationToken ct)
     {
+        if (!settings.EnableBuffering)
+            return;
+        
+        if (lastFlushTime == DateTime.MinValue)
+        {
+            lastFlushTime = DateTime.UtcNow.AddMinutes(-1);
+        }
+
         var counts = await  countBuffer.GetAfterLastFlush(lastFlushTime);
         foreach (var (k,v) in counts)
         {
             var (entityName, recordId, activityType) = UserActivities.SplitRecordKey(k);
             var keyValues = ActivityCountHelper.GetKeyValues(entityName, recordId, activityType);
+            logger.LogInformation("Flush Count: k = {k}, v ={v}", k,v);
             await dao.UpdateOnConflict(ActivityCountHelper.TableName, ActivityCountHelper.KeyFields,keyValues, ActivityCountHelper.ValueField,v,ct);
         }
 
-        foreach (var (userId, k, isActive) in await statusBuffer.GetAfterLastFlush(lastFlushTime))
+        var status = await statusBuffer.GetAfterLastFlush(lastFlushTime);
+        foreach (var (userId, k, isActive) in status)
         {
             var (entityName, recordId, activityType) = UserActivities.SplitRecordKey(k);
             var keyValues = UserActivities.GetKeyValues(entityName, recordId, activityType, userId);
+            logger.LogInformation("Flush active status: userid={userid}, entity={entityName}, recordId={recordId}, activityType={activityType}", userId, entityName, recordId, activityType);
             await dao.UpdateOnConflict(UserActivities.TableName, UserActivities.KeyFields,keyValues, UserActivities.ValueField,isActive,ct);
         }
     }
@@ -63,7 +75,13 @@ public class ActivityService(
 
         async Task<StatusDto> GetByType(string activityType)
         {
-            var (getActive,getCount) = GetFactory(entityName, recordId, activityType,userId??"",ct);
+            var (getActive, getCount) = GetFactory(entityName, recordId, activityType, userId ?? "", ct);
+            if (!settings.EnableBuffering)
+            {
+                return new StatusDto(await getActive(), await getCount());
+            }
+
+
             var recordKey = UserActivities.GetCacheKey(entityName, recordId, activityType);
             if (userId != null)
             {
@@ -75,22 +93,37 @@ public class ActivityService(
         }
     }
 
-    public async Task<long> Record(string entityName, long recordId, 
+    public async Task<long> Record(string entityName, long recordId,
         string activityType, CancellationToken ct)
     {
         if (!settings.RecordActivities.Contains(activityType) && !settings.AutoRecordActivities.Contains(activityType))
             throw new ResultException($"Activity type {activityType}  is not supported");
-        
-        var recordKey =UserActivities.GetCacheKey(entityName, recordId, activityType);
+
+        var recordKey = UserActivities.GetCacheKey(entityName, recordId, activityType);
         var userId = profileService.GetInfo()?.Id;
+
+        if (settings.EnableBuffering)
+        {
+            if (userId != null)
+            {
+                await statusBuffer.Set(userId, recordKey);
+            }
+
+            var (_, getCount) = GetFactory(entityName, recordId, activityType, userId ?? "", ct);
+            return await countBuffer.Increase(recordKey, 1, getCount);
+        }
 
         if (userId != null)
         {
-            await statusBuffer.Set(userId, recordKey);
+            var keyValues = UserActivities.GetKeyValues(entityName, recordId, activityType, userId);
+            await dao.UpdateOnConflict(UserActivities.TableName, UserActivities.KeyFields, keyValues,
+                UserActivities.ValueField, true, ct);
+
         }
-        
-        var (_,getCount) = GetFactory(entityName, recordId, activityType,userId??"",ct);
-        return await countBuffer.Increase(recordKey, 1,getCount);
+
+        var values = ActivityCountHelper.GetKeyValues(entityName, recordId, activityType);
+        return await dao.Increase(ActivityCountHelper.TableName, ActivityCountHelper.KeyFields, values,
+            ActivityCountHelper.ValueField, 1, ct);
     }
 
     public async Task<long> Toggle(string entityName, long recordId,
@@ -103,15 +136,30 @@ public class ActivityService(
         if (userId is null)
             throw new ResultException("User is not logged in");
 
-        var cacheKey =UserActivities.GetCacheKey(entityName, recordId, activityType);
-        var (getActive,getCount) = GetFactory(entityName, recordId, activityType,userId,ct);
-        
-        var statusChanged = await statusBuffer.Toggle(userId, cacheKey, isActive, getActive);
-        if (!statusChanged)
+        var (getActive, getCount) = GetFactory(entityName, recordId, activityType, userId, ct);
+        if (settings.EnableBuffering)
         {
-            return await countBuffer.Get(cacheKey,getCount);
+            var cacheKey = UserActivities.GetCacheKey(entityName, recordId, activityType);
+
+            var statusChanged = await statusBuffer.Toggle(userId, cacheKey, isActive, getActive);
+            if (!statusChanged)
+            {
+                return await countBuffer.Get(cacheKey, getCount);
+            }
+
+            return await countBuffer.Increase(cacheKey, isActive ? 1 : -1, getCount);
         }
-        return await countBuffer.Increase(cacheKey, isActive ? 1 : -1, getCount);
+        
+        var keyValues = UserActivities.GetKeyValues(entityName, recordId, activityType, userId);
+        var statusChange = await dao.UpdateOnConflict(UserActivities.TableName, UserActivities.KeyFields, keyValues,
+            UserActivities.ValueField, true, ct);
+        if (!statusChange)
+        {
+            return await getCount();
+        }
+        var values = ActivityCountHelper.GetKeyValues(entityName, recordId, activityType);
+        return await dao.Increase(ActivityCountHelper.TableName, ActivityCountHelper.KeyFields, values,
+            ActivityCountHelper.ValueField, 1, ct); 
     }
 
     private (Func<Task<bool>>, Func<Task<long>>) GetFactory(string entityName, long recordId, string activityType, 

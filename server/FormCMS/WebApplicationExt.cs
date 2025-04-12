@@ -53,8 +53,8 @@ public static class WebApplicationExt
     public static IServiceCollection AddAuditLog(this IServiceCollection services)
         => AuditLogBuilder.AddAuditLog(services);
 
-    public static IServiceCollection AddActivity(this IServiceCollection services)
-        => ActivityBuilder.AddActivity(services);
+    public static IServiceCollection AddActivity(this IServiceCollection services, bool enableBuffering=true)
+        => ActivityBuilder.AddActivity(services,enableBuffering);
     
     public static IServiceCollection AddKafkaMessageProducer(
         this IServiceCollection services, string[] entities

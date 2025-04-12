@@ -17,21 +17,20 @@ public class RedisTrackingBuffer<T>(IConnectionMultiplexer redis,BufferSettings 
 
     internal async Task<(string, T)[]> GetAfterLastFlush(DateTime lastFlushTime)
     {
-        var lockKey = $"{prefix}:lock:getAfterLastFlush";
+        var now = DateTime.UtcNow;
+        var lockKey = $"{prefix}:flush-lock";
         var lockValue = Guid.NewGuid().ToString();
-        var lockTimeout = TimeSpan.FromSeconds(30);
+        var lockTimeout = TimeSpan.FromSeconds(30); 
         
-        // only one worker need to do flush work 
+        // only one worker need to do flush work, other threads are blocked in 30 seconds
         var acquired = await _db.StringSetAsync(lockKey, lockValue, lockTimeout, When.NotExists);
-        if (!acquired) return []; 
+        if (!acquired)
+        {
+            return [];
+        } 
         
         var ret = new List<(string, T)>();
-        var now = DateTime.UtcNow;
-        if (lastFlushTime == DateTime.MinValue)
-        {
-            lastFlushTime = now.AddMinutes(-1);
-        }
-
+        
         for (var t = lastFlushTime; t < now; t = t.AddMinutes(1))
         {
             var key = GetNextFlushTimeKey(t);
@@ -39,21 +38,14 @@ public class RedisTrackingBuffer<T>(IConnectionMultiplexer redis,BufferSettings 
 
             foreach (var id in ids)
             {
-                var val = await GetAndParse(id.ToString());
+                var val = await GetAndParse(id!);
                 if (val.IsSuccess)
                 {
                     ret.Add((RemovePrefix(id!), val.Value));
                 }
             }
-
             await _db.KeyDeleteAsync(key);
         }
-        // Only release the lock if we still own it
-        var storedValue = await _db.StringGetAsync(lockKey);
-        if (storedValue == lockValue)
-        {
-            await _db.KeyDeleteAsync(lockKey);
-        } 
         return ret.ToArray();
     }
 
@@ -162,12 +154,12 @@ public class RedisTrackingBuffer<T>(IConnectionMultiplexer redis,BufferSettings 
     }
     
     private string AddPrefix(string k) => k.StartsWith(prefix) ? k:prefix + k;
-    private string RemovePrefix (string k) => k.Substring(prefix.Length);
+    private string RemovePrefix (string k) => k.StartsWith(prefix) ?k[prefix.Length..]: k;
 
     private  string GetNextFlushTimeKey(DateTime now)
     {
         var currentMinute = now.TruncateToMinute();
         var t = now.Second >= 30 ? currentMinute.AddMinutes(1).AddSeconds(30) : currentMinute.AddSeconds(30);
-        return AddPrefix($"flush:{t:yyyyMMddHHmmss}");
+        return AddPrefix($"{prefix}:flush:{t:yyyyMMddHHmmss}");
     }
 }

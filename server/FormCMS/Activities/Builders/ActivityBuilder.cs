@@ -7,7 +7,7 @@ namespace FormCMS.Activities.Builders;
 
 public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 {
-    public static IServiceCollection AddActivity(IServiceCollection services)
+    public static IServiceCollection AddActivity(IServiceCollection services, bool enableBuffering)
     {
         services.AddSingleton<ActivityBuilder>();
         
@@ -15,7 +15,7 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         services.AddSingleton<ICountBuffer,MemoryCountBuffer>();
         services.AddSingleton<IStatusBuffer,MemoryStatusBuffer>();
         
-        services.AddSingleton(new ActivitySettings(["like","save"], ["share"],["view"]));
+        services.AddSingleton(new ActivitySettings(enableBuffering,["like","save"], ["share"],["view"]));
         services.AddScoped<IActivityService, ActivityService>();
         services.AddHostedService<BufferFlushWorker>();
         return services;
@@ -23,12 +23,7 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 
     public async Task<WebApplication> UseActivity(WebApplication app)
     {
-        logger.LogInformation(
-            """
-            *********************************************************
-            Using Activity Services
-            *********************************************************
-            """);
+
         using var scope = app.Services.CreateScope();
         var activityService = scope.ServiceProvider.GetRequiredService<IActivityService>();
         await activityService.EnsureActivityTables();
@@ -36,6 +31,18 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         var options = app.Services.GetRequiredService<SystemSettings>();
         var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
         apiGroup.MapGroup("/activities").MapActivityHandler();
+
+        var activitySettings = app.Services.GetRequiredService<ActivitySettings>();
+        logger.LogInformation(
+            $"""
+             *********************************************************
+             Using Activity Services
+             enable buffering = {activitySettings.EnableBuffering},
+             recordActivities = {string.Join("," ,activitySettings.RecordActivities)}
+             toggleActivities = {string.Join("," ,activitySettings.ToggleActivities)}
+             autoRecordActivities = {string.Join("," ,activitySettings.AutoRecordActivities)}
+             *********************************************************
+             """);
         return app;
     }
 }

@@ -13,11 +13,7 @@ public class MemoryTrackingBuffer<T>(BufferSettings settings) where T : struct
     internal (string, T)[] GetAfterLastFlush(DateTime lastFlushTime)
     {
         var now = DateTime.UtcNow;
-        if (lastFlushTime == DateTime.MinValue)
-        {
-            lastFlushTime = now.AddMinutes(-1);
-        }
-        
+       
         var ret = new List<(string, T)>();
         for (var t = lastFlushTime ; t < now; t = t.AddMinutes(1))
         {
