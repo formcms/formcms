@@ -12,14 +12,14 @@ public class AuthApiClient(HttpClient client)
     
     
     public Task<Result> EnsureSaLogin() => Login(Sa, Pwd);
-    
-    public  Task<Result> Login(string email, string password)
+
+    private Task<Result> Login(string email, string password)
     {
         var loginData = new {email, password};
         return client.PostAndSaveCookie("/api/login?useCookies=true", loginData);
     }
 
-    public async Task Logout()
+    private async Task Logout()
     {
         await client.GetResult("/api/logout").Ok();
         client.DefaultRequestHeaders.Remove("Cookie");

@@ -39,7 +39,14 @@ public class AssetService(
 
     }
 
-    public XEntity GetEntity(bool withLinkCount) => withLinkCount ? Assets.EntityWithLinkCount : Assets.Entity;
+    public XEntity GetEntity(bool withLinkCount)
+    {
+        if (profileService.GetInfo()?.CanAccessAdmin != true)
+        {
+            throw new ResultException("Access denied");
+        }
+        return withLinkCount ? Assets.EntityWithLinkCount : Assets.Entity;
+    }
 
     public string GetBaseUrl() => store.GetUrl("");
 

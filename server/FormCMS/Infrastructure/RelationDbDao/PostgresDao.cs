@@ -163,6 +163,8 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                    """;
 
         await using var command = new NpgsqlCommand(sql, connection);
+        command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
+
         for (var i = 0; i < keyValues.Length; i++)
         {
             var param = command.Parameters.Add($"@p{i}", GetNpgsqlDbType(keyValues[i]));
@@ -198,6 +200,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                    """;
 
         await using var command = new NpgsqlCommand(sql, connection);
+        command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
 
         for (var i = 0; i < keyValues.Length; i++)
         {
@@ -229,6 +232,8 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                    """;
 
         await using var command = new NpgsqlCommand(sql, connection);
+        command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
+
         // Add parameters
         for (var i = 0; i < keyValues.Length; i++)
         {

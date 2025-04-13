@@ -61,6 +61,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
         var colDefine = string.Join(", ", parts);
         var sql = $"CREATE TABLE [{table}] ({colDefine});";
         await using var command = new SqlCommand(sql, connection);
+        command.Transaction = _transaction?.Transaction() as SqlTransaction;
         await command.ExecuteNonQueryAsync(ct);
  
         if (updateAtField != "")
@@ -80,6 +81,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
                    """;
 
             await using var cmd = new SqlCommand(sql, connection);
+            cmd.Transaction = _transaction?.Transaction() as SqlTransaction;
             await cmd.ExecuteNonQueryAsync(ct);
         }
     }
@@ -158,6 +160,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
                     """;
 
         await using var command = new SqlCommand(sql, connection);
+        command.Transaction = _transaction?.Transaction() as SqlTransaction;
 
         // Add parameters
         for (var i = 0; i < keyFields.Length; i++)

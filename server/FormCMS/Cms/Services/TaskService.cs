@@ -38,7 +38,12 @@ public class TaskService(
         return store.GetUrl(task.GetPaths().Zip);
     }
 
-    public XEntity GetEntity() => TaskHelper.Entity;
+    public XEntity GetEntity()
+    {
+        EnsureHasPermission();
+        return TaskHelper.Entity;
+    }
+
     public Task EnsureTable()
         =>migrator.MigrateTable(TaskHelper.TableName,TaskHelper.Columns);
 
@@ -93,8 +98,7 @@ public class TaskService(
 
     private void EnsureHasPermission()
     {
-        var menus = profileService.GetInfo()?.AllowedMenus??[];
-        if (!menus.Contains(Menus.MenuTasks))
+        if (profileService.GetInfo()?.CanAccessAdmin != true)
             throw new ResultException("You don't have permission ");
     }
 }

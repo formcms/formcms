@@ -32,12 +32,12 @@ public class SchemaAuthTest
         Assert.True((await _schema.GetLoadedEntity(_saPost)).IsFailed);
     }
 
-    //all users can view top menu bar and XEntity 
+    //all users can view top menu bar and XEntity
     [Fact]
     public Task UserCanViewTopMenuBarAndXEntity() => _auth.Sudo(_email, Pwd, async () =>
     {
-        await _schema.GetTopMenuBar().Ok();
-        await _schema.GetLoadedEntity(_saPost).Ok();
+        Assert.True((await _schema.GetTopMenuBar()).IsFailed);
+        Assert.True((await _schema.GetLoadedEntity(_saPost)).IsFailed);
         //but ordinary user cannot view all schemas
         Assert.True((await _schema.All(null)).IsFailed);
     });

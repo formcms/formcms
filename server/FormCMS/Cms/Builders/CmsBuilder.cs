@@ -274,6 +274,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
                             ? new Problem(ex.Message, ex.StackTrace)
                             : new Problem(ex.Message);
                         await context.Response.WriteAsJsonAsync(problem);
+                        context.Features.Set<IExceptionHandlerFeature>(null);
                     }
                 });
             });
