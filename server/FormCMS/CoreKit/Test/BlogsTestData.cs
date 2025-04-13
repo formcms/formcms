@@ -114,12 +114,15 @@ public static class BlogsTestData
             var post = GetObject([TestFieldNames.Title, TestFieldNames.Abstract, TestFieldNames.Body], i);
             
             post[TestFieldNames.Category.Camelize()] = i;
-            
-            post[TestFieldNames.Image.Camelize()] = RandomGetString(1);
-            post[TestFieldNames.Gallery.Camelize()] = RandomGetString(4).Split(',');
-            
+
+            if (assetPaths.Length > 0)
+            {
+                post[TestFieldNames.Image.Camelize()] = RandomGetPath(1);
+                post[TestFieldNames.Gallery.Camelize()] = RandomGetPath(4).Split(',');
+            }
+
             post[TestFieldNames.MetaData.Camelize()] = new { Key = "Value" };
-            post[TestFieldNames.Language.Camelize()] = new string[]{"English","French"};
+            post[TestFieldNames.Language.Camelize()] = new []{"English","French"};
             
             posts.Add(post);
             
@@ -134,7 +137,7 @@ public static class BlogsTestData
         await insertEntity(new EntityData(TestEntityNames.TestPost, TestTableNames.TestPosts, posts.ToArray()));
         await insertEntity(new EntityData(TestEntityNames.TestAttachment, TestTableNames.TestAttachments, attachments.ToArray()));
 
-        string RandomGetString(int i)
+        string RandomGetPath(int i)
         {
             if (assetPaths.Length == 0)
                 return string.Empty;

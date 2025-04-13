@@ -1,3 +1,4 @@
+using FormCMS.Auth;
 using FormCMS.Auth.Services;
 using FormCMS.Core.Identities;
 using FormCMS.Utils.ResultExt;
@@ -10,11 +11,12 @@ public class DummyProfileService(RestrictedFeatures restrictedFeatures): IProfil
     {
         return new UserAccess
         (
+            CanAccessAdmin:true,
             Id:"",
             Name:"admin",
             Email : "sadmin@cms.com",
-            Roles : [..restrictedFeatures.Menus],
-            AllowedMenus : [],
+            Roles : [Roles.Sa],
+            AllowedMenus :[..restrictedFeatures.Menus],
             ReadonlyEntities:[],
             RestrictedReadonlyEntities:[],
             ReadWriteEntities:[],

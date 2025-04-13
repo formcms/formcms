@@ -1,3 +1,7 @@
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
+using FormCMS.Auth;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.CoreKit.Test;
@@ -5,6 +9,10 @@ using FormCMS.Cms.Builders;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.EnumExt;
+using FormCMS.Utils.RecordExt;
+using FormCMS.Utils.ResultExt;
+using Microsoft.AspNetCore.Identity;
+using Attribute = System.Attribute;
 
 namespace FormCMS.App;
 
@@ -22,17 +30,21 @@ public static class WebApp
         if (builder.Environment.IsDevelopment()) builder.Services.AddCorsPolicy();
         builder.AddServiceDefaults();
 
+        /*
         builder.AddNatsClient(AppConstants.Nats);
         var entities = builder.Configuration.GetRequiredSection("TrackingEntities").Get<string[]>()!;
         builder.Services.AddNatsMessageProducer(entities);
+        */
         
         
+        /*
         builder.AddMongoDBClient(connectionName: AppConstants.MongoCms);
         var queryLinksArray = builder.Configuration.GetRequiredSection("QueryLinksArray").Get<QueryCollectionLinks[]>()!;
         builder.Services.AddMongoDbQuery(queryLinksArray);
+        */
 
         builder.Services.AddPostgresCms(builder.Configuration.GetConnectionString(AppConstants.PostgresCms)!);
-
+        builder.Services.AddActivity(false);
 
         var app = builder.Build();
         app.UseCors(Cors);
@@ -44,8 +56,8 @@ public static class WebApp
         {
             using var scope = app.Services.CreateScope();
             var entitySchemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
-            var post = await entitySchemaService.LoadEntity("post",null,CancellationToken.None);
-            if (post.IsFailed)
+            var res = await entitySchemaService.LoadEntity(TestEntityNames.TestPost.Camelize(),null,CancellationToken.None);
+            if (res.IsFailed)
             {
                 await BlogsTestData.EnsureBlogEntities(x => entitySchemaService.SaveTableDefine(x,CancellationToken.None));
                 await app.AddQuery();
@@ -78,44 +90,19 @@ public static class WebApp
         (
             Distinct:false,
             Name: "post_sync",
-            EntityName: "post",
+            EntityName: TestEntityNames.TestPost.Camelize(),
             Filters: [new Filter("id", MatchTypes.MatchAll, [new Constraint(Matches.In, ["$id"])])],
             Sorts: [new Sort("id", SortOrder.Asc)],
             ReqVariables: [],
             Source:
-            """
+            $$"""
             query post_sync($id: Int) {
-              postList(idSet: [$id], sort: id) {
-                id
-                title
-                body
-                abstract
-                image
-                tags {
-                  id
-                  name
-                  image
-                  description
-                }
-                category {
-                  id
-                  name
-                  image
-                  description
-                }
-                authors {
-                  id
-                  name
-                  image
-                  description
-                }
-                attachments {
-                  id
-                  name
-                  post
-                  image
-                  description
-                }
+              {{TestEntityNames.TestPost.Camelize()}}List(idSet: [$id], sort: id) {
+                id title body abstract 
+                {{TestFieldNames.Tags.Camelize()}} { id name description }
+                {{TestFieldNames.Authors.Camelize()}} { id name description }
+                {{TestFieldNames.Category.Camelize()}} { id name description }
+                {{TestFieldNames.Attachments.Camelize()}} { id name post description }
               }
             }
             """
@@ -123,6 +110,17 @@ public static class WebApp
         await service.SaveQuery(query,null,CancellationToken.None);
     }
 
+    private static bool IsAnonymousType(object obj)
+    {
+        if (obj == null) return false;
+
+        var type = obj.GetType();
+        return Attribute.IsDefined(type, typeof(CompilerGeneratedAttribute))
+               && type.IsSealed
+               && type.Name.Contains("AnonymousType")
+               && type.Namespace == null
+               && type.GetProperties(BindingFlags.Public | BindingFlags.Instance).All(p => !p.CanWrite);
+    }
     private static async Task AddData(this WebApplication app)
     {
         using var scope = app.Services.CreateScope();
@@ -131,6 +129,20 @@ public static class WebApp
         {
             await BlogsTestData.PopulateData(i * 100 + 1, 100, [],async data =>
             {
+                foreach (var record in data.Records)
+                {
+                    foreach (var (key, value) in record)
+                    {
+                        record[key] = value switch
+                        {
+                            string[] array => string.Join(",",array),
+                            Enum valueEnum => valueEnum.Camelize(),
+                            _ when IsAnonymousType(value)=> JsonSerializer.Serialize(value),
+                            _ => value
+                        };
+                    }
+                }
+
                 await executor.BatchInsert(data.TableName.Camelize(), data.Records);
             }, async data =>
             {
