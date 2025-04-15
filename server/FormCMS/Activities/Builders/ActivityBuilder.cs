@@ -2,6 +2,7 @@ using FormCMS.Activities.Handlers;
 using FormCMS.Activities.Services;
 using FormCMS.Activities.Workers;
 using FormCMS.Infrastructure.Buffers;
+using Microsoft.AspNetCore.Mvc;
 
 namespace FormCMS.Activities.Builders;
 
@@ -30,6 +31,7 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
  
         var options = app.Services.GetRequiredService<SystemSettings>();
         var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
+
         apiGroup.MapGroup("/activities").MapActivityHandler();
 
         var activitySettings = app.Services.GetRequiredService<ActivitySettings>();

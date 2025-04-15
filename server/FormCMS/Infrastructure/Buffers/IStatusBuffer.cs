@@ -2,15 +2,14 @@ namespace FormCMS.Infrastructure.Buffers;
 
 public interface IStatusBuffer
 {
-    
-    // Checks if a user has performed an activity (e.g., liked, saved, viewed) on a record
-    Task<bool> Get(string userId, string recordKey, Func<Task<bool>> getStatusAsync);
+    // Checks if a user has performed activities (e.g., liked, saved, viewed) on a record
+    Task<Dictionary<string,bool>> Get(string[] keys, Func<string,Task<bool>> getStatus);
 
     // Toggles the user's activity status (e.g., like to unlike, or vice versa) and returns status change 
-    Task<bool> Toggle(string userId, string recordKey, bool isActive,Func<Task<bool>> getStatusAsync);
+    Task<bool> Toggle(string key, bool isActive,Func<string,Task<bool>> getStatus);
 
-    // Records an activity as performed (e.g., view) 
-    Task Set(string userId, string recordKey);
+    // Records activities as performed (e.g., view) 
+    Task Set(string[] keys );
 
-    Task<(string, string, bool)[]> GetAfterLastFlush(DateTime lastFlushTime);
+    Task<Dictionary<string,bool>> GetAfterLastFlush(DateTime lastFlushTime);
 }

@@ -219,7 +219,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
                 .MapSchemaBuilderSchemaHandlers()
                 .MapAdminPanelSchemaHandlers();
             apiGroup.MapGroup("/assets").MapAssetHandlers();
-            apiGroup.MapGroup("/queries").MapQueryHandlers().CacheOutput(options.QueryCachePolicy);
+            apiGroup.MapGroup("/queries").MapQueryHandlers().CacheOutput(SystemSettings.QueryCachePolicyName);
 
             // if an auth component is not use, the handler will use fake profile service
             apiGroup.MapGroup("/profile").MapProfileHandlers();
@@ -227,8 +227,8 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
 
             app.MapGroup(options.RouteOptions.PageBaseUrl)
                 .MapPages("admin", "doc", "files", "favicon.ico", options.RouteOptions.ApiBaseUrl)
-                .CacheOutput(options.PageCachePolicy);
-            if (options.MapCmsHomePage) app.MapHomePage().CacheOutput(options.PageCachePolicy);
+                .CacheOutput(SystemSettings.PageCachePolicyName);
+            if (options.MapCmsHomePage) app.MapHomePage().CacheOutput(SystemSettings.PageCachePolicyName);
         }
 
         void UseAdminPanel()
@@ -302,7 +302,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
                    RouterOption: API Base URL={options.RouteOptions.ApiBaseUrl} Page Base URL={options.RouteOptions.PageBaseUrl}
                    Image Compression: MaxWidth={options.ImageCompression.MaxWidth}, Quality={options.ImageCompression.Quality}
                    Schema Cache Settings: Entity Schema Expiration={options.EntitySchemaExpiration}, Query Schema Expiration = {options.QuerySchemaExpiration}
-                   Output Cache Settings: Page CachePolicy={options.PageCachePolicy}, Query Cache Policy={options.QueryCachePolicy}
+                   Output Cache Settings: Page CachePolicy={SystemSettings.PageCachePolicyName}, Query Cache Policy={SystemSettings.QueryCachePolicyName}
                    DOTNET_ENVIRONMENT: {Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")}
                    *********************************************************
                    """);

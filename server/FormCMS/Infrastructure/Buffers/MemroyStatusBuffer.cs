@@ -1,34 +1,35 @@
+using FormCMS.Utils.LoggerExt;
+
 namespace FormCMS.Infrastructure.Buffers;
 
-public class MemoryStatusBuffer(BufferSettings settings): IStatusBuffer
+public class MemoryStatusBuffer(BufferSettings settings, ILogger<MemoryStatusBuffer> logger) : IStatusBuffer
 {
-    private readonly MemoryTrackingBuffer<bool> _buffer = new (settings);
-    private static string GetKey (string userId, string recordId) => $"{userId}:{recordId}";
+    private readonly MemoryTrackingBuffer<bool> _buffer = new(settings);
 
-    public Task<(string, string, bool)[]> GetAfterLastFlush(DateTime lastFlushTime)
-    {
-        var values = _buffer.GetAfterLastFlush(lastFlushTime).Select(k =>
-        {
-            var parts = k.Item1.Split(':');
-            return (parts[0], parts[1], k.Item2);
-        }).ToArray();
-        return Task.FromResult(values);
-    } 
+    private readonly object _ = logger.LogInformationEx(
+        """
+        ***********************************************
+        Creating memory status buffer
+        ************************************************
+        """
+    );
 
-    public Task<bool> Get(string userId,string recordKey, Func<Task<bool>> getAsync)
-        => _buffer.SafeGet(GetKey(userId , recordKey), getAsync);
-    
-    // Set or update the activity status
-    public async Task<bool> Toggle(string userId, string recordKey, bool status, Func<Task<bool>> getStatusAsync)
+    public Task<Dictionary<string,bool>> Get(string[] keys, Func<string, Task<bool>> getStatus)
+        => _buffer.SafeGet(keys, getStatus);
+
+    public Task<Dictionary<string,bool>> GetAfterLastFlush(DateTime lastFlushTime)
+        => Task.FromResult(_buffer.GetAfterLastFlush(lastFlushTime));
+
+    public async Task<bool> Toggle(string key, bool status, Func<string, Task<bool>> getStatus)
     {
-        var statusKey =GetKey(userId, recordKey);
-        var semaphore = _buffer.GetSemaphore(statusKey);
+        var semaphore = _buffer.GetSemaphore(key);
         await semaphore.WaitAsync();
         try
         {
-            var currentStatus = await _buffer.Get(statusKey, getStatusAsync);
+            var currentStatus = await _buffer.GetOrCreate(key, getStatus);
             if (currentStatus == status) return false;
-            _buffer.Set(statusKey,status);
+            _buffer.Set(key, status);
+            _buffer.SetFlushKey(key);
             return true;
         }
         finally
@@ -37,10 +38,13 @@ public class MemoryStatusBuffer(BufferSettings settings): IStatusBuffer
         }
     }
 
-    public Task Set(string userId, string recordKey)
+    public Task Set(string[] keys)
     {
-        var statusKey = GetKey(userId, recordKey);
-        _buffer.Set(statusKey, true);
+        foreach (var key in keys)
+        {
+            _buffer.Set(key, true);
+        }
+
         return Task.CompletedTask;
     }
 }

@@ -1,55 +1,58 @@
+using FormCMS.Utils.LoggerExt;
 using StackExchange.Redis;
 
 namespace FormCMS.Infrastructure.Buffers;
 
 using System.Threading.Tasks;
 
-public class RedisStatusBuffer(IConnectionMultiplexer redis, BufferSettings settings) : IStatusBuffer
+public class RedisStatusBuffer(IConnectionMultiplexer redis, BufferSettings settings, ILogger<RedisStatusBuffer> logger) : IStatusBuffer
 {
-    private readonly RedisTrackingBuffer<bool> _buffer = new (redis, settings,"status-buffer:");
-    private static string GetKey(string userId, string recordId) => $"{userId}:{recordId}";
+    private readonly object _ = logger.LogInformationEx(
+        """
+        ***********************************************
+        Creating redis status buffer
+        ************************************************
+        """);
 
-
-    public Task<bool> Get(string userId, string recordKey, Func<Task<bool>> getStatusAsync)
+    private readonly RedisTrackingBuffer<bool> _buffer = new(
+        redis,
+        settings,
+        "status-buffer:", b => b,
+        b => (bool)b
+    );
+    
+    public Task<bool> Toggle(string key, bool isActive, Func<string,Task<bool>> getStatusAsync)
     {
-        return _buffer.SafeGet(GetKey(userId, recordKey), getStatusAsync);
-    }
-
-    public Task<bool> Toggle(string userId, string recordKey, bool isActive, Func<Task<bool>> getStatusAsync)
-    {
-        var key = GetKey(userId, recordKey);
-        
         //the key is for per user, lock won't affect system performance
         return _buffer.DoTaskInLock(key, async () =>
         {
-            var res = await _buffer.GetAndParse(key);
-            var currentStatus = res.IsSuccess ? res.Value : await getStatusAsync();
+            var (hits,_) = await _buffer.GetAndParse([key]);
+            var currentStatus =  hits.Count > 0? hits.First().Value : await getStatusAsync(key);
             if (currentStatus == isActive)
             {
-                if (res.IsFailed) await _buffer.SetValue(key, isActive);
+                if (hits.Count == 0) await _buffer.SetValue(key, isActive);
                 return false;
             }
 
             await _buffer.SetValue(key, isActive);
-            await _buffer.SetFlushKey(key);
+            await _buffer.SetFlushKey([key]);
             return true;
         });
     }
 
-    public async Task Set(string userId, string recordKey)
+    public Task<Dictionary<string,bool>> Get(string[] keys, Func<string,Task<bool>> getStatusAsync)
     {
-        var key = GetKey(userId, recordKey);
-        await _buffer.SetValue(key, true);
-        await _buffer.SetFlushKey(key);
+        return _buffer.SafeGet(keys,getStatusAsync);
     }
 
-    public async Task<(string, string, bool)[]> GetAfterLastFlush(DateTime lastFlushTime)
+    public async Task Set(string[] keys)
     {
-        var values = await _buffer.GetAfterLastFlush(lastFlushTime);
-        return values.Select(k =>
-        {
-            var parts = k.Item1.Split(':');
-            return (parts[0], parts[1], k.Item2);
-        }).ToArray();
+        if (keys.Length == 0) return;
+        var records = keys.Select(x => (x, true)).ToArray();
+        await _buffer.SetValues(records);
+        await _buffer.SetFlushKey(keys);
     }
+
+    public Task<Dictionary<string,bool>> GetAfterLastFlush(DateTime lastFlushTime)
+        => _buffer.GetAfterLastFlush(lastFlushTime);
 }

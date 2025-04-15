@@ -131,13 +131,10 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
         await command.ExecuteNonQueryAsync(ct);
     }
 
-    public async Task<bool> UpdateOnConflict(string tableName, string[] keyFields, object[] keyValues, 
-        string valueField, object value, CancellationToken ct)
+    public async Task<bool> UpdateOnConflict(string tableName, Record conditions, string valueField, object value, CancellationToken ct)
     {
-        if (keyFields.Length != keyValues.Length)
-        {
-            throw new ArgumentException("Key fields and values must have the same length.");
-        }
+        var keyFields = conditions.Keys.ToArray();
+        var keyValues = conditions.Values.ToArray();
 
         // Build MERGE statement
         var keyConditions = string.Join(" AND ", keyFields.Select(k => $"t.[{k}] = s.[{k}]"));
@@ -147,7 +144,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
         var sql = $$"""
                     MERGE [{{tableName}}] AS t
                     USING (
-                        SELECT {{string.Join(", ", keyFields.Select((k, i) => $"@src_{k} AS [{k}]"))}}, 
+                        SELECT {{string.Join(", ", keyFields.Select(k  => $"@src_{k} AS [{k}]"))}}, 
                                        @value AS [{{valueField}}]
                     ) AS s
                     ON ({{keyConditions}})
@@ -174,12 +171,51 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
         return affectedRows > 0;
     }
 
-    public async Task<long> Increase(string tableName, string[] keyFields, object[] keyValues, string valueField, long delta, CancellationToken ct)
+    public async Task BatchUpdateOnConflict(string tableName, Record[] records, string valueField, CancellationToken ct)
     {
-        if (keyFields.Length != keyValues.Length)
+        foreach (var record in records)
         {
-            throw new ArgumentException("Key fields and values must have the same length.");
+            var keyFields = record.Keys.Where(k => k != valueField).ToArray();
+            var keyValues = keyFields.Select(k => record[k]).ToArray();
+            var value = record[valueField];
+
+            var keyConditions = string.Join(" AND ", keyFields.Select(k => $"t.[{k}] = s.[{k}]"));
+            var insertColumns = string.Join(", ", keyFields.Concat([valueField]).Select(c => $"[{c}]"));
+            var insertValues = string.Join(", ", keyFields.Select(k => $"s.[{k}]").Concat([$"s.[{valueField}]"]));
+
+            var sql = $$"""
+                        MERGE [{{tableName}}] AS t
+                        USING (
+                            SELECT {{string.Join(", ", keyFields.Select((k, i) => $"@p{i} AS [{k}]"))}}, 
+                                   @val AS [{{valueField}}]
+                        ) AS s
+                        ON ({{keyConditions}})
+                        WHEN MATCHED AND t.[{{valueField}}] != @val THEN
+                            UPDATE SET t.[{{valueField}}] = s.[{{valueField}}]
+                        WHEN NOT MATCHED THEN
+                            INSERT ({{insertColumns}})
+                            VALUES ({{insertValues}});
+                        """;
+
+            await using var command = new SqlCommand(sql, connection);
+            command.Transaction = _transaction?.Transaction() as SqlTransaction;
+
+            for (int i = 0; i < keyFields.Length; i++)
+            {
+                command.Parameters.AddWithValue($"@p{i}", keyValues[i]);
+            }
+
+            command.Parameters.AddWithValue("@val", value);
+
+            await command.ExecuteNonQueryAsync(ct);
         }
+    }
+
+
+    public async Task<long> Increase(string tableName, Record keyConditions, string valueField, long delta, CancellationToken ct)
+    {
+        string[] keyFields = keyConditions.Keys.ToArray();
+        object[] keyValues = keyConditions.Values.ToArray();
 
         var keyCondition = string.Join(" AND ", keyFields.Select(k => $"t.[{k}] = s.[{k}]"));
         var insertColumns = string.Join(", ", keyFields.Concat([valueField]).Select(c => $"[{c}]"));
@@ -205,7 +241,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
         await using var command = new SqlCommand(sql, connection);
         command.Transaction = _transaction?.Transaction() as SqlTransaction;
 
-        for (int i = 0; i < keyFields.Length; i++)
+        for (var i = 0; i < keyFields.Length; i++)
         {
             command.Parameters.AddWithValue($"@p{i}", keyValues[i]);
         }
@@ -216,26 +252,59 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
         return result is DBNull or null ? delta : Convert.ToInt64(result);
     }
 
-    public async Task<T> GetValue<T>(string tableName, string[] keyFields, object[] keyValues, 
-        string valueField, CancellationToken ct) where T : struct
+    public async Task<Dictionary<string,T>> FetchValues<T>(
+        string tableName,
+        Record? keyConditions,
+        string? inField,
+        IEnumerable<object>? inValues,
+        string valueField,
+        CancellationToken cancellationToken = default) where T : struct
     {
-        if (keyFields.Length != keyValues.Length)
+        var whereClauses = new List<string>();
+        var parameters = new List<SqlParameter>();
+        var paramCounter = 0;
+
+        if (keyConditions != null)
         {
-            throw new ArgumentException("Key fields and values must have the same length.");
+            foreach (var (key, value) in keyConditions)
+            {
+                var paramName = $"@p{paramCounter++}";
+                whereClauses.Add($"[{key}] = {paramName}");
+                parameters.Add(new SqlParameter(paramName, value));
+            }
         }
 
-        var conditions = keyFields.Select((t, i) => $"[{t}] = @p{i}");
-        var sql = $"SELECT [{valueField}] FROM [{tableName}] WHERE {string.Join(" AND ", conditions)}";
+        if (!string.IsNullOrEmpty(inField) && inValues?.Any() == true)
+        {
+            var inParams = new List<string>();
+            foreach (var value in inValues)
+            {
+                var paramName = $"@p{paramCounter++}";
+                inParams.Add(paramName);
+                parameters.Add(new SqlParameter(paramName, value));
+            }
+            whereClauses.Add($"[{inField}] IN ({string.Join(", ", inParams)})");
+        }
+
+        var whereClause = whereClauses.Count > 0
+            ? "WHERE " + string.Join(" AND ", whereClauses)
+            : "";
+
+        var sql = $"SELECT {inField ?? "0 as id"}, [{valueField}] FROM [{tableName}] {whereClause};";
 
         await using var command = new SqlCommand(sql, connection);
         command.Transaction = _transaction?.Transaction() as SqlTransaction;
-        command.Parameters.AddRange(keyValues.Select((x, i) => new SqlParameter($"@p{i}", x)).ToArray());
+        command.Parameters.AddRange(parameters.ToArray());
 
-        var result = await command.ExecuteScalarAsync(ct);
-
-        return result == DBNull.Value || result == null
-            ? default(T)
-            : (T)Convert.ChangeType(result, typeof(T));
+        var results = new Dictionary<string,T>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var key = reader.GetValue(0);
+            var value = reader.IsDBNull(1) ? default : reader.GetFieldValue<T>(1);
+            results.Add(key.ToString(), value);
+        }
+        return results;
     }
 
 

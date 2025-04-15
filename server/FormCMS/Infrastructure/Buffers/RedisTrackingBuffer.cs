@@ -1,4 +1,3 @@
-using FluentResults;
 using FormCMS.Utils.DateTimeExt;
 using FormCMS.Utils.ResultExt;
 using StackExchange.Redis;
@@ -11,11 +10,17 @@ public static class RedisConstants
     internal const int RetryDelayMs = 100; // Delay between retries in milliseconds
 }
 
-public class RedisTrackingBuffer<T>(IConnectionMultiplexer redis,BufferSettings settings, string prefix) where T : struct
+public class RedisTrackingBuffer<T>(
+    IConnectionMultiplexer redis,
+    BufferSettings settings, 
+    string prefix,
+    Func<T,RedisValue> toRedisValue,
+    Func<RedisValue,T> toT
+    ) 
 {
     private readonly IDatabase _db = redis.GetDatabase();
 
-    internal async Task<(string, T)[]> GetAfterLastFlush(DateTime lastFlushTime)
+    internal async Task<Dictionary<string,T>> GetAfterLastFlush(DateTime lastFlushTime)
     {
         var now = DateTime.UtcNow;
         var lockKey = $"{prefix}:flush-lock";
@@ -29,26 +34,20 @@ public class RedisTrackingBuffer<T>(IConnectionMultiplexer redis,BufferSettings 
             return [];
         } 
         
-        var ret = new List<(string, T)>();
-        
+        var ret = new Dictionary<string,T>();
         for (var t = lastFlushTime; t < now; t = t.AddMinutes(1))
         {
             var key = GetNextFlushTimeKey(t);
             var ids = await _db.SetMembersAsync(key);
-
-            foreach (var id in ids)
+            var (hits, _) = await GetAndParse(ids.Select(x=>x.ToString()).ToArray());
+            foreach (var (s, value) in hits)
             {
-                var val = await GetAndParse(id!);
-                if (val.IsSuccess)
-                {
-                    ret.Add((RemovePrefix(id!), val.Value));
-                }
+                ret[RemovePrefix(s)] = value;
             }
             await _db.KeyDeleteAsync(key);
         }
-        return ret.ToArray();
+        return ret;
     }
-
 
     internal async Task<TReturn> DoTaskInLock<TReturn>(string recordId, Func<Task<TReturn>> action)
     {
@@ -87,57 +86,85 @@ public class RedisTrackingBuffer<T>(IConnectionMultiplexer redis,BufferSettings 
         throw new ResultException("Failed to acquire lock");
     }
 
-    internal async Task<T> SafeGet(string recordId, Func<Task<T>> getAsync)
+    internal async Task<Dictionary<string,T>> SafeGet(string[] keys, Func<string,Task<T>> getAsync)
     {
-        recordId = AddPrefix(recordId);
+        var (hits, misses) = await GetAndParse(keys);
         
-        var res = await GetAndParse(recordId);
-        if (res.IsSuccess) return res.Value;
-
-        return await DoTaskInLock(recordId, async () =>
+        var ret = new Dictionary<string, T>(hits);
+        foreach (var key in misses)
         {
-            //another thread might have set cache
-            res = await GetAndParse(recordId);
-            if (res.IsSuccess) return res.Value;
-            
-            var value = await getAsync();
-            await _db.StringSetAsync(recordId, value.ToString(), settings.Expiration);
-            return value;
-        });
+            var value = await DoTaskInLock(key, async () =>
+            {
+                var newValue = await getAsync(RemovePrefix(key));
+                await _db.StringSetAsync(key, toRedisValue(newValue), settings.Expiration);
+                return newValue;
+            });
+            ret.Add(key, value);
+        }
+
+        return ret;
     }
 
-    internal async Task SetFlushKey(string recordId)
+    internal async Task SetFlushKey(string[] keys)
     {
-        recordId = AddPrefix(recordId);
+        if (keys.Length == 0) return;
+        
         var flushKey = GetNextFlushTimeKey(DateTime.UtcNow);
-        await _db.SetAddAsync(flushKey, recordId);
+        var redisValues = keys.Select(AddPrefix).Select(k => (RedisValue)k).ToArray();
+
+        await _db.SetAddAsync(flushKey, redisValues);
         await _db.KeyExpireAsync(flushKey, settings.Expiration);
+    }
+
+    private const string SetValuesLuaScript = """
+                                     for i = 1, #KEYS do
+                                         redis.call("SET", KEYS[i], ARGV[i], "EX", ARGV[#KEYS + 1])
+                                     end
+                                     return true
+                                     """;
+
+    //StringSetAsync doesn't support setting expiry per key directly in batch mode.
+    internal async Task SetValues((string Key, T Value)[] records)
+    {
+        var keys = records.Select(r => (RedisKey)AddPrefix(r.Key)).ToArray();
+        var values = records.Select(r => toRedisValue(r.Value)).ToArray();
+
+        // expiration in seconds
+        var expirationSeconds = (int)settings.Expiration.TotalSeconds;
+
+        var allArgs = values.Concat([expirationSeconds]).ToArray();
+
+
+        await _db.ScriptEvaluateAsync(SetValuesLuaScript, keys, allArgs);
     }
 
     internal Task SetValue(string recordId, T value)
     {
         recordId = AddPrefix(recordId);
-        return _db.StringSetAsync(recordId, value.ToString(), settings.Expiration);
+        return _db.StringSetAsync(recordId, toRedisValue(value), settings.Expiration);
     }
     
 
-    internal async Task<Result<T>> GetAndParse(string recordId)
+    internal async Task<(Dictionary<string,T> Hits, string[]Misses)> GetAndParse(string[] keys)
     {
-        recordId = AddPrefix(recordId);
-        var valStr = await _db.StringGetAsync(recordId);
-        if (valStr.HasValue)
-        {
-            if (typeof(T) == typeof(long) && long.TryParse(valStr, out var longVal))
-            {
-                return Result.Ok((T)(object)longVal);
-            }
+        var redisKeys = keys.Select(k => (RedisKey)AddPrefix(k)).ToArray();
+        var redisValues = await _db.StringGetAsync(redisKeys);
 
-            if (typeof(T) == typeof(bool) && bool.TryParse(valStr, out var boolVal))
+        var hits = new Dictionary<string, T>();
+        var misses = new List<string>();
+        for (var i = 0; i < redisValues.Length; i++)
+        {
+            if (redisValues[i].HasValue)
             {
-                return Result.Ok((T)(object)boolVal);
+                var val = toT(redisValues[i]);
+                hits.Add(keys[i], val);
+            }
+            else
+            {
+                misses.Add(keys[i]);
             }
         }
-        return Result.Fail<T>($"Could not get record {recordId}");
+        return (hits, misses.ToArray());
     }
 
     internal  Task<RedisResult> Increase(string recordId, long delta)

@@ -142,11 +142,10 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         await command.ExecuteNonQueryAsync(ct);
     }
 
-    public async Task<bool> UpdateOnConflict(string tableName, string[] keyFields, object[] keyValues,
-        string valueField, object value, CancellationToken ct)
+    public async Task<bool> UpdateOnConflict(string tableName, Record keyConditions, string valueField, object value, CancellationToken ct)
     {
-        if (keyFields.Length != keyValues.Length)
-            throw new ArgumentException("Key fields and values must have the same length.");
+        var keyFields = keyConditions.Keys.ToArray();
+        var keyValues = keyConditions.Values.ToArray();
 
         var quotedKeyFields = keyFields.Select(Quote).ToArray();
         var insertColumns = string.Join(", ", quotedKeyFields.Concat([Quote(valueField)]));
@@ -179,24 +178,76 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         // xmax = 0 → insert, else update
         return result != null;
     }
-    
-    public async Task<long> Increase(string tableName, string[] keyFields, object[] keyValues, string valueField, long delta, CancellationToken ct)
+
+    public async Task BatchUpdateOnConflict(string tableName, Record[] records, string valueField, CancellationToken ct)
     {
-        if (keyFields.Length != keyValues.Length)
-            throw new ArgumentException("Key fields and values must have the same length.");
+        if (records.Length == 0)
+            return;
+
+        var keyFields = records[0].Keys.Where(k => k != valueField).ToArray();
+        var quotedKeyFields = keyFields.Select(Quote).ToArray();
+        var allFields = keyFields.Append(valueField).ToArray();
+        var quotedAllFields = allFields.Select(Quote).ToArray();
+
+        var conflictFields = string.Join(", ", quotedKeyFields);
+        var insertColumns = string.Join(", ", quotedAllFields);
+
+        var valueRows = new List<string>();
+        var parameters = new List<NpgsqlParameter>();
+        int paramIndex = 0;
+
+        foreach (var record in records)
+        {
+            var rowParams = new List<string>();
+
+            foreach (var field in allFields)
+            {
+                var paramName = $"@p{paramIndex}";
+                rowParams.Add(paramName);
+
+                var value = record.TryGetValue(field, out var val) ? val : DBNull.Value;
+                parameters.Add(new NpgsqlParameter(paramName, GetNpgsqlDbType(value)) { Value = value ?? DBNull.Value });
+                paramIndex++;
+            }
+
+            valueRows.Add($"({string.Join(", ", rowParams)})");
+        }
+
+        var updateClause = $"{Quote(valueField)} = EXCLUDED.{Quote(valueField)}";
+        var whereClause = $"{Quote(tableName)}.{Quote(valueField)} IS DISTINCT FROM EXCLUDED.{Quote(valueField)}";
+
+        var sql = $"""
+                       INSERT INTO {Quote(tableName)} ({insertColumns})
+                       VALUES {string.Join(", ", valueRows)}
+                       ON CONFLICT ({conflictFields})
+                       DO UPDATE SET {updateClause}
+                       WHERE {whereClause};
+                   """;
+
+        await using var cmd = new NpgsqlCommand(sql, connection, _transaction?.Transaction() as NpgsqlTransaction);
+        cmd.Parameters.AddRange(parameters.ToArray());
+
+        await cmd.ExecuteNonQueryAsync(ct);
+    }
+
+
+    public async Task<long> Increase(string tableName, Record keyConditions, string valueField, long delta, CancellationToken ct)
+    {
+        string[] keyFields = keyConditions.Keys.ToArray();
+        object[] keyValues = keyConditions.Values.ToArray();
 
         var keyFieldQuoted = keyFields.Select(Quote).ToArray();
         var insertColumns = string.Join(", ", keyFieldQuoted.Append(Quote(valueField)));
         var insertParams = string.Join(", ", keyFields.Select((_, i) => $"@p{i}").Append("@initValue"));
         var conflictTarget = string.Join(", ", keyFieldQuoted);
-        var updateSet = $"{Quote(valueField)} = \"{tableName}\".{Quote(valueField)} + @delta";
+        var updateSet = $"{Quote(valueField)} = {Quote(tableName)}.{Quote(valueField)} + @delta";
 
         var sql = $"""
-                       INSERT INTO "{tableName}" ({insertColumns})
-                       VALUES ({insertParams})
-                       ON CONFLICT ({conflictTarget})
-                       DO UPDATE SET {updateSet}
-                       RETURNING {Quote(valueField)};
+                   INSERT INTO "{tableName}" ({insertColumns})
+                   VALUES ({insertParams})
+                   ON CONFLICT ({conflictTarget})
+                   DO UPDATE SET {updateSet}
+                   RETURNING {Quote(valueField)};
                    """;
 
         await using var command = new NpgsqlCommand(sql, connection);
@@ -215,38 +266,68 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         return result is long value ? value : throw new InvalidOperationException("Insert/Update failed or value is null.");
     }
 
-    public async Task<T> GetValue<T>(string tableName, string[] keyFields, object[] keyValues,
-        string valueField, CancellationToken ct) where T : struct
+    public async Task<Dictionary<string, T>> FetchValues<T>(
+        string tableName,
+        Record? keyConditions,
+        string? inField, IEnumerable<object>? inValues,
+        string valueField,
+        CancellationToken cancellationToken = default) where T : struct
     {
-        if (keyFields.Length != keyValues.Length)
+        var whereClauses = new List<string>();
+        var parameters = new List<NpgsqlParameter>();
+        var paramIndex = 0;
+
+        if (keyConditions != null)
         {
-            throw new ArgumentException("Key fields and values must have the same length.");
+            foreach (var (key, value) in keyConditions)
+            {
+                var paramName = $"@p{paramIndex++}";
+                whereClauses.Add($"{Quote(key)} = {paramName}");
+                parameters.Add(new NpgsqlParameter(paramName, GetNpgsqlDbType(value))
+                    { Value = value ?? DBNull.Value });
+            }
         }
 
-        // Build WHERE clause
-        var whereClause = string.Join(" AND ", keyFields.Select((k, i) => $"{Quote(k)} = @p{i}"));
+        if (!string.IsNullOrEmpty(inField) && inValues != null)
+        {
+            var placeholders = new List<string>();
+            foreach (var val in inValues)
+            {
+                var paramName = $"@p{paramIndex++}";
+                placeholders.Add(paramName);
+                parameters.Add(new NpgsqlParameter(paramName, GetNpgsqlDbType(val)) { Value = val ?? DBNull.Value });
+            }
+
+            if (placeholders.Count > 0)
+            {
+                whereClauses.Add($"{Quote(inField)} IN ({string.Join(", ", placeholders)})");
+            }
+        }
+
+        var idField = inField is null ? "0 as id" : Quote(inField);
+        
         var sql = $"""
-                   SELECT {Quote(valueField)}
+                   SELECT {idField}, {Quote(valueField)} 
                    FROM "{tableName}"
-                   WHERE {whereClause};
+                   {(whereClauses.Count > 0 ? "WHERE " + string.Join(" AND ", whereClauses) : "")};
                    """;
 
         await using var command = new NpgsqlCommand(sql, connection);
         command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
+        command.Parameters.AddRange(parameters.ToArray());
 
-        // Add parameters
-        for (var i = 0; i < keyValues.Length; i++)
+        var result = new Dictionary<string, T>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
         {
-            var param = command.Parameters.Add($"@p{i}", GetNpgsqlDbType(keyValues[i])); // Adjust type as needed
-            param.Value = keyValues[i] ?? DBNull.Value;
+            var key = reader.GetValue(0).ToString();
+            if (key != null && reader.GetValue(1) is T value)
+            {
+                result[key] = value;
+            }
         }
 
-        var result = await command.ExecuteScalarAsync(ct);
-        if (result == null || result == DBNull.Value)
-        {
-            return default(T);
-        }
-        return (T)Convert.ChangeType(result, typeof(T));
+        return result;
     }
 
     private static NpgsqlDbType GetNpgsqlDbType(object? value)

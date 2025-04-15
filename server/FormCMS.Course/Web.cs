@@ -102,9 +102,9 @@ public class WebApp(
         builder.Services.AddOutputCache(cacheOption =>
         {
             cacheOption.AddBasePolicy(policyBuilder => policyBuilder.Expire(TimeSpan.FromMinutes(1)));
-            cacheOption.AddPolicy(SystemSettings.DefaultPageCachePolicyName,
+            cacheOption.AddPolicy(SystemSettings.PageCachePolicyName,
                 b => b.Expire(TimeSpan.FromMinutes(1)));
-            cacheOption.AddPolicy(SystemSettings.DefaultQueryCachePolicyName,
+            cacheOption.AddPolicy(SystemSettings.QueryCachePolicyName,
                 b => b.Expire(TimeSpan.FromSeconds(1)));
         });
     }

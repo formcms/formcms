@@ -110,17 +110,14 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
         command.Transaction = _transaction?.Transaction() as SqliteTransaction;
         await command.ExecuteNonQueryAsync(ct);
     }
-    
-    public async Task<bool> UpdateOnConflict(string tableName,
-        string[] keyFields, object[] keyValues,
-        string statusField, object value,
-        CancellationToken ct)
+
+    public async Task<bool> UpdateOnConflict(string tableName, Record keyConditions, string valueField, object value, CancellationToken ct)
     {
-        EnsureMatch(keyFields, keyValues);
-        
+        var keyFields = keyConditions.Keys.ToArray();
+        var keyValues = keyConditions.Values.ToArray();
         // Build UPSERT SQL dynamically
-        var insertColumns = string.Join(", ", keyFields.Concat([statusField]));
-        var insertParams = string.Join(", ", keyFields.Select(f => $"@{f}").Concat([$"@{statusField}"]));
+        var insertColumns = string.Join(", ", keyFields.Concat([valueField]));
+        var insertParams = string.Join(", ", keyFields.Select(f => $"@{f}").Concat([$"@{valueField}"]));
         var conflictFields = string.Join(", ", keyFields);
         var desiredStatus = value switch
         {
@@ -133,11 +130,11 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
                 INSERT INTO {tableName} ({insertColumns})
                 VALUES ({insertParams})
                 ON CONFLICT({conflictFields}) DO UPDATE 
-                SET {statusField} = CASE 
-                    WHEN {statusField} = @desiredStatus THEN {statusField} 
+                SET {valueField} = CASE 
+                    WHEN {valueField} = @desiredStatus THEN {valueField} 
                     ELSE @desiredStatus 
                     END
-                WHERE {statusField} != @desiredStatus OR {statusField} IS NULL;
+                WHERE {valueField} != @desiredStatus OR {valueField} IS NULL;
                 
                 SELECT CASE 
                     WHEN changes() > 0 THEN 1 
@@ -152,15 +149,61 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
         }
 
         command.Parameters.AddWithValue("@desiredStatus", desiredStatus);
-        command.Parameters.AddWithValue($"@{statusField}", desiredStatus);
+        command.Parameters.AddWithValue($"@{valueField}", desiredStatus);
 
         var affectedRows = (long)(await command.ExecuteScalarAsync(ct) ?? 0);
         return affectedRows > 0;
     }
 
-    public async Task<long> Increase(string tableName, string[] keyFields, object[] keyValues, string valueField, long delta, CancellationToken ct)
+    //sqlite doesn't support insert int values(), values(), 
+    //insert record one by one to implment interface
+    public async Task BatchUpdateOnConflict(string tableName, Record[] records, string valueField, CancellationToken ct)
     {
-        EnsureMatch(keyFields, keyValues);
+        if (records.Length == 0) return;
+
+        foreach (var record in records)
+        {
+            var keyFields = record.Keys.Where(k => k != valueField).ToArray();
+            var desiredValue = record[valueField] switch
+            {
+                bool b => b ? 1 : 0,
+                var v => v
+            };
+
+            var insertColumns = string.Join(", ", keyFields.Append(valueField));
+            var insertParams = string.Join(", ", keyFields.Select(f => $"@{f}").Append($"@{valueField}"));
+            var conflictFields = string.Join(", ", keyFields);
+
+            var sql = $"""
+                       INSERT INTO {tableName} ({insertColumns})
+                       VALUES ({insertParams})
+                       ON CONFLICT({conflictFields}) DO UPDATE 
+                       SET {valueField} = CASE 
+                           WHEN {valueField} = @desiredStatus THEN {valueField}
+                           ELSE @desiredStatus
+                       END
+                       WHERE {valueField} != @desiredStatus OR {valueField} IS NULL;
+                       """;
+
+            await using var cmd =
+                new SqliteCommand(sql, connection, _transaction?.Transaction() as SqliteTransaction);
+            foreach (var key in keyFields)
+            {
+                cmd.Parameters.AddWithValue($"@{key}", record[key]!);
+            }
+
+            cmd.Parameters.AddWithValue($"@{valueField}", desiredValue);
+            cmd.Parameters.AddWithValue($"@desiredStatus", desiredValue);
+
+            await cmd.ExecuteNonQueryAsync(ct);
+        }
+    }
+
+    public async Task<long> Increase(string tableName, Record keyConditions, string valueField, long delta, CancellationToken ct)
+    {
+        string[] keyFields = keyConditions.Keys.ToArray();
+        object[] keyValues = keyConditions.Values.ToArray();
+        
 
         var insertColumns = string.Join(", ", keyFields.Concat([valueField]));
         var insertParams = string.Join(", ", keyFields.Select((_, i) => $"@p{i}").Concat(["@delta"]));
@@ -177,7 +220,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
         await using var cmd = new SqliteCommand(sql, connection);
         cmd.Transaction = _transaction?.Transaction() as SqliteTransaction;
 
-        for (int i = 0; i < keyValues.Length; i++)
+        for (var i = 0; i < keyValues.Length; i++)
             cmd.Parameters.AddWithValue($"@p{i}", keyValues[i]);
 
         cmd.Parameters.AddWithValue("@delta", delta);
@@ -186,43 +229,65 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
         return scalar != null && scalar != DBNull.Value ? (long)scalar : delta;
     }
 
-    public async Task<T> GetValue<T>(string tableName, string[] keyFields, object[] keyValues, string valueField,
-        CancellationToken ct) where T : struct
+    public async Task<Dictionary<string,T>> FetchValues<T>(
+        string tableName,
+        Record? keyConditions,
+        string? inClauseField,
+        IEnumerable<object>? inClauseValues,
+        string valueField,
+        CancellationToken cancellationToken = default
+    ) where T : struct
     {
-        EnsureMatch(keyFields, keyValues);
+        var conditions = new List<string>();
+        var parameters = new List<SqliteParameter>();
 
-        var conditions = keyFields.Select((t, i) => $"{t} = @p{i}").ToList();
-        var sql = $"SELECT {valueField} FROM {tableName} WHERE {string.Join(" AND ", conditions)}";
+        // Add keyConditions (if any)
+        if (keyConditions != null)
+        {
+            var paramIndex = 0;
+            foreach (var kvp in keyConditions)
+            {
+                var paramName = $"@p{paramIndex++}";
+                conditions.Add($"{kvp.Key} = {paramName}");
+                parameters.Add(new SqliteParameter(paramName, kvp.Value ?? DBNull.Value));
+            }
+        }
 
-        await using var command = new SqliteCommand(sql, connection);
-        command.Parameters.AddRange(keyValues.Select((x, i) => new SqliteParameter($"@p{i}", x)));
-        var result = await command.ExecuteScalarAsync(ct);
+        // Add IN clause (if inClauseField and inClauseValues are valid)
+        if (!string.IsNullOrWhiteSpace(inClauseField) && inClauseValues != null)
+        {
+            var inValuesArray = inClauseValues.ToArray();
+            if (inValuesArray.Length > 0)
+            {
+                var inParamNames = new List<string>();
+                for (var i = 0; i < inValuesArray.Length; i++)
+                {
+                    var paramName = $"@in{i}";
+                    inParamNames.Add(paramName);
+                    parameters.Add(new SqliteParameter(paramName, inValuesArray[i] ?? DBNull.Value));
+                }
 
-        return result == DBNull.Value || result == null
-            ? default(T)
-            : (T)Convert.ChangeType(result, typeof(T));
-    }
-    public async Task<long> IncreaseValue(string tableName, string[] keyFields, object[] keyValues, string valueField,
-        long delta,
-        CancellationToken ct)
-    {
-        EnsureMatch(keyFields, keyValues);
-        var insertColumns = string.Join(", ", keyFields.Concat([valueField]));
-        var insertParams = string.Join(", ", keyFields.Select((_, i) => $"@p{i}").Concat(["@delta"]));
-        var conflictFields = string.Join(", ", keyFields);
-        var sql = $"""
-                   INSERT INTO {tableName} ({insertColumns})
-                   VALUES ({insertParams})
-                   ON CONFLICT ({conflictFields}) DO UPDATE
-                   SET {valueField} = COALESCE({tableName}.{valueField}, 0) + @delta
-                   RETURNING {valueField};
-                   """;
-        await using var cmd = new SqliteCommand(sql, connection);
-        cmd.Parameters.AddRange(keyValues.Select((x,i)=> new SqliteParameter($"@p{i}", x)));  
-        cmd.Parameters.AddWithValue("@delta", delta);
-        
-        var scalar = await cmd.ExecuteScalarAsync(ct);
-        return scalar != null && scalar != DBNull.Value ? (long)scalar : delta;
+                conditions.Add($"{inClauseField} IN ({string.Join(",", inParamNames)})");
+            }
+        }
+
+        var whereClause = conditions.Count > 0 ? "WHERE " + string.Join(" AND ", conditions) : string.Empty;
+        var sql = $"SELECT {inClauseField ?? "0 as id"}, {valueField} FROM {tableName} {whereClause}";
+
+        var results = new Dictionary<string,T>();
+
+        await using var command = new SqliteCommand(sql, connection); // assumes `connection` is open
+        command.Parameters.AddRange(parameters.ToArray());
+
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            var id = reader.GetValue(0);
+            var value = reader.IsDBNull(1) ? default : (T)Convert.ChangeType(reader.GetValue(1), typeof(T));
+            results.Add(id.ToString(), value);
+        }
+
+        return results;
     }
 
     private static void EnsureMatch(string[] fields, object[] values)

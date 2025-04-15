@@ -13,8 +13,8 @@ public sealed class RouteOptions
 
 public sealed class SystemSettings
 {
-    public const string DefaultPageCachePolicyName = "CmsPageCachePolicy";
-    public const string DefaultQueryCachePolicyName = "CmsQueryCachePolicy";
+    public const string PageCachePolicyName = "CmsPageCachePolicy";
+    public const string QueryCachePolicyName = "CmsQueryCachePolicy";
     
     public bool EnableClient { get; set; } = true;
     public bool MapCmsHomePage { get; set; } = true;
@@ -22,8 +22,6 @@ public sealed class SystemSettings
     public TimeSpan EntitySchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);
     public TimeSpan QuerySchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);
 
-    public string PageCachePolicy { get; set; } = DefaultPageCachePolicyName;
-    public string QueryCachePolicy { get; set; } = DefaultQueryCachePolicyName;
     public int DatabaseQueryTimeout { get; set; } = 30;
     public ImageCompressionOptions ImageCompression { get; set; } = new ();
     public RouteOptions RouteOptions { get; set; } = new ();

@@ -8,7 +8,7 @@ public class BufferFlushWorker(
     ILogger<BufferFlushWorker> logger
     ): BackgroundService
 {
-    DateTime lastFlushTime = DateTime.MinValue;
+    private DateTime? lastFlushTime = null;
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)

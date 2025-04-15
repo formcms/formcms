@@ -42,7 +42,7 @@ public static class CmsWorkerBuilder
         Console.WriteLine(
             $"""
              *********************************************************
-             Addded CMS Workers
+             Added CMS Workers
              Database : {databaseProvider} - {string.Join(";", parts)}
              TaskTimingConfig: {taskTimingSeconds}
              *********************************************************

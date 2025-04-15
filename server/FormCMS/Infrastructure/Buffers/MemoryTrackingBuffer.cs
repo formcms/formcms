@@ -6,15 +6,15 @@ namespace FormCMS.Infrastructure.Buffers;
 
 public class MemoryTrackingBuffer<T>(BufferSettings settings) where T : struct
 {
-    private readonly IMemoryCache _cache = new MemoryCache(new MemoryCacheOptions());
-    private readonly IMemoryCache _locks = new MemoryCache(new MemoryCacheOptions());
-    private readonly IMemoryCache _flush = new MemoryCache(new MemoryCacheOptions());
+    private readonly MemoryCache _cache = new (new MemoryCacheOptions());
+    private readonly MemoryCache _locks = new (new MemoryCacheOptions());
+    private readonly MemoryCache _flush = new (new MemoryCacheOptions());
     
-    internal (string, T)[] GetAfterLastFlush(DateTime lastFlushTime)
+    internal Dictionary<string,T> GetAfterLastFlush(DateTime lastFlushTime)
     {
         var now = DateTime.UtcNow;
        
-        var ret = new List<(string, T)>();
+        var ret = new Dictionary<string, T>();
         for (var t = lastFlushTime ; t < now; t = t.AddMinutes(1))
         {
             var key = GetNextFlushTimeKey(t);
@@ -25,26 +25,34 @@ public class MemoryTrackingBuffer<T>(BufferSettings settings) where T : struct
             {
                 if (_cache.TryGetValue(k, out var cachedValue) && cachedValue is T v)
                 {
-                    ret.Add((k, v));
+                    ret[k] = v;
                 }
             }
             _flush.Remove(key);
         }
-        return ret.ToArray();
+
+        return ret;
     }
     
-    internal async Task<T> SafeGet(string recordId, Func<Task<T>> getAsync)
+    internal async Task<Dictionary<string,T>> SafeGet(string[] keys, Func<string,Task<T>> getAsync)
     {
-        var semaphore = GetSemaphore(recordId);
-        await semaphore.WaitAsync();
-        try
+        var ret = new Dictionary<string, T>();
+        foreach (var key in keys)
         {
-            return await Get(recordId, getAsync);
+            var semaphore = GetSemaphore(key);
+            await semaphore.WaitAsync();
+            try
+            {
+                var val = await GetOrCreate(key, getAsync);
+                ret.Add(key, val);
+            }
+            finally
+            {
+                semaphore.Release();
+            }
         }
-        finally
-        {
-            semaphore.Release();
-        }
+
+        return ret;
     }
     
     internal SemaphoreSlim GetSemaphore(string recordId)
@@ -54,9 +62,13 @@ public class MemoryTrackingBuffer<T>(BufferSettings settings) where T : struct
             return new SemaphoreSlim(1, 1);
         })!;
 
-    internal void Set(string recordId, T value)
+    internal void Set(string key, T value)
     {
-        _cache.Set(recordId, value);
+        _cache.Set(key, value);
+    }
+
+    internal void SetFlushKey(string key)
+    {
         var flushKey = GetNextFlushTimeKey(DateTime.UtcNow);
         
         var dict = _flush.GetOrCreate(flushKey, entry =>
@@ -64,14 +76,14 @@ public class MemoryTrackingBuffer<T>(BufferSettings settings) where T : struct
             entry.SetSlidingExpiration(settings.Expiration);
             return new ConcurrentDictionary<string, bool>();
         })!;
-        dict[recordId] = true;
+        dict[key] = true;
     }
-    internal async Task<T> Get(string recordId, Func<Task<T>> getAsync)
+    internal async Task<T> GetOrCreate(string key, Func<string, Task<T>> getAsync)
     {
-        var value = await _cache.GetOrCreateAsync(recordId, async entry =>
+        var value = await _cache.GetOrCreateAsync(key, async entry =>
         {
             entry.SetSlidingExpiration(settings.Expiration);
-            return await getAsync();
+            return await getAsync(key);
         });
         return value;
     }

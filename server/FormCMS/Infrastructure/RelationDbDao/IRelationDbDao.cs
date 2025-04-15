@@ -14,16 +14,24 @@ public interface IRelationDbDao
     Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct = default);
     Task CreateForeignKey(string table, string col, string refTable, string refCol, CancellationToken ct);
     Task CreateIndex(string table, string[] fields, bool isUniq, CancellationToken ct);
+    
     Task<bool> UpdateOnConflict(string tableName, 
-        string[] keyFields, object[] keyValues, 
+        Record keyConditions,
         string valueField, object value,
         CancellationToken ct);
+    
+    Task BatchUpdateOnConflict(string tableName, Record[]records, string valueField, CancellationToken ct);
+    
     Task<long> Increase(string tableName,
-        string[] keyFields, object[] keyValues,
+        Record keyConditions,
         string valueField, long delta,
         CancellationToken ct);
-    
-    Task<T> GetValue<T>(string tableName, 
-        string[] keyFields, object[] keyValues, string valueField,
-        CancellationToken ct) where T : struct;
+
+    Task<Dictionary<string,T>> FetchValues<T>(
+        string tableName,
+        Record? keyConditions,
+        string? inField, IEnumerable<object>? inValues,
+        string valueField,
+        CancellationToken cancellationToken = default
+    ) where T : struct;
 }
