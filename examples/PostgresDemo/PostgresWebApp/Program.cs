@@ -15,6 +15,7 @@ webBuilder.Services.AddPostgresCms(connectionString);
 webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 webBuilder.Services.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>();
 webBuilder.Services.AddAuditLog();
+webBuilder.Services.AddActivity();
 
 var webApp = webBuilder.Build();
 

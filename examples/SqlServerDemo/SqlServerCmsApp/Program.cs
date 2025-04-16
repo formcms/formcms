@@ -15,6 +15,7 @@ webBuilder.Services.AddSqlServerCms(connectionString);
 webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
 webBuilder.Services.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>();
 webBuilder.Services.AddAuditLog();
+webBuilder.Services.AddActivity();
 
 var webApp = webBuilder.Build();
 

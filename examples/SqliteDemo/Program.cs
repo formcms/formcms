@@ -15,6 +15,7 @@ webBuilder.Services.AddSqliteCms(connectionString);
 webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
 webBuilder.Services.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>();
 webBuilder.Services.AddAuditLog();
+webBuilder.Services.AddActivity();
 
 var webApp = webBuilder.Build();
 
