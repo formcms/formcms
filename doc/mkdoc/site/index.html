@@ -98,17 +98,17 @@
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#export-and-import-data" class="nav-link">Export and Import Data</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            
             <li class="nav-item" data-bs-level="2"><a href="#asset-library" class="nav-link">Asset Library</a>
               <ul class="nav flex-column">
               </ul>
             </li>
             
             <li class="nav-item" data-bs-level="2"><a href="#date-and-time" class="nav-link">Date and Time</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#export-and-import-data" class="nav-link">Export and Import Data</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -128,17 +128,22 @@
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#schema-version-control" class="nav-link">Schema Version Control</a>
-              <ul class="nav flex-column">
-              </ul>
-            </li>
-            
             <li class="nav-item" data-bs-level="2"><a href="#online-course-system-frontend" class="nav-link">Online Course System Frontend</a>
               <ul class="nav flex-column">
               </ul>
             </li>
             
             <li class="nav-item" data-bs-level="2"><a href="#navigation-by-category" class="nav-link">Navigation by Category</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#schema-version-control" class="nav-link">Schema Version Control</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#social-activity" class="nav-link">Social Activity</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -914,25 +919,6 @@ If you want to preview how the content looks on a page before publishing, you ca
 </ul>
 <p>By maintaining a detailed audit trail, the System enhances security and operational efficiency, ensuring that all modifications are tracked and can be reviewed when necessary.</p>
 <hr />
-<h2 id="export-and-import-data">Export and Import Data</h2>
-<p>This feature allows you to export or import data</p>
-<p>This feature is helpful for the following scenarios:<br />
-1. Migrating data from one server to another, or even between different types of databases. <br />
-2. Backing up your data. <br />
-3. Cleaning data by exporting only the latest schema, excluding audit log data.   </p>
-<h3 id="exporting-data">Exporting Data</h3>
-<ol>
-<li>Log in to the 'Admin Panel' and navigate to <code>Tasks</code>.</li>
-<li>Click <code>Add Export Task</code>.</li>
-<li>Wait a few minutes, then refresh the page. Once the task is complete, you can download the exported zip file.</li>
-</ol>
-<h3 id="importing-data">Importing Data</h3>
-<ol>
-<li>Log in to the 'Admin Panel' and go to <code>Tasks</code>.</li>
-<li>Click <code>Add Import Task</code>, then select the zip file you wish to import.</li>
-<li>Wait a few minutes, then refresh the page to check if the task was successful.</li>
-</ol>
-<hr />
 <h2 id="asset-library">Asset Library</h2>
 <p>The Asset Library centralizes the management of uploaded assets (e.g., images, files), supporting both local and cloud storage. It enables reuse, optimizes storage, and provides robust permissions and extensibility for various cloud providers.</p>
 <h3 id="overview">Overview</h3>
@@ -1101,6 +1087,25 @@ public interface IFileStore
 <li><strong>Simplicity</strong>: Clear separation of use cases reduces confusion in data entry and display.</li>
 <li><strong>Scalability</strong>: Standardized UTC storage supports global applications without time zone conflicts.</li>
 </ul>
+<hr />
+<h2 id="export-and-import-data">Export and Import Data</h2>
+<p>This feature allows you to export or import data</p>
+<p>This feature is helpful for the following scenarios:<br />
+1. Migrating data from one server to another, or even between different types of databases. <br />
+2. Backing up your data. <br />
+3. Cleaning data by exporting only the latest schema, excluding audit log data.   </p>
+<h3 id="exporting-data">Exporting Data</h3>
+<ol>
+<li>Log in to the 'Admin Panel' and navigate to <code>Tasks</code>.</li>
+<li>Click <code>Add Export Task</code>.</li>
+<li>Wait a few minutes, then refresh the page. Once the task is complete, you can download the exported zip file.</li>
+</ol>
+<h3 id="importing-data">Importing Data</h3>
+<ol>
+<li>Log in to the 'Admin Panel' and go to <code>Tasks</code>.</li>
+<li>Click <code>Add Import Task</code>, then select the zip file you wish to import.</li>
+<li>Wait a few minutes, then refresh the page to check if the task was successful.</li>
+</ol>
 <hr />
 <h2 id="customizing-the-admin-panel">Customizing the Admin Panel</h2>
 <p>FormCms' modular component structure makes it easy to modify UI text, replace components, or swap entire pages.  </p>
@@ -1817,26 +1822,6 @@ The URL <code>/</code> will be resolved to <code>/pages/home</code> unless expli
 </tbody>
 </table>
 <hr />
-<h2 id="schema-version-control">Schema Version Control</h2>
-<p>FormCMS saves each version of schemas, allowing users to roll back to earlier versions. Admins can freely test draft versions, while only published versions take effect.  </p>
-<h3 id="requirements">Requirements</h3>
-<p>To illustrate this feature, let's take a <code>Page</code> as an example. Once a page is published, it becomes publicly accessible. You may need version control for two main reasons:</p>
-<ul>
-<li>You want to make changes but ensure they do not take effect until thoroughly tested.</li>
-<li>If issues arise in the latest version, you need the ability to roll back to a previous version.</li>
-</ul>
-<h3 id="choosing-a-version">Choosing a Version</h3>
-<p>After making changes, the latest version's status changes to <code>draft</code> in the <a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/list.html?type=page">Page List Page</a>.<br />
-To manage versions, click the <code>View History</code> button to navigate to the <a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/history.html?schemaId=01JKKB85KWA651945N5W0T6PJR">History Version List Page</a>.<br />
-Here, you can select any version and set it to <code>published</code> status.</p>
-<h3 id="testing-a-draft-version">Testing a <code>Draft</code> Version</h3>
-<p>To preview a draft version, append <code>sandbox=1</code> as a query parameter in the URL: <a href="https://fluent-cms-admin.azurewebsites.net/story/?sandbox=1">Preview Draft Version Page</a>.<br />
-Alternatively, click the <code>View Page</code> button on the <code>Page Design</code> page.</p>
-<h3 id="compare-schema-changes">Compare schema Changes</h3>
-<p>You can compare the difference between different versions, use the <a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/diff.html?schemaId=01JKKA93AJG2HNY648H9PC16PN&amp;type=query&amp;oldId=126&amp;newId=138">Schema Diff Tool</a>.</p>
-<h3 id="duplicate_1">Duplicate</h3>
-<p>You can duplicate any schema version and save it as a new schema.</p>
-<hr />
 <h2 id="online-course-system-frontend">Online Course System Frontend</h2>
 <p>Having established our understanding of FormCMS essentials like Entity, Query, and Page, we're ready to build a frontend for an online course website.</p>
 <hr />
@@ -1928,6 +1913,142 @@ Course Details &lt;-------&gt; Teacher Details
 <a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/page.html?schema=page&amp;id=33">Edit Example</a></p>
 </li>
 </ul>
+<hr />
+<h2 id="schema-version-control">Schema Version Control</h2>
+<p>FormCMS saves each version of schemas, allowing users to roll back to earlier versions. Admins can freely test draft versions, while only published versions take effect.  </p>
+<h3 id="requirements">Requirements</h3>
+<p>To illustrate this feature, let's take a <code>Page</code> as an example. Once a page is published, it becomes publicly accessible. You may need version control for two main reasons:</p>
+<ul>
+<li>You want to make changes but ensure they do not take effect until thoroughly tested.</li>
+<li>If issues arise in the latest version, you need the ability to roll back to a previous version.</li>
+</ul>
+<h3 id="choosing-a-version">Choosing a Version</h3>
+<p>After making changes, the latest version's status changes to <code>draft</code> in the <a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/list.html?type=page">Page List Page</a>.<br />
+To manage versions, click the <code>View History</code> button to navigate to the <a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/history.html?schemaId=01JKKB85KWA651945N5W0T6PJR">History Version List Page</a>.<br />
+Here, you can select any version and set it to <code>published</code> status.</p>
+<h3 id="testing-a-draft-version">Testing a <code>Draft</code> Version</h3>
+<p>To preview a draft version, append <code>sandbox=1</code> as a query parameter in the URL: <a href="https://fluent-cms-admin.azurewebsites.net/story/?sandbox=1">Preview Draft Version Page</a>.<br />
+Alternatively, click the <code>View Page</code> button on the <code>Page Design</code> page.</p>
+<h3 id="compare-schema-changes">Compare schema Changes</h3>
+<p>You can compare the difference between different versions, use the <a href="https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/diff.html?schemaId=01JKKA93AJG2HNY648H9PC16PN&amp;type=query&amp;oldId=126&amp;newId=138">Schema Diff Tool</a>.</p>
+<h3 id="duplicate_1">Duplicate</h3>
+<p>You can duplicate any schema version and save it as a new schema.</p>
+<hr />
+<h2 id="social-activity">Social Activity</h2>
+<p>The Social Activity feature enhances user engagement by enabling views, likes, saves, and shares. It also provides detailed analytics to help understand content performance.</p>
+<h3 id="endpoints">Endpoints</h3>
+<ul>
+<li>
+<p><code>GET /api/activities/{entityName}/{recordId:long}</code><br />
+  Increments the view count by 1. Returns the active status and count for: like, view, share, and save.</p>
+</li>
+<li>
+<p><code>GET /api/activities/record/{entityName}/{recordId}?type={view|share}</code><br />
+  Retrieves activity info of type <code>view</code> or <code>share</code> for a given entity record.</p>
+</li>
+<li>
+<p><code>POST /api/activities/toggle/{entityName}/{recordId}?type={like|save}&amp;active={true|false}</code><br />
+  Toggles the activity (like or save) on or off based on the <code>active</code> flag.</p>
+</li>
+</ul>
+<h3 id="challenges">Challenges</h3>
+<p>The system cannot leverage traditional output caching due to dynamic nature of the content, which may lead to high database load under heavy traffic.</p>
+<p>To address this, buffered writes are introduced. Activity events are first stored in a buffer (in-memory or Redis), and then periodically flushed to the database, balancing performance and accuracy.</p>
+<hr />
+<h3 id="load-testing">Load Testing</h3>
+<p>Below is a test script using <a href="https://k6.io/">k6</a> to simulate traffic and measure performance:</p>
+<pre><code class="language-javascript">import http from 'k6/http';
+import { check } from 'k6';
+import { Trend } from 'k6/metrics';
+
+const ResponseTime = new Trend('response_time', true);
+
+export const options = {
+    stages: [
+        { duration: '30s', target: 300 },
+        { duration: '30s', target: 300 },
+        { duration: '30s', target: 0 },
+    ],
+    thresholds: {
+        'http_req_failed': ['rate&lt;0.01'],
+        'http_req_duration': ['p(95)&lt;500'],
+        'response_time': ['p(95)&lt;500'],
+    },
+};
+
+export default function () {
+    const id = Math.floor(Math.random() * 100) + 1;
+    const res = http.get(`http://localhost:5000/api/activities/post/${id}`);
+    ResponseTime.add(res.timings.duration);
+    check(res, { 'status is 200': (r) =&gt; r.status === 200 });
+}
+</code></pre>
+<hr />
+<h3 id="performance-comparison">Performance Comparison</h3>
+<h4 id="no-buffer">No Buffer</h4>
+<ul>
+<li>✅ Simple to deploy and debug</li>
+<li>❌ High database load under heavy traffic</li>
+<li>⏱ Avg. response time: <strong>35.28ms</strong></li>
+<li>🧪 Total requests: <strong>509,762</strong></li>
+<li>📉 Throughput: ~<strong>5,664 req/s</strong></li>
+</ul>
+<h4 id="redis-buffer">Redis Buffer</h4>
+<ul>
+<li>✅ High performance</li>
+<li>✅ Scalable across instances</li>
+<li>❌ More complex infrastructure (requires Redis setup)</li>
+<li>⏱ Avg. response time: <strong>11.78ms</strong></li>
+<li>🧪 Total requests: <strong>1,520,072</strong></li>
+<li>📉 Throughput: ~<strong>16,889 req/s</strong></li>
+</ul>
+<h4 id="memory-buffer">Memory Buffer</h4>
+<ul>
+<li>✅ Highest performance</li>
+<li>✅ Easy to deploy</li>
+<li>❌ Not horizontally scalable (buffer is local to instance)</li>
+<li>⏱ Avg. response time: <strong>4ms</strong></li>
+<li>🧪 Total requests: <strong>4,132,111</strong></li>
+<li>📉 Throughput: ~<strong>45,912 req/s</strong></li>
+</ul>
+<hr />
+<h3 id="summary">Summary</h3>
+<p>Each buffering strategy has its tradeoffs:</p>
+<table>
+<thead>
+<tr>
+<th>Strategy</th>
+<th>Performance</th>
+<th>Scalability</th>
+<th>Complexity</th>
+<th>Avg Response Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>No Buffer</td>
+<td>Medium</td>
+<td>High</td>
+<td>Low</td>
+<td>~35ms</td>
+</tr>
+<tr>
+<td>Memory Buffer</td>
+<td>High</td>
+<td>Low</td>
+<td>Low</td>
+<td>~4ms</td>
+</tr>
+<tr>
+<td>Redis Buffer</td>
+<td>High</td>
+<td>High</td>
+<td>Medium</td>
+<td>~12ms</td>
+</tr>
+</tbody>
+</table>
+<p>Choose the approach based on your system’s scalability requirements and infrastructure constraints.</p>
 <hr />
 <h2 id="optimizing-caching">Optimizing Caching</h2>
 <p>FormCMS employs advanced caching strategies to boost performance.  </p>
@@ -2263,7 +2384,8 @@ app.RegisterMessageProducerHook();
 <h3 id="repository-links">Repository Links</h3>
 <ul>
 <li><a href="https://github.com/formcms/formcms/tree/main/server/FormCMS"><strong>Backend Server</strong></a>  </li>
-<li><a href="https://github.com/formcms/formcms/tree/main/admin-panel"><strong>Admin Panel UI</strong></a>  </li>
+<li><a href="https://github.com/FormCms/FormCmsAdminSdk"><strong>Admin Panel Sdk</strong></a></li>
+<li><a href="https://github.com/FormCms/FormCmsAdminApp"><strong>Admin Panel App</strong></a></li>
 <li><a href="https://github.com/formcms/formcms/tree/main/server/FormCMS/wwwroot/schema-ui"><strong>Schema Builder</strong></a>  </li>
 </ul>
 <hr />
@@ -2412,5 +2534,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-04-01 00:00:57.856867+00:00
+Build Date UTC : 2025-04-16 16:58:02.517110+00:00
 -->

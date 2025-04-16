@@ -297,7 +297,7 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
         {
             var id = reader.GetValue(0);
             var value = reader.IsDBNull(1) ? default : (T)Convert.ChangeType(reader.GetValue(1), typeof(T));
-            results.Add(id.ToString(), value);
+            results.Add(id.ToString()!, value);
         }
 
         return results;

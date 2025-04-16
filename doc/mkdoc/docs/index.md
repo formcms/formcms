@@ -465,30 +465,6 @@ By maintaining a detailed audit trail, the System enhances security and operatio
 
 ---
 
-## Export and Import Data
-This feature allows you to export or import data
-
-This feature is helpful for the following scenarios:  
-1. Migrating data from one server to another, or even between different types of databases.   
-2. Backing up your data.   
-3. Cleaning data by exporting only the latest schema, excluding audit log data.   
-
-### Exporting Data
-1. Log in to the 'Admin Panel' and navigate to `Tasks`.
-2. Click `Add Export Task`.
-3. Wait a few minutes, then refresh the page. Once the task is complete, you can download the exported zip file.
-
-### Importing Data
-1. Log in to the 'Admin Panel' and go to `Tasks`.
-2. Click `Add Import Task`, then select the zip file you wish to import.
-3. Wait a few minutes, then refresh the page to check if the task was successful.
-
-
-
-
-
----
-
 ## Asset Library
 The Asset Library centralizes the management of uploaded assets (e.g., images, files), supporting both local and cloud storage. It enables reuse, optimizes storage, and provides robust permissions and extensibility for various cloud providers.
 ### Overview
@@ -671,6 +647,30 @@ FormCMS provides three display formats for handling date and time data, each ser
 - **Flexibility**: `localDatetime` adapts to user locations, while `datetime` and `date` provide universal clarity.
 - **Simplicity**: Clear separation of use cases reduces confusion in data entry and display.
 - **Scalability**: Standardized UTC storage supports global applications without time zone conflicts.
+
+
+
+
+
+---
+
+## Export and Import Data
+This feature allows you to export or import data
+
+This feature is helpful for the following scenarios:  
+1. Migrating data from one server to another, or even between different types of databases.   
+2. Backing up your data.   
+3. Cleaning data by exporting only the latest schema, excluding audit log data.   
+
+### Exporting Data
+1. Log in to the 'Admin Panel' and navigate to `Tasks`.
+2. Click `Add Export Task`.
+3. Wait a few minutes, then refresh the page. Once the task is complete, you can download the exported zip file.
+
+### Importing Data
+1. Log in to the 'Admin Panel' and go to `Tasks`.
+2. Click `Add Import Task`, then select the zip file you wish to import.
+3. Wait a few minutes, then refresh the page to check if the task was successful.
 
 
 
@@ -1504,36 +1504,6 @@ To bind a `Data List` to a component, follow these steps:
 
 
 
-
-
----
-
-## Schema Version Control
-FormCMS saves each version of schemas, allowing users to roll back to earlier versions. Admins can freely test draft versions, while only published versions take effect.  
-
-### Requirements
-To illustrate this feature, let's take a `Page` as an example. Once a page is published, it becomes publicly accessible. You may need version control for two main reasons:
-
-- You want to make changes but ensure they do not take effect until thoroughly tested.
-- If issues arise in the latest version, you need the ability to roll back to a previous version.
-
-### Choosing a Version
-After making changes, the latest version's status changes to `draft` in the [Page List Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/list.html?type=page).  
-To manage versions, click the `View History` button to navigate to the [History Version List Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/history.html?schemaId=01JKKB85KWA651945N5W0T6PJR).  
-Here, you can select any version and set it to `published` status.
-
-### Testing a `Draft` Version
-To preview a draft version, append `sandbox=1` as a query parameter in the URL: [Preview Draft Version Page](https://fluent-cms-admin.azurewebsites.net/story/?sandbox=1).  
-Alternatively, click the `View Page` button on the `Page Design` page.
-
-### Compare schema Changes
-You can compare the difference between different versions, use the [Schema Diff Tool](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/diff.html?schemaId=01JKKA93AJG2HNY648H9PC16PN&type=query&oldId=126&newId=138).
-
-### Duplicate
-You can duplicate any schema version and save it as a new schema.
-
-
-
 ---
 ## Online Course System Frontend
 Having established our understanding of FormCMS essentials like Entity, Query, and Page, we're ready to build a frontend for an online course website.
@@ -1634,6 +1604,138 @@ To create a category entity in the Schema Builder, include `parent` and `childre
 - **Breadcrumbs**:  
   Use the `Breadcrumbs` component to display navigation paths.  
   [Edit Example](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/page.html?schema=page&id=33)
+
+
+
+
+
+---
+
+## Schema Version Control
+FormCMS saves each version of schemas, allowing users to roll back to earlier versions. Admins can freely test draft versions, while only published versions take effect.  
+
+### Requirements
+To illustrate this feature, let's take a `Page` as an example. Once a page is published, it becomes publicly accessible. You may need version control for two main reasons:
+
+- You want to make changes but ensure they do not take effect until thoroughly tested.
+- If issues arise in the latest version, you need the ability to roll back to a previous version.
+
+### Choosing a Version
+After making changes, the latest version's status changes to `draft` in the [Page List Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/list.html?type=page).  
+To manage versions, click the `View History` button to navigate to the [History Version List Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/history.html?schemaId=01JKKB85KWA651945N5W0T6PJR).  
+Here, you can select any version and set it to `published` status.
+
+### Testing a `Draft` Version
+To preview a draft version, append `sandbox=1` as a query parameter in the URL: [Preview Draft Version Page](https://fluent-cms-admin.azurewebsites.net/story/?sandbox=1).  
+Alternatively, click the `View Page` button on the `Page Design` page.
+
+### Compare schema Changes
+You can compare the difference between different versions, use the [Schema Diff Tool](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/diff.html?schemaId=01JKKA93AJG2HNY648H9PC16PN&type=query&oldId=126&newId=138).
+
+### Duplicate
+You can duplicate any schema version and save it as a new schema.
+
+
+
+
+
+---
+
+## Social Activity
+The Social Activity feature enhances user engagement by enabling views, likes, saves, and shares. It also provides detailed analytics to help understand content performance.
+
+### Endpoints
+- `GET /api/activities/{entityName}/{recordId:long}`  
+  Increments the view count by 1. Returns the active status and count for: like, view, share, and save.
+
+- `GET /api/activities/record/{entityName}/{recordId}?type={view|share}`  
+  Retrieves activity info of type `view` or `share` for a given entity record.
+
+- `POST /api/activities/toggle/{entityName}/{recordId}?type={like|save}&active={true|false}`  
+  Toggles the activity (like or save) on or off based on the `active` flag.
+
+### Challenges
+The system cannot leverage traditional output caching due to dynamic nature of the content, which may lead to high database load under heavy traffic.
+
+To address this, buffered writes are introduced. Activity events are first stored in a buffer (in-memory or Redis), and then periodically flushed to the database, balancing performance and accuracy.
+
+---
+
+### Load Testing
+
+Below is a test script using [k6](https://k6.io/) to simulate traffic and measure performance:
+
+```javascript
+import http from 'k6/http';
+import { check } from 'k6';
+import { Trend } from 'k6/metrics';
+
+const ResponseTime = new Trend('response_time', true);
+
+export const options = {
+    stages: [
+        { duration: '30s', target: 300 },
+        { duration: '30s', target: 300 },
+        { duration: '30s', target: 0 },
+    ],
+    thresholds: {
+        'http_req_failed': ['rate<0.01'],
+        'http_req_duration': ['p(95)<500'],
+        'response_time': ['p(95)<500'],
+    },
+};
+
+export default function () {
+    const id = Math.floor(Math.random() * 100) + 1;
+    const res = http.get(`http://localhost:5000/api/activities/post/${id}`);
+    ResponseTime.add(res.timings.duration);
+    check(res, { 'status is 200': (r) => r.status === 200 });
+}
+```
+
+---
+
+### Performance Comparison
+
+#### No Buffer
+
+- ✅ Simple to deploy and debug
+- ❌ High database load under heavy traffic
+- ⏱ Avg. response time: **35.28ms**
+- 🧪 Total requests: **509,762**
+- 📉 Throughput: ~**5,664 req/s**
+
+#### Redis Buffer
+
+- ✅ High performance
+- ✅ Scalable across instances
+- ❌ More complex infrastructure (requires Redis setup)
+- ⏱ Avg. response time: **11.78ms**
+- 🧪 Total requests: **1,520,072**
+- 📉 Throughput: ~**16,889 req/s**
+
+#### Memory Buffer
+
+- ✅ Highest performance
+- ✅ Easy to deploy
+- ❌ Not horizontally scalable (buffer is local to instance)
+- ⏱ Avg. response time: **4ms**
+- 🧪 Total requests: **4,132,111**
+- 📉 Throughput: ~**45,912 req/s**
+
+---
+
+### Summary
+
+Each buffering strategy has its tradeoffs:
+
+| Strategy       | Performance | Scalability | Complexity | Avg Response Time |
+|----------------|-------------|-------------|------------|-------------------|
+| No Buffer      | Medium      | High        | Low        | ~35ms             |
+| Memory Buffer  | High        | Low         | Low        | ~4ms              |
+| Redis Buffer   | High        | High        | Medium     | ~12ms             |
+
+Choose the approach based on your system’s scalability requirements and infrastructure constraints.
 
 
 
@@ -2044,7 +2146,8 @@ The system comprises three main components:
 
 ### Repository Links  
 - [**Backend Server**](https://github.com/formcms/formcms/tree/main/server/FormCMS)  
-- [**Admin Panel UI**](https://github.com/formcms/formcms/tree/main/admin-panel)  
+- [**Admin Panel Sdk**](https://github.com/FormCms/FormCmsAdminSdk)
+- [**Admin Panel App**](https://github.com/FormCms/FormCmsAdminApp)
 - [**Schema Builder**](https://github.com/formcms/formcms/tree/main/server/FormCMS/wwwroot/schema-ui)  
 
 ---

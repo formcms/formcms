@@ -17,7 +17,7 @@ public class AuditLogApiTest
     private readonly EntityApiClient _entityApiClient;
     private readonly AuditLogApiClient _auditLogApiClient;
 
-    private readonly string _post = "audit_log_api_test_post_" + Ulid.NewUlid();
+    private readonly string _post = "audit_post_" + Ulid.NewUlid();
 
     public AuditLogApiTest(ITestOutputHelper testOutputHelper)
     {
