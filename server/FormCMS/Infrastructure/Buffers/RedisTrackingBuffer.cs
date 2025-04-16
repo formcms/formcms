@@ -39,11 +39,15 @@ public class RedisTrackingBuffer<T>(
         {
             var key = GetNextFlushTimeKey(t);
             var ids = await _db.SetMembersAsync(key);
-            var (hits, _) = await GetAndParse(ids.Select(x=>x.ToString()).ToArray());
-            foreach (var (s, value) in hits)
+            if (ids.Length > 0)
             {
-                ret[RemovePrefix(s)] = value;
+                var (hits, _) = await GetAndParse(ids.Select(x => x.ToString()).ToArray());
+                foreach (var (s, value) in hits)
+                {
+                    ret[RemovePrefix(s)] = value;
+                }
             }
+
             await _db.KeyDeleteAsync(key);
         }
         return ret;
@@ -96,10 +100,10 @@ public class RedisTrackingBuffer<T>(
             var value = await DoTaskInLock(key, async () =>
             {
                 var newValue = await getAsync(RemovePrefix(key));
-                await _db.StringSetAsync(key, toRedisValue(newValue), settings.Expiration);
+                await _db.StringSetAsync(AddPrefix(key), toRedisValue(newValue), settings.Expiration);
                 return newValue;
             });
-            ret.Add(key, value);
+            ret.Add(RemovePrefix(key), value);
         }
 
         return ret;
@@ -167,17 +171,19 @@ public class RedisTrackingBuffer<T>(
         return (hits, misses.ToArray());
     }
 
+    private const string IncreaseLuaScript =
+        """
+        if redis.call('EXISTS', KEYS[1]) == 1 then
+           return redis.call('INCRBY', KEYS[1], ARGV[1])
+        else
+           return nil
+        end
+        """;
+ 
     internal  Task<RedisResult> Increase(string recordId, long delta)
     {
-        const string luaScript = """
-                                 if redis.call('EXISTS', KEYS[1]) == 1 then
-                                    return redis.call('INCRBY', KEYS[1], ARGV[1])
-                                 else
-                                    return nil
-                                 end
-                                 """;
         recordId = AddPrefix(recordId);
-        return _db.ScriptEvaluateAsync(luaScript, [recordId],[delta] );
+        return _db.ScriptEvaluateAsync(IncreaseLuaScript, [recordId],[delta] );
     }
     
     private string AddPrefix(string k) => k.StartsWith(prefix) ? k:prefix + k;

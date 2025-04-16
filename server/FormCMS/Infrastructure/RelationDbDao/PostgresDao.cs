@@ -12,14 +12,27 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     private TransactionManager? _transaction;
     private readonly Compiler _compiler = new PostgresCompiler();
 
+    private NpgsqlConnection GetConnection()
+    {
+        if (connection.State != ConnectionState.Open)
+        {
+            if (connection.State == ConnectionState.Broken)
+            {
+                connection.Close();
+            }
+            connection.Open();
+        }
+        return connection;
+    }
+
     public async ValueTask<TransactionManager> BeginTransaction()
-        =>_transaction= new TransactionManager(await connection.BeginTransactionAsync());
+        =>_transaction= new TransactionManager(await GetConnection().BeginTransactionAsync());
     
     public bool InTransaction() => _transaction?.Transaction() != null;
     
     public Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
     {
-        var db = new QueryFactory(connection, _compiler);
+        var db = new QueryFactory(GetConnection(), _compiler);
         db.Logger = result => logger.LogInformation(result.ToString());
             
         return queryFunc(db,_transaction?.Transaction());
@@ -32,7 +45,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                    FROM information_schema.columns
                    WHERE table_name = '{table}';
                    """;
-        await using var command = connection.CreateCommand();
+        await using var command = GetConnection().CreateCommand();
         command.CommandText = sql;
         command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
 
@@ -84,7 +97,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                     EXECUTE FUNCTION __update_{updateAtField}_column();
                     """;
         }
-        await using var command = connection.CreateCommand();
+        await using var command = GetConnection().CreateCommand();
         command.CommandText = sql;
         command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
         await command.ExecuteNonQueryAsync(ct);
@@ -98,7 +111,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
             """
         );
         var sql = string.Join(";", parts.ToArray());
-        await using var command = connection.CreateCommand();
+        await using var command = GetConnection().CreateCommand();
         command.CommandText = sql;
         command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
         await command.ExecuteNonQueryAsync(ct);
@@ -120,7 +133,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                         END 
                    $$
                    """;
-        await using var command = connection.CreateCommand();
+        await using var command = GetConnection().CreateCommand();
         command.CommandText = sql;
         command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
         await command.ExecuteNonQueryAsync(ct);
@@ -136,7 +149,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                    CREATE {indexType} INDEX IF NOT EXISTS "{indexName}" 
                    ON "{table}" ({fieldList});
                    """;
-        await using var command = connection.CreateCommand();
+        await using var command = GetConnection().CreateCommand();
         command.CommandText = sql;
         command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
         await command.ExecuteNonQueryAsync(ct);
@@ -161,7 +174,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                    RETURNING xmax;
                    """;
 
-        await using var command = new NpgsqlCommand(sql, connection);
+        await using var command = new NpgsqlCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
 
         for (var i = 0; i < keyValues.Length; i++)
@@ -224,7 +237,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                        WHERE {whereClause};
                    """;
 
-        await using var cmd = new NpgsqlCommand(sql, connection, _transaction?.Transaction() as NpgsqlTransaction);
+        await using var cmd = new NpgsqlCommand(sql, GetConnection(), _transaction?.Transaction() as NpgsqlTransaction);
         cmd.Parameters.AddRange(parameters.ToArray());
 
         await cmd.ExecuteNonQueryAsync(ct);
@@ -250,7 +263,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                    RETURNING {Quote(valueField)};
                    """;
 
-        await using var command = new NpgsqlCommand(sql, connection);
+        await using var command = new NpgsqlCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
 
         for (var i = 0; i < keyValues.Length; i++)
@@ -312,7 +325,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                    {(whereClauses.Count > 0 ? "WHERE " + string.Join(" AND ", whereClauses) : "")};
                    """;
 
-        await using var command = new NpgsqlCommand(sql, connection);
+        await using var command = new NpgsqlCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
         command.Parameters.AddRange(parameters.ToArray());
 

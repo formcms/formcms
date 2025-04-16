@@ -17,42 +17,23 @@ public static class Utils
             _ => throw new Exception("unsupported database provider")
         };
 
-
-
-
         IServiceCollection AddSqliteDbServices()
         {
-            services.AddScoped(_ =>
-            {
-                var connection = new SqliteConnection(connectionString);
-                connection.Open();
-                return connection;
-            });
+            services.AddScoped(_ => new SqliteConnection(connectionString));
             services.AddScoped<IRelationDbDao, SqliteDao>();
             return services;
         }
 
         IServiceCollection AddSqlServerDbServices()
         {
-            services.AddScoped(_ =>
-            {
-                var connection = new SqlConnection(connectionString);
-                connection.Open();
-                return connection;
-            });
+            services.AddScoped(_ =>  new SqlConnection(connectionString));
             services.AddScoped<IRelationDbDao, SqlServerDao>();
             return services;
         }
 
         IServiceCollection AddPostgresDbServices()
         {
-            services.AddScoped(_ =>
-            {
-                var connection = new NpgsqlConnection(connectionString);
-                connection.Open();
-                return connection;
-            });
-
+            services.AddScoped(_ => new NpgsqlConnection(connectionString));
             services.AddScoped<IRelationDbDao, PostgresDao>();
             return services;
         }

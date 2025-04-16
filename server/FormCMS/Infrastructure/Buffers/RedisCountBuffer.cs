@@ -21,8 +21,8 @@ public class RedisCountBuffer(IConnectionMultiplexer redis, BufferSettings setti
     public Task<Dictionary<string,long>> GetAfterLastFlush(DateTime lastFlushTime)
         => _buffer.GetAfterLastFlush(lastFlushTime);
 
-    public Task<Dictionary<string,long>> Get(string[] keys, Func<string, Task<long>> getCountAsync)
-    =>_buffer.SafeGet(keys, getCountAsync);
+    public Task<Dictionary<string, long>> Get(string[] keys, Func<string, Task<long>> getCountAsync)
+        => _buffer.SafeGet(keys, getCountAsync);
 
     public async Task<long> Increase(string recordId, long delta, Func<string,Task<long>> getCountAsync)
     {

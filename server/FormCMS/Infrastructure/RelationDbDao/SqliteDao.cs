@@ -6,19 +6,32 @@ using SqlKata.Execution;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> logger) : IRelationDbDao
+public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) : IRelationDbDao
 {
     private readonly Compiler _compiler = new SqliteCompiler();
     private TransactionManager? _transaction;
 
+    private SqliteConnection GetConnection()
+    {
+        if (conn.State != ConnectionState.Open)
+        {
+            if (conn.State == ConnectionState.Broken)
+            {
+                conn.Close();
+            }
+            conn.Open();
+        }
+        return conn;
+    }
+
     public async ValueTask<TransactionManager> BeginTransaction()
-        => _transaction = new TransactionManager(await connection.BeginTransactionAsync());
+        => _transaction = new TransactionManager(await GetConnection().BeginTransactionAsync());
 
     public bool InTransaction() => _transaction?.Transaction() != null;
 
     public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
     {
-        var db = new QueryFactory(connection, _compiler);
+        var db = new QueryFactory(GetConnection(), _compiler);
         db.Logger = result => logger.LogInformation(result.ToString());
         return await queryFunc(db, _transaction?.Transaction());
     }
@@ -26,7 +39,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
     public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct)
     {
         var sql = $"PRAGMA table_info({table})";
-        await using var command = new SqliteCommand(sql, connection);
+        await using var command = new SqliteCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as SqliteTransaction;
         // return await ExecuteQuery(sql, async command =>
         // {
@@ -73,7 +86,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
             END;";
         }
 
-        await using var command = new SqliteCommand(sql, connection);
+        await using var command = new SqliteCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as SqliteTransaction;
         await command.ExecuteNonQueryAsync(ct);
     }
@@ -84,7 +97,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
             $"Alter Table {table} ADD COLUMN {x.Name} {ColumnTypeToString(x.Type)}"
         );
         var sql = string.Join(";", parts.ToArray());
-        await using var command = new SqliteCommand(sql, connection);
+        await using var command = new SqliteCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as SqliteTransaction;
         await command.ExecuteNonQueryAsync(ct);
     }
@@ -106,7 +119,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
                    CREATE {indexType} INDEX IF NOT EXISTS "{indexName}" 
                    ON "{table}" ({fieldList});
                    """;
-        await using var command = new SqliteCommand(sql, connection);
+        await using var command = new SqliteCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as SqliteTransaction;
         await command.ExecuteNonQueryAsync(ct);
     }
@@ -142,7 +155,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
                 END;
             ";
 
-        await using var command = new SqliteCommand(sql, connection);
+        await using var command = new SqliteCommand(sql, GetConnection());
         for (var i = 0; i < keyFields.Length; i++)
         {
             command.Parameters.AddWithValue($"@{keyFields[i]}", keyValues[i]);
@@ -156,7 +169,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
     }
 
     //sqlite doesn't support insert int values(), values(), 
-    //insert record one by one to implment interface
+    //insert record one by one to implement interface
     public async Task BatchUpdateOnConflict(string tableName, Record[] records, string valueField, CancellationToken ct)
     {
         if (records.Length == 0) return;
@@ -186,7 +199,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
                        """;
 
             await using var cmd =
-                new SqliteCommand(sql, connection, _transaction?.Transaction() as SqliteTransaction);
+                new SqliteCommand(sql, GetConnection(), _transaction?.Transaction() as SqliteTransaction);
             foreach (var key in keyFields)
             {
                 cmd.Parameters.AddWithValue($"@{key}", record[key]!);
@@ -217,7 +230,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
                    RETURNING {valueField};
                    """;
 
-        await using var cmd = new SqliteCommand(sql, connection);
+        await using var cmd = new SqliteCommand(sql, GetConnection());
         cmd.Transaction = _transaction?.Transaction() as SqliteTransaction;
 
         for (var i = 0; i < keyValues.Length; i++)
@@ -276,7 +289,7 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
 
         var results = new Dictionary<string,T>();
 
-        await using var command = new SqliteCommand(sql, connection); // assumes `connection` is open
+        await using var command = new SqliteCommand(sql, GetConnection()); // assumes `connection` is open
         command.Parameters.AddRange(parameters.ToArray());
 
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
@@ -290,14 +303,6 @@ public sealed class SqliteDao(SqliteConnection connection, ILogger<SqliteDao> lo
         return results;
     }
 
-    private static void EnsureMatch(string[] fields, object[] values)
-    {
-        if (fields.Length != values.Length)
-        {
-            throw new ArgumentException("Number of key fields must match number of values");
-        }
-    }
-    
     private static string ColumnTypeToString(ColumnType dataType)
         => dataType switch
         {

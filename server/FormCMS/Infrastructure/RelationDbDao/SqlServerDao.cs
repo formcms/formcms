@@ -6,16 +6,30 @@ using SqlKata.Execution;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger ) : IRelationDbDao
+public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : IRelationDbDao
 {
     private readonly Compiler _compiler = new SqlServerCompiler();
     private TransactionManager? _transaction;
+    
+    private SqlConnection GetConnection()
+    {
+        if (conn.State != ConnectionState.Open)
+        {
+            if (conn.State == ConnectionState.Broken)
+            {
+                conn.Close();
+            }
+            conn.Open();
+        }
+        return conn;
+    }
+    
     public async ValueTask<TransactionManager> BeginTransaction()
-            => _transaction = new TransactionManager(await connection.BeginTransactionAsync());
+            => _transaction = new TransactionManager(await GetConnection().BeginTransactionAsync());
     public bool InTransaction() => _transaction?.Transaction() != null;
     public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
     {
-        var db = new QueryFactory(connection, _compiler);
+        var db = new QueryFactory(GetConnection(), _compiler);
         db.Logger = result => logger.LogInformation(result.ToString());
         return await queryFunc(db, _transaction?.Transaction());
     }
@@ -28,7 +42,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
                   WHERE TABLE_NAME = '{table}'
                   """;
 
-        await using var command = new SqlCommand(sql, connection);
+        await using var command = new SqlCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as SqlTransaction;
 
         var columnDefinitions = new List<Column>();
@@ -60,7 +74,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
 
         var colDefine = string.Join(", ", parts);
         var sql = $"CREATE TABLE [{table}] ({colDefine});";
-        await using var command = new SqlCommand(sql, connection);
+        await using var command = new SqlCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as SqlTransaction;
         await command.ExecuteNonQueryAsync(ct);
  
@@ -80,7 +94,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
                    END;
                    """;
 
-            await using var cmd = new SqlCommand(sql, connection);
+            await using var cmd = new SqlCommand(sql, GetConnection());
             cmd.Transaction = _transaction?.Transaction() as SqlTransaction;
             await cmd.ExecuteNonQueryAsync(ct);
         }
@@ -92,7 +106,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
             $"ALTER TABLE [{table}] ADD [{x.Name}] {ColumnTypeToString(x.Type)}"
         );
         var sql = string.Join(";", parts);
-        await using var command = new SqlCommand(sql, connection);
+        await using var command = new SqlCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as SqlTransaction;
         await command.ExecuteNonQueryAsync(ct);
     }
@@ -107,7 +121,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
                                ALTER TABLE {table} ADD CONSTRAINT fk_{table}_{col} FOREIGN KEY ([{col}]) REFERENCES {refTable} ([{refCol}]);
                            END
                    """;
-        await using var command = new SqlCommand(sql, connection);
+        await using var command = new SqlCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as SqlTransaction;
         await command.ExecuteNonQueryAsync(ct);
     }
@@ -126,7 +140,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
                        CREATE {unique} INDEX [{indexName}] ON [{table}] ({columnList});
                    END;
                    """;
-        await using var command = new SqlCommand(sql, connection);
+        await using var command = new SqlCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as SqlTransaction;
         await command.ExecuteNonQueryAsync(ct);
     }
@@ -156,7 +170,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
                         SELECT @@ROWCOUNT;
                     """;
 
-        await using var command = new SqlCommand(sql, connection);
+        await using var command = new SqlCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as SqlTransaction;
 
         // Add parameters
@@ -197,7 +211,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
                             VALUES ({{insertValues}});
                         """;
 
-            await using var command = new SqlCommand(sql, connection);
+            await using var command = new SqlCommand(sql, GetConnection());
             command.Transaction = _transaction?.Transaction() as SqlTransaction;
 
             for (int i = 0; i < keyFields.Length; i++)
@@ -238,7 +252,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
                    WHERE {string.Join(" AND ", keyFields.Select((k, i) => $"[{k}] = @p{i}"))};
                    """;
 
-        await using var command = new SqlCommand(sql, connection);
+        await using var command = new SqlCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as SqlTransaction;
 
         for (var i = 0; i < keyFields.Length; i++)
@@ -292,7 +306,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
 
         var sql = $"SELECT {inField ?? "0 as id"}, [{valueField}] FROM [{tableName}] {whereClause};";
 
-        await using var command = new SqlCommand(sql, connection);
+        await using var command = new SqlCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as SqlTransaction;
         command.Parameters.AddRange(parameters.ToArray());
 
@@ -302,7 +316,7 @@ public class SqlServerDao(SqlConnection connection, ILogger<SqlServerDao> logger
         {
             var key = reader.GetValue(0);
             var value = reader.IsDBNull(1) ? default : reader.GetFieldValue<T>(1);
-            results.Add(key.ToString(), value);
+            results.Add(key.ToString()??"", value);
         }
         return results;
     }
