@@ -70,24 +70,20 @@ public static class Activities
     public static Activity LoadMetaData(this Activity activity, Entity entity, Record record)
     {
 
-        if (entity.PageUrl is not null)
-        {
-            activity = activity with { Url = entity.PageUrl + activity.RecordId };
-        }
-
+        activity = activity with { Url = entity.PageUrl + activity.RecordId };
         if (record.ByJsonPath<string>(entity.BookmarkTitleField, out var title))
         {
-            activity = activity with { Title = title };
+            activity = activity with { Title = Trim(title)};
         }
 
         if (record.ByJsonPath<Asset>(entity.BookmarkImageField, out var asset))
         {
-            activity = activity with { Image = asset.Url };
+            activity = activity with { Image = Trim(asset?.Url) };
         }
 
         if (record.ByJsonPath<string>(entity.BookmarkSubtitleField, out var subtitle))
         {
-            activity = activity with { Subtitle = subtitle };
+            activity = activity with { Subtitle = Trim(subtitle)};
         }
 
         if (record.ByJsonPath<DateTime>(entity.BookmarkPublishTimeField, out var publishTime))
@@ -96,6 +92,8 @@ public static class Activities
         }
 
         return activity;
+        
+        string Trim(string? s) => s?.Length > 255 ? s[..255] : s??"";
     }
 
     public static string Key(this Activity activity)

@@ -49,7 +49,7 @@ public class ActivityService(
         var countRecords = counts.Select(pair =>
             (ActivityCounts.Parse(pair.Key) with { Count = pair.Value }).UpsertRecord()).ToArray();
         
-        await dao.BatchUpdateOnConflict(ActivityCounts.TableName,  countRecords, [ActivityCounts.CountField],ct);
+        await dao.BatchUpdateOnConflict(ActivityCounts.TableName,  countRecords, ActivityCounts.KeyFields,ct);
         
         //Query title and image 
         var statusList = await statusBuffer.GetAfterLastFlush(lastFlushTime.Value);
