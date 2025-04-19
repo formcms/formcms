@@ -1,4 +1,5 @@
 using System.Data;
+using Fluid.Values;
 using FormCMS.Utils.DataModels;
 using Microsoft.Data.Sqlite;
 using SqlKata.Compilers;
@@ -124,45 +125,49 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
         await command.ExecuteNonQueryAsync(ct);
     }
 
-    public async Task<bool> UpdateOnConflict(string tableName, Record keyConditions, string valueField, object value, CancellationToken ct)
+    public async Task<bool> UpdateOnConflict(string tableName, Record data, string[] keyFields, CancellationToken ct)
     {
-        var keyFields = keyConditions.Keys.ToArray();
-        var keyValues = keyConditions.Values.ToArray();
-        // Build UPSERT SQL dynamically
-        var insertColumns = string.Join(", ", keyFields.Concat([valueField]));
-        var insertParams = string.Join(", ", keyFields.Select(f => $"@{f}").Concat([$"@{valueField}"]));
+        var insertColumns = string.Join(", ", data.Keys);
+        var insertParams = string.Join(", ", data.Keys.Select(f => $"@{f}"));
         var conflictFields = string.Join(", ", keyFields);
-        var desiredStatus = value switch
-        {
-            bool b => b ? 1 : 0, //sqlite use bool
-            _ => value
-        };
 
-        // Single command with conditional update and custom affected rows logic
-        var sql = $@"
-                INSERT INTO {tableName} ({insertColumns})
-                VALUES ({insertParams})
-                ON CONFLICT({conflictFields}) DO UPDATE 
-                SET {valueField} = CASE 
-                    WHEN {valueField} = @desiredStatus THEN {valueField} 
-                    ELSE @desiredStatus 
-                    END
-                WHERE {valueField} != @desiredStatus OR {valueField} IS NULL;
-                
-                SELECT CASE 
-                    WHEN changes() > 0 THEN 1 
-                    ELSE 0 
-                END;
-            ";
+        var updateFields = data.Keys.Where(fld => !keyFields.Contains(fld)).ToArray();
+        // Build dynamic SET clause for ON CONFLICT ... DO UPDATE
+        var setClauses = updateFields
+            .Select(field =>
+                $"{field} = CASE WHEN {field} = @{field}_new THEN {field} ELSE @{field}_new END"
+            );
+        var setClauseSql = string.Join(", ", setClauses);
+
+        var whereClause = string.Join(" OR ", updateFields.Select(field =>
+            $"{field} != @{field}_new OR {field} IS NULL"
+        ));
+
+        var sql = $"""
+                   INSERT INTO {tableName} ({insertColumns})
+                   VALUES ({insertParams})
+                   ON CONFLICT({conflictFields}) DO UPDATE
+                   SET {setClauseSql}
+                   WHERE {whereClause};
+                   SELECT CASE 
+                        WHEN changes() > 0 THEN 1 
+                   ELSE 0 
+                   END;
+                   """;
 
         await using var command = new SqliteCommand(sql, GetConnection());
-        for (var i = 0; i < keyFields.Length; i++)
+
+        // Add all parameters
+        foreach (var (key, value) in data)
         {
-            command.Parameters.AddWithValue($"@{keyFields[i]}", keyValues[i]);
+            command.Parameters.AddWithValue($"@{key}", value ?? DBNull.Value);
         }
 
-        command.Parameters.AddWithValue("@desiredStatus", desiredStatus);
-        command.Parameters.AddWithValue($"@{valueField}", desiredStatus);
+        foreach (var updateField in updateFields)
+        {
+            var value = data[updateField];
+            command.Parameters.AddWithValue($"@{updateField}_new", value ?? DBNull.Value);
+        }
 
         var affectedRows = (long)(await command.ExecuteScalarAsync(ct) ?? 0);
         return affectedRows > 0;
@@ -170,45 +175,13 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
 
     //sqlite doesn't support insert int values(), values(), 
     //insert record one by one to implement interface
-    public async Task BatchUpdateOnConflict(string tableName, Record[] records, string valueField, CancellationToken ct)
+    public async Task BatchUpdateOnConflict(string tableName, Record[] records, string[] keyFields, CancellationToken ct)
     {
         if (records.Length == 0) return;
 
         foreach (var record in records)
         {
-            var keyFields = record.Keys.Where(k => k != valueField).ToArray();
-            var desiredValue = record[valueField] switch
-            {
-                bool b => b ? 1 : 0,
-                var v => v
-            };
-
-            var insertColumns = string.Join(", ", keyFields.Append(valueField));
-            var insertParams = string.Join(", ", keyFields.Select(f => $"@{f}").Append($"@{valueField}"));
-            var conflictFields = string.Join(", ", keyFields);
-
-            var sql = $"""
-                       INSERT INTO {tableName} ({insertColumns})
-                       VALUES ({insertParams})
-                       ON CONFLICT({conflictFields}) DO UPDATE 
-                       SET {valueField} = CASE 
-                           WHEN {valueField} = @desiredStatus THEN {valueField}
-                           ELSE @desiredStatus
-                       END
-                       WHERE {valueField} != @desiredStatus OR {valueField} IS NULL;
-                       """;
-
-            await using var cmd =
-                new SqliteCommand(sql, GetConnection(), _transaction?.Transaction() as SqliteTransaction);
-            foreach (var key in keyFields)
-            {
-                cmd.Parameters.AddWithValue($"@{key}", record[key]!);
-            }
-
-            cmd.Parameters.AddWithValue($"@{valueField}", desiredValue);
-            cmd.Parameters.AddWithValue($"@desiredStatus", desiredValue);
-
-            await cmd.ExecuteNonQueryAsync(ct);
+            await UpdateOnConflict(tableName, record, keyFields, ct);
         }
     }
 
@@ -301,6 +274,18 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
         }
 
         return results;
+    }
+
+    public async Task<long> MaxId(string tableName, string fieldName, CancellationToken ct = default)
+    {
+        var sql = $"SELECT MAX({fieldName}) FROM {tableName};";
+
+        await using var command = new SqliteCommand(sql, GetConnection());
+        var result = await command.ExecuteScalarAsync(ct);
+
+        // Handle null (no rows in the table)
+        return result != DBNull.Value && result != null ? Convert.ToInt64(result) : 0L;
+        
     }
 
     private static string ColumnTypeToString(ColumnType dataType)

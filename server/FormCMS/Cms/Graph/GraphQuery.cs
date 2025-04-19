@@ -8,7 +8,7 @@ namespace FormCMS.Cms.Graph;
 public record GraphInfo(Entity Entity, ObjectGraphType SingleType, ListGraphType ListType);
 public sealed class GraphQuery : ObjectGraphType
 {
-    public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService, IRelationDbDao dao)
+    public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService)
     {
         var entities = entitySchemaService.AllEntities(CancellationToken.None).GetAwaiter().GetResult();
         var graphMap = new Dictionary<string, GraphInfo>();

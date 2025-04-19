@@ -66,7 +66,7 @@ public static class JunctionHelper
             DefaultPublicationStatus:PublicationStatus.Published,
             PublicationStatusAttribute: publicationStatusAttr,
             UpdatedAtAttribute:updatedAtAttr,
-            PreviewUrl:""
+            PageUrl:""
         );
         
         return new Junction(

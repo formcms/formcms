@@ -5,7 +5,8 @@
   "required": ["name","displayName","tableName", 
     "primaryKey","labelAttributeName",
     "defaultPageSize","defaultPublicationStatus",
-    "attributes","previewUrl"],
+    "pageUrl",
+    "attributes"],
   "properties": {
     "name": {
       "type": "string",
@@ -53,12 +54,35 @@
       "enum": ["draft", "published"],
       "description": "Default Publication Status"
     },
-    "previewUrl": {
+    "pageUrl": {
       "type": "string",
-      "title": "Preview URL"
+      "title": "Page URL"
     },
     
-    
+    "bookmarkQuery": {
+      "type": "string",
+      "title": "Bookmark Query"
+    },
+    "bookmarkQueryParamName": {
+      "type": "string",
+      "title": "Bookmark Query Parameter Name"
+    },
+    "bookmarkTitleField": {
+      "type": "string",
+      "title": "Bookmark Title Field"
+    },
+    "bookmarkSubtitleField": {
+      "type": "string",
+      "title": "Bookmark Subtitle Field"
+    },
+    "bookmarkImageField": {
+      "type": "string",
+      "title": "Bookmark Image Field"
+    },
+    "bookmarkPublishTimeField": {
+      "type": "string",
+      "title": "Bookmark Publish Time Field"
+    },
     "attributes": {
       "title": "Attributes",
       "description": "Attributes of entity, including database table fields and customized attribute",

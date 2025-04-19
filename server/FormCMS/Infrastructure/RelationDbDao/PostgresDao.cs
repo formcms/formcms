@@ -107,7 +107,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     {
         var parts = cols.Select(x =>
             $"""
-                Alter Table "{table}" ADD COLUMN "{x.Name}" {ColTypeToString(x.Type)}
+            Alter Table "{table}" ADD COLUMN "{x.Name}" {ColTypeToString(x.Type)}
             """
         );
         var sql = string.Join(";", parts.ToArray());
@@ -155,59 +155,82 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         await command.ExecuteNonQueryAsync(ct);
     }
 
-    public async Task<bool> UpdateOnConflict(string tableName, Record keyConditions, string valueField, object value, CancellationToken ct)
+    public async Task<bool> UpdateOnConflict(string tableName, Record data, string[] keyFields, CancellationToken ct)
     {
-        var keyFields = keyConditions.Keys.ToArray();
-        var keyValues = keyConditions.Values.ToArray();
+        var keyConditions = data.Where(kvp => keyFields.Contains(kvp.Key))
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
 
         var quotedKeyFields = keyFields.Select(Quote).ToArray();
-        var insertColumns = string.Join(", ", quotedKeyFields.Concat([Quote(valueField)]));
-        var paramPlaceholders = string.Join(", ", keyFields.Select((_, i) => $"@p{i}").Concat(["@value"]));
+        var keyValues = keyConditions.Values.ToArray();
+        
+        var updateFields = data.Keys.Where(fld => !keyFields.Contains(fld)).ToArray();
+        var quotedUpdateFields = updateFields.Select(Quote).ToArray();
+
+        var insertColumns = string.Join(", ", quotedKeyFields.Concat(quotedUpdateFields));
+        var paramPlaceholders = string.Join(", ",
+            keyFields.Select((_, i) => $"@p{i}")
+                .Concat(updateFields.Select((_, i) => $"@v{i}")));
+
         var conflictFields = string.Join(", ", quotedKeyFields);
+
+        var updateSetClause = string.Join(", ", updateFields.Select(f => $"{Quote(f)} = EXCLUDED.{Quote(f)}"));
+        var updateWhereClause = string.Join(" OR ",
+            updateFields.Select(f => $"t.{Quote(f)} IS DISTINCT FROM EXCLUDED.{Quote(f)}"));
 
         var sql = $"""
                    INSERT INTO "{tableName}" AS t ({insertColumns})
                    VALUES ({paramPlaceholders})
                    ON CONFLICT ({conflictFields}) 
-                   DO UPDATE SET {Quote(valueField)} = EXCLUDED.{Quote(valueField)}
-                   WHERE t.{Quote(valueField)} IS DISTINCT FROM EXCLUDED.{Quote(valueField)}
+                   DO UPDATE SET {updateSetClause}
+                   WHERE {updateWhereClause}
                    RETURNING xmax;
                    """;
 
         await using var command = new NpgsqlCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
 
-        for (var i = 0; i < keyValues.Length; i++)
+        // Add key parameters
+        for (var i = 0; i < keyFields.Length; i++)
         {
-            var param = command.Parameters.Add($"@p{i}", GetNpgsqlDbType(keyValues[i]));
-            param.Value = keyValues[i] ?? DBNull.Value;
+            var value = keyValues[i];
+            var param = command.Parameters.Add($"@p{i}", GetNpgsqlDbType(value));
+            param.Value = value ?? DBNull.Value;
         }
 
-        var valueParam = command.Parameters.Add("@value", GetNpgsqlDbType(value));
-        valueParam.Value = value ?? DBNull.Value;
+        // Add update field parameters
+        for (var i = 0; i < updateFields.Length; i++)
+        {
+            var field = updateFields[i];
+            if (!data.TryGetValue(field, out var value))
+                throw new ArgumentException($"Missing update value for field '{field}'");
+
+            var param = command.Parameters.Add($"@v{i}", GetNpgsqlDbType(value));
+            param.Value = value ?? DBNull.Value;
+        }
 
         var result = await command.ExecuteScalarAsync(ct);
-    
+
         // xmax = 0 → insert, else update
         return result != null;
     }
 
-    public async Task BatchUpdateOnConflict(string tableName, Record[] records, string valueField, CancellationToken ct)
+    public async Task BatchUpdateOnConflict(string tableName, Record[] records, string[] keyFields, CancellationToken ct)
     {
         if (records.Length == 0)
             return;
 
-        var keyFields = records[0].Keys.Where(k => k != valueField).ToArray();
-        var quotedKeyFields = keyFields.Select(Quote).ToArray();
-        var allFields = keyFields.Append(valueField).ToArray();
+        // Assume all records have the same keys
+        var allFields = records[0].Keys.ToArray();
+
+        var updateFields = allFields.Where(f => !keyFields.Contains(f)).ToArray();
+
         var quotedAllFields = allFields.Select(Quote).ToArray();
-
-        var conflictFields = string.Join(", ", quotedKeyFields);
         var insertColumns = string.Join(", ", quotedAllFields);
-
+        var conflictFields = string.Join(", ", keyFields.Select(Quote));
+    
         var valueRows = new List<string>();
         var parameters = new List<NpgsqlParameter>();
-        int paramIndex = 0;
+        var paramIndex = 0;
 
         foreach (var record in records)
         {
@@ -220,21 +243,23 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
 
                 var value = record.TryGetValue(field, out var val) ? val : DBNull.Value;
                 parameters.Add(new NpgsqlParameter(paramName, GetNpgsqlDbType(value)) { Value = value ?? DBNull.Value });
+
                 paramIndex++;
             }
 
             valueRows.Add($"({string.Join(", ", rowParams)})");
         }
 
-        var updateClause = $"{Quote(valueField)} = EXCLUDED.{Quote(valueField)}";
-        var whereClause = $"{Quote(tableName)}.{Quote(valueField)} IS DISTINCT FROM EXCLUDED.{Quote(valueField)}";
+        var updateSetClause = string.Join(", ", updateFields.Select(f => $"{Quote(f)} = EXCLUDED.{Quote(f)}"));
+        var whereClause = string.Join(" OR ",
+            updateFields.Select(f => $"{Quote(tableName)}.{Quote(f)} IS DISTINCT FROM EXCLUDED.{Quote(f)}"));
 
         var sql = $"""
-                       INSERT INTO {Quote(tableName)} ({insertColumns})
-                       VALUES {string.Join(", ", valueRows)}
-                       ON CONFLICT ({conflictFields})
-                       DO UPDATE SET {updateClause}
-                       WHERE {whereClause};
+                   INSERT INTO {Quote(tableName)} ({insertColumns})
+                   VALUES {string.Join(", ", valueRows)}
+                   ON CONFLICT ({conflictFields})
+                   DO UPDATE SET {updateSetClause}
+                   WHERE {whereClause};
                    """;
 
         await using var cmd = new NpgsqlCommand(sql, GetConnection(), _transaction?.Transaction() as NpgsqlTransaction);
@@ -343,6 +368,17 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         return result;
     }
 
+    public async Task<long> MaxId(string tableName, string fieldName, CancellationToken ct = default)
+    {
+        var sql = $"""SELECT MAX({Quote(fieldName)}) FROM {Quote(tableName)};""";
+
+        await using var command = new NpgsqlCommand(sql, GetConnection(), _transaction?.Transaction() as NpgsqlTransaction);
+
+        var result = await command.ExecuteScalarAsync(ct);
+
+        return result != DBNull.Value && result != null ? Convert.ToInt64(result) : 0L;
+    }
+
     private static NpgsqlDbType GetNpgsqlDbType(object? value)
     {
         if (value == null)
@@ -350,6 +386,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
 
         return value switch
         {
+            DateTime => NpgsqlDbType.Timestamp,
             long => NpgsqlDbType.Bigint,
             bool => NpgsqlDbType.Boolean,
             string => NpgsqlDbType.Varchar,

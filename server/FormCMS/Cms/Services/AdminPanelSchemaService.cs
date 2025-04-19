@@ -35,7 +35,7 @@ public class AdminPanelSchemaService(
                 DisplayName: entity.DisplayName,
                 LabelAttributeName: entity.LabelAttributeName,
                 DefaultPageSize: entity.DefaultPageSize,
-                PreviewUrl: entity.PreviewUrl
+                PreviewUrl: entity.PageUrl
             );
 
     private static XAttr ToXAttr(LoadedAttribute attribute)

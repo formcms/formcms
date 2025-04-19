@@ -13,21 +13,17 @@ public class PageApiTest
 {
     private readonly string _query = "query_" + Ulid.NewUlid();
     private readonly SchemaApiClient _schemaApiClient;
-    private readonly EntityApiClient _entityApiClient;
     private readonly QueryApiClient _queryApiClient;
     private readonly PageApiClient _pageApiClient;
-    private readonly AssetApiClient _assetApiClient;
 
     public PageApiTest()
     {
         Util.SetTestConnectionString();
         WebAppClient<Program> webAppClient = new();
+        Util.LoginAndInitTestData(webAppClient.GetHttpClient()).GetAwaiter().GetResult();
         _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());
-        _entityApiClient = new EntityApiClient(webAppClient.GetHttpClient());
         _queryApiClient = new QueryApiClient(webAppClient.GetHttpClient());
         _pageApiClient = new PageApiClient(webAppClient.GetHttpClient());
-        _assetApiClient = new AssetApiClient(webAppClient.GetHttpClient());
-        new AuthApiClient(webAppClient.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
         PrepareData().Wait();
     }
 
@@ -97,12 +93,6 @@ public class PageApiTest
 
     private async Task PrepareData()
     {
-        if (!_schemaApiClient.ExistsEntity(TestEntityNames.TestPost.Camelize()).GetAwaiter().GetResult())
-        {
-            await BlogsTestData.EnsureBlogEntities(_schemaApiClient);
-            await BlogsTestData.PopulateData(_entityApiClient,_assetApiClient);
-        }
-
         await $$"""
                 query {{_query}}($id:Int){
                    {{TestEntityNames.TestPost.Camelize()}}List(sort:id, idSet:[$id]){

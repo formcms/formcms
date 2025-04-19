@@ -16,16 +16,23 @@ namespace FormCMS.Core.Descriptors;
 
 public record Entity(
     ImmutableArray<Attribute> Attributes,
-    string Name ,
-    string DisplayName ,
-    string TableName ,
-    
-    string LabelAttributeName ,
-    string PrimaryKey ,
-    
+    string Name,
+    string DisplayName,
+    string TableName,
+
+    string LabelAttributeName,
+    string PrimaryKey,
+
     int DefaultPageSize = EntityConstants.DefaultPageSize,
     PublicationStatus DefaultPublicationStatus = PublicationStatus.Published,
-    string PreviewUrl = ""
+    
+    string PageUrl = "",
+    string BookmarkQuery = "",
+    string BookmarkQueryParamName = "",
+    string BookmarkTitleField = "",
+    string BookmarkSubtitleField ="",
+    string BookmarkImageField="",
+    string BookmarkPublishTimeField =""
 );
 
 public record LoadedEntity(
@@ -43,7 +50,7 @@ public record LoadedEntity(
     string LabelAttributeName,
     int DefaultPageSize,
     PublicationStatus DefaultPublicationStatus,
-    string PreviewUrl
+    string PageUrl
 ); 
 
 public static class EntityConstants
@@ -90,7 +97,7 @@ public static class EntityHelper
             DefaultPublicationStatus:entity.DefaultPublicationStatus,
             UpdatedAtAttribute:updatedAtAttribute,
             PublicationStatusAttribute:publicationStatusAttribute,
-            PreviewUrl:entity.PreviewUrl
+            PageUrl:entity.PageUrl
         );
     }
 

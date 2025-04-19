@@ -12,30 +12,28 @@ using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 using NJsonSchema.Generation;
 
-TsGenerator.GenerateCode<XEntity>("../../admin-panel/src/cms-client/types/xEntity.ts");
-TsGenerator.GenerateCode<ListResponse>("../../admin-panel/src/cms-client/types/listResponse.ts");
-TsGenerator.GenerateCode<ListResponseMode>("../../admin-panel/src/cms-client/types/listResponseMode.ts");
-TsGenerator.GenerateCode<LookupListResponse>("../../admin-panel/src/cms-client/types/lookupListResponse.ts");
-TsGenerator.GenerateCode<DefaultAttributeNames>("../../admin-panel/src/cms-client/types/defaultAttributeNames.ts");
-TsGenerator.GenerateCode<DefaultColumnNames>("../../admin-panel/src/cms-client/types/defaultColumnNames.ts");
-TsGenerator.GenerateCode<PublicationStatus>("../../admin-panel/src/cms-client/types/publicationStatus.ts");
-TsGenerator.GenerateCode<SpecialQueryKeys>("../../admin-panel/src/cms-client/types/specialQueryKeys.ts");
-TsGenerator.GenerateCode<SystemTask>("../../admin-panel/src/cms-client/types/systemTask.ts");
-TsGenerator.GenerateCode<Asset>("../../admin-panel/src/cms-client/types/asset.ts");
-TsGenerator.GenerateCode<AssetLink>("../../admin-panel/src/cms-client/types/assetLink.ts");
+TsGenerator.GenerateCode<XEntity>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/types/xEntity.ts");
+TsGenerator.GenerateCode<ListResponse>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/types/listResponse.ts");
+TsGenerator.GenerateCode<ListResponseMode>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/types/listResponseMode.ts");
+
+TsGenerator.GenerateCode<AuditLog>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auditLog/types/auditLog.ts");
+
+TsGenerator.GenerateCode<Asset>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/cms/types/asset.ts");
+TsGenerator.GenerateCode<AssetLink>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/cms/types/assetLink.ts");
+TsGenerator.GenerateCode<LookupListResponse>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/cms/types/lookupListResponse.ts");
+TsGenerator.GenerateCode<DefaultAttributeNames>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/cms/types/defaultAttributeNames.ts");
+TsGenerator.GenerateCode<DefaultColumnNames>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/cms/types/defaultColumnNames.ts");
+TsGenerator.GenerateCode<PublicationStatus>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/cms/types/publicationStatus.ts");
+TsGenerator.GenerateCode<SpecialQueryKeys>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/cms/types/specialQueryKeys.ts");
+TsGenerator.GenerateCode<SystemTask>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/cms/types/systemTask.ts");
 
 
-TsGenerator.GenerateCode<RoleAccess>("../../admin-panel/src/auth/types/roleAccess.ts");
-TsGenerator.GenerateCode<UserAccess>("../../admin-panel/src/auth/types/userAccess.ts");
-TsGenerator.GenerateCode<ProfileDto>("../../admin-panel/src/auth/types/profileDto.ts");
-TsGenerator.GenerateCode<Menu>("../../admin-panel/src/auth/types/menu.ts");
+TsGenerator.GenerateCode<Menu>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auth/types/menu.ts");
+TsGenerator.GenerateCode<ProfileDto>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auth/types/profileDto.ts");
+TsGenerator.GenerateCode<UserAccess>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auth/types/userAccess.ts");
+TsGenerator.GenerateCode<RoleAccess>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auth/types/roleAccess.ts");
 
-TsGenerator.GenerateCode<AuditLog>("../../admin-panel/src/auditLog/types/auditLog.ts");
-TsGenerator.GenerateCode<XEntity>("../../admin-panel/src/auditLog/types/xEntity.ts");
-TsGenerator.GenerateCode<ListResponse>("../../admin-panel/src/auditLog/types/listResponse.ts");
 
-TsGenerator.GenerateCode<XEntity>("../../admin-panel/src/components/xEntity.ts");
-TsGenerator.GenerateCode<ListResponse>("../../admin-panel/src/components/data/listResponse.ts");
 internal static class TsGenerator
 {
     private static readonly JsonSerializerOptions CamelNaming = new JsonSerializerOptions

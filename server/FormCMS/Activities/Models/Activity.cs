@@ -1,3 +1,5 @@
+using FormCMS.Core.Assets;
+using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.RecordExt;
@@ -11,8 +13,15 @@ public record Activity(
     string ActivityType,
     string UserId,
     bool IsActive = true,
-    long? Id = null
+    long? Id = null,
+    string Title ="", 
+    string Url="", 
+    string Image="", 
+    string Subtitle="", 
+    DateTime? PublishedAt=null
 );
+
+public record ActivityList(Activity[] Items, long TotalRecords);
 
 public static class Activities
 {
@@ -36,9 +45,18 @@ public static class Activities
         ColumnHelper.CreateCamelColumn<Activity, long>(x => x.RecordId),
         ColumnHelper.CreateCamelColumn<Activity, string>(x => x.ActivityType),
         ColumnHelper.CreateCamelColumn<Activity, string>(x => x.UserId),
+        
+        //use active, not deleted, the end point pass parameter ?type=like&active=true
         ColumnHelper.CreateCamelColumn<Activity, bool>(x => x.IsActive),
 
-        DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
+        ColumnHelper.CreateCamelColumn<Activity, string>(x => x.Title),
+        ColumnHelper.CreateCamelColumn<Activity, string>(x => x.Url),
+        ColumnHelper.CreateCamelColumn<Activity, string>(x => x.Subtitle),
+        ColumnHelper.CreateCamelColumn<Activity, string>(x => x.Image),
+        
+        DefaultAttributeNames.PublishedAt.CreateCamelColumn(ColumnType.Datetime),
+        
+        
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
     ];
@@ -49,19 +67,63 @@ public static class Activities
         return new Activity(parts[0], long.Parse(parts[1]), parts[2], parts[3]);
     }
 
+    public static Activity LoadMetaData(this Activity activity, Entity entity, Record record)
+    {
+
+        if (entity.PageUrl is not null)
+        {
+            activity = activity with { Url = entity.PageUrl + activity.RecordId };
+        }
+
+        if (record.ByJsonPath<string>(entity.BookmarkTitleField, out var title))
+        {
+            activity = activity with { Title = title };
+        }
+
+        if (record.ByJsonPath<Asset>(entity.BookmarkImageField, out var asset))
+        {
+            activity = activity with { Image = asset.Url };
+        }
+
+        if (record.ByJsonPath<string>(entity.BookmarkSubtitleField, out var subtitle))
+        {
+            activity = activity with { Subtitle = subtitle };
+        }
+
+        if (record.ByJsonPath<DateTime>(entity.BookmarkPublishTimeField, out var publishTime))
+        {
+            activity = activity with { PublishedAt = publishTime };
+        }
+
+        return activity;
+    }
+
     public static string Key(this Activity activity)
         => $"{activity.EntityName}.{activity.RecordId}.{activity.ActivityType}.{activity.UserId}";
     
-    public static Record UpsertRecord(this Activity activity)
+    public static Record UpsertRecord(this Activity activity, bool includeMetaData)
     {
-        return RecordExtensions.FormObject(activity, whiteList: [
+        var whitList = new List<string>
+        {
             nameof(Activity.EntityName),
             nameof(Activity.RecordId),
             nameof(Activity.ActivityType),
             nameof(Activity.UserId),
             nameof(Activity.IsActive),
-        ]);
+        };
+        if (includeMetaData)
+        {
+            whitList.AddRange([
+                nameof(Activity.Title),
+                nameof(Activity.Image),
+                nameof(Activity.Subtitle),
+                nameof(Activity.Url),
+                nameof(Activity.PublishedAt)
+            ]);
+        }
+        return RecordExtensions.FormObject(activity, [..whitList]);
     }
+    
     public static Record Condition(this Activity activity,bool includeType)
     {
         var ret = new Dictionary<string, object>
@@ -76,4 +138,14 @@ public static class Activities
         }
         return ret;
     }
+
+    public static SqlKata.Query List(string userId, string activityType)
+        => new SqlKata.Query(TableName)
+            .Select(
+                nameof(Activity.EntityName).Camelize(),
+                nameof(Activity.RecordId).Camelize(),
+                nameof(DefaultColumnNames.UpdatedAt).Camelize()
+            )
+            .Where(nameof(Activity.UserId).Camelize(), userId)
+            .Where(nameof(Activity.ActivityType).Camelize(), activityType);
 }

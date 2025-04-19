@@ -16,8 +16,8 @@ namespace FormCMS.Course.Tests;
 
 public class QueryApiTest
 {
-    private readonly string _queryName = "qt_query_" + Ulid.NewUlid();
-    private readonly  string _post = "qt_post_" + Ulid.NewUlid();
+    private readonly string _queryName = "qry_query_" + Ulid.NewUlid();
+    private readonly  string _post = "qry_post_" + Ulid.NewUlid();
 
     private readonly QueryApiClient _query;
     private readonly EntityApiClient _entity;
@@ -29,29 +29,23 @@ public class QueryApiTest
         Util.SetTestConnectionString();
 
         WebAppClient<Program> webAppClient = new();
-        new AuthApiClient(webAppClient.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
+        Util.LoginAndInitTestData(webAppClient.GetHttpClient());
         _schema = new SchemaApiClient(webAppClient.GetHttpClient());
-
-        var asset = new AssetApiClient(webAppClient.GetHttpClient());
         _entity= new EntityApiClient(webAppClient.GetHttpClient());
         _query = new QueryApiClient(webAppClient.GetHttpClient());
         _commonTestCases = new BlogsTestCases(_query, _queryName);
-
-
-        if (_schema.ExistsEntity(TestEntityNames.TestPost.Camelize()).GetAwaiter().GetResult()) return;
-        BlogsTestData.EnsureBlogEntities(_schema).GetAwaiter().GetResult();
-        BlogsTestData.PopulateData(_entity,asset).Wait();
     }
      [Fact]
      public async Task TestCsv()
      {
-         var items = await $$"""
-                             query {
-                                  {{TestEntityNames.TestPost.Camelize()}}List{
-                                      id, {{TestFieldNames.Language.Camelize()}}
-                                  }
-                             }
-                             """.GraphQlQuery<JsonElement[]>(_query).Ok();
+         var items =
+             await $$"""
+                     query {
+                          {{TestEntityNames.TestPost.Camelize()}}List{
+                              id, {{TestFieldNames.Language.Camelize()}}
+                          }
+                     }
+                     """.GraphQlQuery<JsonElement[]>(_query).Ok();
          var first = items.First();
          var ele = first.GetProperty(TestFieldNames.Language.Camelize());
          Assert.True(ele.ValueKind == JsonValueKind.Array);
@@ -59,14 +53,15 @@ public class QueryApiTest
     [Fact]
     public async Task TestDictionary()
     {
-        var items = await $$"""
-                            query {
-                                 {{TestEntityNames.TestPost.Camelize()}}List{
-                                     id, 
-                                     {{TestFieldNames.MetaData.Camelize()}}
-                                 }
-                            }
-                            """.GraphQlQuery<JsonElement[]>(_query).Ok();
+        var items =
+            await $$"""
+                    query {
+                         {{TestEntityNames.TestPost.Camelize()}}List{
+                             id, 
+                             {{TestFieldNames.MetaData.Camelize()}}
+                         }
+                    }
+                    """.GraphQlQuery<JsonElement[]>(_query).Ok();
         var first = items.First();
         var ele = first.GetProperty(TestFieldNames.MetaData.Camelize());
         Assert.True(ele.TryGetProperty("Key",out var url));
@@ -75,16 +70,17 @@ public class QueryApiTest
     [Fact]
     public async Task TestAssets()
     {
-        var items = await $$"""
-                            query {
-                                 {{TestEntityNames.TestPost.Camelize()}}List{
-                                     id, 
-                                     title, 
-                                     image {url, title},
-                                     gallery {url, title}
-                                 }
-                            }
-                            """.GraphQlQuery<JsonElement[]>(_query).Ok();
+        var items =
+            await $$"""
+                    query {
+                         {{TestEntityNames.TestPost.Camelize()}}List{
+                             id, 
+                             title, 
+                             image {url, title},
+                             gallery {url, title}
+                         }
+                    }
+                    """.GraphQlQuery<JsonElement[]>(_query).Ok();
         var first = items.First();
         var image = first.GetProperty("image");
         Assert.True(image.TryGetProperty("url",out var url));
@@ -101,21 +97,23 @@ public class QueryApiTest
     [Fact]
     public async Task TestDistinct()
     {
-        var items = await $$$"""
-                             query {
-                                  {{{TestEntityNames.TestPost.Camelize()}}}List(filterExpr:{field:"tags.name",clause:{startsWith:"Name-1"}} ){
-                                      id, title
-                                  }
-                             }
-                             """.GraphQlQuery<JsonElement[]>(_query).Ok();
+        var items =
+            await $$$"""
+                     query {
+                          {{{TestEntityNames.TestPost.Camelize()}}}List(filterExpr:{field:"tags.name",clause:{startsWith:"Name-1"}} ){
+                              id, title
+                          }
+                     }
+                     """.GraphQlQuery<JsonElement[]>(_query).Ok();
         Assert.True(items.Length > 1);
-        items = await $$$"""
-                             query {
-                                  {{{TestEntityNames.TestPost.Camelize()}}}List(distinct:true, filterExpr:{field:"tags.name",clause:{startsWith:"Name-1"}} ){
-                                      id, title
-                                  }
-                             }
-                             """.GraphQlQuery<JsonElement[]>(_query).Ok();
+        items =
+            await $$$"""
+                     query {
+                          {{{TestEntityNames.TestPost.Camelize()}}}List(distinct:true, filterExpr:{field:"tags.name",clause:{startsWith:"Name-1"}} ){
+                              id, title
+                          }
+                     }
+                     """.GraphQlQuery<JsonElement[]>(_query).Ok();
         Assert.True(items.Length == 1);
     }
     

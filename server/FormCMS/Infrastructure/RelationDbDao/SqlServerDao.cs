@@ -145,86 +145,64 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
         await command.ExecuteNonQueryAsync(ct);
     }
 
-    public async Task<bool> UpdateOnConflict(string tableName, Record conditions, string valueField, object value, CancellationToken ct)
+    public async Task<bool> UpdateOnConflict(string tableName, Record record, string[] keyFields, CancellationToken ct)
     {
-        var keyFields = conditions.Keys.ToArray();
-        var keyValues = conditions.Values.ToArray();
+        var allFields = record.Keys.ToArray();
+        var nonKeyFields = allFields.Except(keyFields).ToArray();
 
-        // Build MERGE statement
+        if (nonKeyFields.Length == 0)
+            throw new ArgumentException("Record must contain at least one non-key field to update or insert.");
+
+        // Key condition for ON clause
         var keyConditions = string.Join(" AND ", keyFields.Select(k => $"t.[{k}] = s.[{k}]"));
-        var insertColumns = string.Join(", ", keyFields.Concat([valueField]).Select(c => $"[{c}]"));
-        var insertValues = string.Join(", ", keyFields.Select(k => $"s.[{k}]").Concat([$"s.[{valueField}]"]));
+
+        // Insert column list
+        var insertColumns = string.Join(", ", allFields.Select(f => $"[{f}]"));
+        var insertValues = string.Join(", ", allFields.Select(f => $"s.[{f}]"));
+
+        // Update SET clause with conditional check
+        var updateSetClause = string.Join(", ", nonKeyFields.Select(f => $"t.[{f}] = s.[{f}]"));
+        var updateCheckClause = string.Join(" OR ", nonKeyFields.Select(f => $"t.[{f}] != s.[{f}]"));
+
+        // Build SELECT clause in USING (subquery)
+        var selectClause = string.Join(", ", allFields.Select(f => $"@src_{f} AS [{f}]"));
 
         var sql = $$"""
                     MERGE [{{tableName}}] AS t
                     USING (
-                        SELECT {{string.Join(", ", keyFields.Select(k  => $"@src_{k} AS [{k}]"))}}, 
-                                       @value AS [{{valueField}}]
+                        SELECT {{selectClause}}
                     ) AS s
                     ON ({{keyConditions}})
-                    WHEN MATCHED  AND t.[{{valueField}}] != @value THEN
-                        UPDATE SET t.[{{valueField}}] = s.[{{valueField}}]
+                    WHEN MATCHED AND ({{updateCheckClause}}) THEN
+                        UPDATE SET {{updateSetClause}}
                     WHEN NOT MATCHED THEN
                         INSERT ({{insertColumns}})
                         VALUES ({{insertValues}});
-                        SELECT @@ROWCOUNT;
+                    SELECT @@ROWCOUNT;
                     """;
 
         await using var command = new SqlCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as SqlTransaction;
 
         // Add parameters
-        for (var i = 0; i < keyFields.Length; i++)
+        foreach (var field in allFields)
         {
-            command.Parameters.AddWithValue($"@src_{keyFields[i]}", keyValues[i]);
+            var paramName = $"@src_{field}";
+            command.Parameters.AddWithValue(paramName, record[field] ?? DBNull.Value);
         }
-        command.Parameters.AddWithValue("@value", value);
 
-        // Execute and return affected rows
-        var affectedRows = (int)(await command.ExecuteScalarAsync(ct)??0);
+        var affectedRows = (int)(await command.ExecuteScalarAsync(ct) ?? 0);
         return affectedRows > 0;
     }
 
-    public async Task BatchUpdateOnConflict(string tableName, Record[] records, string valueField, CancellationToken ct)
+
+    public async Task BatchUpdateOnConflict(string tableName, Record[] records, string[] updateFields, CancellationToken ct)
     {
         foreach (var record in records)
         {
-            var keyFields = record.Keys.Where(k => k != valueField).ToArray();
-            var keyValues = keyFields.Select(k => record[k]).ToArray();
-            var value = record[valueField];
-
-            var keyConditions = string.Join(" AND ", keyFields.Select(k => $"t.[{k}] = s.[{k}]"));
-            var insertColumns = string.Join(", ", keyFields.Concat([valueField]).Select(c => $"[{c}]"));
-            var insertValues = string.Join(", ", keyFields.Select(k => $"s.[{k}]").Concat([$"s.[{valueField}]"]));
-
-            var sql = $$"""
-                        MERGE [{{tableName}}] AS t
-                        USING (
-                            SELECT {{string.Join(", ", keyFields.Select((k, i) => $"@p{i} AS [{k}]"))}}, 
-                                   @val AS [{{valueField}}]
-                        ) AS s
-                        ON ({{keyConditions}})
-                        WHEN MATCHED AND t.[{{valueField}}] != @val THEN
-                            UPDATE SET t.[{{valueField}}] = s.[{{valueField}}]
-                        WHEN NOT MATCHED THEN
-                            INSERT ({{insertColumns}})
-                            VALUES ({{insertValues}});
-                        """;
-
-            await using var command = new SqlCommand(sql, GetConnection());
-            command.Transaction = _transaction?.Transaction() as SqlTransaction;
-
-            for (int i = 0; i < keyFields.Length; i++)
-            {
-                command.Parameters.AddWithValue($"@p{i}", keyValues[i]);
-            }
-
-            command.Parameters.AddWithValue("@val", value);
-
-            await command.ExecuteNonQueryAsync(ct);
+            await UpdateOnConflict(tableName, record, updateFields, ct);
         }
     }
-
 
     public async Task<long> Increase(string tableName, Record keyConditions, string valueField, long delta, CancellationToken ct)
     {
@@ -321,6 +299,16 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
         return results;
     }
 
+    public async Task<long> MaxId(string tableName, string fieldName, CancellationToken ct = default)
+    {
+        var sql = $"SELECT ISNULL(MAX([{fieldName}]), 0) FROM [{tableName}]";
+
+        await using var command = new SqlCommand(sql, GetConnection());
+        command.Transaction = _transaction?.Transaction() as SqlTransaction;
+
+        var result = await command.ExecuteScalarAsync(ct);
+        return result != null && long.TryParse(result.ToString(), out var maxId) ? maxId : 0;
+    }
 
     private static string ColumnTypeToString(ColumnType dataType)
         => dataType switch
