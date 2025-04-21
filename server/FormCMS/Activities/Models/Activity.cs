@@ -2,8 +2,10 @@ using FormCMS.Core.Assets;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
+using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.RecordExt;
 using Humanizer;
+using Query = SqlKata.Query;
 
 namespace FormCMS.Activities.Models;
 
@@ -13,22 +15,39 @@ public record Activity(
     string ActivityType,
     string UserId,
     bool IsActive = true,
-    long? Id = null,
+    long Id = 0,
     string Title ="", 
     string Url="", 
     string Image="", 
     string Subtitle="", 
-    DateTime? PublishedAt=null
+    DateTime PublishedAt=default,
+    DateTime UpdatedAt = default
 );
-
-public record ActivityList(Activity[] Items, long TotalRecords);
 
 public static class Activities
 {
     public const string TableName = "__activities";
+    private const int DefaultPageSize = 8;
 
     public static readonly string ActiveField = nameof(Activity.IsActive).Camelize();
     public static readonly string TypeField = nameof(Activity.ActivityType).Camelize();
+
+    public static readonly XEntity Entity = XEntityExtensions.CreateEntity<Activity>(
+        labelAttribute: nameof(Activity.Title),
+        defaultPageSize: DefaultPageSize,
+        attributes:
+        [
+            XAttrExtensions.CreateAttr<Activity, long>(x => x.Id, isDefault: true),
+            XAttrExtensions.CreateAttr<Activity, string>(x => x.EntityName),
+            XAttrExtensions.CreateAttr<Activity, long>(x => x.RecordId),
+            XAttrExtensions.CreateAttr<Activity, string>(x => x.ActivityType),
+            XAttrExtensions.CreateAttr<Activity, string>(x => x.Title),
+            XAttrExtensions.CreateAttr<Activity, string>(x => x.Subtitle),
+            XAttrExtensions.CreateAttr<Activity, string>(x => x.Url),
+            XAttrExtensions.CreateAttr<Activity, string>(x => x.Image),
+            XAttrExtensions.CreateAttr<Activity, DateTime>(x => x.PublishedAt),
+            XAttrExtensions.CreateAttr<Activity, DateTime>(x => x.UpdatedAt),
+        ]);
     
     public static readonly string[] KeyFields =
     [
@@ -55,8 +74,6 @@ public static class Activities
         ColumnHelper.CreateCamelColumn<Activity, string>(x => x.Image),
         
         DefaultAttributeNames.PublishedAt.CreateCamelColumn(ColumnType.Datetime),
-        
-        
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
     ];
@@ -137,13 +154,32 @@ public static class Activities
         return ret;
     }
 
-    public static SqlKata.Query List(string userId, string activityType)
-        => new SqlKata.Query(TableName)
+    public static Query List(string userId, string activityType,int?offset,int?limit)
+    {
+        var query = new Query(TableName)
             .Select(
-                nameof(Activity.EntityName).Camelize(),
-                nameof(Activity.RecordId).Camelize(),
-                nameof(DefaultColumnNames.UpdatedAt).Camelize()
+                nameof(DefaultColumnNames.UpdatedAt).Camelize(),
+                nameof(Activity.Image).Camelize(),
+                nameof(Activity.Title).Camelize(),
+                nameof(Activity.Subtitle).Camelize(),
+                nameof(Activity.PublishedAt).Camelize(),
+                nameof(Activity.Url).Camelize()
             )
             .Where(nameof(Activity.UserId).Camelize(), userId)
-            .Where(nameof(Activity.ActivityType).Camelize(), activityType);
+            .Where(nameof(Activity.ActivityType).Camelize(), activityType)
+            .Where(nameof(Activity.IsActive).Camelize(), true);
+        
+        if (offset > 0) query.Offset(offset.Value);
+        query.Limit(limit??DefaultPageSize);
+        return query;
+    }
+    
+    public static Query Count(string userId, string activityType)
+    {
+        var q = new Query(TableName)
+            .Where(nameof(Activity.UserId).Camelize(), userId)
+            .Where(nameof(Activity.ActivityType).Camelize(), activityType)
+            .Where(nameof(Activity.IsActive).Camelize(), true);
+        return q;
+    }
 }

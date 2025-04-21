@@ -1,4 +1,5 @@
 using FormCMS.Activities.ApiClient;
+using FormCMS.Activities.Models;
 using FormCMS.Auth.ApiClient;
 using FormCMS.Core.Descriptors;
 using FormCMS.CoreKit.ApiClient;
@@ -14,14 +15,39 @@ public class ActivityTest
 {
 
     private readonly ActivityApiClient _activityApiClient;
+    private readonly BookmarkApiClient _bookmarkApiClient;
  
     public ActivityTest()
     {
-        Util.SetTestConnectionString();
+        // Util.SetTestConnectionString();
         
         WebAppClient<Program> webAppClient = new();
         Util.LoginAndInitTestData(webAppClient.GetHttpClient()).GetAwaiter().GetResult();
         _activityApiClient = new ActivityApiClient(webAppClient.GetHttpClient());
+        _bookmarkApiClient = new BookmarkApiClient(webAppClient.GetHttpClient());
+    }
+
+    [Fact]
+    public async Task CreateFolderAndBookmark()
+    {
+        //save without folder
+        await _bookmarkApiClient.AddBookmarks(TestEntityNames.TestPost.Camelize(), 1, "",[0]).Ok();
+        var folders = await _bookmarkApiClient.FolderWithRecordStatus(TestEntityNames.TestPost.Camelize(), 1).Ok();
+        Assert.True(folders.First(x=>x.Id == 0).Selected);
+
+        var name =  Ulid.NewUlid().ToString();
+        await _bookmarkApiClient.AddBookmarks(TestEntityNames.TestPost.Camelize(), 1, name,[0]).Ok();
+        folders = await _bookmarkApiClient.FolderWithRecordStatus(TestEntityNames.TestPost.Camelize(), 1).Ok();
+        Assert.NotNull(folders.FirstOrDefault(x=>x.Name == name));
+    }
+    
+    [Fact]
+    public async Task TestHistory()
+    {
+        await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), 1).Ok();
+        //now should have one history
+        var res = await _activityApiClient.List("view","").Ok();
+        Assert.True(res.TotalRecords >=1);
     }
 
     [Fact]

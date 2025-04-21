@@ -4,6 +4,8 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.Cache;
 using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Utils.DataModels;
+using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.ResultExt;
 
 namespace FormCMS.Activities.Services;
@@ -18,15 +20,28 @@ public class ActivityService(
     IEntitySchemaService schemaService,  
     IQueryService queryService,
     
-    
+    KateQueryExecutor executor,
     IRelationDbDao dao,
     DatabaseMigrator migrator
 ) : IActivityService
 {
-    public async Task<Activity> GetActivityItems(string activityType, CancellationToken ct = default)
+    public XEntity GetEntity() => Models.Activities.Entity;
+    public async Task<ListResponse> List(string activityType, StrArgs args, int?offset, int?limit, CancellationToken ct = default)
     {
-       // var activities = await GetStatusDict()
-       throw new NotImplementedException();
+        if (!settings.ToggleActivities.Contains(activityType)
+            && !settings.RecordActivities.Contains(activityType)
+            && !settings.AutoRecordActivities.Contains(activityType))
+        {
+            throw new ResultException("Unknown activity type");
+        }
+        
+        var userId = profileService.GetInfo()?.Id ?? throw new ResultException("User is not logged in");
+        var (filters, sorts) = QueryStringParser.Parse(args);
+        var query = Models.Activities.List(userId, activityType, offset, limit);
+        var items = await executor.Many(query, Models.Activities.Columns,filters,sorts,ct);
+        var countQuery = Models.Activities.Count(userId, activityType);
+        var count = await executor.Count(countQuery,Models.Activities.Columns,filters,ct);
+        return new ListResponse(items,count); 
     }
     
     public async Task EnsureActivityTables()
@@ -59,7 +74,7 @@ public class ActivityService(
     
     public async Task<Dictionary<string, StatusDto>> Get(string entityName, long recordId, CancellationToken ct)
     {
-        await EnsureEntityRecordExists(entityName, recordId,ct);
+        await Utils.EnsureEntityRecordExists(schemaService,dao,maxRecordIdCache,entityName, recordId,ct);
         var ret = new Dictionary<string, StatusDto>();
         foreach (var pair in await Record(entityName, recordId, settings.AutoRecordActivities.ToArray(), ct))
         {
@@ -103,8 +118,8 @@ public class ActivityService(
         string[] activityTypes,
         CancellationToken ct)
     {
-        await EnsureEntityRecordExists(entityName, recordId,ct);
-        
+        await Utils.EnsureEntityRecordExists(schemaService,dao,maxRecordIdCache,entityName, recordId,ct);
+ 
         if (activityTypes.Any(t => 
                 !settings.RecordActivities.Contains(t) &&
                 !settings.AutoRecordActivities.Contains(t)))
@@ -157,7 +172,7 @@ public class ActivityService(
         if (profileService.GetInfo() is not { Id: var userId })
             throw new ResultException("User is not logged in");
 
-        var entity = await EnsureEntityRecordExists(entityName, recordId, ct);
+        var entity = await Utils.EnsureEntityRecordExists(schemaService,dao,maxRecordIdCache,entityName, recordId,ct);
 
         var activity = new Activity(entityName, recordId, activityType, userId,isActive);
         var count = new ActivityCount(entityName, recordId, activityType);
@@ -194,7 +209,7 @@ public class ActivityService(
         {
             if (activity.IsActive)
             {
-                var loadedActivities = await LoadActivityMetaData(entity, [activity], ct);
+                var loadedActivities = await LoadMetaData(entity, [activity], ct);
                 if (loadedActivities.Length == 0) throw new ResultException("No activities loaded");
 
                 await dao.UpdateOnConflict(Models.Activities.TableName,
@@ -210,7 +225,7 @@ public class ActivityService(
         }
     }
 
-    private async Task<Activity[]> LoadActivityMetaData(Entity entity, Activity[] activities, CancellationToken ct)
+    private async Task<Activity[]> LoadMetaData(Entity entity, Activity[] activities, CancellationToken ct)
     {
         var ids = activities
             .Where(x=>x.IsActive)
@@ -247,7 +262,7 @@ public class ActivityService(
         {
             var entity = entities.FirstOrDefault(x=>x.Name == group.Key);
             if (entity == null) throw new ResultException($"Entity {group.Key} not found");
-            var loadedActivities = await LoadActivityMetaData(entity,activities, ct);
+            var loadedActivities = await LoadMetaData(entity,activities, ct);
             toUpdate.AddRange(loadedActivities.Select(x=>x.UpsertRecord(true)));
         }
         await dao.BatchUpdateOnConflict(
@@ -257,21 +272,7 @@ public class ActivityService(
             ct);
     }
 
-    private async Task<Entity> EnsureEntityRecordExists(string entityName, long recordId, CancellationToken ct)
-    {
-        var entities = await schemaService.AllEntities(ct);
-        var entity = entities.FirstOrDefault(x => x.Name == entityName);
-        if (entity is null) throw new ResultException("Entity not found");
-
-        var maxId = await maxRecordIdCache.GetOrSet(entityName,
-            async _ => await dao.MaxId(entity.TableName, entity.PrimaryKey, ct), ct);
-
-        if (recordId < 1 || recordId > maxId)
-        {
-            throw new ResultException("Record id is out of range");
-        }
-        return entity;
-    }
+ 
     
     private async Task<Dictionary<string, bool>> GetStatusDictFromBuffer(Activity[] status)
     {

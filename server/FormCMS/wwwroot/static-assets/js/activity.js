@@ -84,23 +84,90 @@ $(document).ready(function () {
                 });
             });
 
-            // Save button click handler
             saveButton.on('click', function (e) {
                 e.preventDefault();
-                const currentActive = $(this).hasClass('active');
-                const newActive = !currentActive;
 
+                // Create and append modal
+                const $modal = $(`
+                    <div id="bookmark-modal" class="modal modal-open">
+                        <div class="modal-box">
+                            <h3 class="font-bold text-lg">Save to Bookmark Folder</h3>
+                            <div id="folder-list" class="mt-4 max-h-60 overflow-y-auto"></div>
+                            
+                            <div class="mt-4">
+                                <div class="form-control">
+                                    <label class="label">
+                                        <span class="label-text">Create New Folder</span>
+                                    </label>
+                                    <div class="flex space-x-2">
+                                        <input id="new-folder-name" type="text" placeholder="Enter folder name" class="input input-bordered w-full" />
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="modal-action">
+                                <button id="save-bookmark" class="btn btn-primary">Save</button>
+                                <button id="cancel-bookmark" class="btn">Cancel</button>
+                            </div>
+                        </div>
+                    </div>
+                `);
+                $('body').append($modal);
+
+                // Fetch bookmark folders
                 $.ajax({
-                    url: `/api/activities/toggle/${entityName}/${recordId}?type=save&active=${newActive}`,
-                    method: 'POST',
-                    success: function (response) {
-                        saveButton.toggleClass('active', newActive);
-                        saveButton.find('[data-component="save-icon-inactive"]').toggleClass('hidden', newActive);
-                        saveButton.find('[data-component="save-icon-active"]').toggleClass('hidden', !newActive);
+                    url: `/api/bookmarks/folders/${entityName}/${recordId}`,
+                    method: 'GET',
+                    success: function (folders) {
+                        const $folderList = $('#folder-list');
+                        folders.forEach(folder => {
+                            const $checkbox = $(`
+                                <div class="form-control">
+                                    <label class="label cursor-pointer">
+                                        <span class="label-text">${folder.name || 'Default Folder'}</span>
+                                        <input type="checkbox" class="checkbox" data-folder-id="${folder.id}" ${folder.selected ? 'checked' : ''} />
+                                    </label>
+                                </div>
+                            `);
+                            $folderList.append($checkbox);
+                        });
                     },
                     error: function (xhr, status, error) {
-                        console.error('Error toggling save:', error);
+                        console.error('Error fetching bookmark folders:', error);
+                        showToast('Failed to load bookmark folders');
+                        $modal.remove();
                     }
+                });
+
+                // Save button in modal
+                $('#save-bookmark').on('click', function () {
+                    const selectedFolders = $('#folder-list input:checked').map(function () {
+                        return parseInt($(this).data('folder-id'));
+                    }).get();
+                    const newFolderName = $('#new-folder-name').val();
+
+                    $.ajax({
+                        url: `/api/bookmarks/${entityName}/${recordId}`,
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({selectedFolders,newFolderName}),
+                        success: function (response) {
+                            saveButton.toggleClass('active', selectedFolders.length > 0);
+                            saveButton.find('[data-component="save-icon-inactive"]').toggleClass('hidden', selectedFolders.length > 0);
+                            saveButton.find('[data-component="save-icon-active"]').toggleClass('hidden', selectedFolders.length === 0);
+                            showToast('Bookmark saved successfully');
+                            $modal.remove();
+                        },
+                        error: function (xhr, status, error) {
+                            console.error('Error saving bookmark:', error);
+                            showToast('Failed to save bookmark');
+                        }
+                    });
+                });
+
+                // Cancel button in modal
+                $('#cancel-bookmark').on('click', function () {
+                    $modal.remove();
                 });
             });
         });

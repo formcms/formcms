@@ -1,11 +1,14 @@
 using System.Text.Json;
 using FluentResults;
+using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.HttpClientExt;
 
 namespace FormCMS.Activities.ApiClient;
 
 public class ActivityApiClient(HttpClient client)
 {
+    public Task<Result<ListResponse>> List(string type,string qs)
+        => client.GetResult<ListResponse>($"{client.BaseAddress}api/activities/list/{type}?" + qs);
 
     public Task<Result<JsonElement>> Get(string entityName, long recordId)
     {

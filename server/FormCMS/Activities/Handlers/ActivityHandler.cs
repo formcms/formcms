@@ -1,4 +1,5 @@
 using FormCMS.Activities.Services;
+using Microsoft.AspNetCore.WebUtilities;
 using NUlid;
 
 namespace FormCMS.Activities.Handlers;
@@ -7,6 +8,16 @@ public static class ActivityHandler
 {
     public static RouteGroupBuilder MapActivityHandler(this RouteGroupBuilder builder)
     {
+        builder.MapGet("/entity", (IActivityService s) => s.GetEntity());
+        builder.MapGet("/list/{activityType}", (
+            CancellationToken ct,
+            HttpContext context,
+            string activityType,
+            int? offset,
+            int? limit,
+            IActivityService s
+        ) => s.List(activityType, QueryHelpers.ParseQuery(context.Request.QueryString.Value), offset, limit, ct));
+        
         builder.MapGet("/{entityName}/{recordId:long}", (
             string entityName,
             long recordId,
@@ -15,7 +26,7 @@ public static class ActivityHandler
             CancellationToken ct
         ) =>
         {
-            //if need to count uniq visit and total visit
+            //to count uniq visit and total visit
             http.Response.Cookies.Append("user-id", Ulid.NewUlid().ToString(), new CookieOptions
             {
                 HttpOnly = true,

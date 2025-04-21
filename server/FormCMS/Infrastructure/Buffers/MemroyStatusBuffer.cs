@@ -43,6 +43,7 @@ public class MemoryStatusBuffer(BufferSettings settings, ILogger<MemoryStatusBuf
         foreach (var key in keys)
         {
             _buffer.Set(key, true);
+            _buffer.SetFlushKey(key);
         }
 
         return Task.CompletedTask;

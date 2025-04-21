@@ -1,3 +1,5 @@
+using FormCMS.Utils.DisplayModels;
+
 namespace FormCMS.Activities.Services;
 
 public record ActivitySettings(
@@ -11,6 +13,8 @@ public record StatusDto(bool Active, long Count);
 
 public interface IActivityService
 {
+    XEntity GetEntity();
+    Task<ListResponse> List(string activityType, StrArgs args, int? offset, int? limit, CancellationToken ct);
     Task Flush(DateTime? lastFlushTime, CancellationToken ct);
     Task EnsureActivityTables();
     Task<long> Toggle(string entityName, long recordId, string activityType, bool isActive, CancellationToken ct);

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FormCMS.Activities.Models;
 using FormCMS.AuditLogging.Models;
 using FormCMS.Auth.Services;
 using NJsonSchema;
@@ -33,6 +34,7 @@ TsGenerator.GenerateCode<ProfileDto>("../../../FormCmsAdminApp/libs/FormCmsAdmin
 TsGenerator.GenerateCode<UserAccess>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auth/types/userAccess.ts");
 TsGenerator.GenerateCode<RoleAccess>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auth/types/roleAccess.ts");
 
+TsGenerator.GenerateCode<Activity>("../../../FormCmsPortal/libs/FormCmsAdminSdk/activity/types/activity.ts");
 
 internal static class TsGenerator
 {

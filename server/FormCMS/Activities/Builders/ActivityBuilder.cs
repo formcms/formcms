@@ -23,6 +23,7 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         
         services.AddSingleton(new ActivitySettings(enableBuffering,["like","save"], ["share"],["view"]));
         services.AddScoped<IActivityService, ActivityService>();
+        services.AddScoped<IBookmarkService, BookmarkService>();
         services.AddHostedService<BufferFlushWorker>();
         return services;
     }
@@ -31,13 +32,14 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
     {
 
         using var scope = app.Services.CreateScope();
-        var activityService = scope.ServiceProvider.GetRequiredService<IActivityService>();
-        await activityService.EnsureActivityTables();
+        await scope.ServiceProvider.GetRequiredService<IActivityService>().EnsureActivityTables();
+        await scope.ServiceProvider.GetRequiredService<IBookmarkService>().EnsureBookmarkTables();
  
         var options = app.Services.GetRequiredService<SystemSettings>();
         var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
 
         apiGroup.MapGroup("/activities").MapActivityHandler();
+        apiGroup.MapGroup("/bookmarks").MapBookmarkHandler();
 
         var activitySettings = app.Services.GetRequiredService<ActivitySettings>();
         logger.LogInformation(

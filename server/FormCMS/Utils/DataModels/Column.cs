@@ -28,7 +28,7 @@ public static class ColumnHelper
         var columnType = typeof(TValue) switch
         {
             { } t when t == typeof(string) || t== typeof(Enum)=> ColumnType.String,
-            { } t when t == typeof(int)=> ColumnType.Int,
+            { } t when t == typeof(int) || t == typeof(int?)||t == typeof(long) || t== typeof(long?)=> ColumnType.Int,
             { } t when t == typeof(bool)=> ColumnType.Boolean,
             { } t when t == typeof(DateTime)=> ColumnType.Datetime,
             _=>ColumnType.Int
