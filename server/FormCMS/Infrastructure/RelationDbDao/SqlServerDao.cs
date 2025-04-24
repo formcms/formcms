@@ -154,7 +154,7 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
             throw new ArgumentException("Record must contain at least one non-key field to update or insert.");
 
         // Key condition for ON clause
-        var keyConditions = string.Join(" AND ", keyFields.Select(k => $"t.[{k}] = s.[{k}]"));
+        var keyConditions = string.Join(" AND ", keyFields.Select(k => $"(t.[{k}] = s.[{k}] or t.[{k}] is null and s.[{k}] is null)"));
 
         // Insert column list
         var insertColumns = string.Join(", ", allFields.Select(f => $"[{f}]"));

@@ -3,6 +3,7 @@ using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.Cache;
 using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
@@ -20,15 +21,10 @@ public class BookmarkService(
     KateQueryExecutor executor
 ) : IBookmarkService
 {
-    public XEntity GetEntity() => BookmarkFolders.Entity;
-
     public async Task EnsureBookmarkTables()
     {
         await migrator.MigrateTable(BookmarkFolders.TableName, BookmarkFolders.Columns);
-        await dao.CreateIndex(BookmarkFolders.TableName, BookmarkFolders.KeyFields, true, CancellationToken.None);
-
         await migrator.MigrateTable(Bookmarks.TableName, Bookmarks.Columns);
-        await dao.CreateIndex(Bookmarks.TableName, Bookmarks.KeyFields, true, CancellationToken.None);
 
         await dao.CreateForeignKey(
             Bookmarks.TableName, nameof(Bookmark.FolderId).Camelize(),
@@ -57,18 +53,50 @@ public class BookmarkService(
         return folders;
     }
 
-    public async Task<BookmarkFolder> AddFolder(BookmarkFolder folder, CancellationToken ct)
+    public async Task UpdateFolder(long id,BookmarkFolder folder, CancellationToken ct)
     {
         var userId = profileService.GetInfo()?.Id ?? throw new ResultException("User is not logged in.");
-        return await AddFolder(userId,folder, ct);
+        folder = folder with { UserId = userId, Id=id};
+            
+        var affected = await executor.Exec(folder.Update(),false, ct);
+        if (affected == 0) throw new ResultException("Failed to update folder.");
     }
 
-
+    public async Task DeleteFolder(long folderId, CancellationToken ct)
+    {
+        var userId = profileService.GetInfo()?.Id ?? throw new ResultException("User is not logged in.");
+        using var trans = await dao.BeginTransaction();
+        try
+        {
+            await executor.Exec(Bookmarks.DeleteBookmarksByFolder(userId, folderId),false,ct);
+            await executor.Exec(BookmarkFolders.Delete(userId, folderId), false, ct);
+            trans.Commit();
+        }
+        catch (Exception e)
+        {
+            trans.Rollback();
+            throw;
+        }
+    }
+    
+    public async Task<ListResponse> List(long folderId, StrArgs args, int?offset, int?limit, CancellationToken ct)
+    {
+        var userId = profileService.GetInfo()?.Id ?? throw new ResultException("User is not logged in");
+        var (filters, sorts) = QueryStringParser.Parse(args); 
+        var listQuery = Bookmarks.List(userId, folderId, offset, limit);
+        var items = await executor.Many(listQuery, Models.Bookmarks.Columns,filters,sorts,ct);
+        var countQuery = Bookmarks.Count(userId, folderId);
+        var count = await executor.Count(countQuery,Models.Activities.Columns,filters,ct);
+        return new ListResponse(items,count);  
+    }
 
     //folderId 0, means default folder, to avoid foreign key error, need to convert it to null
     public async Task AddBookmark(string entityName, long recordId, string newFolderName, long[] newFolderIds,
         CancellationToken ct)
     {
+        Console.Write($"""
+                      adding bookmark {entityName} to {newFolderName}""
+                      """);
         var userId = profileService.GetInfo()?.Id ?? throw new ResultException("User is not logged in.");
         var entity =
             await Utils.EnsureEntityRecordExists(schemaService, dao, maxRecordIdCache, entityName, recordId, ct);
@@ -96,8 +124,19 @@ public class BookmarkService(
                 .ToArray();
             var loadedBookmark = await LoadMetaData(entity, bookmarks, ct);
             var records = loadedBookmark.Select(x => x.ToInsertRecord()).ToArray();
-            await dao.BatchUpdateOnConflict(Bookmarks.TableName, records, Bookmarks.KeyFields, ct);
+            await executor.BatchInsert(Bookmarks.TableName,records);
         }
+
+        var count = new ActivityCount(entityName, recordId, Bookmarks.ActivityType, 1);
+        await dao.Increase(
+            ActivityCounts.TableName, count.Condition(true),
+            ActivityCounts.CountField, 1, ct);
+    }
+
+    public Task DeleteBookmark(long bookmarkId, CancellationToken ct)
+    {
+        var userId = profileService.GetInfo()?.Id ?? throw new ResultException("User is not logged in.");
+        return executor.Exec(Bookmarks.Delete(userId, bookmarkId), false, ct);
     }
 
     private async Task<Bookmark[]> LoadMetaData(Entity entity, Bookmark[] bookmarks, CancellationToken ct)
@@ -138,7 +177,7 @@ public class BookmarkService(
     private async Task<Record[]> GetFoldersByUserId(string userId, CancellationToken ct)
     {
         var records = await executor.Many(BookmarkFolders.All(userId), ct);
-        records = [new BookmarkFolder(userId, "", "", Id: 0).ToRecord(), ..records];
+        records = [new BookmarkFolder("", "", "", Id: 0).ToRecord(), ..records];
         return records;
     }
 

@@ -6,6 +6,7 @@ using FormCMS.Activities.Builders;
 using FormCMS.AuditLogging.Builders;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.Rewrite;
 
 namespace FormCMS;
 
@@ -19,6 +20,9 @@ public static class WebApplicationExt
         app.Services.GetService<MessageProduceBuilder>()?.UseEventProducer(app);
         app.Services.GetService<AuditLogBuilder>()?.UseAuditLog(app);
         app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
+        
+        //only
+        app.UseRewriter(app.Services.GetRequiredService<RewriteOptions>());
     }
 
     public static HookRegistry GetHookRegistry(this WebApplication app) =>

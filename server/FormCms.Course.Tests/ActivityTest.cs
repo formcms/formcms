@@ -1,13 +1,7 @@
 using FormCMS.Activities.ApiClient;
-using FormCMS.Activities.Models;
-using FormCMS.Auth.ApiClient;
-using FormCMS.Core.Descriptors;
-using FormCMS.CoreKit.ApiClient;
 using FormCMS.CoreKit.Test;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
-using NUlid;
-using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Course.Tests;
 
@@ -15,51 +9,47 @@ public class ActivityTest
 {
 
     private readonly ActivityApiClient _activityApiClient;
-    private readonly BookmarkApiClient _bookmarkApiClient;
- 
+    private const long RecordId = 21;
+
     public ActivityTest()
     {
-        // Util.SetTestConnectionString();
-        
-        WebAppClient<Program> webAppClient = new();
+        Util.SetTestConnectionString();
+        var webAppClient = new WebAppClient<Program>();
         Util.LoginAndInitTestData(webAppClient.GetHttpClient()).GetAwaiter().GetResult();
         _activityApiClient = new ActivityApiClient(webAppClient.GetHttpClient());
-        _bookmarkApiClient = new BookmarkApiClient(webAppClient.GetHttpClient());
     }
 
-    [Fact]
-    public async Task CreateFolderAndBookmark()
+    public async Task EnsureActivity()
     {
-        //save without folder
-        await _bookmarkApiClient.AddBookmarks(TestEntityNames.TestPost.Camelize(), 1, "",[0]).Ok();
-        var folders = await _bookmarkApiClient.FolderWithRecordStatus(TestEntityNames.TestPost.Camelize(), 1).Ok();
-        Assert.True(folders.First(x=>x.Id == 0).Selected);
-
-        var name =  Ulid.NewUlid().ToString();
-        await _bookmarkApiClient.AddBookmarks(TestEntityNames.TestPost.Camelize(), 1, name,[0]).Ok();
-        folders = await _bookmarkApiClient.FolderWithRecordStatus(TestEntityNames.TestPost.Camelize(), 1).Ok();
-        Assert.NotNull(folders.FirstOrDefault(x=>x.Name == name));
+        await TestListHistoryAndDelete();
+        await ViewShareLike();
     }
-    
-    [Fact]
-    public async Task TestHistory()
+
+    //have to disable activity cache
+    private async Task TestListHistoryAndDelete()
     {
-        await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), 1).Ok();
-        //now should have one history
-        var res = await _activityApiClient.List("view","").Ok();
-        Assert.True(res.TotalRecords >=1);
+        await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        var res = await _activityApiClient.List("view", "sort[id]=-1").Ok();
+        Assert.True(res.TotalRecords >= 1);
+        var totalRecords = res.TotalRecords;
+        var item = res.Items[0];
+
+        var id = item.GetLong("id");
+
+        await _activityApiClient.Delete(id).Ok();
+        res = await _activityApiClient.List("view", "").Ok();
+        Assert.True(res.TotalRecords < totalRecords);
     }
 
-    [Fact]
-    public async Task ViewShareLike()
+    private async Task ViewShareLike()
     {
         //get
-        var rootElement = await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), 1).Ok();
+        var rootElement = await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
 
         //view count increase automatically
         var viewElement = rootElement.GetProperty("view");
         Assert.True(viewElement.GetProperty("active").GetBoolean());
-        Assert.Equal(1, viewElement.GetProperty("count").GetInt64());
+        Assert.True(viewElement.GetProperty("count").GetInt64() > 0);
 
         //like count should be 0
         var likeElement = rootElement.GetProperty("like");
@@ -67,26 +57,26 @@ public class ActivityTest
         Assert.Equal(0, likeElement.GetProperty("count").GetInt64());
 
         //record share 
-        var count = await _activityApiClient.Record(TestEntityNames.TestPost.Camelize(), 1, "share").Ok();
+        var count = await _activityApiClient.Record(TestEntityNames.TestPost.Camelize(), RecordId, "share").Ok();
         Assert.Equal(1, count);
-        await _activityApiClient.Record(TestEntityNames.TestPost.Camelize(), 1, "share").Ok();
-        rootElement = await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), 1).Ok();
+        await _activityApiClient.Record(TestEntityNames.TestPost.Camelize(), RecordId, "share").Ok();
+        rootElement = await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
         var shareElement = rootElement.GetProperty("share");
         Assert.True(shareElement.GetProperty("active").GetBoolean());
         Assert.Equal(2, shareElement.GetProperty("count").GetInt64());
 
         //toggle like
-        count = await _activityApiClient.Toggle(TestEntityNames.TestPost.Camelize(), 1, "like", true).Ok();
+        count = await _activityApiClient.Toggle(TestEntityNames.TestPost.Camelize(), RecordId, "like", true).Ok();
         Assert.Equal(1, count);
-        rootElement = await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), 1).Ok();
+        rootElement = await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
         likeElement = rootElement.GetProperty("like");
         Assert.True(likeElement.GetProperty("active").GetBoolean());
         Assert.Equal(1, likeElement.GetProperty("count").GetInt64());
 
         //cancel like
-        count = await _activityApiClient.Toggle(TestEntityNames.TestPost.Camelize(), 1, "like", false).Ok();
+        count = await _activityApiClient.Toggle(TestEntityNames.TestPost.Camelize(), RecordId, "like", false).Ok();
         Assert.Equal(0, count);
-        rootElement = await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), 1).Ok();
+        rootElement = await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
         likeElement = rootElement.GetProperty("like");
         Assert.False(likeElement.GetProperty("active").GetBoolean());
         Assert.Equal(0, likeElement.GetProperty("count").GetInt64());

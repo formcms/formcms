@@ -23,16 +23,17 @@ public static class Util
     }
     
    
-    internal static int GetInt(this IDictionary<string,object> e, string key)
+    internal static long GetLong(this IDictionary<string,object> e, string key)
     {
         var val = e[key];
         return val switch
         {
-            int id => id,
-            JsonElement jsonElement => jsonElement.GetInt32(),
+            long id => id,
+            JsonElement jsonElement => jsonElement.GetInt64(),
             _ => throw new ArgumentOutOfRangeException()
         };
     }
+    
     internal static void SetTestConnectionString()
     {
         (string, string)[] settings =

@@ -25,7 +25,6 @@ public class ActivityService(
     DatabaseMigrator migrator
 ) : IActivityService
 {
-    public XEntity GetEntity() => Models.Activities.Entity;
     public async Task<ListResponse> List(string activityType, StrArgs args, int?offset, int?limit, CancellationToken ct = default)
     {
         if (!settings.ToggleActivities.Contains(activityType)
@@ -42,6 +41,12 @@ public class ActivityService(
         var countQuery = Models.Activities.Count(userId, activityType);
         var count = await executor.Count(countQuery,Models.Activities.Columns,filters,ct);
         return new ListResponse(items,count); 
+    }
+
+    public Task Delete(long id, CancellationToken ct = default)
+    {
+        var userId = profileService.GetInfo()?.Id ?? throw new ResultException("User is not logged in");
+        return executor.Exec(Models.Activities.Delete(userId, id), false,ct);
     }
     
     public async Task EnsureActivityTables()

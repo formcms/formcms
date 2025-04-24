@@ -29,7 +29,7 @@ public class QueryApiTest
         Util.SetTestConnectionString();
 
         WebAppClient<Program> webAppClient = new();
-        Util.LoginAndInitTestData(webAppClient.GetHttpClient());
+        Util.LoginAndInitTestData(webAppClient.GetHttpClient()).GetAwaiter().GetResult();
         _schema = new SchemaApiClient(webAppClient.GetHttpClient());
         _entity= new EntityApiClient(webAppClient.GetHttpClient());
         _query = new QueryApiClient(webAppClient.GetHttpClient());

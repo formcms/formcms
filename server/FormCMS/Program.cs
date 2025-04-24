@@ -35,6 +35,8 @@ TsGenerator.GenerateCode<UserAccess>("../../../FormCmsAdminApp/libs/FormCmsAdmin
 TsGenerator.GenerateCode<RoleAccess>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auth/types/roleAccess.ts");
 
 TsGenerator.GenerateCode<Activity>("../../../FormCmsPortal/libs/FormCmsAdminSdk/activity/types/activity.ts");
+TsGenerator.GenerateCode<Bookmark>("../../../FormCmsPortal/libs/FormCmsAdminSdk/activity/types/bookmark.ts");
+TsGenerator.GenerateCode<BookmarkFolder>("../../../FormCmsPortal/libs/FormCmsAdminSdk/activity/types/bookmarkFoder.ts");
 
 internal static class TsGenerator
 {

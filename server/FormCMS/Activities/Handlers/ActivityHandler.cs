@@ -8,7 +8,6 @@ public static class ActivityHandler
 {
     public static RouteGroupBuilder MapActivityHandler(this RouteGroupBuilder builder)
     {
-        builder.MapGet("/entity", (IActivityService s) => s.GetEntity());
         builder.MapGet("/list/{activityType}", (
             CancellationToken ct,
             HttpContext context,
@@ -17,6 +16,12 @@ public static class ActivityHandler
             int? limit,
             IActivityService s
         ) => s.List(activityType, QueryHelpers.ParseQuery(context.Request.QueryString.Value), offset, limit, ct));
+
+        builder.MapPost("/delete/{id:long}/", (
+            long id,
+            CancellationToken ct,
+            IActivityService s
+        ) => s.Delete(id, ct));
         
         builder.MapGet("/{entityName}/{recordId:long}", (
             string entityName,

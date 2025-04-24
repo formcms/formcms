@@ -82,7 +82,7 @@ public static class HttpClientExt
         if (!msg.IsSuccessStatusCode)
         {
             return Result.Fail(
-                $"Fail to {msg.RequestMessage?.Method} {msg.RequestMessage?.RequestUri}, message= {str}");
+                $"Fail to {msg.RequestMessage?.Method} {msg.RequestMessage?.RequestUri}, statusCode={msg.StatusCode} message= {str}");
         }
         return Result.Ok();
     }
@@ -104,7 +104,7 @@ public static class HttpClientExt
         if (!msg.IsSuccessStatusCode)
         {
             return Result.Fail(
-                $"fail to {msg.RequestMessage?.Method} {msg.RequestMessage?.RequestUri},   statusCode={msg.StatusCode}, message= {str}");
+                $"fail to {msg.RequestMessage?.Method} {msg.RequestMessage?.RequestUri}, statusCode={msg.StatusCode}, message= {str}");
         }
 
         var item = JsonSerializer.Deserialize<T>(str,options);

@@ -10,7 +10,7 @@ public class AuditLogApiClient(HttpClient client)
     public Task<Result<ListResponse>> List(string qs)
         => client.GetResult<ListResponse>("/api/audit_log?" + qs);
 
-    public Task<Result<AuditLog>> Single(int id)
+    public Task<Result<AuditLog>> Single(long id)
         => client.GetResult<AuditLog>($"/api/audit_log/{id}");
     
     public Task<Result<AuditLog>> AuditEntity()

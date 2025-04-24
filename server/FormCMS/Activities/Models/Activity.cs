@@ -27,28 +27,11 @@ public record Activity(
 public static class Activities
 {
     public const string TableName = "__activities";
-    private const int DefaultPageSize = 8;
+    const int DefaultPageSize = 8;
 
     public static readonly string ActiveField = nameof(Activity.IsActive).Camelize();
     public static readonly string TypeField = nameof(Activity.ActivityType).Camelize();
 
-    public static readonly XEntity Entity = XEntityExtensions.CreateEntity<Activity>(
-        labelAttribute: nameof(Activity.Title),
-        defaultPageSize: DefaultPageSize,
-        attributes:
-        [
-            XAttrExtensions.CreateAttr<Activity, long>(x => x.Id, isDefault: true),
-            XAttrExtensions.CreateAttr<Activity, string>(x => x.EntityName),
-            XAttrExtensions.CreateAttr<Activity, long>(x => x.RecordId),
-            XAttrExtensions.CreateAttr<Activity, string>(x => x.ActivityType),
-            XAttrExtensions.CreateAttr<Activity, string>(x => x.Title),
-            XAttrExtensions.CreateAttr<Activity, string>(x => x.Subtitle),
-            XAttrExtensions.CreateAttr<Activity, string>(x => x.Url),
-            XAttrExtensions.CreateAttr<Activity, string>(x => x.Image),
-            XAttrExtensions.CreateAttr<Activity, DateTime>(x => x.PublishedAt),
-            XAttrExtensions.CreateAttr<Activity, DateTime>(x => x.UpdatedAt),
-        ]);
-    
     public static readonly string[] KeyFields =
     [
         nameof(Activity.EntityName).Camelize(),
@@ -153,11 +136,18 @@ public static class Activities
         }
         return ret;
     }
-
+    
+    public static Query Delete(string userId, long id)
+        => new Query(TableName)
+            .Where(nameof(Activity.UserId).Camelize(), userId)
+            .Where(nameof(Activity.Id).Camelize(), id)
+            .AsUpdate([nameof(Activity.IsActive).Camelize()], [false]);
+    
     public static Query List(string userId, string activityType,int?offset,int?limit)
     {
         var query = new Query(TableName)
             .Select(
+                nameof(Activity.Id).Camelize(),
                 nameof(DefaultColumnNames.UpdatedAt).Camelize(),
                 nameof(Activity.Image).Camelize(),
                 nameof(Activity.Title).Camelize(),

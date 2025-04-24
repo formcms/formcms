@@ -1,85 +1,89 @@
 $(document).ready(function () {
-    let loadingDict = new Map();
+    const loadingDict = new Map();
+
     $('[data-command="previous"]').click(e => handlePaginationButton(e, e.target, false));
     $('[data-command="next"]').click(e => handlePaginationButton(e, e.target, true));
 
     initIntersectionObserver();
-    setPaginationStatus();
+    updatePaginationStatus();
 
-    function setPaginationStatus() {
+    function updatePaginationStatus() {
         $('[data-source="data-list"]').each(function () {
-            let pagination = $(this).attr('pagination');
-            let first = $(this).attr('first');
-            let last = $(this).attr('last');
+            const $list = $(this);
+            const pagination = $list.attr('pagination');
+            const first = $list.attr('first');
+            const last = $list.attr('last');
+            const $nav = $list.parent().find(':has([data-command="previous"])');
 
-            let nav = $(this).parent().find(':has([data-command="previous"])');
-            if (pagination !== 'Button' || !first && !last) {
-                nav.remove();
-            } else {
-                if (first && first.length > 0) {
-                    nav.find('[data-command="previous"]').show();
-                } else {
-                    nav.find('[data-command="previous"]').hide();
-                }
-
-                if (last && last.length > 0) {
-                    nav.find('[data-command="next"]').show();
-                } else {
-                    nav.find('[data-command="next"]').hide();
-                }
+            if (pagination !== 'Button' || (!first && !last)) {
+                $nav.remove();
+                return;
             }
+
+            toggleButtonVisibility($nav.find('[data-command="previous"]'), !!first);
+            toggleButtonVisibility($nav.find('[data-command="next"]'), !!last);
         });
     }
 
-    function handlePaginationButton(event, button, isNext) {
+    function toggleButtonVisibility($button, isVisible) {
+        isVisible ? $button.show() : $button.hide();
+    }
+
+    async function handlePaginationButton(event, button, isNext) {
         event.preventDefault();
-        let container = button.parentElement.parentElement;
-        let list = container.querySelector('[data-source="data-list"]');
-        loadMore(list.attributes[isNext ? "last" : "first"].value, response => {
+        const container = button.parentElement.parentElement;
+        const list = container.querySelector('[data-source="data-list"]');
+        const token = list.attributes[isNext ? "last" : "first"].value;
+        const response = await fetchPagePart(token);
+        if (response) {
             list.outerHTML = response;
-            setPaginationStatus();
-        })
+            updatePaginationStatus();
+        }
     }
 
-    function loadMore(token, render) {
-        if (!token || loadingDict[token]) {
-            return
+    async function fetchPagePart(token) {
+        if (!token || loadingDict.has(token)) {
+            return; // Already loading
         }
-        loadingDict[token] = true;
-        $.ajax({
-            url: '/page_part',
-            type: 'GET',
-            data: {
-                token,
-            },
-            success: function (response) {
-                render(response);
-                loadingDict[token] = false;
-            },
-            error: function () {
-                console.log('Error loading more.');
-                loadingDict[token] = false;
-            }
-        });
+
+        loadingDict.set(token, true);
+
+        try {
+            const url = new URL('/page_part', window.location.origin);
+            url.searchParams.append('token', token);
+
+            const response = await fetch(url.toString());
+
+            if (!response.ok) throw new Error('Network response was not ok');
+
+            const data = await response.text();
+            return data;
+        } catch (error) {
+            console.error('Error loading more.', error);
+        } finally {
+            loadingDict.delete(token);
+        }
     }
 
     function initIntersectionObserver() {
-        let observer = new IntersectionObserver(function (entries) {
-            entries.forEach(entry => {
+        const observer = new IntersectionObserver(async entries => {
+            for (const entry of entries) {
                 if (entry.isIntersecting) {
-                    loadMore(entry.target.attributes['last'].value, response => {
+                    const token = entry.target.getAttribute('last');
+                    const response = await fetchPagePart(token);
+
+                    if (response) {
                         const template = document.createElement('template');
                         template.innerHTML = response.trim();
                         entry.target.parentElement.appendChild(template.content);
                         entry.target.remove();
-                        initIntersectionObserver();
-                    });
+                        initIntersectionObserver(); // Re-init for next load
+                    }
                 }
-            });
+            }
         });
 
-        // Observe the hidden element
-        let ele = document.querySelector(".load-more-trigger");
-        if (ele) observer.observe(ele);
+        const trigger = document.querySelector(".load-more-trigger");
+        if (trigger) observer.observe(trigger);
     }
 });

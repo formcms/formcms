@@ -2,8 +2,10 @@ using FormCMS.AuditLogging.Models;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using Humanizer;
+using Microsoft.EntityFrameworkCore;
 using SqlKata;
 using Column = FormCMS.Utils.DataModels.Column;
 
@@ -21,26 +23,6 @@ public record BookmarkFolder(
 public static class BookmarkFolders
 {
     public const string TableName = "__bookmark_folders";
-    private const int DefaultPageSize = 10;
-
-    public static readonly string[] KeyFields =
-    [
-        nameof(BookmarkFolder.UserId).Camelize(),
-        nameof(BookmarkFolder.Name).Camelize()
-    ];
-
-    public static readonly XEntity Entity = XEntityExtensions.CreateEntity<Activity>(
-        labelAttribute: nameof(Activity.Title),
-        defaultPageSize: DefaultPageSize,
-        attributes:
-        [
-            XAttrExtensions.CreateAttr<BookmarkFolder, long>(x => x.Id, isDefault: true),
-            XAttrExtensions.CreateAttr<BookmarkFolder, string>(x => x.UserId),
-            XAttrExtensions.CreateAttr<BookmarkFolder, string>(x => x.Name),
-            XAttrExtensions.CreateAttr<BookmarkFolder, string>(x => x.Description),
-            XAttrExtensions.CreateAttr<BookmarkFolder, DateTime>(x => x.UpdatedAt),
-        ]
-    );
 
     public static readonly Column[] Columns =
     [
@@ -76,8 +58,15 @@ public static class BookmarkFolders
             nameof(BookmarkFolder.Description),
         ]);
 
-    public static Query Insert(this BookmarkFolder folder) =>
-        new Query(TableName).AsInsert(RecordExtensions.FormObject(
+    //although folderId is global uniq, add userId to prevent forge identity
+    public static Query Delete(string userId, long id) 
+        => new Query(TableName)
+            .Where(nameof(BookmarkFolder.UserId).Camelize(), userId)
+            .Where(nameof(BookmarkFolder.Id).Camelize(), id)
+            .AsUpdate([DefaultColumnNames.Deleted.Camelize()], [true]);
+
+    public static Query Insert(this BookmarkFolder folder) 
+        => new Query(TableName).AsInsert(RecordExtensions.FormObject(
             folder, whiteList:
             [
                 nameof(BookmarkFolder.UserId),
@@ -85,4 +74,14 @@ public static class BookmarkFolders
                 nameof(BookmarkFolder.Description),
             ]
         ),true);
+
+    public static Query Update(this BookmarkFolder folder)
+        => new Query(TableName)
+            .Where(nameof(BookmarkFolder.Id).Camelize(), folder.Id)
+            .Where(nameof(BookmarkFolder.UserId).Camelize(), folder.UserId)
+            .AsUpdate(
+                [nameof(BookmarkFolder.Name).Camelize(), nameof(BookmarkFolder.Description).Camelize()],
+                [folder.Name, folder.Description]
+            );
+
 }

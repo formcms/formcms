@@ -68,7 +68,8 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         services.AddSingleton(new KateQueryExecutorOption(systemSettings.DatabaseQueryTimeout));
         services.AddScoped<KateQueryExecutor>();
         services.AddScoped<DatabaseMigrator>();
-        
+
+        services.AddSingleton(new RewriteOptions());
         AddCacheServices();
         AddGraphqlServices();
         AddPageTemplateServices();
@@ -196,13 +197,12 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
 
         void UserRedirects()
         {
-            var rewriteOptions = new RewriteOptions();
+            var rewriteOptions = app.Services.GetRequiredService<RewriteOptions>();
             if (adminPath.StartsWith(FormCmsContentRoot))
             {
                 rewriteOptions.AddRedirect(@"^admin$", adminPath);
             }
             rewriteOptions.AddRedirect(@"^schema$", schemaBuilderPath);
-            app.UseRewriter(rewriteOptions);
         }
 
         void UseGraphql()
