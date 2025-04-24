@@ -148,6 +148,11 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-bs-level="2"><a href="#user-portal" class="nav-link">User Portal</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#optimizing-caching" class="nav-link">Optimizing Caching</a>
               <ul class="nav flex-column">
               </ul>
@@ -194,19 +199,23 @@ We’d love for you to contribute to FormCMS! Check out our <a href="https://git
 Love FormCMS? Show your support by giving us a ⭐ on GitHub and help us grow! 🌟<br />
 Have suggestions? Connect with us on Reddit! https://www.reddit.com/r/FormCMS/</p>
 <hr />
-<h2 id="what-is-formcms">What is  FormCMS?</h2>
-<p><strong>FormCMS</strong> is an open-source Content Management System designed to simplify and speed-up web development workflows. While it's particularly suited for CMS projects, it is also highly beneficial for general web applications, reducing the need for repetitive REST/GraphQL API development.</p>
-<ul>
+<h2 id="what-is-formcms">What is FormCMS?</h2>
+<p><strong>FormCMS</strong> is an open-source Content Management System designed to streamline and accelerate web development workflows. Ideal for CMS projects and general web applications, it minimizes repetitive REST/GraphQL API development while offering powerful tools for data management, page design, and user interaction.</p>
+<h3 id="key-features">Key Features</h3>
+<ol>
 <li>
-<p><strong>CRUD Operations:</strong>  FormCMS includes built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations, complemented by a React-based admin panel for efficient data management.</p>
+<p><strong>Data Modeling and CRUD with RESTful APIs</strong><br />
+   FormCMS provides robust data modeling capabilities and built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations. These are complemented by a React-based admin panel, enabling efficient and intuitive data management for developers and content creators.</p>
 </li>
 <li>
-<p><strong>GraphQL Queries:</strong> Access multiple related entities in a single query, enhancing client-side performance, security, and flexibility.</p>
+<p><strong>GraphQL Queries and Grapes.js Page Designer</strong><br />
+   Leverage GraphQL to fetch multiple related entities in a single query, boosting client-side performance, security, and flexibility. Additionally, the integrated <a href="https://grapesjs.com/">Grapes.js</a> page designer, powered by <a href="https://handlebarsjs.com/">Handlebars</a>, allows for effortless creation of dynamic, data-bound pages, streamlining the design process.</p>
 </li>
 <li>
-<p><strong>Grapes.js Page Designer:</strong> Build dynamic pages effortlessly using the integrated page designer powered by <a href="https://grapesjs.com/">Grapes.js</a> and <a href="https://handlebarsjs.com/">Handlebars</a>. Easily bind data sources for an interactive and streamlined design experience.</p>
+<p><strong>User Social Activity</strong><br />
+   FormCMS now includes user engagement features, allowing users to like, share, and save content, with the system tracking view counts. Users can access their interaction history, liked posts, and saved posts through a dedicated user portal, enhancing interactivity and personalization.</p>
 </li>
-</ul>
+</ol>
 <hr />
 <h2 id="new-cms-data-modeling">New CMS? — Data Modeling</h2>
 <h3 id="data-modeling-in-current-cms-solutions">Data Modeling in Current CMS Solutions</h3>
@@ -1164,7 +1173,6 @@ pnpm install
 <h3 id="swapping-ui-components">Swapping UI Components</h3>
 <p>Replace table columns, input fields, or other UI components with your custom versions as needed.</p>
 <hr />
-<hr />
 <h2 id="graphql-query"><strong>GraphQL Query</strong></h2>
 <p>FormCMS simplifies frontend development by offering robust GraphQL support.</p>
 <h3 id="getting-started">Getting Started</h3>
@@ -2050,6 +2058,34 @@ export default function () {
 </table>
 <p>Choose the approach based on your system’s scalability requirements and infrastructure constraints.</p>
 <hr />
+<h2 id="user-portal">User Portal</h2>
+<p>Users can access their view history, liked posts, and bookmarked posts in a personalized portal.  </p>
+<p>The <strong>User Portal</strong> in FormCMS provides a centralized interface for users to manage their social activity, including viewing their interaction history, liked posts, and bookmarked content. This enhances user engagement by offering a tailored experience to revisit and organize content.</p>
+<h3 id="history">History</h3>
+<p>Users can view a list of all items they have previously accessed, such as pages, posts, or other content. Each item in the history is displayed with a clickable link, allowing users to easily revisit the content.</p>
+<h3 id="liked-items">Liked Items</h3>
+<p>The Liked Items section displays all posts or content that the user has liked. Users can browse their liked items, with options to unlike content or click through to view the full item, fostering seamless interaction with preferred content.</p>
+<h3 id="bookmarked-items">Bookmarked Items</h3>
+<p>Users can organize and view their saved content in the Bookmarked Items section. Bookmarks can be grouped into custom folders for easy categorization, enabling users to efficiently manage and access their saved items by folder or as a complete list.</p>
+<h3 id="configuration_1">Configuration</h3>
+<p>The User Portal displays items with the following metadata:
+- <strong>Image</strong>: A thumbnail or visual representation of the item.
+- <strong>Title</strong>: The primary name or heading of the item.
+- <strong>Subtitle</strong>: A brief description or secondary text for the item.
+- <strong>URL</strong>: The link to access the full item.
+- <strong>PublishedAt</strong>: The publication date and time of the item.</p>
+<p>Metadata mappings are configured on the <strong>Entity Settings</strong> page, where administrators can define how data fields map to the portal's display. The following settings are available:</p>
+<ul>
+<li><strong>PageUrl</strong>: Specifies the base URL for item links (e.g., "/content/").</li>
+<li><strong>BookmarkQuery</strong>: Defines the query used to fetch bookmarked items.</li>
+<li><strong>BookmarkQueryParamName</strong>: Sets the parameter name for the query (e.g., "id").</li>
+<li><strong>BookmarkTitleField</strong>: Maps the field containing the item's title.</li>
+<li><strong>BookmarkSubtitleField</strong>: Maps the field for the item's subtitle.</li>
+<li><strong>BookmarkImageField</strong>: Maps the field for the item's image URL.</li>
+<li><strong>BookmarkPublishTimeField</strong>: Maps the field for the item's publication timestamp.</li>
+</ul>
+<p>These settings allow for flexible customization, ensuring the User Portal displays content accurately and consistently across history, liked items, and bookmarked items.</p>
+<hr />
 <h2 id="optimizing-caching">Optimizing Caching</h2>
 <p>FormCMS employs advanced caching strategies to boost performance.  </p>
 <p>For detailed information on ASP.NET Core caching, visit the official documentation: <a href="https://learn.microsoft.com/en-us/aspnet/core/performance/caching/overview?view=aspnetcore-9.0">ASP.NET Core Caching Overview</a>.</p>
@@ -2534,5 +2570,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-04-16 16:58:02.517110+00:00
+Build Date UTC : 2025-04-24 18:59:32.794307+00:00
 -->

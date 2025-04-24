@@ -9,15 +9,21 @@ Have suggestions? Connect with us on Reddit! https://www.reddit.com/r/FormCMS/
 
 
 ---
-## What is  FormCMS?
+## What is FormCMS?
 
-**FormCMS** is an open-source Content Management System designed to simplify and speed-up web development workflows. While it's particularly suited for CMS projects, it is also highly beneficial for general web applications, reducing the need for repetitive REST/GraphQL API development.
+**FormCMS** is an open-source Content Management System designed to streamline and accelerate web development workflows. Ideal for CMS projects and general web applications, it minimizes repetitive REST/GraphQL API development while offering powerful tools for data management, page design, and user interaction.
 
-- **CRUD Operations:**  FormCMS includes built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations, complemented by a React-based admin panel for efficient data management.
+### Key Features
 
-- **GraphQL Queries:** Access multiple related entities in a single query, enhancing client-side performance, security, and flexibility.
+1. **Data Modeling and CRUD with RESTful APIs**  
+   FormCMS provides robust data modeling capabilities and built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations. These are complemented by a React-based admin panel, enabling efficient and intuitive data management for developers and content creators.
 
-- **Grapes.js Page Designer:** Build dynamic pages effortlessly using the integrated page designer powered by [Grapes.js](https://grapesjs.com/) and [Handlebars](https://handlebarsjs.com/). Easily bind data sources for an interactive and streamlined design experience.
+2. **GraphQL Queries and Grapes.js Page Designer**  
+   Leverage GraphQL to fetch multiple related entities in a single query, boosting client-side performance, security, and flexibility. Additionally, the integrated [Grapes.js](https://grapesjs.com/) page designer, powered by [Handlebars](https://handlebarsjs.com/), allows for effortless creation of dynamic, data-bound pages, streamlining the design process.
+
+3. **User Social Activity**  
+   FormCMS now includes user engagement features, allowing users to like, share, and save content, with the system tracking view counts. Users can access their interaction history, liked posts, and saved posts through a dedicated user portal, enhancing interactivity and personalization.
+
 
 
 ---
@@ -754,8 +760,6 @@ To customize text:
 ### Swapping UI Components
 
 Replace table columns, input fields, or other UI components with your custom versions as needed.
-
----
 
 
 ---
@@ -1736,6 +1740,47 @@ Each buffering strategy has its tradeoffs:
 | Redis Buffer   | High        | High        | Medium     | ~12ms             |
 
 Choose the approach based on your system’s scalability requirements and infrastructure constraints.
+
+
+
+
+
+---
+
+## User Portal
+
+Users can access their view history, liked posts, and bookmarked posts in a personalized portal.  
+
+The **User Portal** in FormCMS provides a centralized interface for users to manage their social activity, including viewing their interaction history, liked posts, and bookmarked content. This enhances user engagement by offering a tailored experience to revisit and organize content.
+
+### History
+Users can view a list of all items they have previously accessed, such as pages, posts, or other content. Each item in the history is displayed with a clickable link, allowing users to easily revisit the content.
+
+### Liked Items
+The Liked Items section displays all posts or content that the user has liked. Users can browse their liked items, with options to unlike content or click through to view the full item, fostering seamless interaction with preferred content.
+
+### Bookmarked Items
+Users can organize and view their saved content in the Bookmarked Items section. Bookmarks can be grouped into custom folders for easy categorization, enabling users to efficiently manage and access their saved items by folder or as a complete list.
+
+### Configuration
+The User Portal displays items with the following metadata:
+- **Image**: A thumbnail or visual representation of the item.
+- **Title**: The primary name or heading of the item.
+- **Subtitle**: A brief description or secondary text for the item.
+- **URL**: The link to access the full item.
+- **PublishedAt**: The publication date and time of the item.
+
+Metadata mappings are configured on the **Entity Settings** page, where administrators can define how data fields map to the portal's display. The following settings are available:
+
+- **PageUrl**: Specifies the base URL for item links (e.g., "/content/").
+- **BookmarkQuery**: Defines the query used to fetch bookmarked items.
+- **BookmarkQueryParamName**: Sets the parameter name for the query (e.g., "id").
+- **BookmarkTitleField**: Maps the field containing the item's title.
+- **BookmarkSubtitleField**: Maps the field for the item's subtitle.
+- **BookmarkImageField**: Maps the field for the item's image URL.
+- **BookmarkPublishTimeField**: Maps the field for the item's publication timestamp.
+
+These settings allow for flexible customization, ensuring the User Portal displays content accurately and consistently across history, liked items, and bookmarked items.
 
 
 

@@ -1,12 +1,18 @@
 
 
 ---
-## What is  FormCMS?
+## What is FormCMS?
 
-**FormCMS** is an open-source Content Management System designed to simplify and speed-up web development workflows. While it's particularly suited for CMS projects, it is also highly beneficial for general web applications, reducing the need for repetitive REST/GraphQL API development.
+**FormCMS** is an open-source Content Management System designed to streamline and accelerate web development workflows. Ideal for CMS projects and general web applications, it minimizes repetitive REST/GraphQL API development while offering powerful tools for data management, page design, and user interaction.
 
-- **CRUD Operations:**  FormCMS includes built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations, complemented by a React-based admin panel for efficient data management.
+### Key Features
 
-- **GraphQL Queries:** Access multiple related entities in a single query, enhancing client-side performance, security, and flexibility.
+1. **Data Modeling and CRUD with RESTful APIs**  
+   FormCMS provides robust data modeling capabilities and built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations. These are complemented by a React-based admin panel, enabling efficient and intuitive data management for developers and content creators.
 
-- **Grapes.js Page Designer:** Build dynamic pages effortlessly using the integrated page designer powered by [Grapes.js](https://grapesjs.com/) and [Handlebars](https://handlebarsjs.com/). Easily bind data sources for an interactive and streamlined design experience.
+2. **GraphQL Queries and Grapes.js Page Designer**  
+   Leverage GraphQL to fetch multiple related entities in a single query, boosting client-side performance, security, and flexibility. Additionally, the integrated [Grapes.js](https://grapesjs.com/) page designer, powered by [Handlebars](https://handlebarsjs.com/), allows for effortless creation of dynamic, data-bound pages, streamlining the design process.
+
+3. **User Social Activity**  
+   FormCMS now includes user engagement features, allowing users to like, share, and save content, with the system tracking view counts. Users can access their interaction history, liked posts, and saved posts through a dedicated user portal, enhancing interactivity and personalization.
+

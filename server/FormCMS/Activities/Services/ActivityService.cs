@@ -243,7 +243,7 @@ public class ActivityService(
             [entity.BookmarkQueryParamName] = ids
         };
         var records = await queryService.ListWithAction(entity.BookmarkQuery, new Span(),new Pagination(),strAgs,ct);
-        var dict = records.ToDictionary(x => x[entity.PrimaryKey].ToString());
+        var dict = records.ToDictionary(x => x[entity.PrimaryKey].ToString()!);
 
         var list = new List<Activity>();
         foreach (var ac in activities)

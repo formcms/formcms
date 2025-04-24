@@ -84,5 +84,3 @@ To customize text:
 
 Replace table columns, input fields, or other UI components with your custom versions as needed.
 </details>  
-
----

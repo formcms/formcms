@@ -72,7 +72,7 @@ public class BookmarkService(
             await executor.Exec(BookmarkFolders.Delete(userId, folderId), false, ct);
             trans.Commit();
         }
-        catch (Exception e)
+        catch 
         {
             trans.Rollback();
             throw;
@@ -151,7 +151,7 @@ public class BookmarkService(
             [entity.BookmarkQueryParamName] = ids
         };
         var records = await queryService.ListWithAction(entity.BookmarkQuery, new Span(), new Pagination(), strAgs, ct);
-        var dict = records.ToDictionary(x => x[entity.PrimaryKey].ToString());
+        var dict = records.ToDictionary(x => x[entity.PrimaryKey].ToString()!);
 
         var list = new List<Bookmark>();
         foreach (var ac in bookmarks)
