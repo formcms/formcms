@@ -23,7 +23,7 @@ public class WebApp(
         AddDbService();
         builder.Services.AddCmsAuth<IdentityUser, IdentityRole, CmsDbContext>();
         builder.Services.AddAuditLog();
-        builder.Services.AddActivity(false);
+        builder.Services.AddActivity();
         
         AddOutputCachePolicy();
         builder.AddServiceDefaults();
