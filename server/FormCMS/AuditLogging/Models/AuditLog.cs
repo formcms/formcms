@@ -13,6 +13,8 @@ public enum ActionType
     Delete
 }
 
+public record DailyActionCount(ActionType Action, DateTime Day, long Count);
+
 public record AuditLog(
     long Id,
     string UserId,
@@ -86,6 +88,20 @@ public static class AuditLogHelper
             .Select(fields);
     }
 
+    public static Query GetDailyActionCount(Func<string,string>CastDate, int daysAgo)
+    {
+        var sevenDaysAgo = DateTime.UtcNow.Date.AddDays(-daysAgo);
+        var dateExp = CastDate(nameof(AuditLog.CreatedAt).Camelize());
+
+        return new Query(AuditLogConstants.TableName)
+            .Where(nameof(AuditLog.CreatedAt).Camelize(), ">=", sevenDaysAgo)
+            .SelectRaw($"{dateExp} as {nameof(DailyActionCount.Day).Camelize()}")
+            .Select(nameof(AuditLog.Action).Camelize())
+            .SelectRaw($"COUNT(*) as {nameof(DailyActionCount.Count).Camelize()}")
+            .GroupByRaw($"{dateExp}, {nameof(AuditLog.Action).Camelize()}")
+            .OrderBy(nameof(DailyActionCount.Day).Camelize());
+    }
+    
     public static Query Count() => new (AuditLogConstants.TableName);
     
 }

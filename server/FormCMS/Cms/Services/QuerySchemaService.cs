@@ -16,7 +16,7 @@ namespace FormCMS.Cms.Services;
 public sealed class QuerySchemaService(
     ISchemaService schemaSvc,
     IEntitySchemaService entitySchemaSvc,
-    KeyValueCache<LoadedQuery> queryCache,
+    KeyValueCache<LoadedQuery> queryCache ,
     SystemSettings systemSettings
 ) : IQuerySchemaService
 {

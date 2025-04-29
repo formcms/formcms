@@ -20,7 +20,7 @@ remove_container(){
 }
 
 test_postgres_container() {
-  local container_name="integration-test-postgres"
+  local container_name="integration-postgres"
   
   remove_container $container_name
   local docker_run_command="docker run -d --name $container_name -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=mysecretpassword -e POSTGRES_DB=cms_integration_tests -p 5432:5432 postgres:latest"
@@ -34,7 +34,7 @@ test_postgres_container() {
 }
 
 test_sqlserver_container(){
-  local container_name="integration-test-sql-edge"
+  local container_name="integration-sql-edge"
   local password=Admin12345678!
   remove_container $container_name
   
@@ -42,7 +42,7 @@ test_sqlserver_container(){
   sleep 10
   
   export DatabaseProvider=SqlServer
-  export ConnectionStrings__SqlServer="Server=localhost;Database=cms_integration_tests;User Id=sa;Password=Admin12345678!;TrustServerCertificate=True;MultipleActiveResultSets=True;"
+  export ConnectionStrings__SqlServer="Server=localhost;Database=cms;User Id=sa;Password=Admin12345678!;TrustServerCertificate=True;MultipleActiveResultSets=True;"
   
   Logging__LogLevel__Default=None\
   Logging__LogLevel__Microsoft__AspNetCore=None\
@@ -53,7 +53,7 @@ test_sqlserver_container(){
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-#db_path=$(pwd)/_cms_temp_integration_tests.db.db && rm -f "$db_path" && test_sqlite "$db_path"
+#db_path=$(pwd)/integration.db && rm -f "$db_path" && test_sqlite "$db_path"
 
 #test_postgres_container 
 
