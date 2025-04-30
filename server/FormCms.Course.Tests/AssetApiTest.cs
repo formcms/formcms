@@ -12,7 +12,7 @@ using SkiaSharp;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Course.Tests;
-
+[Collection("API")]
 public class AssetApiTest
 {
     private readonly AssetApiClient _assetApiClient;
@@ -20,15 +20,14 @@ public class AssetApiTest
     private readonly EntityApiClient _entityApiClient;
     private readonly  string _post = "at_post_" + Ulid.NewUlid();
  
-    public AssetApiTest()
+    public AssetApiTest(CustomWebApplicationFactory factory)
     {
         Util.SetTestConnectionString();
-        var webAppClient = new WebAppClient<Program>();
-        new AuthApiClient(webAppClient.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
+        new AuthApiClient(factory.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
 
-        _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());
-        _entityApiClient = new EntityApiClient(webAppClient.GetHttpClient());
-        _assetApiClient = new AssetApiClient(webAppClient.GetHttpClient());
+        _schemaApiClient = new SchemaApiClient(factory.GetHttpClient());
+        _entityApiClient = new EntityApiClient(factory.GetHttpClient());
+        _assetApiClient = new AssetApiClient(factory.GetHttpClient());
     }
 
     [Fact]

@@ -5,7 +5,7 @@ using FormCMS.Utils.ResultExt;
 using NUlid;
 
 namespace FormCMS.Course.Tests;
-
+[Collection("API")]
 public class EntityAuthTest
 {
     private readonly string _post = "ea_post_" + Ulid.NewUlid();
@@ -20,14 +20,13 @@ public class EntityAuthTest
     private long _saPostId = 0;
     private const string Name = "name";
 
-    public EntityAuthTest()
+    public EntityAuthTest(CustomWebApplicationFactory factory)
     {
         Util.SetTestConnectionString();
-        var webAppClient = new WebAppClient<Program>();
-        _auth = new AuthApiClient(webAppClient.GetHttpClient());
-        _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());
-        _account = new AccountApiClient(webAppClient.GetHttpClient());
-        _entity = new EntityApiClient(webAppClient.GetHttpClient());
+        _auth = new AuthApiClient(factory.GetHttpClient());
+        _schemaApiClient = new SchemaApiClient(factory.GetHttpClient());
+        _account = new AccountApiClient(factory.GetHttpClient());
+        _entity = new EntityApiClient(factory.GetHttpClient());
         
         _auth.Register(_email, Pwd).GetAwaiter().GetResult();
         EnsureEntityExists().GetAwaiter().GetResult();

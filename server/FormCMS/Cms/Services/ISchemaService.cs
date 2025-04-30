@@ -22,7 +22,7 @@ public interface ISchemaService
 
     Task<Result> NameNotTakenByOther(Schema schema, CancellationToken ct);
     Task<Schema?> GetByNameDefault(string name, SchemaType type, PublicationStatus? status, CancellationToken ct);
-    Task<Schema?> GetByNamePrefixDefault(string name, SchemaType type, PublicationStatus? status, CancellationToken ct);
+    Task<Schema?> StartsNotEqualDefault(string name, SchemaType type, PublicationStatus? status, CancellationToken ct);
 
     Task Publish(Schema schema, CancellationToken ct);
 

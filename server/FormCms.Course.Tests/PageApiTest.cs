@@ -1,4 +1,3 @@
-using FormCMS.Auth.ApiClient;
 using FormCMS.Core.Descriptors;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.CoreKit.Test;
@@ -8,7 +7,7 @@ using HtmlAgilityPack;
 using NUlid;
 
 namespace FormCMS.Course.Tests;
-
+[Collection("API")]
 public class PageApiTest
 {
     private readonly string _query = "query_" + Ulid.NewUlid();
@@ -16,14 +15,13 @@ public class PageApiTest
     private readonly QueryApiClient _queryApiClient;
     private readonly PageApiClient _pageApiClient;
 
-    public PageApiTest()
+    public PageApiTest(CustomWebApplicationFactory factory)
     {
         Util.SetTestConnectionString();
-        WebAppClient<Program> webAppClient = new();
-        Util.LoginAndInitTestData(webAppClient.GetHttpClient()).GetAwaiter().GetResult();
-        _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());
-        _queryApiClient = new QueryApiClient(webAppClient.GetHttpClient());
-        _pageApiClient = new PageApiClient(webAppClient.GetHttpClient());
+        Util.LoginAndInitTestData(factory.GetHttpClient()).GetAwaiter().GetResult();
+        _schemaApiClient = new SchemaApiClient(factory.GetHttpClient());
+        _queryApiClient = new QueryApiClient(factory.GetHttpClient());
+        _pageApiClient = new PageApiClient(factory.GetHttpClient());
         PrepareData().Wait();
     }
 
@@ -89,6 +87,8 @@ public class PageApiTest
         var lastValue = divNode.GetAttributeValue("last", "Attribute not found");
         html = await _pageApiClient.GetPagePart(lastValue).Ok();
         Assert.True(html.IndexOf("--5--", StringComparison.Ordinal) > 0);
+        
+        
     }
 
     private async Task PrepareData()

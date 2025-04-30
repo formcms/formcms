@@ -2,29 +2,56 @@ using FormCMS.Activities.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.Buffers;
-using FormCMS.Infrastructure.Cache;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.ResultExt;
+using Humanizer;
 
 namespace FormCMS.Activities.Services;
 
 public class ActivityService(
     ICountBuffer countBuffer,
     IStatusBuffer statusBuffer,
-    KeyValueCache<long> maxRecordIdCache,
         
     ActivitySettings settings,
     IProfileService profileService,
-    IEntitySchemaService schemaService,  
+    IEntitySchemaService entitySchemaService,  
+    IEntityService entityService,
     IQueryService queryService,
+    IPageService pageService,
     
     KateQueryExecutor executor,
     IRelationDbDao dao,
     DatabaseMigrator migrator
 ) : IActivityService
 {
+    public  Task<Record[]> GetDailyActivityCount(int daysAgo,CancellationToken ct)
+    {
+        if (!profileService.GetInfo()?.CanAccessAdmin == true || daysAgo > 30) throw new Exception("Can't access daily count");
+        return executor.Many(Models.Activities.GetDailyActivityCount(dao.CastDate,daysAgo),ct);
+    }
+    
+    public  Task<Record[]> GetDailyPageVisitCount(int daysAgo,bool authed,CancellationToken ct)
+    {
+        if (!profileService.GetInfo()?.CanAccessAdmin == true || daysAgo > 30) throw new Exception("Can't access daily count");
+        return executor.Many(Models.Activities.GetDailyVisitCount(dao.CastDate,daysAgo,authed),ct);
+    }
+    
+    public  async Task<Record[]> GetTopVisitCount(int topN,CancellationToken ct)
+    {
+        if (!profileService.GetInfo()?.CanAccessAdmin == true || topN > 30) throw new Exception("Can't access daily count");
+        var counts = await executor.Many(ActivityCounts.GetPageVisiteCount(topN),ct);
+        var ids = counts.Select(x => x[nameof(ActivityCount.RecordId).Camelize()]).ToArray();
+        var schemas = await executor.Many(SchemaHelper.ByIds(ids),ct);
+        var dict = schemas.ToDictionary(x=>(long)x[nameof(Schema.Id).Camelize()]);
+        foreach (var count in counts)
+        {
+            count[nameof(Schema.Name).Camelize()] = dict[(long)count[nameof(ActivityCount.RecordId).Camelize()]][nameof(Schema.Name).Camelize()];
+        }
+        return counts;
+    }
+    
     public async Task<ListResponse> List(string activityType, StrArgs args, int?offset, int?limit, CancellationToken ct = default)
     {
         if (!settings.ToggleActivities.Contains(activityType)
@@ -77,11 +104,11 @@ public class ActivityService(
         await UpsertActivities(activities,ct);
     }
     
-    public async Task<Dictionary<string, StatusDto>> Get(string entityName, long recordId, CancellationToken ct)
+    public async Task<Dictionary<string, StatusDto>> Get(string cookieUserId,string entityName, long recordId, CancellationToken ct)
     {
-        await Utils.EnsureEntityRecordExists(schemaService,dao,maxRecordIdCache,entityName, recordId,ct);
+        await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
         var ret = new Dictionary<string, StatusDto>();
-        foreach (var pair in await Record(entityName, recordId, settings.AutoRecordActivities.ToArray(), ct))
+        foreach (var pair in await InternalRecord(cookieUserId,entityName, recordId, settings.AutoRecordActivities.ToArray(), ct))
         {
             ret[pair.Key] = new StatusDto(true, pair.Value);
         }
@@ -117,52 +144,35 @@ public class ActivityService(
         return ret;
     }
 
+    //why not log visit at page service directly?page service might cache result
+    public async Task Visit( string cookieUserId, string url, CancellationToken ct )
+    {
+        var path = new Uri(url).AbsolutePath.TrimStart('/');
+        var id = await pageService.GetPageId(path, ct);
+        await InternalRecord(cookieUserId, Models.Activities.PageEntity, id, [Models.Activities.VisitActivityType], ct);
+    }
+
     public async Task<Dictionary<string, long>> Record(
+        string cookieUserId,
         string entityName,
         long recordId,
         string[] activityTypes,
-        CancellationToken ct)
+        CancellationToken ct
+    )
     {
-        await Utils.EnsureEntityRecordExists(schemaService,dao,maxRecordIdCache,entityName, recordId,ct);
- 
-        if (activityTypes.Any(t => 
+
+        if (activityTypes.Any(t =>
                 !settings.RecordActivities.Contains(t) &&
                 !settings.AutoRecordActivities.Contains(t)))
         {
             throw new ResultException("One or more activity types are not supported.");
         }
+        await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
 
-        var userId = profileService.GetInfo()?.Id;
-        var activities = userId is not null
-            ? activityTypes.Select(x => new Activity(entityName, recordId, x, userId)).ToArray()
-            : [];
-
-        var counts = activityTypes
-            .Select(x => new ActivityCount(entityName, recordId, x,1))
-            .ToArray();
-
-        var result = new Dictionary<string, long>();
-
-        if (settings.EnableBuffering)
-        {
-            await statusBuffer.Set( activities.Select(a => a.Key()).ToArray());
-            foreach (var count in counts)
-            {
-                result[count.ActivityType] = await countBuffer.Increase(count.Key(), 1, GetCount);
-            }
-        }
-        else
-        {
-            await UpsertActivities(activities,ct);
-            foreach (var count in counts)
-            {
-                result[count.ActivityType] = await dao.Increase(
-                    ActivityCounts.TableName, count.Condition(true),
-                    ActivityCounts.CountField, 1, ct);
-            }
-        }
-        return result;
+        return await InternalRecord(cookieUserId, entityName, recordId, activityTypes, ct);
     }
+
+
 
     public async Task<long> Toggle(
         string entityName,
@@ -177,7 +187,8 @@ public class ActivityService(
         if (profileService.GetInfo() is not { Id: var userId })
             throw new ResultException("User is not logged in");
 
-        var entity = await Utils.EnsureEntityRecordExists(schemaService,dao,maxRecordIdCache,entityName, recordId,ct);
+        var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId, ct).Ok();
+ 
 
         var activity = new Activity(entityName, recordId, activityType, userId,isActive);
         var count = new ActivityCount(entityName, recordId, activityType);
@@ -230,6 +241,43 @@ public class ActivityService(
         }
     }
 
+    private async Task<Dictionary<string, long>> InternalRecord(
+        string cookieUserId,
+        string entityName,
+        long recordId,
+        string[] activityTypes,
+        CancellationToken ct
+    ){
+
+        var userId = profileService.GetInfo()?.Id ?? cookieUserId;
+        var activities = activityTypes.Select(x => new Activity(entityName, recordId, x, userId)).ToArray();
+
+        var counts = activityTypes
+            .Select(x => new ActivityCount(entityName, recordId, x,1))
+            .ToArray();
+
+        var result = new Dictionary<string, long>();
+
+        if (settings.EnableBuffering)
+        {
+            await statusBuffer.Set( activities.Select(a => a.Key()).ToArray());
+            foreach (var count in counts)
+            {
+                result[count.ActivityType] = await countBuffer.Increase(count.Key(), 1, GetCount);
+            }
+        }
+        else
+        {
+            await UpsertActivities(activities,ct);
+            foreach (var count in counts)
+            {
+                result[count.ActivityType] = await dao.Increase(
+                    ActivityCounts.TableName, count.Condition(true),
+                    ActivityCounts.CountField, 1, ct);
+            }
+        }
+        return result;
+    }
     private async Task<Activity[]> LoadMetaData(Entity entity, Activity[] activities, CancellationToken ct)
     {
         var ids = activities
@@ -261,14 +309,20 @@ public class ActivityService(
     {
         var groups = activities.GroupBy(a => a.EntityName);
         var toUpdate = new List<Record>();
-        var entities = await schemaService.AllEntities(ct);
+        var entities = await entitySchemaService.AllEntities(ct);
         
         foreach (var group in groups)
         {
-            var entity = entities.FirstOrDefault(x=>x.Name == group.Key);
-            if (entity == null) throw new ResultException($"Entity {group.Key} not found");
-            var loadedActivities = await LoadMetaData(entity,activities, ct);
-            toUpdate.AddRange(loadedActivities.Select(x=>x.UpsertRecord(true)));
+            if (group.Key == Models.Activities.PageEntity)
+            {
+                toUpdate.AddRange(group.Select(x=>x.UpsertRecord(true)));
+            }
+            else
+            {
+                var entity = entities.FirstOrDefault(x=>x.Name == group.Key);
+                var loadedActivities = await LoadMetaData(entity, [..group], ct);
+                toUpdate.AddRange(loadedActivities.Select(x => x.UpsertRecord(true)));
+            }
         }
         await dao.BatchUpdateOnConflict(
             Models.Activities.TableName,

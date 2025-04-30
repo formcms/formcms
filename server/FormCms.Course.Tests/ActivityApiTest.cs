@@ -4,29 +4,24 @@ using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
 
 namespace FormCMS.Course.Tests;
-
-public class ActivityTest
+[Collection("API")]
+public class ActivityApiTest
 {
 
     private readonly ActivityApiClient _activityApiClient;
     private const long RecordId = 21;
 
-    public ActivityTest()
+    public ActivityApiTest(CustomWebApplicationFactory factory)
     {
         Util.SetTestConnectionString();
-        var webAppClient = new WebAppClient<Program>();
-        Util.LoginAndInitTestData(webAppClient.GetHttpClient()).GetAwaiter().GetResult();
-        _activityApiClient = new ActivityApiClient(webAppClient.GetHttpClient());
+        // var webAppClient = new WebAppClient<Program>();
+        Util.LoginAndInitTestData(factory.GetHttpClient()).GetAwaiter().GetResult();
+        _activityApiClient = new ActivityApiClient(factory.GetHttpClient());
     }
-
-    public async Task EnsureActivity()
-    {
-        await TestListHistoryAndDelete();
-        await ViewShareLike();
-    }
-
+    
     //have to disable activity cache
-    private async Task TestListHistoryAndDelete()
+    [Fact]
+    public async Task TestListHistoryAndDelete()
     {
         await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
         var res = await _activityApiClient.List("view", "sort[id]=-1").Ok();
@@ -41,6 +36,7 @@ public class ActivityTest
         Assert.True(res.TotalRecords < totalRecords);
     }
 
+    [Fact]
     private async Task ViewShareLike()
     {
         //get

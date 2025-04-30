@@ -2,9 +2,9 @@ using FormCMS.Core.Assets;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
-using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.RecordExt;
 using Humanizer;
+using NUlid;
 using Query = SqlKata.Query;
 
 namespace FormCMS.Activities.Models;
@@ -26,12 +26,19 @@ public record Activity(
 
 public static class Activities
 {
+    private const string AnonymousPrefix = "anonymous_";
     public const string TableName = "__activities";
-    const int DefaultPageSize = 8;
+    public const string VisitActivityType = "visit";
+    public const string PageEntity = "page";
+    private const int DefaultPageSize = 8;
 
     public static readonly string ActiveField = nameof(Activity.IsActive).Camelize();
     public static readonly string TypeField = nameof(Activity.ActivityType).Camelize();
 
+    public static string GetAnonymouseCookieUserId() => AnonymousPrefix + "cookie_" + Ulid.NewUlid();
+
+    public static string AddAnonymouseHeader(string useId) => AnonymousPrefix + useId;
+    
     public static readonly string[] KeyFields =
     [
         nameof(Activity.EntityName).Camelize(),
@@ -67,39 +74,39 @@ public static class Activities
         return new Activity(parts[0], long.Parse(parts[1]), parts[2], parts[3]);
     }
 
-    public static Activity LoadMetaData(this Activity activity, Entity entity, Record record)
+    public static Activity LoadMetaData(this Activity activityApi, Entity entity, Record record)
     {
 
-        activity = activity with { Url = entity.PageUrl + activity.RecordId };
+        activityApi = activityApi with { Url = entity.PageUrl + activityApi.RecordId };
         if (record.ByJsonPath<string>(entity.BookmarkTitleField, out var title))
         {
-            activity = activity with { Title = Trim(title)};
+            activityApi = activityApi with { Title = Trim(title)};
         }
 
         if (record.ByJsonPath<Asset>(entity.BookmarkImageField, out var asset))
         {
-            activity = activity with { Image = Trim(asset?.Url) };
+            activityApi = activityApi with { Image = Trim(asset?.Url) };
         }
 
         if (record.ByJsonPath<string>(entity.BookmarkSubtitleField, out var subtitle))
         {
-            activity = activity with { Subtitle = Trim(subtitle)};
+            activityApi = activityApi with { Subtitle = Trim(subtitle)};
         }
 
         if (record.ByJsonPath<DateTime>(entity.BookmarkPublishTimeField, out var publishTime))
         {
-            activity = activity with { PublishedAt = publishTime };
+            activityApi = activityApi with { PublishedAt = publishTime };
         }
 
-        return activity;
+        return activityApi;
         
         string Trim(string? s) => s?.Length > 255 ? s[..255] : s??"";
     }
 
-    public static string Key(this Activity activity)
-        => $"{activity.EntityName}.{activity.RecordId}.{activity.ActivityType}.{activity.UserId}";
+    public static string Key(this Activity activityApi)
+        => $"{activityApi.EntityName}.{activityApi.RecordId}.{activityApi.ActivityType}.{activityApi.UserId}";
     
-    public static Record UpsertRecord(this Activity activity, bool includeMetaData)
+    public static Record UpsertRecord(this Activity activityApi, bool includeMetaData)
     {
         var whitList = new List<string>
         {
@@ -119,20 +126,20 @@ public static class Activities
                 nameof(Activity.PublishedAt)
             ]);
         }
-        return RecordExtensions.FormObject(activity, [..whitList]);
+        return RecordExtensions.FormObject(activityApi, [..whitList]);
     }
     
-    public static Record Condition(this Activity activity,bool includeType)
+    public static Record Condition(this Activity activityApi,bool includeType)
     {
         var ret = new Dictionary<string, object>
         {
-            {nameof(Activity.EntityName).Camelize(),activity.EntityName},
-            {nameof(Activity.RecordId).Camelize(),activity.RecordId},
-            {nameof(Activity.UserId).Camelize(),activity.UserId}
+            {nameof(Activity.EntityName).Camelize(),activityApi.EntityName},
+            {nameof(Activity.RecordId).Camelize(),activityApi.RecordId},
+            {nameof(Activity.UserId).Camelize(),activityApi.UserId}
         };
         if (includeType)
         {
-            ret[nameof(Activity.ActivityType).Camelize()] = activity.ActivityType;
+            ret[nameof(Activity.ActivityType).Camelize()] = activityApi.ActivityType;
         }
         return ret;
     }
@@ -171,5 +178,40 @@ public static class Activities
             .Where(nameof(Activity.ActivityType).Camelize(), activityType)
             .Where(nameof(Activity.IsActive).Camelize(), true);
         return q;
+    }
+
+    public static Query GetDailyVisitCount(Func<string, string> CastDate, int daysAgo,bool isAuthed)
+    {
+        var start = DateTime.UtcNow.Date.AddDays(-daysAgo);
+        var dateExp = CastDate(nameof(DefaultColumnNames.UpdatedAt).Camelize());
+        var query = new Query(TableName)
+                .Where(nameof(DefaultColumnNames.UpdatedAt).Camelize(), ">=", start)
+                .Where(nameof(Activity.ActivityType).Camelize(),VisitActivityType)
+                .Where(nameof(Activity.IsActive).Camelize(), true)
+                .SelectRaw($"{dateExp} as {nameof(DailyActivityCount.Day).Camelize()}")
+                .SelectRaw($"COUNT(*) as {nameof(DailyActivityCount.Count).Camelize()}")
+                .GroupByRaw($"{dateExp}")
+            ;
+        query = isAuthed
+            ? query.WhereStarts(nameof(Activity.UserId).Camelize(),AnonymousPrefix)
+            : query.WhereNotStarts(nameof(Activity.UserId).Camelize(), AnonymousPrefix);
+        
+        return query;
+    }
+    
+    public static Query GetDailyActivityCount(Func<string,string>CastDate,int daysAgo)
+    {
+        var start = DateTime.UtcNow.Date.AddDays(-daysAgo);
+        var dateExp = CastDate(nameof(DefaultColumnNames.UpdatedAt).Camelize());
+
+        return new Query(TableName)
+            .Where(nameof(DefaultColumnNames.UpdatedAt).Camelize(), ">=", start)
+            .WhereNot(nameof(Activity.ActivityType).Camelize(), VisitActivityType)
+            .Where(nameof(Activity.IsActive).Camelize(), true)
+            .SelectRaw($"{dateExp} as {nameof(DailyActivityCount.Day).Camelize()}")
+            .Select(nameof(DailyActivityCount.ActivityType).Camelize())
+            .SelectRaw($"COUNT(*) as {nameof(DailyActivityCount.Count).Camelize()}")
+            .GroupBy(nameof(Activity.ActivityType).Camelize())
+            .GroupByRaw($"{dateExp}");
     }
 }

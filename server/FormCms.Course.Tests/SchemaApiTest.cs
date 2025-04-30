@@ -7,7 +7,7 @@ using IdGen;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Course.Tests;
-
+[Collection("API")]
 public class SchemaApiTest
 {
     private readonly SchemaApiClient _schema;
@@ -16,13 +16,12 @@ public class SchemaApiTest
 
     private readonly Schema _testSchema;
     
-    public SchemaApiTest()
+    public SchemaApiTest(CustomWebApplicationFactory factory)
     {
         Util.SetTestConnectionString();
 
-        WebAppClient<Program> webAppClient = new();
-        _schema = new SchemaApiClient(webAppClient.GetHttpClient());
-        new AuthApiClient(webAppClient.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
+        _schema = new SchemaApiClient(factory.GetHttpClient());
+        new AuthApiClient(factory.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
         var post = "schema_api_test_post" + new IdGenerator(0).CreateId();
         _testSchema = new(
             Name: post,

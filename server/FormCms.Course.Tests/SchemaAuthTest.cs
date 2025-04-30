@@ -1,10 +1,11 @@
 using FormCMS.Auth.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.ResultExt;
+using Microsoft.AspNetCore.Mvc.Testing;
 using NUlid;
 
 namespace FormCMS.Course.Tests;
-
+[Collection("API")]
 public class SchemaAuthTest
 {
     private readonly SchemaApiClient _schema;
@@ -14,12 +15,11 @@ public class SchemaAuthTest
     private readonly string _email = $"sa_user_{Ulid.NewUlid()}@cms.com";
     private const string Pwd = "Admin1!";
 
-    public SchemaAuthTest()
+    public SchemaAuthTest(CustomWebApplicationFactory factory)
     {
         Util.SetTestConnectionString();
-        var webAppClient = new WebAppClient<Program>();
-        _auth = new AuthApiClient(webAppClient.GetHttpClient());
-        _schema = new SchemaApiClient(webAppClient.GetHttpClient());
+        _auth = new AuthApiClient(factory.GetHttpClient());
+        _schema = new SchemaApiClient(factory.GetHttpClient());
         EnsureEntityExists().GetAwaiter().GetResult();
         _auth.Register(_email, Pwd).GetAwaiter().GetResult();
     }

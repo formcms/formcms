@@ -1,5 +1,4 @@
 using System.Text.Json;
-using FormCMS.Auth.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.ResultExt;
@@ -8,12 +7,11 @@ using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.jsonElementExt;
 using Microsoft.Extensions.Primitives;
-using Namotion.Reflection;
 using NUlid;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Course.Tests;
-
+[Collection("API")]
 public class QueryApiTest
 {
     private readonly string _queryName = "qry_query_" + Ulid.NewUlid();
@@ -24,15 +22,14 @@ public class QueryApiTest
     private readonly SchemaApiClient _schema;
     private readonly BlogsTestCases _commonTestCases;
 
-    public QueryApiTest()
+    public QueryApiTest(CustomWebApplicationFactory factory)
     {
         Util.SetTestConnectionString();
 
-        WebAppClient<Program> webAppClient = new();
-        Util.LoginAndInitTestData(webAppClient.GetHttpClient()).GetAwaiter().GetResult();
-        _schema = new SchemaApiClient(webAppClient.GetHttpClient());
-        _entity= new EntityApiClient(webAppClient.GetHttpClient());
-        _query = new QueryApiClient(webAppClient.GetHttpClient());
+        Util.LoginAndInitTestData(factory.GetHttpClient()).GetAwaiter().GetResult();
+        _schema = new SchemaApiClient(factory.GetHttpClient());
+        _entity= new EntityApiClient(factory.GetHttpClient());
+        _query = new QueryApiClient(factory.GetHttpClient());
         _commonTestCases = new BlogsTestCases(_query, _queryName);
     }
      [Fact]

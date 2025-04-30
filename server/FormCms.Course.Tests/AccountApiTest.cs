@@ -5,6 +5,7 @@ using NUlid;
 
 namespace FormCMS.Course.Tests;
 
+[Collection("API")]
 public class AccountApiTest
 {
     private readonly AuthApiClient _authApiClient;
@@ -13,12 +14,11 @@ public class AccountApiTest
     private readonly string _email = $"at_user_{Ulid.NewUlid()}@cms.com";
     private readonly string _role = $"at_role_{Ulid.NewUlid()}";
 
-    public AccountApiTest()
+    public AccountApiTest(CustomWebApplicationFactory factory)
     {
         Util.SetTestConnectionString();
-        var webAppClient = new WebAppClient<Program>();
-        _authApiClient = new AuthApiClient(webAppClient.GetHttpClient());
-        _accountApiClient = new AccountApiClient(webAppClient.GetHttpClient());
+        _authApiClient = new AuthApiClient(factory.GetHttpClient());
+        _accountApiClient = new AccountApiClient(factory.GetHttpClient());
     }
 
     [Fact]

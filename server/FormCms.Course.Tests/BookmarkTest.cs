@@ -8,32 +8,24 @@ using Microsoft.AspNetCore.Authentication;
 using NUlid;
 
 namespace FormCMS.Course.Tests;
-
+[Collection("API")]
 public class BookmarkTest
 {
     private readonly ActivityApiClient _activityApiClient;
     private readonly BookmarkApiClient _bookmarkApiClient;
     private const  long  RecordId = 22;
 
-    public BookmarkTest()
+    public BookmarkTest(CustomWebApplicationFactory factory)
     {
         Util.SetTestConnectionString();
-        WebAppClient<Program> webAppClient = new();
-        Util.LoginAndInitTestData(webAppClient.GetHttpClient()).GetAwaiter().GetResult();
-        _bookmarkApiClient = new BookmarkApiClient(webAppClient.GetHttpClient());
-        _activityApiClient = new ActivityApiClient(webAppClient.GetHttpClient());
+        Util.LoginAndInitTestData(factory.GetHttpClient()).GetAwaiter().GetResult();
+        _bookmarkApiClient = new BookmarkApiClient(factory.GetHttpClient());
+        _activityApiClient = new ActivityApiClient(factory.GetHttpClient());
 
     }
 
-    public async Task EsnureBookmark()
-    {
-        await ListBookmarkByFolderIdAndDelete();
-        await FolderUpdateAndDelete();
-        await SaveToDefaultFolder();
-        await SaveAndCreateFolderOnTheFlight();
-    }
-
-    private async Task ListBookmarkByFolderIdAndDelete()
+    [Fact]
+    public async Task ListBookmarkByFolderIdAndDelete()
     {
         var name = Ulid.NewUlid().ToString();
         await _bookmarkApiClient.AddBookmarks(TestEntityNames.TestPost.Camelize(), RecordId, name, []).Ok();
@@ -54,7 +46,8 @@ public class BookmarkTest
         Assert.Equal(JsonValueKind.Undefined,folder.ValueKind);
     }
 
-    private async Task FolderUpdateAndDelete()
+    [Fact]
+    public async Task FolderUpdateAndDelete()
     {
         //add
         var name = Ulid.NewUlid().ToString();
@@ -71,8 +64,8 @@ public class BookmarkTest
         Assert.Equal("test", folder.GetProperty("description").GetString());
     
     }
-
-    private async Task SaveToDefaultFolder()
+    [Fact]
+    public async Task SaveToDefaultFolder()
     {
         var res =await _bookmarkApiClient.ListBookmarks(0).Ok();
         foreach (var item in res.Items)
@@ -81,11 +74,12 @@ public class BookmarkTest
         }
         //save to default folder
         await _bookmarkApiClient.AddBookmarks(TestEntityNames.TestPost.Camelize(), RecordId, "", [0]).Ok();
-        var folders = await _bookmarkApiClient.FolderWithRecordStatus(TestEntityNames.TestPost.Camelize(), 1).Ok();
+        var folders = await _bookmarkApiClient.FolderWithRecordStatus(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
         Assert.True(folders.First(x => x.Id == 0).Selected);
     }
 
-    private async Task SaveAndCreateFolderOnTheFlight()
+    [Fact]
+    public async Task SaveAndCreateFolderOnTheFlight()
     {
         var name = Ulid.NewUlid().ToString();
         await _bookmarkApiClient.AddBookmarks(TestEntityNames.TestPost.Camelize(), RecordId, name, [0]).Ok();
@@ -93,7 +87,7 @@ public class BookmarkTest
         Assert.NotNull(folders.FirstOrDefault(x => x.Name == name));
     }
     
-    //have to disable activity cache
+    [Fact]
     private async Task TestListHistoryAndDelete()
     {
         await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
@@ -109,7 +103,8 @@ public class BookmarkTest
         Assert.True(res.TotalRecords < totalRecords);
     }
 
-    private async Task ViewShareLike()
+    [Fact]
+    public async Task ViewShareLike()
     {
         //get
         var rootElement = await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();

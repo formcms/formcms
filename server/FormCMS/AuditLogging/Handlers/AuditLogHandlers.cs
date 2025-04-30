@@ -7,6 +7,12 @@ public static class AuditLogHandlers
 {
     public static void MapAuditLogHandlers(this RouteGroupBuilder builder)
     {
+        builder.MapGet("/counts", (
+            int n,
+            IAuditLogService auditLogService,
+            CancellationToken ct
+        ) => auditLogService.GetActionCounts(n,ct));
+        
         builder.MapGet("/", (
             IAuditLogService s, 
             HttpContext context,

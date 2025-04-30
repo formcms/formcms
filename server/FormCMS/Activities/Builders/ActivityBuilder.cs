@@ -14,12 +14,6 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
     public static IServiceCollection AddActivity(IServiceCollection services, bool enableBuffering)
     {
         services.AddSingleton<ActivityBuilder>();
-        
-        services.AddSingleton<KeyValueCache<long>>(p =>
-            new KeyValueCache<long>(p,
-                p.GetRequiredService<ILogger<KeyValueCache<long>>>(),
-                "EntityMaxRecordId", TimeSpan.FromMinutes(5)));
-        
         services.AddSingleton(new BufferSettings());
         services.AddSingleton<ICountBuffer,MemoryCountBuffer>();
         services.AddSingleton<IStatusBuffer,MemoryStatusBuffer>();

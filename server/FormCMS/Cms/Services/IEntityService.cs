@@ -1,4 +1,5 @@
 using System.Text.Json;
+using FluentResults;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.DisplayModels;
 
@@ -6,7 +7,7 @@ namespace FormCMS.Cms.Services;
 
 public interface IEntityService
 {
-    
+    Task<Result<Entity>> GetEntityAndValidateRecordId(string entityName, long recordId, CancellationToken ct); 
     Task<ListResponse?> ListWithAction(string name,ListResponseMode mode, Pagination pagination,  StrArgs args,
         CancellationToken ct= default);
 

@@ -10,7 +10,7 @@ using NUlid;
 using Xunit.Abstractions;
 
 namespace FormCMS.Course.Tests;
-
+[Collection("API")]
 public class AuditLogApiTest
 {
     private readonly SchemaApiClient _schemaApiClient;
@@ -19,16 +19,15 @@ public class AuditLogApiTest
 
     private readonly string _post = "audit_post_" + Ulid.NewUlid();
 
-    public AuditLogApiTest(ITestOutputHelper testOutputHelper)
+    public AuditLogApiTest(CustomWebApplicationFactory factory)
     {
         Util.SetTestConnectionString();
         
-        var webAppClient = new WebAppClient<Program>();
-        _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());
-        _entityApiClient = new EntityApiClient(webAppClient.GetHttpClient());
-        _auditLogApiClient = new AuditLogApiClient(webAppClient.GetHttpClient());
+        _schemaApiClient = new SchemaApiClient(factory.GetHttpClient());
+        _entityApiClient = new EntityApiClient(factory.GetHttpClient());
+        _auditLogApiClient = new AuditLogApiClient(factory.GetHttpClient());
 
-        new AuthApiClient(webAppClient.GetHttpClient()).EnsureSaLogin().GetAwaiter().GetResult();
+        new AuthApiClient(factory.GetHttpClient()).EnsureSaLogin().GetAwaiter().GetResult();
     }
 
     [Fact]

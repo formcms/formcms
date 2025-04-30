@@ -12,7 +12,7 @@ using NUlid;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Course.Tests;
-
+[Collection("API")]
 public class EntityApiTest
 {
     private const string Name = "name";
@@ -26,13 +26,12 @@ public class EntityApiTest
     private readonly SchemaApiClient _schemaApiClient;
     private static readonly string[] Payload = ["a", "b", "c"];
 
-    public EntityApiTest()
+    public EntityApiTest(CustomWebApplicationFactory factory)
     {
         Util.SetTestConnectionString();
-        WebAppClient<Program> webAppClient = new();
-        _entityApiClient = new EntityApiClient(webAppClient.GetHttpClient());
-        _schemaApiClient = new SchemaApiClient(webAppClient.GetHttpClient());
-        new AuthApiClient(webAppClient.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
+        _entityApiClient = new EntityApiClient(factory.GetHttpClient());
+        _schemaApiClient = new SchemaApiClient(factory.GetHttpClient());
+        new AuthApiClient(factory.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
     }
 
     [Fact]

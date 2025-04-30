@@ -5,7 +5,7 @@ using FormCMS.Utils.ResultExt;
 using NUlid;
 
 namespace FormCMS.Course.Tests;
-
+[Collection("API")]
 public class AssetAuthTest
 {
     private readonly AuthApiClient _auth;
@@ -17,13 +17,12 @@ public class AssetAuthTest
     private const string Pwd = $"Admin1!";
     private long _saAssetId = 0;
 
-    public AssetAuthTest()
+    public AssetAuthTest(CustomWebApplicationFactory factory)
     {
         Util.SetTestConnectionString();
-        var webAppClient = new WebAppClient<Program>();
-        _auth = new AuthApiClient(webAppClient.GetHttpClient());
-        _account = new AccountApiClient(webAppClient.GetHttpClient());
-        _asset = new AssetApiClient(webAppClient.GetHttpClient());
+        _auth = new AuthApiClient(factory.GetHttpClient());
+        _account = new AccountApiClient(factory.GetHttpClient());
+        _asset = new AssetApiClient(factory.GetHttpClient());
         _auth.Register(_email, Pwd).GetAwaiter().GetResult();
         AddSaAssetAndGetId().GetAwaiter().GetResult();
     }
