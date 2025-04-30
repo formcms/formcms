@@ -1,38 +1,27 @@
-using FormCMS.Activities.ApiClient;
 using FormCMS.CoreKit.Test;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
 
 namespace FormCMS.Course.Tests;
 [Collection("API")]
-public class ActivityApiTest
+public class ActivityApiTest(AppFactory factory)
 {
-
-    private readonly ActivityApiClient _activityApiClient;
+    private bool _ = factory.LoginAndInitTestData();
     private const long RecordId = 21;
 
-    public ActivityApiTest(CustomWebApplicationFactory factory)
-    {
-        Util.SetTestConnectionString();
-        // var webAppClient = new WebAppClient<Program>();
-        Util.LoginAndInitTestData(factory.GetHttpClient()).GetAwaiter().GetResult();
-        _activityApiClient = new ActivityApiClient(factory.GetHttpClient());
-    }
-    
-    //have to disable activity cache
     [Fact]
     public async Task TestListHistoryAndDelete()
     {
-        await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
-        var res = await _activityApiClient.List("view", "sort[id]=-1").Ok();
+        await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        var res = await factory.ActivityApi.List("view", "sort[id]=-1").Ok();
         Assert.True(res.TotalRecords >= 1);
         var totalRecords = res.TotalRecords;
         var item = res.Items[0];
 
         var id = item.GetLong("id");
 
-        await _activityApiClient.Delete(id).Ok();
-        res = await _activityApiClient.List("view", "").Ok();
+        await factory.ActivityApi.Delete(id).Ok();
+        res = await factory.ActivityApi.List("view", "").Ok();
         Assert.True(res.TotalRecords < totalRecords);
     }
 
@@ -40,7 +29,7 @@ public class ActivityApiTest
     private async Task ViewShareLike()
     {
         //get
-        var rootElement = await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        var rootElement = await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
 
         //view count increase automatically
         var viewElement = rootElement.GetProperty("view");
@@ -53,26 +42,26 @@ public class ActivityApiTest
         Assert.Equal(0, likeElement.GetProperty("count").GetInt64());
 
         //record share 
-        var count = await _activityApiClient.Record(TestEntityNames.TestPost.Camelize(), RecordId, "share").Ok();
+        var count = await factory.ActivityApi.Record(TestEntityNames.TestPost.Camelize(), RecordId, "share").Ok();
         Assert.Equal(1, count);
-        await _activityApiClient.Record(TestEntityNames.TestPost.Camelize(), RecordId, "share").Ok();
-        rootElement = await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        await factory.ActivityApi.Record(TestEntityNames.TestPost.Camelize(), RecordId, "share").Ok();
+        rootElement = await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
         var shareElement = rootElement.GetProperty("share");
         Assert.True(shareElement.GetProperty("active").GetBoolean());
         Assert.Equal(2, shareElement.GetProperty("count").GetInt64());
 
         //toggle like
-        count = await _activityApiClient.Toggle(TestEntityNames.TestPost.Camelize(), RecordId, "like", true).Ok();
+        count = await factory.ActivityApi.Toggle(TestEntityNames.TestPost.Camelize(), RecordId, "like", true).Ok();
         Assert.Equal(1, count);
-        rootElement = await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        rootElement = await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
         likeElement = rootElement.GetProperty("like");
         Assert.True(likeElement.GetProperty("active").GetBoolean());
         Assert.Equal(1, likeElement.GetProperty("count").GetInt64());
 
         //cancel like
-        count = await _activityApiClient.Toggle(TestEntityNames.TestPost.Camelize(), RecordId, "like", false).Ok();
+        count = await factory.ActivityApi.Toggle(TestEntityNames.TestPost.Camelize(), RecordId, "like", false).Ok();
         Assert.Equal(0, count);
-        rootElement = await _activityApiClient.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        rootElement = await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
         likeElement = rootElement.GetProperty("like");
         Assert.False(likeElement.GetProperty("active").GetBoolean());
         Assert.Equal(0, likeElement.GetProperty("count").GetInt64());

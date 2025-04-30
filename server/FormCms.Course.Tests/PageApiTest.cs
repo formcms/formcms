@@ -1,5 +1,4 @@
 using FormCMS.Core.Descriptors;
-using FormCMS.CoreKit.ApiClient;
 using FormCMS.CoreKit.Test;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
@@ -11,18 +10,13 @@ namespace FormCMS.Course.Tests;
 public class PageApiTest
 {
     private readonly string _query = "query_" + Ulid.NewUlid();
-    private readonly SchemaApiClient _schemaApiClient;
-    private readonly QueryApiClient _queryApiClient;
-    private readonly PageApiClient _pageApiClient;
+    private AppFactory Factory { get; }
 
-    public PageApiTest(CustomWebApplicationFactory factory)
+    public PageApiTest(AppFactory factory)
     {
-        Util.SetTestConnectionString();
-        Util.LoginAndInitTestData(factory.GetHttpClient()).GetAwaiter().GetResult();
-        _schemaApiClient = new SchemaApiClient(factory.GetHttpClient());
-        _queryApiClient = new QueryApiClient(factory.GetHttpClient());
-        _pageApiClient = new PageApiClient(factory.GetHttpClient());
-        PrepareData().Wait();
+        Factory = factory;
+        factory.LoginAndInitTestData();
+        PrepareData().GetAwaiter().GetResult();
     }
 
     [Fact]
@@ -35,7 +29,7 @@ public class PageApiTest
             Page: new Page(_query + "/{id}", "", _query, html, "", "", "")
         ));
         
-        await _schemaApiClient.Save(schema).Ok();
+        await Factory.SchemaApi.Save(schema).Ok();
 
         //save the query again, remove the field 'id', the query is draft, so will not effect page
         await $$"""
@@ -44,9 +38,9 @@ public class PageApiTest
                         id,
                    }
                 }    
-                """.GraphQlQuery(_queryApiClient).Ok();
+                """.GraphQlQuery(Factory.QueryApi).Ok();
         
-        var s = await _pageApiClient.GetDetailPage(_query, "2").Ok();
+        var s = await Factory.PageApi.GetDetailPage(_query, "2").Ok();
         Assert.True(s.IndexOf('2', StringComparison.Ordinal) > 0);
         
     }
@@ -58,8 +52,8 @@ public class PageApiTest
         var schema = new Schema(_query + "/{id}", SchemaType.Page, new Settings(
             Page: new Page(_query + "/{id}", "", _query, html, "", "", "")
         ));
-        await _schemaApiClient.Save(schema).Ok();
-        var s =await _pageApiClient.GetDetailPage(_query,"2").Ok();
+        await Factory.SchemaApi.Save(schema).Ok();
+        var s =await Factory.PageApi.GetDetailPage(_query,"2").Ok();
         Assert.True(s.IndexOf("--2--", StringComparison.Ordinal) > 0);
     }
     
@@ -76,8 +70,8 @@ public class PageApiTest
         var schema = new Schema(_query, SchemaType.Page, new Settings(
             Page: new Page(_query, "", null, html, "", "", "")
         ));
-        await _schemaApiClient.Save(schema).Ok();
-        html =await _pageApiClient.GetLandingPage(_query).Ok();
+        await Factory.SchemaApi.Save(schema).Ok();
+        html =await Factory.PageApi.GetLandingPage(_query).Ok();
         Assert.True(html.IndexOf("--1--", StringComparison.Ordinal) > 0);
         
         var doc = new HtmlDocument();
@@ -85,7 +79,7 @@ public class PageApiTest
 
         var divNode = doc.DocumentNode.SelectSingleNode("//div[@id='div1']");
         var lastValue = divNode.GetAttributeValue("last", "Attribute not found");
-        html = await _pageApiClient.GetPagePart(lastValue).Ok();
+        html = await Factory.PageApi.GetPagePart(lastValue).Ok();
         Assert.True(html.IndexOf("--5--", StringComparison.Ordinal) > 0);
         
         
@@ -100,6 +94,6 @@ public class PageApiTest
                         tags {id, name}
                    }
                 }    
-                """.GraphQlQuery(_queryApiClient).Ok();
+                """.GraphQlQuery(Factory.QueryApi).Ok();
     }
 }

@@ -193,8 +193,8 @@ public static class Activities
                 .GroupByRaw($"{dateExp}")
             ;
         query = isAuthed
-            ? query.WhereStarts(nameof(Activity.UserId).Camelize(),AnonymousPrefix)
-            : query.WhereNotStarts(nameof(Activity.UserId).Camelize(), AnonymousPrefix);
+            ? query.WhereNotStarts(nameof(Activity.UserId).Camelize(), AnonymousPrefix)
+            : query.WhereStarts(nameof(Activity.UserId).Camelize(), AnonymousPrefix);
         
         return query;
     }

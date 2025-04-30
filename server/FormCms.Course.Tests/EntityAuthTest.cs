@@ -10,25 +10,17 @@ public class EntityAuthTest
 {
     private readonly string _post = "ea_post_" + Ulid.NewUlid();
 
-    private readonly AuthApiClient _auth;
-    private readonly AccountApiClient _account;
-    private readonly SchemaApiClient _schemaApiClient;
-    private readonly EntityApiClient _entity;
     private readonly string _email = $"ea_user_{Ulid.NewUlid()}@cms.com";
     private const string Pwd = "Admin1!";
     private readonly string _role = $"ea_role_{Ulid.NewUlid()}";
     private long _saPostId = 0;
     private const string Name = "name";
+    private AppFactory Factory { get; }
 
-    public EntityAuthTest(CustomWebApplicationFactory factory)
+    public EntityAuthTest(AppFactory factory)
     {
-        Util.SetTestConnectionString();
-        _auth = new AuthApiClient(factory.GetHttpClient());
-        _schemaApiClient = new SchemaApiClient(factory.GetHttpClient());
-        _account = new AccountApiClient(factory.GetHttpClient());
-        _entity = new EntityApiClient(factory.GetHttpClient());
-        
-        _auth.Register(_email, Pwd).GetAwaiter().GetResult();
+        Factory = factory;
+        Factory.AuthApi.Register(_email, Pwd).GetAwaiter().GetResult();
         EnsureEntityExists().GetAwaiter().GetResult();
     }
 
@@ -36,84 +28,84 @@ public class EntityAuthTest
     public Task AnonymousUser() => ReadAddFail();
     
     [Fact]
-    public Task EmptyUser() =>  _auth.Sudo(_email, Pwd, ReadAddFail);
+    public Task EmptyUser() =>  Factory.AuthApi.Sudo(_email, Pwd, ReadAddFail);
     
     [Fact]
     public async Task UserRestrictedRead()
     {
-        await _auth.SaDo(() => _account.AssignEntityToUser(_email, restrictedRead: [_post]));
-        await _auth.Sudo(_email, Pwd, ReadOwnOk);
-        await _auth.Sudo(_email, Pwd, WriteOwnFail);
-        await _auth.Sudo(_email, Pwd, ReadOtherFail);
+        await Factory.AuthApi.SaDo(() => Factory.AccountApi.AssignEntityToUser(_email, restrictedRead: [_post]));
+        await Factory.AuthApi.Sudo(_email, Pwd, ReadOwnOk);
+        await Factory.AuthApi.Sudo(_email, Pwd, WriteOwnFail);
+        await Factory.AuthApi.Sudo(_email, Pwd, ReadOtherFail);
     }
     
     [Fact]
     public async Task RoleRestrictedRead()
     {
-        await _auth.SaDo(() => _account.AssignEntityToUserByRole(_email, _role, restrictedRead: [_post]));
-        await _auth.Sudo(_email, Pwd, ReadOwnOk);
-        await _auth.Sudo(_email, Pwd, WriteOwnFail);
-        await _auth.Sudo(_email, Pwd, ReadOtherFail);
+        await Factory.AuthApi.SaDo(() => Factory.AccountApi.AssignEntityToUserByRole(_email, _role, restrictedRead: [_post]));
+        await Factory.AuthApi.Sudo(_email, Pwd, ReadOwnOk);
+        await Factory.AuthApi.Sudo(_email, Pwd, WriteOwnFail);
+        await Factory.AuthApi.Sudo(_email, Pwd, ReadOtherFail);
     }
    
     [Fact]
     public async Task UserFullRead()
     {
-        await _auth.SaDo( () => _account.AssignEntityToUser(_email, fullRead: [_post]));
-        await _auth.Sudo(_email, Pwd, ReadOwnOk);
-        await _auth.Sudo(_email, Pwd, WriteOwnFail);
-        await _auth.Sudo(_email, Pwd, ReadOtherOk);
+        await Factory.AuthApi.SaDo( () => Factory.AccountApi.AssignEntityToUser(_email, fullRead: [_post]));
+        await Factory.AuthApi.Sudo(_email, Pwd, ReadOwnOk);
+        await Factory.AuthApi.Sudo(_email, Pwd, WriteOwnFail);
+        await Factory.AuthApi.Sudo(_email, Pwd, ReadOtherOk);
     } 
     
     [Fact]
     public async Task RoleFullRead()
     {
-        await _auth.SaDo( () => _account.AssignEntityToUserByRole(_email,_role, fullRead: [_post]));
-        await _auth.Sudo(_email, Pwd, ReadOwnOk);
-        await _auth.Sudo(_email, Pwd, WriteOwnFail);
-        await _auth.Sudo(_email, Pwd, ReadOtherOk);
+        await Factory.AuthApi.SaDo( () => Factory.AccountApi.AssignEntityToUserByRole(_email,_role, fullRead: [_post]));
+        await Factory.AuthApi.Sudo(_email, Pwd, ReadOwnOk);
+        await Factory.AuthApi.Sudo(_email, Pwd, WriteOwnFail);
+        await Factory.AuthApi.Sudo(_email, Pwd, ReadOtherOk);
     }
 
     [Fact]
     public async Task UserWithRestrictedWrite()
     {
-        await _auth.SaDo( () => _account.AssignEntityToUser(_email, restrictedWrite: [_post]));
-        await _auth.Sudo(_email, Pwd, ReadOwnOk);
-        await _auth.Sudo(_email, Pwd, ReadOtherFail);
-        await _auth.Sudo(_email, Pwd, WriteOwnOk);
+        await Factory.AuthApi.SaDo( () => Factory.AccountApi.AssignEntityToUser(_email, restrictedWrite: [_post]));
+        await Factory.AuthApi.Sudo(_email, Pwd, ReadOwnOk);
+        await Factory.AuthApi.Sudo(_email, Pwd, ReadOtherFail);
+        await Factory.AuthApi.Sudo(_email, Pwd, WriteOwnOk);
     }
 
     [Fact]
     public async Task RoleWithRestrictedWrite()
     {
-        await _auth.SaDo( () => _account.AssignEntityToUserByRole(_email,_role, restrictedWrite: [_post]));
-        await _auth.Sudo(_email, Pwd, ReadOwnOk);
-        await _auth.Sudo(_email, Pwd, ReadOtherFail);
-        await _auth.Sudo(_email, Pwd, WriteOwnOk);
+        await Factory.AuthApi.SaDo( () => Factory.AccountApi.AssignEntityToUserByRole(_email,_role, restrictedWrite: [_post]));
+        await Factory.AuthApi.Sudo(_email, Pwd, ReadOwnOk);
+        await Factory.AuthApi.Sudo(_email, Pwd, ReadOtherFail);
+        await Factory.AuthApi.Sudo(_email, Pwd, WriteOwnOk);
     }
 
     [Fact]
     public async Task UserFullWrite()
     {
-        await _auth.SaDo(() => _account.AssignEntityToUser(_email, fullWrite: [_post]));
-        await _auth.Sudo(_email, Pwd, ReadOwnOk);
-        await _auth.Sudo(_email, Pwd, WriteOwnOk);
-        await _auth.Sudo(_email, Pwd, WriteOtherOk);
-        await _auth.Sudo(_email, Pwd, ReadOtherOk);
+        await Factory.AuthApi.SaDo(() => Factory.AccountApi.AssignEntityToUser(_email, fullWrite: [_post]));
+        await Factory.AuthApi.Sudo(_email, Pwd, ReadOwnOk);
+        await Factory.AuthApi.Sudo(_email, Pwd, WriteOwnOk);
+        await Factory.AuthApi.Sudo(_email, Pwd, WriteOtherOk);
+        await Factory.AuthApi.Sudo(_email, Pwd, ReadOtherOk);
     }
 
     [Fact]
     public async Task RoleFullWrite()
     {
-        await _auth.SaDo(() => _account.AssignEntityToUser(_email, fullWrite: [_post]));
-        await _auth.Sudo(_email, Pwd, ReadOwnOk);
-        await _auth.Sudo(_email, Pwd, WriteOwnOk);
-        await _auth.Sudo(_email, Pwd, WriteOtherOk);
-        await _auth.Sudo(_email, Pwd, ReadOtherOk);
+        await Factory.AuthApi.SaDo(() => Factory.AccountApi.AssignEntityToUser(_email, fullWrite: [_post]));
+        await Factory.AuthApi.Sudo(_email, Pwd, ReadOwnOk);
+        await Factory.AuthApi.Sudo(_email, Pwd, WriteOwnOk);
+        await Factory.AuthApi.Sudo(_email, Pwd, WriteOtherOk);
+        await Factory.AuthApi.Sudo(_email, Pwd, ReadOtherOk);
     }
 
     [Fact]
-    public Task SaUser() => _auth.SaDo(async () =>
+    public Task SaUser() => Factory.AuthApi.SaDo(async () =>
     {
         await ReadOwnOk();
         await WriteOwnOk();
@@ -122,65 +114,65 @@ public class EntityAuthTest
     });
     private async Task ReadAddFail()
     {
-        var res = await _entity.Insert(_post, Name, "name1");
+        var res = await Factory.EntityApi.Insert(_post, Name, "name1");
         Assert.True(res.IsFailed);
 
-        var singleRes = await _entity.Single(_post,_saPostId);
+        var singleRes = await Factory.EntityApi.Single(_post,_saPostId);
         Assert.True(singleRes.IsFailed);
 
-        var listRes = await _entity.List(_post, 0, 100);
+        var listRes = await Factory.EntityApi.List(_post, 0, 100);
         Assert.True(listRes.IsFailed);
     }
     
     private async Task ReadOwnOk()
     {
-        await _entity.List(_post,0,100).Ok();
+        await Factory.EntityApi.List(_post,0,100).Ok();
     }
     
     private async Task ReadOtherOk() 
     {
-        await _entity.Single(_post,_saPostId).Ok();
-        var list = await _entity.List(_post, 0,100).Ok();
+        await Factory.EntityApi.Single(_post,_saPostId).Ok();
+        var list = await Factory.EntityApi.List(_post, 0,100).Ok();
         Assert.True(list.Items.Length > 0);
         Assert.True(list.TotalRecords > 0);
     }
     
     private async Task ReadOtherFail()
     {
-        Assert.True((await _entity.Single(_post, _saPostId)).IsFailed);
+        Assert.True((await Factory.EntityApi.Single(_post, _saPostId)).IsFailed);
         
-        var list = await _entity.List(_post, 0,100).Ok();
+        var list = await Factory.EntityApi.List(_post, 0,100).Ok();
         Assert.Empty(list.Items);
         Assert.Equal(0, list.TotalRecords);
     }
     
     private async Task WriteOwnFail()
     {
-        var res = await _entity.Insert(_post, Name, "name1");
+        var res = await Factory.EntityApi.Insert(_post, Name, "name1");
         Assert.True(res.IsFailed);
     }
     
     private async Task WriteOwnOk()
     {
-        var res = await _entity.Insert(_post, Name,"test").Ok();
-        res = await  _entity.Single(_post, res.GetProperty("id").GetInt64()).Ok();
-        await _entity.Update(_post, res.ToDictionary()).Ok();
-        res = await  _entity.Single(_post, res.GetProperty("id").GetInt64()).Ok();
-        await _entity.Delete(_post, res.ToDictionary()).Ok();
+        var res = await Factory.EntityApi.Insert(_post, Name,"test").Ok();
+        res = await  Factory.EntityApi.Single(_post, res.GetProperty("id").GetInt64()).Ok();
+        await Factory.EntityApi.Update(_post, res.ToDictionary()).Ok();
+        res = await  Factory.EntityApi.Single(_post, res.GetProperty("id").GetInt64()).Ok();
+        await Factory.EntityApi.Delete(_post, res.ToDictionary()).Ok();
     } 
    
     private async Task WriteOtherOk() 
     {
-        var res = await _entity.Single(_post, _saPostId).Ok();
-        await _entity.Update(_post, res.ToDictionary()).Ok();
+        var res = await Factory.EntityApi.Single(_post, _saPostId).Ok();
+        await Factory.EntityApi.Update(_post, res.ToDictionary()).Ok();
     }
     
     private async Task EnsureEntityExists()
     {
-        await _auth.SaDo(async () =>
+        await Factory.AuthApi.SaDo(async () =>
         {
-            await _schemaApiClient.EnsureSimpleEntity(_post, Name,false).Ok();
-            var res=await _entity.Insert(_post, Name, "name1").Ok();
+            await Factory.SchemaApi.EnsureSimpleEntity(_post, Name,false).Ok();
+            var res=await Factory.EntityApi.Insert(_post, Name, "name1").Ok();
             _saPostId = res.GetProperty("id").GetInt64();
         });
     }

@@ -11,67 +11,53 @@ using Xunit.Abstractions;
 
 namespace FormCMS.Course.Tests;
 [Collection("API")]
-public class AuditLogApiTest
+public class AuditLogApiTest(AppFactory factory)
 {
-    private readonly SchemaApiClient _schemaApiClient;
-    private readonly EntityApiClient _entityApiClient;
-    private readonly AuditLogApiClient _auditLogApiClient;
-
     private readonly string _post = "audit_post_" + Ulid.NewUlid();
-
-    public AuditLogApiTest(CustomWebApplicationFactory factory)
-    {
-        Util.SetTestConnectionString();
-        
-        _schemaApiClient = new SchemaApiClient(factory.GetHttpClient());
-        _entityApiClient = new EntityApiClient(factory.GetHttpClient());
-        _auditLogApiClient = new AuditLogApiClient(factory.GetHttpClient());
-
-        new AuthApiClient(factory.GetHttpClient()).EnsureSaLogin().GetAwaiter().GetResult();
-    }
+    private bool _ = factory.LoginAndInitTestData();
 
     [Fact]
     public async Task EnsureAuditLogEntityExists()
     {
-        var entity = await _auditLogApiClient.AuditEntity().Ok();
+        var entity = await factory.AuditLogApi.AuditEntity().Ok();
         Assert.NotNull(entity);
     }
 
     [Fact]
     public async Task EnsureOptionAddUpdateDelete()
     {
-        var res = await _auditLogApiClient.List("sort[id]=-1").Ok();
+        var res = await factory.AuditLogApi.List("sort[id]=-1").Ok();
         var logId = res.Items.Length > 0 ? res.Items[0].GetLong("id"):0;
         
         
-        await _schemaApiClient.EnsureSimpleEntity(_post,"name",false).Ok();
-        var item = await _entityApiClient.Insert(_post,"name","test").Ok();
-        var log = await _auditLogApiClient.Single(++logId).Ok();
+        await factory.SchemaApi.EnsureSimpleEntity(_post,"name",false).Ok();
+        var item = await factory.EntityApi.Insert(_post,"name","test").Ok();
+        var log = await factory.AuditLogApi.Single(++logId).Ok();
         Assert.Equal(ActionType.Create,log.Action);
 
-        item = await _entityApiClient.Single(_post, item.GetProperty("id").GetInt32()).Ok();
-        await _entityApiClient.Update(_post, item.ToDictionary());
-        log = await _auditLogApiClient.Single(++logId).Ok();
+        item = await factory.EntityApi.Single(_post, item.GetProperty("id").GetInt32()).Ok();
+        await factory.EntityApi.Update(_post, item.ToDictionary());
+        log = await factory.AuditLogApi.Single(++logId).Ok();
         Assert.Equal(ActionType.Update,log.Action);
 
-        item = await _entityApiClient.Single(_post, item.GetProperty("id").GetInt32()).Ok();
-        await _entityApiClient.Delete(_post, item.ToDictionary());
-        log = await _auditLogApiClient.Single(++logId).Ok();
+        item = await  factory.EntityApi.Single(_post, item.GetProperty("id").GetInt32()).Ok();
+        await  factory.EntityApi.Delete(_post, item.ToDictionary());
+        log = await factory.AuditLogApi.Single(++logId).Ok();
         Assert.Equal(ActionType.Delete,log.Action);
     }
     
     [Fact]
     public async Task EnsureAuditLogAddListSingle()
     {
-        await _schemaApiClient.EnsureSimpleEntity(_post,"name",false).Ok();
-        await _entityApiClient.Insert(_post,"name","test").Ok();
-        var res = await _auditLogApiClient.List("sort[id]=-1").Ok();
+        await factory.SchemaApi.EnsureSimpleEntity(_post,"name",false).Ok();
+        await  factory.EntityApi.Insert(_post,"name","test").Ok();
+        var res = await factory.AuditLogApi.List("sort[id]=-1").Ok();
         var item = res.Items[0];
         var ele = item[nameof(AuditLog.EntityName).Camelize()];
         Assert.True(ele is JsonElement entityElement && entityElement.GetString() == _post);
         
         var id = (JsonElement)item[nameof(AuditLog.Id).Camelize()];
-        var log = await _auditLogApiClient.Single(id.GetInt32()).Ok();
+        var log = await factory.AuditLogApi.Single(id.GetInt32()).Ok();
         var name = (JsonElement)log.Payload["name"];
         Assert.Equal("test", name.GetString());
     }

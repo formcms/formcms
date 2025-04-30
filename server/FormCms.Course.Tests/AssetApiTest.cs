@@ -1,7 +1,5 @@
-using FormCMS.Auth.ApiClient;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.Assets;
-using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.jsonElementExt;
 using FormCMS.Utils.RecordExt;
@@ -13,30 +11,18 @@ using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Course.Tests;
 [Collection("API")]
-public class AssetApiTest
+public class AssetApiTest(AppFactory factory)
 {
-    private readonly AssetApiClient _assetApiClient;
-    private readonly SchemaApiClient _schemaApiClient;
-    private readonly EntityApiClient _entityApiClient;
-    private readonly  string _post = "at_post_" + Ulid.NewUlid();
- 
-    public AssetApiTest(CustomWebApplicationFactory factory)
-    {
-        Util.SetTestConnectionString();
-        new AuthApiClient(factory.GetHttpClient()).EnsureSaLogin().Ok().GetAwaiter().GetResult();
-
-        _schemaApiClient = new SchemaApiClient(factory.GetHttpClient());
-        _entityApiClient = new EntityApiClient(factory.GetHttpClient());
-        _assetApiClient = new AssetApiClient(factory.GetHttpClient());
-    }
-
+    private readonly  string _post = "asset_post" + Ulid.NewUlid();
+    private bool _ = factory.LoginAndInitTestData();
+    
     [Fact]
     public async Task GetEntity()
     {
-        var entity = await _assetApiClient.GetEntity(true).Ok();
+        var entity = await factory.AssetApi.GetEntity(true).Ok();
         Assert.NotNull(entity.Attributes.FirstOrDefault(x=>x.Field == nameof(Asset.LinkCount).Camelize()));
         
-        entity = await _assetApiClient.GetEntity(false).Ok();
+        entity = await  factory.AssetApi.GetEntity(false).Ok();
         Assert.Null(entity.Attributes.FirstOrDefault(x=>x.Field == nameof(Asset.LinkCount).Camelize()));
     }
 
@@ -45,15 +31,15 @@ public class AssetApiTest
     {
         string txtFileName = $"{Ulid.NewUlid()}.txt";
         var bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
-        await _assetApiClient.AddAsset([(txtFileName, bs)]).Ok();
-        var res = await _assetApiClient.List(true, "").Ok();
+        await  factory.AssetApi.AddAsset([(txtFileName, bs)]).Ok();
+        var res = await  factory.AssetApi.List(true, "").Ok();
         Assert.True(res.Items[0].ContainsKey(nameof(Asset.LinkCount).Camelize()));
     }
 
     [Fact]
     public async Task TestBaseUrl()
     {
-        await _assetApiClient.GetEntityBaseUrl().Ok();
+        await  factory.AssetApi.GetEntityBaseUrl().Ok();
     }
 
     [Fact]
@@ -61,8 +47,8 @@ public class AssetApiTest
     {
          var txtFileName = $"{Ulid.NewUlid()}.txt";
          var bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
-         var path = await _assetApiClient.AddAsset([(txtFileName, bs)]).Ok();
-         var rec = await _assetApiClient.Single(path).Ok();
+         var path = await  factory.AssetApi.AddAsset([(txtFileName, bs)]).Ok();
+         var rec = await  factory.AssetApi.Single(path).Ok();
          Assert.NotNull(rec);
 
     }
@@ -71,13 +57,13 @@ public class AssetApiTest
     {
         var txtFileName = $"{Ulid.NewUlid()}.txt";
         var bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
-        await _assetApiClient.AddAsset([(txtFileName, bs)]).Ok();
-        var id = await _assetApiClient.GetAssetIdByName(txtFileName);
+        await  factory.AssetApi.AddAsset([(txtFileName, bs)]).Ok();
+        var id = await  factory.AssetApi.GetAssetIdByName(txtFileName);
       
         txtFileName = $"{Ulid.NewUlid()}.txt";
         bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
-        await _assetApiClient.Replace(id, txtFileName, bs).Ok();
-        var asset = await _assetApiClient.Single(id).Ok();
+        await  factory.AssetApi.Replace(id, txtFileName, bs).Ok();
+        var asset = await  factory.AssetApi.Single(id).Ok();
         Assert.Equal(txtFileName,asset.Name);
         Assert.Equal(4,asset.Size);
     }
@@ -87,10 +73,10 @@ public class AssetApiTest
     {
         var txtFileName = $"{Ulid.NewUlid()}.txt";
         var bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
-        await _assetApiClient.AddAsset([(txtFileName, bs)]).Ok();
-        var id = await _assetApiClient.GetAssetIdByName(txtFileName);
+        await  factory.AssetApi.AddAsset([(txtFileName, bs)]).Ok();
+        var id = await  factory.AssetApi.GetAssetIdByName(txtFileName);
         
-        var asset = await _assetApiClient.Single(id).Ok();
+        var asset = await  factory.AssetApi.Single(id).Ok();
         asset = asset with
         {
             Title = "Title", Metadata = new Dictionary<string, object>
@@ -98,8 +84,8 @@ public class AssetApiTest
                 {"color","yellow"}
             }
         };
-        await _assetApiClient.UpdateMeta(asset).Ok();
-        asset = await _assetApiClient.Single(id).Ok();
+        await  factory.AssetApi.UpdateMeta(asset).Ok();
+        asset = await  factory.AssetApi.Single(id).Ok();
         Assert.Equal("Title",asset.Title);
         Assert.True(asset.Metadata.ContainsKey("color"));
     }
@@ -107,23 +93,23 @@ public class AssetApiTest
     [Fact]
     public async Task CreateAsset()
     {
-        var path = await _assetApiClient.AddAsset([("image.png",Create2048TileImage())]).Ok();
-        var res = await _assetApiClient.List(false,$"path[equals]={path}").Ok();
+        var path = await  factory.AssetApi.AddAsset([("image.png",Create2048TileImage())]).Ok();
+        var res = await  factory.AssetApi.List(false,$"path[equals]={path}").Ok();
         Assert.Single(res.Items); 
     }
 
     private async Task<AssetLink?> EntityHasAsset(string assetName, string entityName, long recordId)
     {
-        var list = await _assetApiClient.List(false,$"name[equals]={assetName}").Ok();
+        var list = await  factory.AssetApi.List(false,$"name[equals]={assetName}").Ok();
         var id = list.Items[0].LongOrZero("id");
-        var asset = await _assetApiClient.Single(id).Ok();
+        var asset = await  factory.AssetApi.Single(id).Ok();
         return asset.Links?.FirstOrDefault(x => x.EntityName == entityName && x.RecordId == recordId);
     }
 
     [Fact]
     public async Task AddDataWithFileAsset()
     {
-        await _schemaApiClient.EnsureEntity(_post, "title", false,
+        await  factory.SchemaApi.EnsureEntity(_post, "title", false,
             new Attribute("title", "Title"),
             new Attribute("file", "File", DataType.String, DisplayType.File),
             new Attribute("image", "Image", DataType.String, DisplayType.Image),
@@ -132,19 +118,19 @@ public class AssetApiTest
 
         string txtFileName = $"{Ulid.NewUlid()}.txt";
         var bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
-        var file = await _assetApiClient.AddAsset([(txtFileName, bs)]).Ok();
+        var file = await  factory.AssetApi.AddAsset([(txtFileName, bs)]).Ok();
 
         var singleImage = $"{Ulid.NewUlid()}.jpg";
-        var path = await _assetApiClient.AddAsset([(singleImage, Create2048TileImage())]).Ok();
+        var path = await  factory.AssetApi.AddAsset([(singleImage, Create2048TileImage())]).Ok();
 
         var img1 = $"{Ulid.NewUlid()}.jpg";
         var img2 = $"{Ulid.NewUlid()}.jpg";
-        var imagesPath = await _assetApiClient.AddAsset([
+        var imagesPath = await  factory.AssetApi.AddAsset([
             (img1, Create2048TileImage()),
             (img2, Create2048TileImage())
         ]).Ok();
 
-        var res = await _entityApiClient.Insert(_post, 
+        var res = await  factory.EntityApi.Insert(_post, 
             new { title = "post1", file, image = path, images = imagesPath }).Ok();
         var id = res.GetProperty("id").GetInt64();
 
@@ -153,15 +139,15 @@ public class AssetApiTest
         Assert.NotNull(await EntityHasAsset(img1, _post, id));
         Assert.NotNull(await EntityHasAsset(img2, _post, id));
 
-        var ele = await _entityApiClient.Single(_post, id).Ok();
+        var ele = await  factory.EntityApi.Single(_post, id).Ok();
         var record = ele.ToDictionary();
 
         var updateImage = $"{Ulid.NewUlid()}.jpg";
-        imagesPath = await _assetApiClient.AddAsset([
+        imagesPath = await  factory.AssetApi.AddAsset([
             (updateImage, Create2048TileImage()),
         ]).Ok();
         record["images"] = imagesPath;
-        await _entityApiClient.Update(_post, record).Ok();
+        await  factory.EntityApi.Update(_post, record).Ok();
 
         Assert.NotNull(await EntityHasAsset(txtFileName, _post, id));
         Assert.NotNull(await EntityHasAsset(singleImage, _post, id));
@@ -170,8 +156,8 @@ public class AssetApiTest
         Assert.Null(await EntityHasAsset(img2, _post, id));
 
 
-        ele = await _entityApiClient.Single(_post, id).Ok();
-        await _entityApiClient.Delete(_post, ele).Ok();
+        ele = await  factory.EntityApi.Single(_post, id).Ok();
+        await  factory.EntityApi.Delete(_post, ele).Ok();
         Assert.Null(await EntityHasAsset(txtFileName, _post, id));
         Assert.Null(await EntityHasAsset(singleImage, _post, id));
         Assert.Null(await EntityHasAsset(updateImage, _post, id));

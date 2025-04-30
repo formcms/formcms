@@ -8,7 +8,7 @@ public class BufferFlushWorker(
     ILogger<BufferFlushWorker> logger
     ): BackgroundService
 {
-    private DateTime? lastFlushTime = null;
+    private DateTime? lastFlushTime;
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
@@ -26,11 +26,24 @@ public class BufferFlushWorker(
                 await activityService.Flush(lastFlushTime,stoppingToken);
                 lastFlushTime = nextMinute;
             }
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+            {
+                logger.LogInformation("BufferFlushWorker is stopping gracefully.");
+                break; // Exit the loop gracefully
+            }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error processing counts");
-                await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken); // Brief delay on error
+                try
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken); // Brief delay on error
+                }
+                catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+                {
+                    break; // Shutdown during error delay
+                }
             }
+            logger.LogInformation("BufferFlushWorker has stopped.");
         }
     }
 }
