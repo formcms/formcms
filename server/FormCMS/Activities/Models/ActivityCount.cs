@@ -2,10 +2,9 @@ using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.RecordExt;
 using Humanizer;
-using Column = FormCMS.Utils.DataModels.Column;
-using Query = SqlKata.Query;
 
 namespace FormCMS.Activities.Models;
+
 public record ActivityCount(
     string EntityName,
     long RecordId,
@@ -70,18 +69,4 @@ public static class ActivityCounts
         }
         return ret;
     }
-    
-    public static Query GetPageVisiteCount(int topN)
-    {
-        var query = new Query(TableName)
-            .Select(nameof(PageVisitCount.RecordId).Camelize())
-            .Select(nameof(PageVisitCount.Count).Camelize())
-            
-            .Where(nameof(ActivityCount.ActivityType).Camelize(), Activities.VisitActivityType)
-            .Where(nameof(ActivityCount.EntityName).Camelize(), Activities.PageEntity)
-            .Where(nameof(DefaultColumnNames.Deleted).Camelize(),false)
-            .OrderBy(nameof(ActivityCount.Count).Camelize())
-            .Limit(topN);
-        return query;
-    } 
 }

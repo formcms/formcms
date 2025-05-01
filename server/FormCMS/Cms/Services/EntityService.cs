@@ -1,9 +1,7 @@
 using System.Text.Json;
-using FluentResults;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.Assets;
-using FormCMS.Infrastructure.Cache;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.DataModels;
@@ -21,29 +19,9 @@ public sealed class EntityService(
     IEntitySchemaService entitySchemaSvc,
     IAssetService assetService,
     IServiceProvider provider,
-    KeyValueCache<long> maxRecordIdCache,
     HookRegistry hookRegistry
 ) : IEntityService
 {
-    public async Task<Result<Entity>> GetEntityAndValidateRecordId(
-        string entityName,
-        long recordId,
-        CancellationToken ct
-    )
-    {
-        var entities = await entitySchemaSvc.AllEntities(ct);
-        var entity = entities.FirstOrDefault(x => x.Name == entityName);
-        if (entity is null) throw new ResultException("Entity not found");
-
-        var maxId = await maxRecordIdCache.GetOrSet(entityName,
-            async _ => await relationDbDao.MaxId(entity.TableName, entity.PrimaryKey, ct), ct);
-
-        if (recordId < 1 || recordId > maxId)
-        {
-            return Result.Fail("Record id is out of range");
-        }
-        return entity;
-    }
 
     public async Task<ListResponse?> ListWithAction(
         string name,

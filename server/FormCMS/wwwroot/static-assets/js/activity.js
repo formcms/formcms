@@ -1,8 +1,7 @@
 $(document).ready(function () {
     let loggedIn = false;
     isUserLoggedIn().then(x=> loggedIn = x);
-
-    trackVisit();
+    
     loadActivityBars();
 
     async function loadActivityBars() {
@@ -20,7 +19,6 @@ $(document).ready(function () {
         const shareButton = activityBar.find('[data-component="share-button"]');
         const viewButton = activityBar.find('[data-component="view-button"]');
 
-        
         try {
             const data = await fetchActivity(entityName, recordId);
             updateLikeButton(likeButton, data.like);
@@ -57,9 +55,6 @@ $(document).ready(function () {
     async function fetchActivity(entity, id) {
         const res = await fetch(`/api/activities/${entity}/${id}`);
         return await res.json();
-    }
-    async function trackVisit() {
-        await fetch(`/api/activities/visit?url=${encodeURIComponent(window.location.href)}`);
     }
 
     async function toggleActivity(entity, id, type, active) {

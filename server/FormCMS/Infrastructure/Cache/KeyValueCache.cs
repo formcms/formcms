@@ -12,13 +12,12 @@ public sealed class KeyValueCache<T>
     private readonly TimeSpan _expiration;
     private readonly TimeSpan _localCacheExpiration;
 
-    public KeyValueCache(IServiceProvider provider, string prefix, TimeSpan expiration)
+    public KeyValueCache(IServiceProvider provider, ILogger<KeyValueCache<T>> logger, string prefix, TimeSpan expiration)
     {
         _prefix = prefix;
         _expiration = expiration;
         _localCacheExpiration = expiration / 3;
 
-        var logger = provider.GetRequiredService<ILogger<KeyValueCache<T>>>();
         if (provider.GetService<HybridCache>() is { } hybridCache)
         {
             logger.LogInformation(

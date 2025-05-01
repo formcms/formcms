@@ -18,7 +18,6 @@ TsGenerator.GenerateCode<ListResponse>("../../../FormCmsAdminApp/libs/FormCmsAdm
 TsGenerator.GenerateCode<ListResponseMode>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/types/listResponseMode.ts");
 
 TsGenerator.GenerateCode<AuditLog>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auditLog/types/auditLog.ts");
-TsGenerator.GenerateCode<DailyActionCount>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auditLog/types/dailyActionCount.ts");
 
 TsGenerator.GenerateCode<Asset>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/cms/types/asset.ts");
 TsGenerator.GenerateCode<AssetLink>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/cms/types/assetLink.ts");
@@ -37,9 +36,7 @@ TsGenerator.GenerateCode<RoleAccess>("../../../FormCmsAdminApp/libs/FormCmsAdmin
 
 TsGenerator.GenerateCode<Activity>("../../../FormCmsPortal/libs/FormCmsAdminSdk/activity/types/activity.ts");
 TsGenerator.GenerateCode<Bookmark>("../../../FormCmsPortal/libs/FormCmsAdminSdk/activity/types/bookmark.ts");
-TsGenerator.GenerateCode<BookmarkFolder>("../../../FormCmsPortal/libs/FormCmsAdminSdk/activity/types/bookmarkFolder.ts");
-TsGenerator.GenerateCode<DailyActivityCount>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/activity/types/dailyActivityCount.ts");
-TsGenerator.GenerateCode<PageVisitCount>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/activity/types/pageVisitCount.ts");
+TsGenerator.GenerateCode<BookmarkFolder>("../../../FormCmsPortal/libs/FormCmsAdminSdk/activity/types/bookmarkFoder.ts");
 
 internal static class TsGenerator
 {

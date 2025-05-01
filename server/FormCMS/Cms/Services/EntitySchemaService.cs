@@ -16,8 +16,8 @@ namespace FormCMS.Cms.Services;
 public sealed class EntitySchemaService(
     ISchemaService schemaSvc,
     IRelationDbDao dao,
+    KeyValueCache<ImmutableArray<Entity>> entityCache,
     HookRegistry hook,
-    KeyValueCache<ImmutableArray<Entity>> entityCache ,
     IServiceProvider provider
 ) : IEntitySchemaService
 {

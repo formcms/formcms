@@ -60,24 +60,18 @@ public static class SchemaHelper
     
     public static SqlKata.Query ById(long id)
         => BaseQuery().Where(nameof(Schema.Id).Camelize(), id);
-
-    public static SqlKata.Query ByIds(IEnumerable<object> ids)
-        => BaseQuery().WhereIn(nameof(Schema.Id).Camelize(), ids)
-            .Select(nameof(Schema.Id).Camelize(), nameof(Schema.Name).Camelize());
     
     public static SqlKata.Query BySchemaId(string schemaId)
         => BaseQuery()
             .OrderByDesc(nameof(Schema.Id).Camelize())
             .Where(nameof(Schema.SchemaId).Camelize(), schemaId);
 
-    public static SqlKata.Query StartsNotEqualNameAndType(string name, SchemaType type,
+    public static SqlKata.Query ByStartsNameAndType(string name, SchemaType type,
         PublicationStatus? publicationStatus)
         => BaseQuery()
             .WithStatus(publicationStatus)
             .WhereStarts(nameof(Schema.Name).Camelize(), name)
-            .WhereNot(nameof(Schema.Name).Camelize(), name)
             .Where(nameof(Schema.Type).Camelize(), type.Camelize());
-    
 
     public static SqlKata.Query ByNameAndTypeAndNotId(string name, SchemaType type, string schemaId)
         => BaseQuery()

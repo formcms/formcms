@@ -1,6 +1,7 @@
 using FormCMS.Activities.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
+using FormCMS.Infrastructure.Cache;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
@@ -12,7 +13,8 @@ namespace FormCMS.Activities.Services;
 public class BookmarkService(
     IProfileService profileService,
     IQueryService queryService,
-    IEntityService entityService,
+    IEntitySchemaService schemaService,
+    KeyValueCache<long> maxRecordIdCache,
 
     DatabaseMigrator migrator,
     IRelationDbDao dao,
@@ -82,7 +84,7 @@ public class BookmarkService(
         var userId = profileService.GetInfo()?.Id ?? throw new ResultException("User is not logged in");
         var (filters, sorts) = QueryStringParser.Parse(args); 
         var listQuery = Bookmarks.List(userId, folderId, offset, limit);
-        var items = await executor.Many(listQuery, Bookmarks.Columns,filters,sorts,ct);
+        var items = await executor.Many(listQuery, Models.Bookmarks.Columns,filters,sorts,ct);
         var countQuery = Bookmarks.Count(userId, folderId);
         var count = await executor.Count(countQuery,Models.Activities.Columns,filters,ct);
         return new ListResponse(items,count);  
@@ -96,7 +98,8 @@ public class BookmarkService(
                       adding bookmark {entityName} to {newFolderName}""
                       """);
         var userId = profileService.GetInfo()?.Id ?? throw new ResultException("User is not logged in.");
-        var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
+        var entity =
+            await Utils.EnsureEntityRecordExists(schemaService, dao, maxRecordIdCache, entityName, recordId, ct);
         var existingFolderIds = await GetFolderIdsByUserAndRecord(userId, entityName, recordId, ct);
 
         var toAdd = newFolderIds.Except(existingFolderIds).ToArray();
@@ -124,7 +127,7 @@ public class BookmarkService(
             await executor.BatchInsert(Bookmarks.TableName,records);
         }
 
-        var count = new ActivityCount(entityName, recordId, Bookmarks.ActivityType);
+        var count = new ActivityCount(entityName, recordId, Bookmarks.ActivityType, 1);
         await dao.Increase(
             ActivityCounts.TableName, count.Condition(true),
             ActivityCounts.CountField, 1, ct);

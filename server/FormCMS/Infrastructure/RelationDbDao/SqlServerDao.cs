@@ -309,8 +309,6 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
         var result = await command.ExecuteScalarAsync(ct);
         return result != null && long.TryParse(result.ToString(), out var maxId) ? maxId : 0;
     }
-    
-    public string CastDate(string field)=> $"CAST({field} AS DATE)";
 
     private static string ColumnTypeToString(ColumnType dataType)
         => dataType switch

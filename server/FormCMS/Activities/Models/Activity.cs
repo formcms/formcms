@@ -2,9 +2,9 @@ using FormCMS.Core.Assets;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
+using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.RecordExt;
 using Humanizer;
-using NUlid;
 using Query = SqlKata.Query;
 
 namespace FormCMS.Activities.Models;
@@ -26,19 +26,12 @@ public record Activity(
 
 public static class Activities
 {
-    private const string AnonymousPrefix = "anonymous_";
     public const string TableName = "__activities";
-    public const string VisitActivityType = "visit";
-    public const string PageEntity = "page";
-    private const int DefaultPageSize = 8;
+    const int DefaultPageSize = 8;
 
     public static readonly string ActiveField = nameof(Activity.IsActive).Camelize();
     public static readonly string TypeField = nameof(Activity.ActivityType).Camelize();
 
-    public static string GetAnonymouseCookieUserId() => AnonymousPrefix + "cookie_" + Ulid.NewUlid();
-
-    public static string AddAnonymouseHeader(string useId) => AnonymousPrefix + useId;
-    
     public static readonly string[] KeyFields =
     [
         nameof(Activity.EntityName).Camelize(),
@@ -178,40 +171,5 @@ public static class Activities
             .Where(nameof(Activity.ActivityType).Camelize(), activityType)
             .Where(nameof(Activity.IsActive).Camelize(), true);
         return q;
-    }
-
-    public static Query GetDailyVisitCount(Func<string, string> CastDate, int daysAgo,bool isAuthed)
-    {
-        var start = DateTime.UtcNow.Date.AddDays(-daysAgo);
-        var dateExp = CastDate(nameof(DefaultColumnNames.UpdatedAt).Camelize());
-        var query = new Query(TableName)
-                .Where(nameof(DefaultColumnNames.UpdatedAt).Camelize(), ">=", start)
-                .Where(nameof(Activity.ActivityType).Camelize(),VisitActivityType)
-                .Where(nameof(Activity.IsActive).Camelize(), true)
-                .SelectRaw($"{dateExp} as {nameof(DailyActivityCount.Day).Camelize()}")
-                .SelectRaw($"COUNT(*) as {nameof(DailyActivityCount.Count).Camelize()}")
-                .GroupByRaw($"{dateExp}")
-            ;
-        query = isAuthed
-            ? query.WhereStarts(nameof(Activity.UserId).Camelize(),AnonymousPrefix)
-            : query.WhereNotStarts(nameof(Activity.UserId).Camelize(), AnonymousPrefix);
-        
-        return query;
-    }
-    
-    public static Query GetDailyActivityCount(Func<string,string>CastDate,int daysAgo)
-    {
-        var start = DateTime.UtcNow.Date.AddDays(-daysAgo);
-        var dateExp = CastDate(nameof(DefaultColumnNames.UpdatedAt).Camelize());
-
-        return new Query(TableName)
-            .Where(nameof(DefaultColumnNames.UpdatedAt).Camelize(), ">=", start)
-            .WhereNot(nameof(Activity.ActivityType).Camelize(), VisitActivityType)
-            .Where(nameof(Activity.IsActive).Camelize(), true)
-            .SelectRaw($"{dateExp} as {nameof(DailyActivityCount.Day).Camelize()}")
-            .Select(nameof(DailyActivityCount.ActivityType).Camelize())
-            .SelectRaw($"COUNT(*) as {nameof(DailyActivityCount.Count).Camelize()}")
-            .GroupBy(nameof(Activity.ActivityType).Camelize())
-            .GroupByRaw($"{dateExp}");
     }
 }

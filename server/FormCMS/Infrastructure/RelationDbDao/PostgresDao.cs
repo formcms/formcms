@@ -379,8 +379,6 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         return result != DBNull.Value && result != null ? Convert.ToInt64(result) : 0L;
     }
 
-    public string CastDate(string field)=> $"Date({Quote(field)})";
-
     private static NpgsqlDbType GetNpgsqlDbType(object? value)
     {
         if (value == null)

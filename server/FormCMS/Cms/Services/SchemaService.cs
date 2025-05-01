@@ -68,10 +68,10 @@ public sealed class SchemaService(
         return res.IsSuccess ? res.Value : null;
     }
 
-    public async Task<Schema?> StartsNotEqualDefault(string name, SchemaType type, PublicationStatus?status,
+    public async Task<Schema?> GetByNamePrefixDefault(string name, SchemaType type, PublicationStatus?status,
         CancellationToken ct = default)
     {
-        var item = await queryExecutor.Single(SchemaHelper.StartsNotEqualNameAndType(name,type,status), ct);
+        var item = await queryExecutor.Single(SchemaHelper.ByStartsNameAndType(name,type,status), ct);
 
         var res = SchemaHelper.RecordToSchema(item);
 

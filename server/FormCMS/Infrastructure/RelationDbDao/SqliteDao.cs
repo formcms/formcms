@@ -288,9 +288,6 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
         
     }
 
-    public string CastDate(string field)=> $"Date({field})";
-    
-
     private static string ColumnTypeToString(ColumnType dataType)
         => dataType switch
         {

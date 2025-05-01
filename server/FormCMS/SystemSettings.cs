@@ -20,7 +20,6 @@ public sealed class SystemSettings
     public bool MapCmsHomePage { get; set; } = true;
     public string GraphQlPath { get; set; } = "/graph";
     public TimeSpan EntitySchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);
-    public TimeSpan PageSchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);
     public TimeSpan QuerySchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);
 
     public int DatabaseQueryTimeout { get; set; } = 30;

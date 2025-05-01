@@ -11,15 +11,10 @@ namespace FormCMS.AuditLogging.Services;
 public class AuditLogService(
     IProfileService profileService,
     KateQueryExecutor executor,
-    DatabaseMigrator migrator,
-    IRelationDbDao dao
+    DatabaseMigrator migrator
     ):IAuditLogService
 {
-    public  Task<Record[]> GetActionCounts(int daysAgo,CancellationToken ct )
-    {
-        EnsureHasPermission();
-        return executor.Many(AuditLogHelper.GetDailyActionCount(dao.CastDate,daysAgo), ct);
-    }
+
     public async Task<AuditLog> Single(long id, CancellationToken ct = default)
     {
         EnsureHasPermission();

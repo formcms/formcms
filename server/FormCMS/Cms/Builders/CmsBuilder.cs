@@ -153,17 +153,15 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         void AddCacheServices()
         {
             services.AddMemoryCache();
-            services.AddSingleton<KeyValueCache<long>>(p =>
-                new KeyValueCache<long>(p, "maxRecordId", systemSettings.EntitySchemaExpiration));
-            
-            services.AddSingleton<KeyValueCache<FormCMS.Core.Descriptors.Schema>>(p =>
-                new KeyValueCache<FormCMS.Core.Descriptors.Schema>(p, "page", systemSettings.PageSchemaExpiration));
-
             services.AddSingleton<KeyValueCache<ImmutableArray<Entity>>>(p =>
-                new KeyValueCache<ImmutableArray<Entity>>(p, "entities", systemSettings.EntitySchemaExpiration));
+                new KeyValueCache<ImmutableArray<Entity>>(p,
+                    p.GetRequiredService<ILogger<KeyValueCache<ImmutableArray<Entity>>>>(),
+                    "entities", systemSettings.EntitySchemaExpiration));
 
             services.AddSingleton<KeyValueCache<LoadedQuery>>(p =>
-                new KeyValueCache<LoadedQuery>(p, "query", systemSettings.QuerySchemaExpiration));
+                new KeyValueCache<LoadedQuery>(p,
+                    p.GetRequiredService<ILogger<KeyValueCache<LoadedQuery>>>(),
+                    "query", systemSettings.QuerySchemaExpiration));
         }
     }
 
@@ -209,7 +207,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
 
         void UseGraphql()
         {
-            app.UseGraphQL<FormCMS.Cms.Graph.Schema>();
+            app.UseGraphQL<Schema>();
             app.UseGraphQLGraphiQL(options.GraphQlPath);
         }
 

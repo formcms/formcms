@@ -11,7 +11,7 @@ public static class PageHandler
             IPageService pageService,
             HttpContext context,
             CancellationToken ct
-        ) => await context.Html(await pageService.Get("", context.Args(), ct), ct));
+        ) => await context.Html(await pageService.Get("home", context.Args(), ct), ct));
     }
 
     public static RouteGroupBuilder MapPages(this RouteGroupBuilder app, params string[] knownUrls)

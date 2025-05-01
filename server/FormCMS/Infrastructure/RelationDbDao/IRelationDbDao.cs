@@ -28,5 +28,4 @@ public interface IRelationDbDao
     ) where T : struct;
     
     Task<long> MaxId(string tableName, string fieldName,CancellationToken ct = default);
-    string CastDate(string field);
 }
