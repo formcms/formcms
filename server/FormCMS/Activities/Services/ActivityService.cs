@@ -319,7 +319,8 @@ public class ActivityService(
             }
             else
             {
-                var entity = entities.FirstOrDefault(x=>x.Name == group.Key);
+                var entity = entities.FirstOrDefault(x => x.Name == group.Key);
+                if (entity == null) continue;
                 var loadedActivities = await LoadMetaData(entity, [..group], ct);
                 toUpdate.AddRange(loadedActivities.Select(x => x.UpsertRecord(true)));
             }

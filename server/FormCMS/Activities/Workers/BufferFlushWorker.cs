@@ -8,7 +8,7 @@ public class BufferFlushWorker(
     ILogger<BufferFlushWorker> logger
     ): BackgroundService
 {
-    private DateTime? lastFlushTime;
+    private DateTime? _lastFlushTime;
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         while (!stoppingToken.IsCancellationRequested)
@@ -23,8 +23,8 @@ public class BufferFlushWorker(
 
                 using var scope = scopeFactory.CreateScope();
                 var activityService = scope.ServiceProvider.GetRequiredService<IActivityService>();
-                await activityService.Flush(lastFlushTime,stoppingToken);
-                lastFlushTime = nextMinute;
+                await activityService.Flush(_lastFlushTime,stoppingToken);
+                _lastFlushTime = nextMinute;
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -43,7 +43,7 @@ public class BufferFlushWorker(
                     break; // Shutdown during error delay
                 }
             }
-            logger.LogInformation("BufferFlushWorker has stopped.");
         }
+        logger.LogInformation("BufferFlushWorker has stopped.");
     }
 }
