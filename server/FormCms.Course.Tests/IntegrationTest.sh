@@ -53,9 +53,9 @@ test_sqlserver_container(){
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-#db_path=$(pwd)/_cms_temp_integration_tests.db.db && rm -f "$db_path" && test_sqlite "$db_path"
+db_path=$(pwd)/_cms_temp_integration_tests.db.db && rm -f "$db_path" && test_sqlite "$db_path"
 
-#test_postgres_container 
+test_postgres_container 
 
 test_sqlserver_container
 

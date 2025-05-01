@@ -12,6 +12,7 @@ public class WebApp(
     WebApplicationBuilder builder,
     string databaseProvider, 
     string databaseConnectionString, 
+    bool enableActivityBuffer,
     string? redisConnectionString, 
     AzureBlobStoreOptions? azureBlobStoreOptions
     )
@@ -23,7 +24,7 @@ public class WebApp(
         AddDbService();
         builder.Services.AddCmsAuth<IdentityUser, IdentityRole, CmsDbContext>();
         builder.Services.AddAuditLog();
-        builder.Services.AddActivity();
+        builder.Services.AddActivity(enableActivityBuffer);
         
         AddOutputCachePolicy();
         builder.AddServiceDefaults();

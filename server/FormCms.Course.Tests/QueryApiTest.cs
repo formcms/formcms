@@ -1,5 +1,4 @@
 using System.Text.Json;
-using FormCMS.Auth.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.ResultExt;
@@ -8,34 +7,25 @@ using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.jsonElementExt;
 using Microsoft.Extensions.Primitives;
-using Namotion.Reflection;
 using NUlid;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Course.Tests;
-
+[Collection("API")]
 public class QueryApiTest
 {
     private readonly string _queryName = "qry_query_" + Ulid.NewUlid();
     private readonly  string _post = "qry_post_" + Ulid.NewUlid();
+    private readonly BlogsTestCases _commonTestCases; 
+    private AppFactory Factory { get; }
 
-    private readonly QueryApiClient _query;
-    private readonly EntityApiClient _entity;
-    private readonly SchemaApiClient _schema;
-    private readonly BlogsTestCases _commonTestCases;
-
-    public QueryApiTest()
+    public QueryApiTest(AppFactory factory)
     {
-        Util.SetTestConnectionString();
-
-        WebAppClient<Program> webAppClient = new();
-        Util.LoginAndInitTestData(webAppClient.GetHttpClient()).GetAwaiter().GetResult();
-        _schema = new SchemaApiClient(webAppClient.GetHttpClient());
-        _entity= new EntityApiClient(webAppClient.GetHttpClient());
-        _query = new QueryApiClient(webAppClient.GetHttpClient());
-        _commonTestCases = new BlogsTestCases(_query, _queryName);
+        factory.LoginAndInitTestData();
+        Factory = factory;
+        _commonTestCases = new BlogsTestCases(factory.QueryApi, _queryName);
     }
-     [Fact]
+    [Fact]
      public async Task TestCsv()
      {
          var items =
@@ -45,7 +35,7 @@ public class QueryApiTest
                               id, {{TestFieldNames.Language.Camelize()}}
                           }
                      }
-                     """.GraphQlQuery<JsonElement[]>(_query).Ok();
+                     """.GraphQlQuery<JsonElement[]>(Factory.QueryApi).Ok();
          var first = items.First();
          var ele = first.GetProperty(TestFieldNames.Language.Camelize());
          Assert.True(ele.ValueKind == JsonValueKind.Array);
@@ -61,7 +51,7 @@ public class QueryApiTest
                              {{TestFieldNames.MetaData.Camelize()}}
                          }
                     }
-                    """.GraphQlQuery<JsonElement[]>(_query).Ok();
+                    """.GraphQlQuery<JsonElement[]>(Factory.QueryApi).Ok();
         var first = items.First();
         var ele = first.GetProperty(TestFieldNames.MetaData.Camelize());
         Assert.True(ele.TryGetProperty("Key",out var url));
@@ -80,7 +70,7 @@ public class QueryApiTest
                              gallery {url, title}
                          }
                     }
-                    """.GraphQlQuery<JsonElement[]>(_query).Ok();
+                    """.GraphQlQuery<JsonElement[]>(Factory.QueryApi).Ok();
         var first = items.First();
         var image = first.GetProperty("image");
         Assert.True(image.TryGetProperty("url",out var url));
@@ -104,7 +94,7 @@ public class QueryApiTest
                               id, title
                           }
                      }
-                     """.GraphQlQuery<JsonElement[]>(_query).Ok();
+                     """.GraphQlQuery<JsonElement[]>(Factory.QueryApi).Ok();
         Assert.True(items.Length > 1);
         items =
             await $$$"""
@@ -113,7 +103,7 @@ public class QueryApiTest
                               id, title
                           }
                      }
-                     """.GraphQlQuery<JsonElement[]>(_query).Ok();
+                     """.GraphQlQuery<JsonElement[]>(Factory.QueryApi).Ok();
         Assert.True(items.Length == 1);
     }
     
@@ -126,30 +116,30 @@ public class QueryApiTest
             new ("name", "Name", DisplayType: DisplayType.Text),
             new ("name1", "Name1", DisplayType: DisplayType.Text)
         ];
-        await _schema.EnsureEntity(_post, "name", false, attrs).Ok();
+        await Factory.SchemaApi.EnsureEntity(_post, "name", false, attrs).Ok();
         
         var payload = new Dictionary<string, object>
         {
             {"name","post21"},
             {"name1","post22"},
         };
-        await _entity.Insert(_post, payload);
+        await Factory.EntityApi.Insert(_post, payload);
 
         await $$"""
                 query {{_queryName}}{
                    {{_post}}List{id, name, name1}
                 }
-                """.GraphQlQuery(_query).Ok();
+                """.GraphQlQuery(Factory.QueryApi).Ok();
 
 
         
         // remove name1 this latest version is draft
-        await _schema.EnsureSimpleEntity(_post, "name", false).Ok();
-        await _entity.Insert(_post, "name", "post1").Ok();// should be draft now
+        await Factory.SchemaApi.EnsureSimpleEntity(_post, "name", false).Ok();
+        await Factory.EntityApi.Insert(_post, "name", "post1").Ok();// should be draft now
         
        
         //query use published schema, so it is still working
-        var items = await _query.List(_queryName).Ok();
+        var items = await Factory.QueryApi.List(_queryName).Ok();
         Assert.Equal(2,items.Length);
         
         //use draft post, so should fail
@@ -157,29 +147,29 @@ public class QueryApiTest
         {
             {"sandbox","1"}
         };
-        var res =await _query.List(_queryName, args);
+        var res =await Factory.QueryApi.List(_queryName, args);
         Assert.True(res.IsFailed);
     }
     
     [Fact]
     public async Task EnsureDaftDataNotAffectQuery()
     {
-        await _schema.EnsureSimpleEntity(_post, "name", true).Ok();
-        await _entity.Insert(_post, "name", "post1");// should be draft now
+        await Factory.SchemaApi.EnsureSimpleEntity(_post, "name", true).Ok();
+        await Factory.EntityApi.Insert(_post, "name", "post1");// should be draft now
         
         await $$"""
                 query {{_queryName}}{
                    {{_post}}List{id }
                 }
-                """.GraphQlQuery(_query).Ok();
-        var items = (await _query.List(_queryName)).Ok();
+                """.GraphQlQuery(Factory.QueryApi).Ok();
+        var items = (await Factory.QueryApi.List(_queryName)).Ok();
         Assert.Empty(items);
         
         var args = new Dictionary<string, StringValues>
         {
             {"preview","1"}
         };
-        items = await _query.List(_queryName, args).Ok();
+        items = await Factory.QueryApi.List(_queryName, args).Ok();
         Assert.Single(items);
     }
 
@@ -266,9 +256,9 @@ public class QueryApiTest
                       }
                    }
                 }
-                """.GraphQlQuery(_query).Ok();
+                """.GraphQlQuery(Factory.QueryApi).Ok();
 
-        var posts = (await _query.List(_queryName, new Dictionary<string, StringValues>
+        var posts = (await Factory.QueryApi.List(_queryName, new Dictionary<string, StringValues>
         {
             [$"{attrName}.limit"] = limit.ToString(),
             [$"limit"] = "1",
@@ -281,7 +271,7 @@ public class QueryApiTest
         {
 
             var cursor = SpanHelper.Cursor(last);
-            var items = (await _query.Part(query: _queryName, attr: attrName, last: cursor, limit: limit)).Ok();
+            var items = (await Factory.QueryApi.Part(query: _queryName, attr: attrName, last: cursor, limit: limit)).Ok();
             Assert.Equal(limit, items.Length);
         }
         else

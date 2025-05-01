@@ -19,7 +19,7 @@ public class AuthApiClient(HttpClient client)
         return client.PostAndSaveCookie("/api/login?useCookies=true", loginData);
     }
 
-    private async Task Logout()
+    public async Task Logout()
     {
         await client.GetResult("/api/logout").Ok();
         client.DefaultRequestHeaders.Remove("Cookie");

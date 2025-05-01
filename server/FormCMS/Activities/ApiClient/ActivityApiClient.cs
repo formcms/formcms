@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Web;
 using FluentResults;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.HttpClientExt;
@@ -7,6 +8,18 @@ namespace FormCMS.Activities.ApiClient;
 
 public class ActivityApiClient(HttpClient client)
 {
+    public Task<Result<Record[]>> PageCounts()
+        => client.GetResult<Record[]>($"/page-counts?n={7}".ActivityUrl());
+    
+    public Task<Result<Record[]>> VisitCounts(bool authed)
+        => client.GetResult<Record[]>($"/visit-counts?authed={authed}&n={7}".ActivityUrl());
+    
+    public Task<Result<Record[]>> ActivityCounts()
+        => client.GetResult<Record[]>($"/activity-counts?n={7}".ActivityUrl());
+    
+    public Task Visit(string url)
+        => client.GetResult($"/visit?url={HttpUtility.UrlEncode(url)}".ActivityUrl());
+    
     public Task<Result<ListResponse>> List(string type,string qs)
         => client.GetResult<ListResponse>($"/list/{type}?{qs}".ActivityUrl());
 
