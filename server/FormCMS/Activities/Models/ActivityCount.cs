@@ -25,6 +25,7 @@ public static class ActivityCounts
         nameof(ActivityCount.ActivityType).Camelize()
     ];
 
+    public static string ActivityCountField(string activityType)=> activityType + "Count";
     public static readonly string CountField = nameof(ActivityCount.Count).Camelize();
     public static readonly string TypeField = nameof(ActivityCount.ActivityType).Camelize();
 

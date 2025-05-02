@@ -1,9 +1,14 @@
+using System.Collections.Immutable;
 using FormCMS.Activities.Handlers;
+using FormCMS.Activities.Models;
 using FormCMS.Activities.Services;
 using FormCMS.Activities.Workers;
+using FormCMS.Core.Descriptors;
+using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.Cache;
 using Microsoft.AspNetCore.Rewrite;
+using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Activities.Builders;
 
@@ -27,6 +32,7 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 
     public async Task<WebApplication> UseActivity(WebApplication app)
     {
+        var activitySettings = app.Services.GetRequiredService<ActivitySettings>();
         using var scope = app.Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<IActivityService>().EnsureActivityTables();
         await scope.ServiceProvider.GetRequiredService<IBookmarkService>().EnsureBookmarkTables(); 
@@ -38,9 +44,9 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         apiGroup.MapGroup("/bookmarks").MapBookmarkHandler();
 
         var portalPath = "/portal";
+        RegisterHooks();
         AddCmsPortal();
         
-        var activitySettings = app.Services.GetRequiredService<ActivitySettings>();
         logger.LogInformation(
             $"""
              *********************************************************
@@ -75,6 +81,36 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
                             $"{portalPath}/index.html");
                     });
                 });
+        }
+
+        void RegisterHooks()
+        {
+            var attrs = activitySettings
+                .AllCountTypes()
+                .Select(type => new Attribute(
+                    Field: ActivityCounts.ActivityCountField(type),
+                    Header: ActivityCounts.ActivityCountField(type),
+                    DataType: DataType.Int)
+                );
+
+            var registry = app.Services.GetRequiredService<HookRegistry>();
+            registry.ExtraQueryFieldEntities.Register("", args =>
+            {
+                var entities = args.entities.Select(x => x with
+                {
+                    Attributes = [
+                        ..x.Attributes,
+                        ..attrs,
+                    ]
+                });
+                return new ExtraQueryFieldEntitiesArgs([..entities]);
+            });
+            registry.QueryPostList.RegisterDynamic("*" ,async (IActivityService service, QueryPostListArgs args)=>
+            {
+                var entity = args.Query.Entity;
+                await service.LoadCounts(entity.Name, entity.PrimaryKey,[..args.Fields], args.RefRecords, CancellationToken.None);
+                return args;
+            });
         }
     }
 }

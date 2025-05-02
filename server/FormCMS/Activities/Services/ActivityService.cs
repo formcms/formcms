@@ -1,4 +1,5 @@
 using FormCMS.Activities.Models;
+using FormCMS.Cms.Graph;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.Buffers;
@@ -7,6 +8,8 @@ using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
+using Attribute = FormCMS.Core.Descriptors.Attribute;
+using Schema = FormCMS.Core.Descriptors.Schema;
 
 namespace FormCMS.Activities.Services;
 
@@ -26,6 +29,7 @@ public class ActivityService(
     DatabaseMigrator migrator
 ) : IActivityService
 {
+   
     public  Task<Record[]> GetDailyActivityCount(int daysAgo,CancellationToken ct)
     {
         if (!profileService.GetInfo()?.CanAccessAdmin == true || daysAgo > 30) throw new Exception("Can't access daily count");
@@ -103,6 +107,31 @@ public class ActivityService(
         var activities = statusList.Select(pair => Models.Activities.Parse(pair.Key) with { IsActive = pair.Value }).ToArray();
         await UpsertActivities(activities,ct);
     }
+    
+    public async Task LoadCounts(string entityName,string primaryKey, HashSet<string> fields, IEnumerable<Record> records, CancellationToken ct)
+    {
+        var types = settings
+            .AllCountTypes()
+            .Where(x => fields.Contains(ActivityCounts.ActivityCountField(x))).ToArray();
+        
+        if (types.Length == 0)
+        {
+            return;
+        }
+
+        foreach (var record in records)
+        {
+            var id =(long)record[primaryKey];
+            var counts = types.Select(t => new ActivityCount(entityName,id,t)).ToArray();
+            var countDict = settings.EnableBuffering
+                ? await GetCountDictFromBuffer(counts)
+                : await GetCountDict(counts, ct);
+            foreach (var t in types)
+            {
+                record[ActivityCounts.ActivityCountField(t)] = countDict[t];
+            }
+        }
+    } 
     
     public async Task<Dictionary<string, StatusDto>> Get(string cookieUserId,string entityName, long recordId, CancellationToken ct)
     {

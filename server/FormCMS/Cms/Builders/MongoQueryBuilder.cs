@@ -28,18 +28,18 @@ public class MongoQueryBuilder(ILogger<MongoQueryBuilder> logger, QueryCollectio
         foreach (var (query, collection) in queryLinksArray)
         {
             var hookRegistry = app.Services.GetRequiredService<HookRegistry>();
-            hookRegistry.QueryPreGetList.RegisterDynamic(
+            hookRegistry.QueryPreList.RegisterDynamic(
                 query,
-                async (IDocumentDbQuery dao, QueryPreGetListArgs p) =>
+                async (IDocumentDbQuery dao, QueryPreListArgs p) =>
                 {
                     var res = (await dao.Query(collection, p.Filters, [..p.Sorts], p.Pagination, p.Span)).Ok();
                     return p with { OutRecords = res };
                 }
             );
 
-            hookRegistry.QueryPreGetSingle.RegisterDynamic(
+            hookRegistry.QueryPreSingle.RegisterDynamic(
                 query,
-                async (IDocumentDbQuery dao, QueryPreGetSingleArgs p) =>
+                async (IDocumentDbQuery dao, QueryPreSingleArgs p) =>
                 {
                     var records = (await dao.Query(collection, p.Filters, [], new ValidPagination(0, 1))).Ok();
                     return p with { OutRecord = records.First() };

@@ -93,7 +93,8 @@ public sealed class QuerySchemaService(
         var selection = await ParseGraphFields("", entity, fields, null, status, ct).Ok();
         var sorts = await query.Sorts.ToValidSorts(entity, entitySchemaSvc,status).Ok();
         var validFilter = await query.Filters.ToValidFilters(entity,status, entitySchemaSvc).Ok();
-        return query.ToLoadedQuery(entity, selection, sorts, validFilter);
+        var names = fields.Select(f => f.Name.StringValue);
+        return query.ToLoadedQuery(entity, selection, sorts, validFilter,names);
     }
 
     private async Task VerifyQuery(Query? query, PublicationStatus? status, CancellationToken ct = default)
@@ -119,7 +120,9 @@ public sealed class QuerySchemaService(
         PublicationStatus? status,
         CancellationToken ct = default)
     {
-        return fields.ShortcutMap( async field =>
+        return fields
+            .Where(x=>entity.Attributes.FirstOrDefault(a=>a?.Field == x.Name) != null)
+            .ShortcutMap( async field =>
                     await entitySchemaSvc.LoadSingleAttrByName(entity, field.Name.StringValue, status, ct)
                         .Map(attr => attr.ToGraph(attr.DisplayType.IsAsset()?GetAssetFields(field): []))
                         .Map(attr => attr with { Prefix = prefix })

@@ -4,9 +4,10 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Utils.DisplayModels;
 using GraphQL.Types;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
+
 namespace FormCMS.Cms.Graph;
 
-public static  class FieldTypes
+public static class FieldTypes
 {
     public static ObjectGraphType PlainType(Entity entity)
     {
@@ -17,7 +18,6 @@ public static  class FieldTypes
 
         foreach (var attr in entity.Attributes.Where(x => !x.DataType.IsCompound()))
         {
-
             var fieldType = new FieldType
             {
                 Name = attr.Field,
@@ -36,12 +36,13 @@ public static  class FieldTypes
                     fieldType.ResolvedType = PlainGraphType(attr);
                     break;
             }
+
             entityType.AddField(fieldType);
         }
 
         return entityType;
     }
-    
+
     public static void SetCompoundType(Entity entity, Dictionary<string, GraphInfo> graphMap)
     {
         var current = graphMap[entity.Name].SingleType;
@@ -66,14 +67,14 @@ public static  class FieldTypes
         }
     }
 
-    private static IGraphType PlainGraphType( Attribute attribute)
+    private static IGraphType PlainGraphType(Attribute attribute)
     {
         return attribute.DataType switch
         {
             DataType.Int => new IntGraphType(),
             DataType.Datetime => new DateTimeGraphType(),
-            _ when attribute.DisplayType is DisplayType.Dictionary=> new JsonGraphType(),
-            _ when attribute.DisplayType.IsCsv()=> new ListGraphType(new StringGraphType()),
+            _ when attribute.DisplayType is DisplayType.Dictionary => new JsonGraphType(),
+            _ when attribute.DisplayType.IsCsv() => new ListGraphType(new StringGraphType()),
             _ => new StringGraphType()
         };
     }

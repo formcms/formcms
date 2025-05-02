@@ -5,17 +5,18 @@ using GraphQL.Types;
 
 namespace FormCMS.Cms.Graph;
 
-public record GraphInfo(Entity Entity, ObjectGraphType SingleType, ListGraphType ListType);
+public record GraphInfo(Entity Entity,  ObjectGraphType SingleType, ListGraphType ListType);
 public sealed class GraphQuery : ObjectGraphType
 {
     public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService)
     {
         var entities = entitySchemaService.AllEntities(CancellationToken.None).GetAwaiter().GetResult();
+        var extraQueryFieldEntity = entitySchemaService.ExtraQueryFieldEntities(CancellationToken.None).GetAwaiter().GetResult();
         var graphMap = new Dictionary<string, GraphInfo>();
         
         foreach (var entity in entities)
         {
-            var t = FieldTypes.PlainType(entity);
+            var t = FieldTypes.PlainType(extraQueryFieldEntity.First(e=>e.Name == entity.Name));
             graphMap[entity.Name] = new GraphInfo(entity, t, new ListGraphType(t));
         }
         

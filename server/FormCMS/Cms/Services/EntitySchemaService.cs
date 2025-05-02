@@ -21,7 +21,7 @@ public sealed class EntitySchemaService(
     IServiceProvider provider
 ) : IEntitySchemaService
 {
-    public ValueTask<ImmutableArray<Entity>> AllEntities(CancellationToken ct = default)
+    public ValueTask<ImmutableArray<Entity>> AllEntities(CancellationToken ct)
     {
         return entityCache.GetOrSet("", async token =>
         {
@@ -31,6 +31,13 @@ public sealed class EntitySchemaService(
                 .Select(x => x.Settings.Entity!);
             return [..entities];
         }, ct);
+    }
+
+    public async ValueTask<ImmutableArray<Entity>> ExtraQueryFieldEntities(CancellationToken ct)
+    {
+        var entities = await AllEntities(ct);
+        var res = await hook.ExtraQueryFieldEntities.Trigger( provider,new ExtraQueryFieldEntitiesArgs(entities) );
+        return res.entities;
     }
 
     public async Task<Schema> AddOrUpdateByName(Entity entity, CancellationToken ct)

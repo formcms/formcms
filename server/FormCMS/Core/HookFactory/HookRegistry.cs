@@ -6,8 +6,12 @@ public class HookRegistry
         public HookList<SchemaPreSaveArgs> SchemaPreSave { get; } = new();
         public HookList<SchemaPostSaveArgs> SchemaPostSave { get; } = new();
         public HookList<SchemaPreDelArgs> SchemaPreDel { get; } = new();
-        public HookList<QueryPreGetListArgs> QueryPreGetList { get; } = new();
-        public HookList<QueryPreGetSingleArgs> QueryPreGetSingle { get; } = new();
+        public HookList<QueryPreListArgs> QueryPreList { get; } = new();
+        public HookList<QueryPostListArgs> QueryPostList { get; } = new();
+        public HookList<QueryPreSingleArgs> QueryPreSingle { get; } = new();
+        public HookList<QueryPostSingleArgs> QueryPostSingle { get; } = new();
+        public HookList<ExtraQueryFieldEntitiesArgs> ExtraQueryFieldEntities { get; } = new();
+        
         public HookList<EntityPreGetSingleArgs> EntityPreGetSingle { get; } = new();
         public HookList<EntityPreGetListArgs> EntityPreGetList { get; } = new();
         public HookList<EntityPreUpdateArgs> EntityPreUpdate { get; } = new();
