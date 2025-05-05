@@ -11,7 +11,7 @@ $(document).ready(() => {
 function utcStrToDatetimeStr  (s)  {
     if (!s) return null
     const d = typeof(s) == 'string' ? utcStrToDatetime(s):s;
-    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString();
+    return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
 const utcStrToDatetime = (s) => {

@@ -48,7 +48,7 @@ export const contentB = {
     <div class="container px-5 py-12 mx-auto">
         <div class="flex flex-wrap w-full mb-12">
             <div class="lg:w-1/2 w-full mb-6 lg:mb-0">
-                <h1 class="sm:text-4xl text-3xl font-bold title-font mb-2 text-gray-900">Featured Courses</h1>
+                <h1 class="sm:text-4xl text-3xl font-bold title-font mb-2 text-gray-900">Content B</h1>
                 <div class="h-1 w-20 bg-red-500 rounded"></div>
             </div>
             <p class="lg:w-1/2 w-full leading-relaxed text-gray-500 prose">
