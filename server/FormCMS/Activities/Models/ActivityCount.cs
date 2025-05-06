@@ -56,7 +56,7 @@ public static class ActivityCounts
             nameof(ActivityCount.EntityName),
             nameof(ActivityCount.RecordId),
             nameof(ActivityCount.ActivityType),
-            nameof(ActivityCount.Count),
+            nameof(ActivityCount.Count)
         ]);
     
     public static Record Condition(this ActivityCount count,bool includeType)
@@ -72,18 +72,27 @@ public static class ActivityCounts
         }
         return ret;
     }
-    
-    public static Query GetPageVisiteCount(int topN)
-    {
-        var query = new Query(TableName)
+
+    public static Query TopCountItems(string entityName, int topN)
+        => new Query(TableName)
+            .Select(nameof(TopCountItem.EntityName).Camelize())
+            .Select(nameof(TopCountItem.RecordId).Camelize())
+            .Select(nameof(TopCountItem.Count).Camelize())
+            
+            .Where(nameof(ActivityCount.ActivityType).Camelize(), Constants.ScoreActivityType)
+            .Where(nameof(ActivityCount.EntityName).Camelize(), entityName)
+            .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false)
+            .OrderByDesc(nameof(ActivityCount.Count).Camelize())
+            .Limit(topN);
+
+    public static Query PageVisites(int topN)
+        => new Query(TableName)
             .Select(nameof(PageVisitCount.RecordId).Camelize())
             .Select(nameof(PageVisitCount.Count).Camelize())
-            
-            .Where(nameof(ActivityCount.ActivityType).Camelize(), Activities.VisitActivityType)
-            .Where(nameof(ActivityCount.EntityName).Camelize(), Activities.PageEntity)
-            .Where(nameof(DefaultColumnNames.Deleted).Camelize(),false)
-            .OrderBy(nameof(ActivityCount.Count).Camelize())
+
+            .Where(nameof(ActivityCount.ActivityType).Camelize(), Constants.VisitActivityType)
+            .Where(nameof(ActivityCount.EntityName).Camelize(), Constants.PageEntity)
+            .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false)
+            .OrderByDesc(nameof(ActivityCount.Count).Camelize())
             .Limit(topN);
-        return query;
-    } 
 }

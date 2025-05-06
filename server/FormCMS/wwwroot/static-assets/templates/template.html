@@ -7,10 +7,9 @@
     <script src="//code.jquery.com/jquery.min.js"></script>
     <script src="//cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <script src="/_content/FormCMS/static-assets/js/pagination.js"></script>
     <script src="/_content/FormCMS/static-assets/js/activity.js"></script>
-    <script src="/_content/FormCMS/static-assets/js/formatter.js"></script>
 
 
     <link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/base.min.css">
@@ -19,17 +18,18 @@
     <link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/utilities.min.css">
     <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css" rel="stylesheet" type="text/css"/>
     <style>
+
         /*don't delete below line, it's place holder*/
         <!--css-->
-        
-        /*social activity*/
+            /*social activity*/
         .active svg {
             fill: currentColor; /* Fills the icon when active */
         }
+
         .inactive svg {
             fill: none; /* Keeps the icon outlined when inactive */
         }
-        
+
         /* Toast styling */
         .toast {
             position: fixed;
@@ -45,98 +45,34 @@
             opacity: 0;
             transition: opacity 0.3s ease-in-out;
         }
+
         .toast.show {
             opacity: 1;
         }
     </style>
 </head>
 <body>
-
-
-
-
+<!--Place Holder-->
 <!--body-->
 
-<!--<div id="most-popular" class="gjs-row">-->
-<!--    <div id="most-popular-cell" class="gjs-cell">-->
-<!--        <section class="text-gray-600 body-font">-->
-<!--            <div class="container px-5 py-10 mx-auto">-->
-<!--                <h1 class="sm:text-3xl text-2xl font-medium title-font mb-2 text-gray-900">Most Popular Courses</h1>-->
-<!--                <div class="h-1 w-20 bg-red-500 rounded"></div>-->
-<!--                <div class="flex flex-col space-y-4 mt-6 w-full lg:w-1/4 lg:ml-auto">-->
-<!--                    &lt;!&ndash; Course 1 &ndash;&gt;-->
-<!--                    <div class="bg-gray-100 p-4 rounded-lg">-->
-<!--                        <a href="/course/20" title="Mastering the Art of Cooking Steak">-->
-<!--                            <img src="/files/2025-01/4bc9ce33.jpg" alt="steak and fork" class="h-20 w-full object-cover object-center mb-4 rounded">-->
-<!--                        </a>-->
-<!--                        <h3 class="tracking-widest text-red-500 text-xs font-medium title-font">Beginner</h3>-->
-<!--                        <h2 class="text-lg text-gray-900 font-medium title-font mb-2">-->
-<!--                            <a href="/course/20">Mastering the Art of Cooking Steak</a>-->
-<!--                        </h2>-->
-<!--                        <p class="leading-relaxed text-sm prose">Learn to cook the perfect steak with expert techniques.</p>-->
-<!--                    </div>-->
-<!--                    &lt;!&ndash; Course  인터페이스&ndash;&gt;-->
-<!--                    <div class="bg-gray-100 p-4 rounded-lg">-->
-<!--                        <a href="/course/19" title="Mastering the Essentials of Cooking">-->
-<!--                            <img src="/files/2025-01/468c3e87.jpg" alt="bows" class="h-20 w-full object-cover object-center mb-4 rounded">-->
-<!--                        </a>-->
-<!--                        <h3 class="tracking-widest text-red-500 text-xs font-medium title-font">Beginner</h3>-->
-<!--                        <h2 class="text-lg text-gray-900 font-medium title-font mb-2">-->
-<!--                            <a href="/course/19">Mastering the Essentials of Cooking</a>-->
-<!--                        </h2>-->
-<!--                        <p class="leading-relaxed text-sm prose">Fundamental techniques for home cooks.</p>-->
-<!--                    </div>-->
-<!--                    &lt;!&ndash; Course 3 &ndash;&gt;-->
-<!--                    <div class="bg-gray-100 p-4 rounded-lg">-->
-<!--                        <a href="/course/18" title="Functional Programming">-->
-<!--                            <img src="/files/2024-11/42b80584.jpg" alt="mug and plates" class="h-20 w-full object-cover object-center mb-4 rounded">-->
-<!--                        </a>-->
-<!--                        <h3 class="tracking-widest text-red-500 text-xs font-medium title-font">Advanced</h3>-->
-<!--                        <h2 class="text-lg text-gray-900 font-medium title-font mb-2">-->
-<!--                            <a href="/course/18">Functional Programming</a>-->
-<!--                        </h2>-->
-<!--                        <p class="leading-relaxed text-sm prose">Master functional programming paradigms.</p>-->
-<!--                    </div>-->
-<!--                    &lt;!&ndash; Course 4 &ndash;&gt;-->
-<!--                    <div class="bg-gray-100 p-4 rounded-lg">-->
-<!--                        <a href="/course/16" title="Object-Oriented Programming (OOP)">-->
-<!--                            <img src="/files/2024-10/abdbf302.jpg" alt="inbox" class="h-20 w-full object-cover object-center mb-4 rounded">-->
-<!--                        </a>-->
-<!--                        <h3 class="tracking-widest text-red-500 text-xs font-medium title-font">Beginner</h3>-->
-<!--                        <h2 class="text-lg text-gray-900 font-medium title-font mb-2">-->
-<!--                            <a href="/course/16">Object-Oriented Programming (OOP)</a>-->
-<!--                        </h2>-->
-<!--                        <p class="leading-relaxed text-sm prose">Learn OOP fundamentals.</p>-->
-<!--                    </div>-->
-<!--                    &lt;!&ndash; Course 5 &ndash;&gt;-->
-<!--                    <div class="bg-gray-100 p-4 rounded-lg">-->
-<!--                        <a href="/course/15" title="Mastering Angular">-->
-<!--                            <img src="/files/2024-10/191901cd.jpg" alt="angular" class="h-20 w-full object-cover object-center mb-4 rounded">-->
-<!--                        </a>-->
-<!--                        <h3 class="tracking-widest text-red-500 text-xs font-medium title-font">Intermediate</h3>-->
-<!--                        <h2 class="text-lg text-gray-900 font-medium title-font mb-2">-->
-<!--                            <a href="/course/15">Mastering Angular</a>-->
-<!--                        </h2>-->
-<!--                        <p class="leading-relaxed text-sm prose">Build dynamic web apps with Angular.</p>-->
-<!--                    </div>-->
-<!--                </div>-->
-<!--            </div>-->
-<!--        </section>-->
-<!--    </div>-->
-<!--</div>-->
-<div id="cookie-consent-banner" style="position:fixed; bottom:0; background:white; width:100%; padding:10px; text-align:center; box-shadow:0 -2px 10px rgba(0,0,0,0.2);">
+
+
+<div id="cookie-consent-banner"
+     style="position:fixed; bottom:0; background:white; width:100%; padding:10px; text-align:center; box-shadow:0 -2px 10px rgba(0,0,0,0.2);">
     We use cookies to improve your experience.
     <button class="btn btn-primary btn-sm" onclick="acceptCookies()">Accept</button>
 </div>
 
 <script>
     function acceptCookies() {
-        document.cookie = "cookies-consent=true; path=/; max-age=" + (60*60*24*365);
+        document.cookie = "cookies-consent=true; path=/; max-age=" + (60 * 60 * 24 * 365);
         document.getElementById('cookie-consent-banner').style.display = 'none';
     }
+
     function hasConsent() {
         return document.cookie.split(';').some(c => c.trim().startsWith('cookies-consent=true'));
     }
+
     // Hide banner if already consented
     if (hasConsent()) {
         document.getElementById('cookie-consent-banner').style.display = 'none';

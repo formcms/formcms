@@ -215,7 +215,6 @@ public sealed class QueryService(
             }
         }
     }
-    
 
     private async Task AttachRelated(GraphAttribute attr, StrArgs args, Record[] items, CancellationToken ct)
     {

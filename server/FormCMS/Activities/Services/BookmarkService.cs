@@ -130,7 +130,7 @@ public class BookmarkService(
         var count = new ActivityCount(entityName, recordId, Bookmarks.ActivityType, 1);
         await dao.Increase(
             ActivityCounts.TableName, count.Condition(true),
-            ActivityCounts.CountField, 1, ct);
+            ActivityCounts.CountField, 0,1, ct);
     }
 
     public Task DeleteBookmark(long bookmarkId, CancellationToken ct)

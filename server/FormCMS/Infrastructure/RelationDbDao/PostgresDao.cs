@@ -269,7 +269,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     }
 
 
-    public async Task<long> Increase(string tableName, Record keyConditions, string valueField, long delta, CancellationToken ct)
+    public async Task<long> Increase(string tableName, Record keyConditions, string valueField, long initVal, long delta, CancellationToken ct)
     {
         string[] keyFields = keyConditions.Keys.ToArray();
         object[] keyValues = keyConditions.Values.ToArray();
@@ -297,7 +297,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
             param.Value = keyValues[i] ?? DBNull.Value;
         }
 
-        command.Parameters.AddWithValue("@initValue", NpgsqlDbType.Bigint, 1);
+        command.Parameters.AddWithValue("@initValue", NpgsqlDbType.Bigint, initVal + delta);
         command.Parameters.AddWithValue("@delta", NpgsqlDbType.Bigint, delta);
 
         var result = await command.ExecuteScalarAsync(ct);

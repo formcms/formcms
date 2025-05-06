@@ -185,14 +185,14 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
         }
     }
 
-    public async Task<long> Increase(string tableName, Record keyConditions, string valueField, long delta, CancellationToken ct)
+    public async Task<long> Increase(string tableName, Record keyConditions, string valueField,long initVal, long delta, CancellationToken ct)
     {
         string[] keyFields = keyConditions.Keys.ToArray();
         object[] keyValues = keyConditions.Values.ToArray();
         
 
         var insertColumns = string.Join(", ", keyFields.Concat([valueField]));
-        var insertParams = string.Join(", ", keyFields.Select((_, i) => $"@p{i}").Concat(["@delta"]));
+        var insertParams = string.Join(", ", keyFields.Select((_, i) => $"@p{i}").Concat(["@initVal"]));
         var conflictFields = string.Join(", ", keyFields);
 
         var sql = $"""
@@ -209,6 +209,7 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
         for (var i = 0; i < keyValues.Length; i++)
             cmd.Parameters.AddWithValue($"@p{i}", keyValues[i]);
 
+        cmd.Parameters.AddWithValue("@initVal", initVal + delta);
         cmd.Parameters.AddWithValue("@delta", delta);
 
         var scalar = await cmd.ExecuteScalarAsync(ct);

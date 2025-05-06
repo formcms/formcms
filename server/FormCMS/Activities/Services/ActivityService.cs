@@ -1,14 +1,13 @@
 using FormCMS.Activities.Models;
-using FormCMS.Cms.Graph;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
-using Attribute = FormCMS.Core.Descriptors.Attribute;
 using Schema = FormCMS.Core.Descriptors.Schema;
 
 namespace FormCMS.Activities.Services;
@@ -29,7 +28,6 @@ public class ActivityService(
     DatabaseMigrator migrator
 ) : IActivityService
 {
-   
     public  Task<Record[]> GetDailyActivityCount(int daysAgo,CancellationToken ct)
     {
         if (!profileService.GetInfo()?.CanAccessAdmin == true || daysAgo > 30) throw new Exception("Can't access daily count");
@@ -42,10 +40,10 @@ public class ActivityService(
         return executor.Many(Models.Activities.GetDailyVisitCount(dao.CastDate,daysAgo,authed),ct);
     }
     
-    public  async Task<Record[]> GetTopVisitCount(int topN,CancellationToken ct)
+    public  async Task<Record[]> GetTopVisitPages(int topN,CancellationToken ct)
     {
         if (!profileService.GetInfo()?.CanAccessAdmin == true || topN > 30) throw new Exception("Can't access daily count");
-        var counts = await executor.Many(ActivityCounts.GetPageVisiteCount(topN),ct);
+        var counts = await executor.Many(ActivityCounts.PageVisites(topN),ct);
         var ids = counts.Select(x => x[nameof(ActivityCount.RecordId).Camelize()]).ToArray();
         var schemas = await executor.Many(SchemaHelper.ByIds(ids),ct);
         var dict = schemas.ToDictionary(x=>(long)x[nameof(Schema.Id).Camelize()]);
@@ -53,8 +51,37 @@ public class ActivityService(
         {
             count[nameof(Schema.Name).Camelize()] = dict[(long)count[nameof(ActivityCount.RecordId).Camelize()]][nameof(Schema.Name).Camelize()];
         }
+       
         return counts;
     }
+    
+    public async Task<Record[]> GetTopItems(string entityName, int topN, CancellationToken ct)
+    {
+        if (topN > 30) throw new Exception("Can't access top items");
+        var allEntities = await entitySchemaService.AllEntities(ct);
+        var entity = allEntities.FirstOrDefault(x=>x.Name == entityName)?? throw new Exception($"Entity {entityName} not found");
+        var items = await executor.Many(ActivityCounts.TopCountItems(entityName, topN), ct);
+        var ids = items
+            .Select(x => x[nameof(TopCountItem.RecordId).Camelize()].ToString())
+            .ToArray();
+        if (ids.Length == 0) return items;
+        
+        var strAgs = new StrArgs
+        {
+            [entity.BookmarkQueryParamName] = ids
+        };
+        var records = await queryService.ListWithAction(entity.BookmarkQuery, new Span(),new Pagination(),strAgs,ct);
+        var dict = records.ToDictionary(x => x[entity.PrimaryKey].ToString()!);
+        string[] types = [..settings.ToggleActivities, ..settings.RecordActivities];
+
+        foreach (var item in items)
+        {
+            var id = (long)item[nameof(TopCountItem.RecordId).Camelize()];
+            TopCountItemHelper.LoadMetaData(entity.ToLoadedEntity(),item, dict[id.ToString()]);
+            item[nameof(TopCountItem.Counts).Camelize()] = await GetCountDict(entityName, id,types,ct);
+        }
+        return items;
+    } 
     
     public async Task<ListResponse> List(string activityType, StrArgs args, int?offset, int?limit, CancellationToken ct = default)
     {
@@ -124,8 +151,8 @@ public class ActivityService(
             var id =(long)record[primaryKey];
             var counts = types.Select(t => new ActivityCount(entityName,id,t)).ToArray();
             var countDict = settings.EnableBuffering
-                ? await GetCountDictFromBuffer(counts)
-                : await GetCountDict(counts, ct);
+                ? await GetBufferCountDict(counts)
+                : await GetDbCountDict(counts, ct);
             foreach (var t in types)
             {
                 record[ActivityCounts.ActivityCountField(t)] = countDict[t];
@@ -135,9 +162,9 @@ public class ActivityService(
     
     public async Task<Dictionary<string, StatusDto>> Get(string cookieUserId,string entityName, long recordId, CancellationToken ct)
     {
-        await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
+        var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
         var ret = new Dictionary<string, StatusDto>();
-        foreach (var pair in await InternalRecord(cookieUserId,entityName, recordId, settings.AutoRecordActivities.ToArray(), ct))
+        foreach (var pair in await InternalRecord(cookieUserId,entity,entityName, recordId, settings.AutoRecordActivities.ToArray(), ct))
         {
             ret[pair.Key] = new StatusDto(true, pair.Value);
         }
@@ -155,13 +182,11 @@ public class ActivityService(
                 => new Activity(entityName, recordId, x, userId)
             ).ToArray();
             statusDict = settings.EnableBuffering 
-                ? await GetStatusDictFromBuffer(activities) 
-                : await GetStatusDict(activities, ct);
+                ? await GetBufferStatusDict(activities) 
+                : await GetDbStatusDict(activities, ct);
         }
 
-        var countDict = settings.EnableBuffering
-            ? await GetCountDictFromBuffer(counts)
-            : await GetCountDict(counts, ct);
+        var countDict = await GetCountDict(entityName,recordId, types,ct);
 
         foreach (var t in types)
         {
@@ -173,12 +198,22 @@ public class ActivityService(
         return ret;
     }
 
+    private async Task<Dictionary<string,long>> GetCountDict(string entityName, long recordId,string[] types, CancellationToken ct)
+    {
+        var counts = types.Select(x => 
+            new ActivityCount(entityName, recordId, x)).ToArray();
+ 
+        return settings.EnableBuffering
+            ? await GetBufferCountDict(counts)
+            : await GetDbCountDict(counts, ct); 
+    }
+
     //why not log visit at page service directly?page service might cache result
     public async Task Visit( string cookieUserId, string url, CancellationToken ct )
     {
         var path = new Uri(url).AbsolutePath.TrimStart('/');
         var id = await pageService.GetPageId(path, ct);
-        await InternalRecord(cookieUserId, Models.Activities.PageEntity, id, [Models.Activities.VisitActivityType], ct);
+        await InternalRecord(cookieUserId, null,Constants.PageEntity, id, [Constants.VisitActivityType], ct);
     }
 
     public async Task<Dictionary<string, long>> Record(
@@ -196,12 +231,10 @@ public class ActivityService(
         {
             throw new ResultException("One or more activity types are not supported.");
         }
-        await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
+        var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
 
-        return await InternalRecord(cookieUserId, entityName, recordId, activityTypes, ct);
+        return await InternalRecord(cookieUserId, entity,entityName, recordId, activityTypes, ct);
     }
-
-
 
     public async Task<long> Toggle(
         string entityName,
@@ -238,7 +271,7 @@ public class ActivityService(
             activity.UpsertRecord(false), 
             Models.Activities.KeyFields, 
             ct);
-        return changed switch
+        var ret= changed switch
         {
             true => await UpdateActivityMetaAndIncrease(),
             false => (await dao.FetchValues<long>(
@@ -249,6 +282,8 @@ public class ActivityService(
                     ct))
                 .FirstOrDefault().Value
         };
+        await UpdateScore(entity,[count],ct);
+        return ret;
 
         async Task<long> UpdateActivityMetaAndIncrease()
         {
@@ -265,13 +300,75 @@ public class ActivityService(
                 ActivityCounts.TableName,
                 count.Condition(true),
                 ActivityCounts.CountField,
+                0,
                 delta,
                 ct);
         }
     }
 
+    private async Task UpdateScore(LoadedEntity entity,ActivityCount[] counts, CancellationToken ct)
+    {
+        foreach (var a in counts)
+        {
+            await UpdateOneScore(a);
+        }
+
+        return;
+
+        async Task UpdateOneScore(ActivityCount count)
+        {
+            if (!settings.Weights.TryGetValue(count.ActivityType, out var weight))
+            {
+                return;
+            }
+
+            count = count with { ActivityType = Constants.ScoreActivityType };
+            if (settings.EnableBuffering)
+            {
+                await countBuffer.Increase(count.Key(), weight, GetItemScore);
+            }
+            else
+            {
+                var timeScore = await GetInitialScoreByPublishedAt();
+                await dao.Increase(
+                    ActivityCounts.TableName, count.Condition(true),
+                    ActivityCounts.CountField,timeScore, weight, ct);
+            }
+
+            return;
+
+            async Task<long> GetItemScore(string _)
+            {
+                var dict = await GetDbCountDict([count], ct);
+                if (dict.Count > 0)
+                {
+                    return dict.First().Value;
+                }
+
+                return await GetInitialScoreByPublishedAt() + weight;
+            }
+
+            async Task<long> GetInitialScoreByPublishedAt()
+            {
+                var rec = await executor.Single(entity.PublishedAt(count.RecordId),ct);
+                if (rec is null 
+                    || !rec.TryGetValue(DefaultAttributeNames.PublishedAt.Camelize(), out var value) 
+                    || value is null) throw new ResultException("invalid publish time");
+                
+                var publishTime = value switch
+                {
+                    string s => DateTime.Parse(s),
+                    DateTime d => d,
+                    _ => throw new ResultException("invalid publish time")
+                };
+                var hoursFromNowToReference = (long)(publishTime - settings.ReferenceDateTime).TotalHours;
+                return hoursFromNowToReference * settings.HourBoostWeight;
+            }
+        }
+    }
     private async Task<Dictionary<string, long>> InternalRecord(
         string cookieUserId,
+        LoadedEntity? entity,
         string entityName,
         long recordId,
         string[] activityTypes,
@@ -282,7 +379,7 @@ public class ActivityService(
         var activities = activityTypes.Select(x => new Activity(entityName, recordId, x, userId)).ToArray();
 
         var counts = activityTypes
-            .Select(x => new ActivityCount(entityName, recordId, x,1))
+            .Select(x => new ActivityCount(entityName, recordId, x))
             .ToArray();
 
         var result = new Dictionary<string, long>();
@@ -302,12 +399,17 @@ public class ActivityService(
             {
                 result[count.ActivityType] = await dao.Increase(
                     ActivityCounts.TableName, count.Condition(true),
-                    ActivityCounts.CountField, 1, ct);
+                    ActivityCounts.CountField, 0,1, ct);
             }
+        }
+
+        if (entity is not null)
+        {
+            await UpdateScore(entity,counts,ct);
         }
         return result;
     }
-    private async Task<Activity[]> LoadMetaData(Entity entity, Activity[] activities, CancellationToken ct)
+    private async Task<Activity[]> LoadMetaData(LoadedEntity entity, Activity[] activities, CancellationToken ct)
     {
         var ids = activities
             .Where(x=>x.IsActive)
@@ -342,7 +444,7 @@ public class ActivityService(
         
         foreach (var group in groups)
         {
-            if (group.Key == Models.Activities.PageEntity)
+            if (group.Key == Constants.PageEntity)
             {
                 toUpdate.AddRange(group.Select(x=>x.UpsertRecord(true)));
             }
@@ -350,7 +452,7 @@ public class ActivityService(
             {
                 var entity = entities.FirstOrDefault(x => x.Name == group.Key);
                 if (entity == null) continue;
-                var loadedActivities = await LoadMetaData(entity, [..group], ct);
+                var loadedActivities = await LoadMetaData(entity.ToLoadedEntity(), [..group], ct);
                 toUpdate.AddRange(loadedActivities.Select(x => x.UpsertRecord(true)));
             }
         }
@@ -363,7 +465,7 @@ public class ActivityService(
 
  
     
-    private async Task<Dictionary<string, bool>> GetStatusDictFromBuffer(Activity[] status)
+    private async Task<Dictionary<string, bool>> GetBufferStatusDict(Activity[] status)
     {
         var keys = status.Select(Models.Activities.Key).ToArray();
         var dict = await statusBuffer.Get(keys, GetStatus);
@@ -376,7 +478,7 @@ public class ActivityService(
         return ret;
     }
     
-    private  async Task<Dictionary<string,bool>> GetStatusDict(Activity[] activities, CancellationToken ct)
+    private  async Task<Dictionary<string,bool>> GetDbStatusDict(Activity[] activities, CancellationToken ct)
     {
         var userId = profileService.GetInfo()?.Id;
         if (activities.Length == 0 || userId is null) return [];
@@ -390,7 +492,7 @@ public class ActivityService(
             ct);
     }
 
-    private async Task<Dictionary<string, long>> GetCountDictFromBuffer(ActivityCount[] counts)
+    private async Task<Dictionary<string, long>> GetBufferCountDict(ActivityCount[] counts)
     {
         var dict = await countBuffer.Get(counts.Select(ActivityCounts.Key).ToArray(), GetCount);
         var ret = new Dictionary<string, long>();
@@ -402,7 +504,7 @@ public class ActivityService(
         return ret;
     }
     
-    private async Task<Dictionary<string, long>> GetCountDict(ActivityCount[] counts, CancellationToken ct)
+    private async Task<Dictionary<string, long>> GetDbCountDict(ActivityCount[] counts, CancellationToken ct)
     {
         if (counts.Length == 0 ) return [];
 

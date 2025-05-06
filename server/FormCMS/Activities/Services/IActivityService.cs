@@ -6,7 +6,10 @@ public record ActivitySettings(
     bool EnableBuffering,
     HashSet<string> ToggleActivities,
     HashSet<string> RecordActivities,
-    HashSet<string> AutoRecordActivities
+    HashSet<string> AutoRecordActivities,
+    Dictionary<string,long> Weights,
+    DateTime ReferenceDateTime,
+    long HourBoostWeight
 );
 
 public static class ActivityServiceExtensions
@@ -22,7 +25,7 @@ public static class ActivityServiceExtensions
 public interface IActivityService
 {
     Task LoadCounts(string entityName, string primaryKey, HashSet<string>fields, IEnumerable<Record> records, CancellationToken ct);
-    Task<Record[]> GetTopVisitCount(int topN, CancellationToken ct);
+    Task<Record[]> GetTopVisitPages(int topN, CancellationToken ct);
     Task<Record[]> GetDailyPageVisitCount(int daysAgo, bool authed, CancellationToken ct);
     Task<Record[]> GetDailyActivityCount(int daysAgo,CancellationToken ct);
     Task<ListResponse> List(string activityType, StrArgs args, int? offset, int? limit, CancellationToken ct);
@@ -33,4 +36,5 @@ public interface IActivityService
     Task Visit(string cookieUserId, string url, CancellationToken ct);
     Task<Dictionary<string, StatusDto>> Get(string cookieUserId,string entityName, long recordId, CancellationToken ct);
     Task Delete(long id, CancellationToken ct = default);
+    Task<Record[]> GetTopItems(string entityName, int topN, CancellationToken ct);
 }

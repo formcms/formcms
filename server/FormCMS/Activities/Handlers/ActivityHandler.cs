@@ -9,11 +9,18 @@ public static class ActivityHandler
 {
     public static RouteGroupBuilder MapActivityHandler(this RouteGroupBuilder builder)
     {
-        builder.MapGet("/page-counts", (
+        builder.MapGet("top-items/{entityName}", (
+            IActivityService s,
+            string entityName,
             int n,
-            CancellationToken ct,
-            IActivityService s
-        ) => s.GetTopVisitCount(n,ct));
+            CancellationToken ct
+        ) => s.GetTopItems(entityName, n, ct));
+        
+        builder.MapGet("/page-counts", (
+            IActivityService s,
+            int n,
+            CancellationToken ct
+        ) => s.GetTopVisitPages(n,ct));
         
         builder.MapGet("/visit-counts", (
             int n,

@@ -4,9 +4,19 @@ $(document).ready(function () {
     $('[data-command="previous"]').click(e => handlePaginationButton(e, e.target, false));
     $('[data-command="next"]').click(e => handlePaginationButton(e, e.target, true));
 
+    formatDate();
     initIntersectionObserver();
     updatePaginationStatus();
 
+    function formatDate () {
+        $('[data-component="localDateTime"]').each(function() {
+            const isoDate = $(this).text().trim();
+            if (isoDate) {
+                const formattedDate = utcStrToDatetimeStr(isoDate);
+                $(this).text(formattedDate || isoDate);
+            }
+        }); 
+    }
     function updatePaginationStatus() {
         $('[data-source="data-list"]').each(function () {
             const $list = $(this);
@@ -40,7 +50,7 @@ $(document).ready(function () {
             updatePaginationStatus();
         }
     }
-
+ 
     async function fetchPagePart(token) {
         if (!token || loadingDict.has(token)) {
             return; // Already loading
@@ -56,8 +66,21 @@ $(document).ready(function () {
 
             if (!response.ok) throw new Error('Network response was not ok');
 
-            const data = await response.text();
-            return data;
+            let htmlContent = await response.text();
+            //htmlContent might not be in a root element, 
+            const $content = $(`<div>${htmlContent}</div>`);
+
+            $content.find('[data-component="localDateTime"]').each(function() {
+                const isoDate = $(this).text().trim();
+                if (isoDate) {
+                    const formattedDate = utcStrToDatetimeStr(isoDate);
+                    $(this).text(formattedDate || isoDate);
+                }
+            });
+            const formattedHtml = $content.prop('innerHTML');
+            console.log(htmlContent, formattedHtml);
+            return formattedHtml;
+            
         } catch (error) {
             console.error('Error loading more.', error);
         } finally {
@@ -71,6 +94,7 @@ $(document).ready(function () {
                 if (entry.isIntersecting) {
                     const token = entry.target.getAttribute('last');
                     const response = await fetchPagePart(token);
+                    console.log(response);
 
                     if (response) {
                         const template = document.createElement('template');
@@ -85,5 +109,19 @@ $(document).ready(function () {
 
         const trigger = document.querySelector(".load-more-trigger");
         if (trigger) observer.observe(trigger);
+    }
+
+    function utcStrToDatetimeStr  (s)  {
+        if (!s) return null
+        const d = typeof(s) == 'string' ? utcStrToDatetime(s):s;
+        return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function utcStrToDatetime  (s)  {
+        s = s.replaceAll(' ', 'T')
+        if (!s.endsWith('Z')) {
+            s += 'Z';
+        }
+        return new Date(s);
     }
 });

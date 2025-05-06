@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using FormCMS.Activities.Handlers;
 using FormCMS.Activities.Models;
 using FormCMS.Activities.Services;
@@ -6,7 +5,6 @@ using FormCMS.Activities.Workers;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.Buffers;
-using FormCMS.Infrastructure.Cache;
 using Microsoft.AspNetCore.Rewrite;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
@@ -22,8 +20,23 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         services.AddSingleton(new BufferSettings());
         services.AddSingleton<ICountBuffer,MemoryCountBuffer>();
         services.AddSingleton<IStatusBuffer,MemoryStatusBuffer>();
-        
-        services.AddSingleton(new ActivitySettings(enableBuffering,["like"], ["share"],["view"]));
+
+        services.AddSingleton(
+            new ActivitySettings(
+                EnableBuffering: enableBuffering,
+                ToggleActivities: ["like"],
+                RecordActivities: ["share"],
+                AutoRecordActivities: ["view"],
+                Weights: new Dictionary<string, long>
+                {
+                    { "view", 10 },
+                    { "like", 20 },
+                    { "share", 30 },
+                },
+                ReferenceDateTime: new DateTime(2025,1,1),
+                HourBoostWeight: 10
+            )
+        );
         services.AddScoped<IActivityService, ActivityService>();
         services.AddScoped<IBookmarkService, BookmarkService>();
         services.AddHostedService<BufferFlushWorker>();
