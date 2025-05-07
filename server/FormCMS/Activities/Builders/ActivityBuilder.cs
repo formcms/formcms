@@ -16,11 +16,6 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 
     public static IServiceCollection AddActivity(IServiceCollection services, bool enableBuffering)
     {
-        services.AddSingleton<ActivityBuilder>();
-        services.AddSingleton(new BufferSettings());
-        services.AddSingleton<ICountBuffer,MemoryCountBuffer>();
-        services.AddSingleton<IStatusBuffer,MemoryStatusBuffer>();
-
         services.AddSingleton(
             new ActivitySettings(
                 EnableBuffering: enableBuffering,
@@ -37,8 +32,18 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
                 HourBoostWeight: 10
             )
         );
+        
+        services.AddSingleton<ActivityBuilder>();
+        services.AddSingleton(new BufferSettings());
+        services.AddSingleton<ICountBuffer,MemoryCountBuffer>();
+        services.AddSingleton<IStatusBuffer,MemoryStatusBuffer>();
+
+        services.AddScoped<IActivityCollectService, ActivityCollectService>();
         services.AddScoped<IActivityService, ActivityService>();
+        services.AddScoped<IQueryPluginService, QueryPluginService>();
+        services.AddScoped<ITopItemService, TopItemService>();
         services.AddScoped<IBookmarkService, BookmarkService>();
+        
         services.AddHostedService<BufferFlushWorker>();
         return services;
     }
@@ -47,7 +52,7 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
     {
         var activitySettings = app.Services.GetRequiredService<ActivitySettings>();
         using var scope = app.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<IActivityService>().EnsureActivityTables();
+        await scope.ServiceProvider.GetRequiredService<IActivityCollectService>().EnsureActivityTables();
         await scope.ServiceProvider.GetRequiredService<IBookmarkService>().EnsureBookmarkTables(); 
         
         var options = app.Services.GetRequiredService<SystemSettings>();
@@ -118,7 +123,7 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
                 });
                 return new ExtraQueryFieldEntitiesArgs([..entities]);
             });
-            registry.QueryPostList.RegisterDynamic("*" ,async (IActivityService service, QueryPostListArgs args)=>
+            registry.QueryPostList.RegisterDynamic("*" ,async (IQueryPluginService service, QueryPostListArgs args)=>
             {
                 var entity = args.Query.Entity;
                 await service.LoadCounts(entity.Name, entity.PrimaryKey,[..args.Fields], args.RefRecords, CancellationToken.None);

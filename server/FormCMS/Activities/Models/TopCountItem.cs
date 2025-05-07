@@ -6,6 +6,7 @@ using Humanizer;
 namespace FormCMS.Activities.Models;
 
 public record TopCountItem(
+    string I,
     string EntityName, 
     long RecordId,
     long Count,

@@ -16,6 +16,11 @@ export const customTypes = {
             ],
         }
     ],
+    ['top-list']:[
+        {name:"offset", label:'offset'},
+        {name:"entity", label:'entity'},
+        {name:"limit", label:'limit'},
+    ],
     ['activity-bar']:[
         {name:"data-entity", label:'Entity Name'},
         {name:"data-record-id", label:'Record Id'},

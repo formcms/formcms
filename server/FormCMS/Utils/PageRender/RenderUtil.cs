@@ -17,7 +17,23 @@ public static class RenderUtil
         var template = Handlebars.Compile(html);
         return template(data);
     }
+    
+    public static Result<TopNode[]> GetTopNodes(this HtmlDocument doc)
+    {
+        var nodeCollection = doc.DocumentNode.SelectNodes($"//*[@{Constants.AttrDataSource}='{Constants.TopList}']");
+        if (nodeCollection is null) return Result.Ok<TopNode[]>([]);
+        var ret = new List<TopNode>();
+        foreach (var n in nodeCollection)
+        {
+            if (!GetInt(n, Constants.AttrLimit, out var limit)) return Result.Fail("Failed to parse limit");
+            
+            var entity = n.GetAttributeValue(Constants.AttrEntity, string.Empty);
+            ret.Add(new TopNode(n, entity,limit,"TopList_" + entity));
+        }
 
+        return ret.ToArray();
+    }
+    
     public static Result<DataNode[]> GetDataNodes(this HtmlDocument doc)
     {
         var nodeCollection = doc.DocumentNode.SelectNodes($"//*[@{Constants.AttrDataSource}='{Constants.DataList}']");
@@ -43,12 +59,14 @@ public static class RenderUtil
         }
 
         return ret.ToArray();
-        bool GetInt(HtmlNode node, string attribute, out int value) => int.TryParse(node.GetAttributeValue(attribute, "0"), out value);
     }
 
-    public static void SetPaginationTemplate(this HtmlNode node, string field, PaginationMode paginationMode)
+    public static void SetRepeats(this HtmlNode node, string field)
     {
         node.InnerHtml = "{{#each " + field + "}}" + node.InnerHtml + "{{/each}}";
+    }
+    public static void SetPagination(this HtmlNode node, string field, PaginationMode paginationMode)
+    {
         switch (paginationMode)
         {
             case PaginationMode.InfiniteScroll:
@@ -60,4 +78,7 @@ public static class RenderUtil
                 break;
         }
     }
+    
+    private static bool GetInt(HtmlNode node, string attribute, out int value) 
+        => int.TryParse(node.GetAttributeValue(attribute, "0"), out value);
 }

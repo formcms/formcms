@@ -3,7 +3,16 @@ export const activityBar =
         category: 'Data Display',
         name: 'activity-bar',
         label: 'Activity Bar',
-        media: `<svg viewBox="0 0 1024 1024" class="icon"  xmlns="http://www.w3.org/2000/svg"><path d="M214.5 264.6h587.4v513.9H214.5z" fill="#E1F0FF" /><path d="M214.5 240.2h587.4v97.9H214.5zM801.9 240.2h24.5v538.4h-24.5zM190 240.2h24.5v538.4H190z" fill="#446EB1" /><path d="M214.5 460.4h587.4v24.5H214.5zM214.5 607.3h587.4v24.5H214.5z" fill="#6D9EE8" /><path d="M385.8 338.1h24.5v416h-24.5zM606.1 338.1h24.5v416h-24.5z" fill="#6D9EE8" /><path d="M214.5 754.1h587.4v24.5H214.5z" fill="#446EB1" /></svg>`,
+        media: `<svg viewBox="0 0 24 24" class="icon" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <!-- Heart for Like (top-left, scaled down) -->
+        <path d="M6 8.5l-.7-.6C3.4 6.3 2 5.2 2 3.5 2 2.1 3.1 1 4.5 1c.8 0 1.6.4 2 1 .4-.6 1.2-1 2-1 1.4 0 2.5 1.1 2.5 2.5 0 1.7-1.5 3.1-3.8 5.2L6 8.5z" />
+        <!-- Share arrow (top-right, scaled down) -->
+        <path d="M18 6l2 2m0 0l-2 2m2-2h-4" />
+        <!-- Eye pupil for View (bottom-center, scaled down) -->
+        <circle cx="12" cy="16" r="1" />
+        <!-- Eye outline for View (bottom-center, scaled down) -->
+        <path d="M17 16c0-2.2-1.8-4-4-4s-4 1.8-4 4" /> 
+    </svg>`,
         content: `
     <div class="btn-group flex justify-center gap-2"  data-component="activity-bar" data-gjs-type="activity-bar">
         <button data-component="like-button" class="btn btn-primary btn-sm flex items-center gap-1">

@@ -22,7 +22,7 @@ public class BufferFlushWorker(
                 await Task.Delay(delay, stoppingToken);
 
                 using var scope = scopeFactory.CreateScope();
-                var activityService = scope.ServiceProvider.GetRequiredService<IActivityService>();
+                var activityService = scope.ServiceProvider.GetRequiredService<IActivityCollectService>();
                 await activityService.Flush(_lastFlushTime,stoppingToken);
                 _lastFlushTime = nextMinute;
             }

@@ -66,7 +66,7 @@ export function loadEditor(container,  components,styles) {
             ],
             styles: [
                 'https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.0.2/tailwind.min.css',
-                'https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css'
+                'https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css',
             ],
         },
         assetManager: {

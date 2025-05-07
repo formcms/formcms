@@ -9,13 +9,6 @@ public static class ActivityHandler
 {
     public static RouteGroupBuilder MapActivityHandler(this RouteGroupBuilder builder)
     {
-        builder.MapGet("top-items/{entityName}", (
-            IActivityService s,
-            string entityName,
-            int n,
-            CancellationToken ct
-        ) => s.GetTopItems(entityName, n, ct));
-        
         builder.MapGet("/page-counts", (
             IActivityService s,
             int n,
@@ -55,7 +48,7 @@ public static class ActivityHandler
         builder.MapGet("/{entityName}/{recordId:long}", (
             string entityName,
             long recordId,
-            IActivityService s,
+            IActivityCollectService s,
             HttpContext http, // Inject HttpContext
             CancellationToken ct
         ) => s.Get(UserId(http), entityName, recordId, ct));
@@ -65,14 +58,14 @@ public static class ActivityHandler
             long recordId,
             string type,
             bool active,
-            IActivityService s,
+            IActivityCollectService s,
             CancellationToken ct
         ) => s.Toggle(entityName, recordId, type, active, ct));
 
         builder.MapGet("/visit", (
             string url, 
             HttpContext context,
-            IActivityService s,CancellationToken ct
+            IActivityCollectService s,CancellationToken ct
         ) => s.Visit(UserId(context), url, ct));
         
         builder.MapPost("/record/{entityName}/{recordId:long}", async (
@@ -80,7 +73,7 @@ public static class ActivityHandler
             long recordId,
             string type,
             HttpContext context,
-            IActivityService s,
+            IActivityCollectService s,
             CancellationToken ct
         ) =>
         {

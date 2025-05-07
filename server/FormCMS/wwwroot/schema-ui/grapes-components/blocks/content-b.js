@@ -36,26 +36,26 @@ export const contentB = {
         width: 16px;
         height: 16px;
     }
-    .truncate-two-lines {
+    .truncate-lines {
         display: -webkit-box;
-        -webkit-line-clamp: 2;
+        -webkit-line-clamp: 3;
         -webkit-box-orient: vertical;
         overflow: hidden;
         text-overflow: ellipsis;
     }
 </style>
 <section class="text-gray-600 body-font">
-    <div class="container px-5 py-12 mx-auto">
-        <div class="flex flex-wrap w-full mb-12">
-            <div class="lg:w-1/2 w-full mb-6 lg:mb-0">
+    <div class="container px-5 py-5 mx-auto">
+        <div class="flex flex-wrap w-full mb-5">
+            <div class="lg:w-1/2 w-full mb-5 lg:mb-0">
                 <h1 class="sm:text-4xl text-3xl font-bold title-font mb-2 text-gray-900">Content B</h1>
                 <div class="h-1 w-20 bg-red-500 rounded"></div>
             </div>
             <p class="lg:w-1/2 w-full leading-relaxed text-gray-500 prose">
-                This section is powered by <a href="https://github.com/FormCMS/FormCMS/" id="ile891" class="text-indigo-500 hover:text-indigo-700">FormCMS</a> \`Content B\` custom blocks, showcasing courses filtered by \`status=featured\`. Pagination is enabled with button controls.
+                This section is powered by <a href="https://github.com/FormCMS/FormCMS/" id="ile891" class="text-indigo-500 hover:text-indigo-700">FormCMS</a> \`Content B\` custom blocks.
             </p>
         </div>
-        <div class="flex flex-wrap -m-4" data-gjs-type="data-list" data-source="data-list">
+        <div class="flex flex-wrap -m-4" data-gjs-type="data-list" data-source="data-list" offset="0" limit="4">
             <div class="xl:w-1/4 md:w-1/2 p-4">
                 <div class="bg-white p-6 rounded-lg shadow-md item-card">
                     <a href="/course/20" id="ig7n3" title="Mastering the Art of Cooking Steak">
@@ -65,7 +65,7 @@ export const contentB = {
                     <h2 class="text-lg text-gray-900 font-medium title-font mb-3">
                         <a href="/course/20" id="i3rs6" class="hover:text-indigo-600">{{title}}</a>
                     </h2>
-                    <p class="leading-relaxed text-base text-gray-600 prose truncate-two-lines">{{subtitle}}</p>
+                    <p class="leading-relaxed text-base text-gray-600 prose truncate-lines">{{subtitle}}</p>
                     <div class="mt-4 flex justify-between">
                         <span class="meta-info">
                             <svg class="meta-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
