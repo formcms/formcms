@@ -4,7 +4,7 @@ namespace FormCMS.Cms.Services;
 
 public class DummyTopItemService:ITopItemService
 {
-    public Task<Record[]> GetTopItems(string entityName, int topN, CancellationToken ct)
+    public Task<Record[]> GetTopItems(string entityName, int offset, int limit, CancellationToken ct)
     {
         throw new NotImplementedException();
     }

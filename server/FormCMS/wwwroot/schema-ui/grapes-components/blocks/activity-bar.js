@@ -14,7 +14,7 @@ export const activityBar =
         <path d="M17 16c0-2.2-1.8-4-4-4s-4 1.8-4 4" /> 
     </svg>`,
         content: `
-    <div class="btn-group flex justify-center gap-2"  data-component="activity-bar" data-gjs-type="activity-bar">
+    <div class="btn-group flex justify-center gap-2  py-1"  data-component="activity-bar" data-gjs-type="activity-bar">
         <button data-component="like-button" class="btn btn-primary btn-sm flex items-center gap-1">
             <!-- Inactive: Outline Heart -->
             <svg data-component="like-icon-inactive" xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

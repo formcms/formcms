@@ -73,7 +73,7 @@ public static class ActivityCounts
         return ret;
     }
 
-    public static Query TopCountItems(string entityName, int topN)
+    public static Query TopCountItems(string entityName, int offset, int limit)
         => new Query(TableName)
             .Select(nameof(TopCountItem.EntityName).Camelize())
             .Select(nameof(TopCountItem.RecordId).Camelize())
@@ -83,7 +83,8 @@ public static class ActivityCounts
             .Where(nameof(ActivityCount.EntityName).Camelize(), entityName)
             .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false)
             .OrderByDesc(nameof(ActivityCount.Count).Camelize())
-            .Limit(topN);
+            .Offset(offset)
+            .Limit(limit);
 
     public static Query PageVisites(int topN)
         => new Query(TableName)

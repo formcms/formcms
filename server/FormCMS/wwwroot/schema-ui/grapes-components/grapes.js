@@ -23,8 +23,10 @@ function addCustomTypes(editor){
             view:{
                 openSettings: function ( e ) {
                     e.preventDefault();
-                    editor.select( this.model );
-                    editor.Panels.getButton( 'views', 'open-tm' ).set( 'active', 1 );
+                    if(traits.length> 0) {
+                        editor.select(this.model);
+                        editor.Panels.getButton('views', 'open-tm').set('active', 1);
+                    }
                 },
                 onActive() {
                     this.el.contentEditable = true;

@@ -4,10 +4,10 @@ export const topList = {
     label: 'Top List',
     media: `<svg viewBox="0 0 1024 1024" class="icon" xmlns="http://www.w3.org/2000/svg"><path d="M128 128h768v768H128z" fill="#E1F0FF"/><path d="M128 128h768v128H128zM128 256h768v128H128zM128 384h768v128H128zM128 512h768v128H128zM128 640h768v128H128z" fill="#446EB1"/><path d="M128 128h128v640H128z" fill="#6D9EE8"/></svg>`,
     content: `
-<section class="py-6">
-    <h3 class="sm:text-2xl text-2xl font-bold title-font mb-6 text-gray-900">Top List</h3>
-    <div class="mt-8" data-gjs-type="top-list" data-source="top-list" limit="5">
-        <div class="lg:border-t5-100 max-md:border-t5-100 bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 mb-4">
+<div class="py-6" data-gjs-type="top-list"  data-component="top-list" offset="0" limit="5">
+    <h3 class="sm:text-2xl text-2xl font-bold title-font mb-2 text-gray-900">Top List</h3>
+    <div class="mt-4"  data-gjs-type="foreach" data-component="foreach">
+        <div class="lg:border-t5-100 max-md:border-t5-100 bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 mb-2">
             <div class="flex items-start">
                 <div class="font-source w-10 shrink-0 text-3xl italic text-gray-500">{{i}}</div>
                 <div class="flex-1">
@@ -21,17 +21,17 @@ export const topList = {
                             </svg>
                             <div>{{counts.share}}</div>
                         </button>
-                        <a href="/course/7" class="group cursor-pointer flex items-center gap-1 min-w-[50px] hover:text-blue-500 transition-colors duration-200">
+                        <button class="group cursor-pointer flex items-center gap-1 min-w-[50px] hover:text-blue-500 transition-colors duration-200">
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-4 w-4 !stroke-2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 01-.923 1.785A5.969 5.969 0 006 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
                             </svg>
                             <div>{{counts.like}}</div>
-                        </a>
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-</section>
+</div>
 `
 };

@@ -14,6 +14,7 @@ import {breadcrumbs} from "./blocks/breadcrumbs.js";
 import {carousel} from "./blocks/carousel.js";
 import {activityBar}from "./blocks/activity-bar.js"
 import {topList} from "./blocks/top-list.js";
+import {relatedList} from "./blocks/related-list.js";
 
 export const customBlocks = [
     cardA,
@@ -26,5 +27,6 @@ export const customBlocks = [
     breadcrumbs,
     carousel,
     activityBar,
-    topList
+    relatedList,
+    topList,
 ]

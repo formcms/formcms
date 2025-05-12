@@ -1,4 +1,5 @@
 export const customTypes = {
+    ['foreach']:[], /*need to generate a uniq ID*/
     ['data-list']: [
         {name:"field", label:'field'},
         {name:"query", label:'query'},

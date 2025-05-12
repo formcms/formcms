@@ -82,7 +82,7 @@ public sealed class PageService(
         };
         TagPagination(data, items, part);
 
-        ctx.Node.SetRepeats(flatField);
+        ctx.Node.SetEach(flatField);
         ctx.Node.SetPagination(flatField, part.DataSource.PaginationMode);
         var html = part.DataSource.PaginationMode == PaginationMode.Button
             ? ctx.Node.OuterHtml // for button pagination, replace the div 
@@ -99,13 +99,13 @@ public sealed class PageService(
         await LoadTopList(data, ctx.TopNodes, token);
         foreach (var (htmlNode, dataSource) in ctx.DateNodes)
         {
-            htmlNode.SetRepeats(dataSource.Field);
+            htmlNode.SetEach(dataSource.Field);
             htmlNode.SetPagination(dataSource.Field, dataSource.PaginationMode);
         }
         
         foreach (var node in ctx.TopNodes)
         {
-            node.HtmlNode.SetRepeats(node.Field);
+            node.HtmlNode.SetEach(node.Field);
         }
 
         var title = Handlebars.Compile(ctx.Page.Title)(data);
@@ -142,7 +142,7 @@ public sealed class PageService(
     {
         foreach (var node in nodes)
         {
-            data[node.Field] = await topItemSvc.GetTopItems(node.Entity, node.Limit, ct);
+            data[node.Field] = await topItemSvc.GetTopItems(node.Entity, node.Offset,node.Limit, ct);
         }
     }
 

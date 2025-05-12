@@ -28,7 +28,7 @@ export const cardA =
   </g>
 </svg>`,
         content: `
-<div class="container px-8 mx-auto xl:px-5  max-w-screen-lg py-5 lg:py-8 !pt-0">
+<div class="container px-8 mx-auto xl:px-5  max-w-screen-lg py-5 lg:py-8 !pt-0" data-gjs-type="card-a">
   <div class="mx-auto max-w-screen-md ">
     <div class="mt-3 rounded-2xl bg-gray-50 px-8 py-8 text-gray-500 dark:bg-gray-900 dark:text-gray-400">
       <div class="flex flex-wrap items-start sm:flex-nowrap sm:space-x-6">

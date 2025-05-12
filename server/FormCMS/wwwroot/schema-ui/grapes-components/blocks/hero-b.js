@@ -18,7 +18,7 @@ export const heroB =
 \tL202.231,56.632z"/>
 </svg>`,
         content: `
-<div class="container px-8 mx-auto xl:px-5  max-w-screen-lg py-5 lg:py-8 !pt-0">
+<div data-gjs-type='hero-b' class="container px-8 mx-auto xl:px-5  max-w-screen-lg py-5 lg:py-8 !pt-0">
   <div class="mx-auto max-w-screen-md ">
     <div class="flex justify-center"> <div class="flex gap-3"> <span class="inline-block text-xs font-medium tracking-wider mt-5 text-pink-600">{{tag}}</span> </div> </div>
     <h1 class="text-brand-primary mb-3 mt-2 text-center text-3xl font-semibold tracking-tight dark:text-white lg:text-4xl lg:leading-snug">{{title}}</h1>

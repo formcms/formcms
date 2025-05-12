@@ -20,48 +20,64 @@ public static class RenderUtil
     
     public static Result<TopNode[]> GetTopNodes(this HtmlDocument doc)
     {
-        var nodeCollection = doc.DocumentNode.SelectNodes($"//*[@{Constants.AttrDataSource}='{Constants.TopList}']");
-        if (nodeCollection is null) return Result.Ok<TopNode[]>([]);
+        var parentNodes = doc.DocumentNode.SelectNodes($"//*[@{Constants.AttrDataComponent}='{Constants.TopList}']");
+        if (parentNodes is null) return Result.Ok<TopNode[]>([]);
         var ret = new List<TopNode>();
-        foreach (var n in nodeCollection)
+        foreach (var parent in parentNodes)
         {
-            if (!GetInt(n, Constants.AttrLimit, out var limit)) return Result.Fail("Failed to parse limit");
-            
-            var entity = n.GetAttributeValue(Constants.AttrEntity, string.Empty);
-            ret.Add(new TopNode(n, entity,limit,"TopList_" + entity));
+            if (!GetInt(parent, Constants.AttrLimit, out var limit)) return Result.Fail("Failed to parse limit");
+            if (!GetInt(parent, Constants.AttrOffset, out var offset)) return Result.Fail("Failed to parse offset");
+            ret.AddRange(
+                from foreachNode in parent.SelectNodes($".//*[@{Constants.AttrDataComponent}='{Constants.Foreach}']")
+                let entity = parent.GetAttributeValue(Constants.AttrEntity, string.Empty)
+                select new TopNode(foreachNode, entity, offset, limit, parent.Id));
         }
 
         return ret.ToArray();
     }
-    
+
     public static Result<DataNode[]> GetDataNodes(this HtmlDocument doc)
     {
-        var nodeCollection = doc.DocumentNode.SelectNodes($"//*[@{Constants.AttrDataSource}='{Constants.DataList}']");
-        if (nodeCollection is null) return Result.Ok<DataNode[]>([]);
-        var ret = new List<DataNode>();
-        foreach (var n in nodeCollection)
-        {
-            if (!GetInt(n, Constants.AttrOffset, out var offset)) return Result.Fail("Failed to parse offset");
-            if (!GetInt(n, Constants.AttrLimit, out var limit)) return Result.Fail("Failed to parse limit");
-            
-            var query = n.GetAttributeValue(Constants.AttrQuery, string.Empty);
-            var qs = n.GetAttributeValue(Constants.AttrQueryString, string.Empty);
-            var field = n.GetAttributeValue(Constants.AttrField, string.Empty);
-            if (string.IsNullOrWhiteSpace(field) && string.IsNullOrWhiteSpace(query))
-            {
-                return Result.Fail($"Error: Both the 'field' and 'query' properties are missing for the {Constants.DataList} element. Please ensure that the element is configured correctly. Element details: [{n.OuterHtml}]");
-            }
+        var parentNodes = doc.DocumentNode.SelectNodes($"//*[@{Constants.AttrDataComponent}='{Constants.DataList}']");
+        if (parentNodes is null) return Result.Ok<DataNode[]>([]);
 
-            field = string.IsNullOrWhiteSpace(field) ? n.Id : field;
-            var pagination = n.GetAttributeValue(Constants.AttrPagination, PaginationMode.None.ToString());
-            Enum.TryParse(pagination,true, out PaginationMode paginationType);
-            ret.Add(new DataNode(n, new DataSource(paginationType, field, query, qs, offset, limit)));
+        var ret = new List<DataNode>();
+        foreach (var parent in parentNodes)
+        {
+            // Find the child element with data-foreach="true"
+            foreach (var foreachNode in parent.SelectNodes($".//*[@{Constants.AttrDataComponent}='{Constants.Foreach}']"))
+            {
+                // Parse attributes from the parent element
+                if (!GetInt(parent, Constants.AttrOffset, out var offset)) return Result.Fail("Failed to parse offset");
+                if (!GetInt(parent, Constants.AttrLimit, out var limit)) return Result.Fail("Failed to parse limit");
+
+                var query = parent.GetAttributeValue(Constants.AttrQuery, string.Empty);
+                var qs = parent.GetAttributeValue(Constants.AttrQueryString, string.Empty);
+                var field = parent.GetAttributeValue(Constants.AttrField, string.Empty);
+
+                // Validate field and query
+                if (string.IsNullOrWhiteSpace(field) && string.IsNullOrWhiteSpace(query))
+                {
+                    return Result.Fail(
+                        $"Error: Both the 'field' and 'query' properties are missing for the element with id '{parent.Id}'. Please ensure that the element is configured correctly. Element details: [{parent.OuterHtml}]");
+                }
+
+                // Use parent.Id if field is empty
+                field = string.IsNullOrWhiteSpace(field) ? parent.Id : field;
+
+                // Parse pagination attribute
+                var pagination = parent.GetAttributeValue(Constants.AttrPagination, nameof(PaginationMode.None));
+                Enum.TryParse(pagination, true, out PaginationMode paginationType);
+
+                // Create DataNode with the foreach node and DataSource from parent attributes
+                ret.Add(new DataNode(foreachNode, new DataSource(paginationType, field, query, qs, offset, limit)));
+            }
         }
 
         return ret.ToArray();
     }
 
-    public static void SetRepeats(this HtmlNode node, string field)
+    public static void SetEach(this HtmlNode node, string field)
     {
         node.InnerHtml = "{{#each " + field + "}}" + node.InnerHtml + "{{/each}}";
     }

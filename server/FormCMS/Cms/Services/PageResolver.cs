@@ -14,7 +14,7 @@ public class PageResolver(
     public  Task<Schema> GetPage(string path, CancellationToken ct)
     {
         path = string.IsNullOrWhiteSpace(path) ? Home : path;
-        var parts = path.Split('/');
+        var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length > 2)
         {
             throw new ResultException("Page path contains more than 2 segments");

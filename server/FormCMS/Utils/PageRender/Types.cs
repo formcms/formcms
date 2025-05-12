@@ -8,7 +8,7 @@ namespace FormCMS.Utils.PageRender;
 
 public static class Constants
 {
-    public const string AttrDataSource = "data-source";
+    public const string AttrDataComponent = "data-component";
     public const string AttrQuery = "query";
     public const string AttrEntity = "entity";
     public const string AttrOffset = "offset";
@@ -18,12 +18,13 @@ public static class Constants
     public const string AttrPagination = "pagination";
     public const string DataList = "data-list";
     public const string TopList = "top-list";
+    public const string Foreach = "foreach";
 }
 
 public enum PaginationMode { None, Button, InfiniteScroll }
 public record DataSource(PaginationMode PaginationMode, string Field, string Query, string QueryString, int Offset, int Limit);
 public record DataNode(HtmlNode HtmlNode, DataSource DataSource );
-public record TopNode(HtmlNode HtmlNode, string Entity, int Limit, string Field);
+public record TopNode(HtmlNode HtmlNode, string Entity,int Offset, int Limit, string Field);
 
 public record PagePart(string Page, string NodeId, string First, string Last, DataSource DataSource);
 
