@@ -27,7 +27,7 @@ export const heroB =
         <div class="relative h-10 w-10 flex-shrink-0">
             <img alt="Li Bai" loading="lazy" decoding="async" data-nimg="fill" class="rounded-full object-cover" src="/files{{author.image}}" style="position: absolute; height: 100%; width: 100%; inset: 0px; color: transparent;"/>
         </div>
-        <div class="flex items-center space-x-2 text-sm"> <p class="text-gray-800 dark:text-gray-400"> <a href=""> {{author.name}} </a> </p> </div>
+        <div class="flex items-center space-x-2 text-sm"> <p class="text-gray-800 dark:text-gray-400"> <a href="/page/{{author.id}}"> {{author.name}} </a> </p> </div>
         <div> <div class="flex items-center space-x-2 text-sm"> <time class="text-gray-500 dark:text-gray-400" >{{date}}</time> <span>{{time_to_read}}</span> </div>
       </div>
     </div>

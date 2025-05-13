@@ -9,3 +9,8 @@ public sealed record Page(
     /*for grapes.js restore last configure */
     string Components,
     string Styles);
+
+public class PageConstants
+{
+    public const string Home = "home";
+}

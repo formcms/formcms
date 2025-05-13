@@ -22,7 +22,7 @@ export const contentB = {
                     </a>
                     <h3 class="tracking-widest text-red-500 text-xs font-medium uppercase">{{tag}}</h3>
                     <h2 class="text-lg text-gray-900 font-medium mb-3">
-                        <a href="pageName/{{id}}" class="hover:text-indigo-600 line-clamp-2" >{{title}}</a>
+                        <a href="/page/{{id}}" class="hover:text-indigo-600 line-clamp-2" >{{title}}</a>
                     </h2>
                     <p class="leading-relaxed text-base text-gray-600 prose line-clamp-3">{{subtitle}}</p>
                     <div class="mt-4 flex justify-between">

@@ -13,19 +13,19 @@ export const threeLayerMenu = {
       <li>
         <details open class="group">
           <summary class="cursor-pointer text-base font-semibold text-gray-800 hover:text-blue-600">
-            <a href="{{url}}"> {{name}} </a>
+            <a href="/page/{{id}}"> {{name}} </a>
           </summary>
           <ul class="pl-4 space-y-2 mt-2 border-l border-gray-200">
             {{#each children}}
             <li>
               <details open class="group">
                 <summary class="cursor-pointer text-sm font-medium text-gray-700 hover:text-blue-500">
-                  <a href="{{url}}">{{name}}</a>
+                  <a href="/page/{{id}}">{{name}}</a>
                 </summary>
                 <ul class="pl-4 space-y-1 mt-1 border-l border-gray-100">
                   {{#each children}}
                   <li>
-                    <a href="{{url}}" class="text-sm text-gray-600 hover:text-blue-400 hover:underline"> {{name}} </a>
+                    <a href="/page/{{id}}" class="text-sm text-gray-600 hover:text-blue-400 hover:underline"> {{name}} </a>
                   </li>
                   {{/each}}
                 </ul>

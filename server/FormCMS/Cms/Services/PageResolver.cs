@@ -9,11 +9,8 @@ public class PageResolver(
     ISchemaService schemaSvc
     ):IPageResolver
 {
-    private const string Home = "home";
-
     public  Task<Schema> GetPage(string path, CancellationToken ct)
     {
-        path = string.IsNullOrWhiteSpace(path) ? Home : path;
         var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
         if (parts.Length > 2)
         {

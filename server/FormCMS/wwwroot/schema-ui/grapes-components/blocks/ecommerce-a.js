@@ -13,13 +13,13 @@ export const ecommerceA = {
         <div class="flex flex-wrap -m-4" data-gjs-type="foreach" data-component="foreach">
           <div class="p-4 md:w-1/2 lg:w-1/4 w-full">
             <div class="bg-white rounded-xl overflow-hidden border border-gray-200 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl">
-              <a href="/pageName/{{slug}}" title="{{title}}">
+              <a href="/page/{{id}}" title="{{title}}">
                 <img src="{{image.url}}" alt="{{title}}" class="w-full h-56 object-cover rounded-t-xl" />
               </a>
               <div class="p-5">
                 <p class="text-xs font-medium uppercase text-red-500 mb-1">{{tag}}</p>
                 <h3 class="text-lg font-semibold text-gray-900 mb-3">
-                  <a class="transition-colors duration-200 hover:text-blue-600" href="/pageName/{{slug}}">{{title}}</a>
+                  <a class="transition-colors duration-200 hover:text-blue-600" href="/page/{{id}}">{{title}}</a>
                 </h3>
                 <div class="flex justify-between items-center">
                   <span class="flex items-center gap-2 text-sm text-gray-500">

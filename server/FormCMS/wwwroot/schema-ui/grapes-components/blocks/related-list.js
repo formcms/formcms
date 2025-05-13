@@ -22,10 +22,12 @@ export const relatedList = {
         <div class="lg:border-t5-100 max-md:border-t5-100 bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 mb-2">
             <div class="flex items-start">
                 <div class="w-16 h-16 shrink-0 mr-3">
+                    <a href="/page/{{id}}" data-title="true" class="block">
                     <img src="{{image.url}}" alt="{{title}}" class="w-full h-full object-cover rounded-md" />
+                    </a>
                 </div>
                 <div class="flex-1">
-                    <a href="{{url}}" data-title="true" class="block">
+                    <a href="/page/{{id}}" data-title="true" class="block">
                         <h3 class="text-lg font-serif font-extrabold text-gray-800 hover:text-blue-600 transition-colors duration-200">{{title}}</h3>
                     </a>
                     <div class="flex items-center gap-2 text-xs text-gray-500 mt-2">

@@ -81,6 +81,7 @@ public static class SchemaHelper
 
     public static SqlKata.Query ByNameAndTypeAndNotId(string name, SchemaType type, string schemaId)
         => BaseQuery()
+            .Where(nameof(Schema.IsLatest).Camelize(),true)
             .Where(nameof(Schema.Name).Camelize(), name)
             .Where(nameof(Schema.Type).Camelize(), type.Camelize())
             .WhereNot(nameof(Schema.SchemaId).Camelize(), schemaId);
@@ -110,15 +111,15 @@ public static class SchemaHelper
     private static SqlKata.Query BaseQuery()
         =>new SqlKata.Query(TableName)
             .Select(new []{
-                nameof(Schema.SchemaId), 
-                nameof(Schema.PublicationStatus), 
-                nameof(Schema.Id),
-                nameof(Schema.Name),
-                nameof(Schema.Type),
-                nameof(Schema.Settings),
-                nameof(Schema.CreatedAt),
-                nameof(Schema.CreatedBy),
-                nameof(Schema.IsLatest)
+                nameof(Schema.SchemaId).Camelize(), 
+                nameof(Schema.PublicationStatus).Camelize(), 
+                nameof(Schema.Id).Camelize(),
+                nameof(Schema.Name).Camelize(),
+                nameof(Schema.Type).Camelize(),
+                nameof(Schema.Settings).Camelize(),
+                nameof(Schema.CreatedAt).Camelize(),
+                nameof(Schema.CreatedBy).Camelize(),
+                nameof(Schema.IsLatest).Camelize()
             }.Select(x=>x.Camelize()))
             .Where(DefaultColumnNames.Deleted.Camelize(), false);
 
