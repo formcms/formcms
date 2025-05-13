@@ -24,6 +24,34 @@ public class ActivityCollectService(
     DatabaseMigrator migrator
 ) : IActivityCollectService
 {
+    public async Task EnsureActivityTables()
+    {
+        await migrator.MigrateTable(Models.Activities.TableName, Models.Activities.Columns);
+        await dao.CreateIndex(Models.Activities.TableName, Models.Activities.KeyFields, true, CancellationToken.None);
+
+        await migrator.MigrateTable(ActivityCounts.TableName, ActivityCounts.Columns);
+        await dao.CreateIndex(ActivityCounts.TableName, ActivityCounts.KeyFields, true, CancellationToken.None);
+    }
+
+    public async Task Flush(DateTime? lastFlushTime, CancellationToken ct)
+    {
+        if (!settings.EnableBuffering)
+            return;
+
+        lastFlushTime ??= DateTime.UtcNow.AddMinutes(-1);
+
+        var counts = await countBuffer.GetAfterLastFlush(lastFlushTime.Value);
+        var countRecords = counts.Select(pair =>
+            (ActivityCounts.Parse(pair.Key) with { Count = pair.Value }).UpsertRecord()).ToArray();
+        
+        await dao.BatchUpdateOnConflict(ActivityCounts.TableName,  countRecords, ActivityCounts.KeyFields,ct);
+        
+        //Query title and image 
+        var statusList = await statusBuffer.GetAfterLastFlush(lastFlushTime.Value);
+        var activities = statusList.Select(pair => Models.Activities.Parse(pair.Key) with { IsActive = pair.Value }).ToArray();
+        await UpsertActivities(activities,ct);
+    }
+    
     public async Task<Dictionary<string, StatusDto>> Get(string cookieUserId,string entityName, long recordId, CancellationToken ct)
     {
         var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
@@ -169,33 +197,7 @@ public class ActivityCollectService(
                 ct);
         }
     }
-    public async Task EnsureActivityTables()
-    {
-        await migrator.MigrateTable(Models.Activities.TableName, Models.Activities.Columns);
-        await dao.CreateIndex(Models.Activities.TableName, Models.Activities.KeyFields, true, CancellationToken.None);
-
-        await migrator.MigrateTable(ActivityCounts.TableName, ActivityCounts.Columns);
-        await dao.CreateIndex(ActivityCounts.TableName, ActivityCounts.KeyFields, true, CancellationToken.None);
-    }
-
-    public async Task Flush(DateTime? lastFlushTime, CancellationToken ct)
-    {
-        if (!settings.EnableBuffering)
-            return;
-
-        lastFlushTime ??= DateTime.UtcNow.AddMinutes(-1);
-
-        var counts = await countBuffer.GetAfterLastFlush(lastFlushTime.Value);
-        var countRecords = counts.Select(pair =>
-            (ActivityCounts.Parse(pair.Key) with { Count = pair.Value }).UpsertRecord()).ToArray();
-        
-        await dao.BatchUpdateOnConflict(ActivityCounts.TableName,  countRecords, ActivityCounts.KeyFields,ct);
-        
-        //Query title and image 
-        var statusList = await statusBuffer.GetAfterLastFlush(lastFlushTime.Value);
-        var activities = statusList.Select(pair => Models.Activities.Parse(pair.Key) with { IsActive = pair.Value }).ToArray();
-        await UpsertActivities(activities,ct);
-    }
+  
 
     private async Task UpdateScore(LoadedEntity entity,ActivityCount[] counts, CancellationToken ct)
     {
@@ -337,7 +339,7 @@ public class ActivityCollectService(
         {
             if (group.Key == Constants.PageEntity)
             {
-                toUpdate.AddRange(group.Select(x=>x.UpsertRecord(true)));
+                toUpdate.AddRange(group.Select(x=>x.UpsertRecord(false)));
             }
             else
             {
@@ -354,8 +356,6 @@ public class ActivityCollectService(
             ct);
     }
 
- 
-    
     private async Task<Dictionary<string, bool>> GetBufferStatusDict(Activity[] status)
     {
         var keys = status.Select(Models.Activities.Key).ToArray();

@@ -216,6 +216,7 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
         var insertValues = string.Join(", ", keyFields.Select(k => $"s.[{k}]").Concat([$"s.[{valueField}]"]));
 
         var sql = $"""
+                   DECLARE @OutputTable TABLE ([count] BIGINT);
                    MERGE [{tableName}] AS t
                    USING (
                        SELECT {sourceColumns}, @initVal + @delta AS [{valueField}]
@@ -226,7 +227,8 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
                    WHEN NOT MATCHED THEN
                        INSERT ({insertColumns})
                        VALUES ({insertValues})
-                   OUTPUT inserted.[{valueField}];
+                   OUTPUT inserted.[{valueField}] INTO @OutputTable;
+                   SELECT [{valueField}] FROM @OutputTable;
                    """;
 
         await using var command = new SqlCommand(sql, GetConnection());

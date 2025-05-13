@@ -30,13 +30,13 @@ public class ActivityApiTest(AppFactory factory)
         ));
         await factory.SchemaApi.Save(schema);
         
-        //anonymous visit
+        //authed visit
         await factory.ActivityApi.Visit(factory.GetHttpClient().BaseAddress + "/home");
         var authedCount = await factory.ActivityApi.VisitCounts(true).Ok();
         Assert.True(authedCount.Length > 0);
-        
-        //authed visit
         await factory.AuthApi.Logout();
+        
+        //anonymous visit
         await factory.ActivityApi.Visit(factory.GetHttpClient().BaseAddress + "/home");
         await factory.AuthApi.EnsureSaLogin().Ok();
         var anonymouseCount = await factory.ActivityApi.VisitCounts(false).Ok();

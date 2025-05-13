@@ -153,6 +153,11 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-bs-level="2"><a href="#popular-score" class="nav-link">Popular Score</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#optimizing-caching" class="nav-link">Optimizing Caching</a>
               <ul class="nav flex-column">
               </ul>
@@ -2086,6 +2091,29 @@ export default function () {
 </ul>
 <p>These settings allow for flexible customization, ensuring the User Portal displays content accurately and consistently across history, liked items, and bookmarked items.</p>
 <hr />
+<h2 id="popular-score">Popular Score</h2>
+<p>The Popular Score is a dynamic metric that measures the engagement level of content record</p>
+<p>The <strong>Popular Score</strong> is a simple way to measure how engaging content (like posts, videos, or articles) is based on user interactions such as <strong>views</strong>, <strong>likes</strong>, <strong>shares</strong>, and <strong>how long ago the content was posted</strong>. It helps platforms rank and promote content that’s getting attention, making it more visible on homepages, trending sections, or personalized feeds.</p>
+<hr />
+<h3 id="calculation-of-the-popular-score">Calculation of the Popular Score</h3>
+<p>The Popular Score combines views, likes, shares, and time since posting, with each part weighted to reflect its importance. Newer content gets a boost, while older content loses a bit of its score.</p>
+<p>Scores are updated frequently (e.g., every minute) and stored in a fast system like Redis to keep things running smoothly.
+To favor fresh content, the score is slightly reduced for older posts. The older the content, the more its score drops.</p>
+<hr />
+<h3 id="how-its-used">How It’s Used</h3>
+<p>The Popular Score powers key features:  <br />
+1. <strong>Ranking Content</strong>: Shows the most engaging posts on homepages or trending pages.  <br />
+2. <strong>Personalized Feeds</strong>: Combines scores with user interests to suggest content.  <br />
+3. <strong>Creator Insights</strong>: Helps creators see what’s working to improve their posts.  <br />
+4. <strong>Content Moderation</strong>: Flags high-scoring content for review to ensure it follows platform rules. </p>
+<hr />
+<h3 id="making-it-work-smoothly">Making It Work Smoothly</h3>
+<p>To handle lots of interactions without slowing down:
+- <strong>Batching</strong>: Group interaction counts (views, likes, shares) to reduce database work.
+- <strong>Quick Updates</strong>: Only update scores for new interactions to save time.
+- <strong>Fast Storage</strong>: Use Redis to store scores for instant access.
+- <strong>Background Processing</strong>: Update scores in the background to keep the platform responsive.</p>
+<hr />
 <h2 id="optimizing-caching">Optimizing Caching</h2>
 <p>FormCMS employs advanced caching strategies to boost performance.  </p>
 <p>For detailed information on ASP.NET Core caching, visit the official documentation: <a href="https://learn.microsoft.com/en-us/aspnet/core/performance/caching/overview?view=aspnetcore-9.0">ASP.NET Core Caching Overview</a>.</p>
@@ -2570,5 +2598,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-04-24 18:59:32.794307+00:00
+Build Date UTC : 2025-05-13 17:17:51.778993+00:00
 -->

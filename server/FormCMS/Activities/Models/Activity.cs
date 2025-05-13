@@ -16,11 +16,11 @@ public record Activity(
     string UserId,
     bool IsActive = true,
     long Id = 0,
-    string Title ="", 
-    string Url="", 
-    string Image="", 
-    string Subtitle="", 
-    DateTime PublishedAt=default,
+    string Title = "",
+    string Url = "",
+    string Image = "",
+    string Subtitle = "",
+    DateTime PublishedAt = default,
     DateTime UpdatedAt = default
 );
 

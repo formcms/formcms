@@ -24,7 +24,7 @@ public class QueryPluginService(
             var countDict = await activityCollectService.GetCountDict(entityName, id, types, ct);
             foreach (var t in types)
             {
-                record[ActivityCounts.ActivityCountField(t)] = countDict[t];
+                record[ActivityCounts.ActivityCountField(t)] = countDict.TryGetValue(t, out var j) ? j : 0;
             }
         }
     }  
