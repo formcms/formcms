@@ -11,7 +11,6 @@ using Humanizer;
 namespace FormCMS.Cms.Services;
 
 public sealed class QueryService(
-    ILogger<QueryService> logger,
     KateQueryExecutor executor,
     IQuerySchemaService schemaSvc,
     IEntitySchemaService resolver,
@@ -63,7 +62,15 @@ public sealed class QueryService(
         
         var sourceId = desc.TargetAttribute.GetValueOrLookup(records[0]);
         new[] { attribute }.SetSpan(records, attribute.Sorts, sourceId);
-        return records;
+
+        var postParam = new QueryPostListArgs(query,
+            [..fields.Select(x => x.Field)],
+            [..filters],
+            [..sorts],
+            validSpan, pagination.PlusLimitOne(),
+            records);
+        postParam = await hook.QueryPostList.Trigger(provider, postParam);
+        return postParam.RefRecords;
     }
 
     /*
@@ -86,23 +93,25 @@ public sealed class QueryService(
      */
     private async Task<Record[]> ListWithAction(QueryContext ctx, Span span, StrArgs args, CancellationToken ct = default)
     {
-        var (query, filters, sorts, pagination) = ctx;
+        var (query, pagination) = ctx;
         var validSpan = span.ToValid(query.Entity.Attributes).Ok();
 
-        var hookParam = new QueryPreGetListArgs(query,  [..filters], query.Sorts, validSpan,
+        var hookParam = new QueryPreListArgs(query,  query.Filters, query.Sorts, validSpan,
             pagination.PlusLimitOne());
-        var res = await hook.QueryPreGetList.Trigger(provider, hookParam);
+        
+        var res = await hook.QueryPreList.Trigger(provider, hookParam);
+        
         Record[] items;
         if (res.OutRecords is not null)
         {
-            logger.LogInformation("Returning records from hook, query = {query}", ctx.Query.Name);
             items = span.ToPage(res.OutRecords, pagination.Limit);
         }
         else
         {
-            var fields = query.Selection.Where(x => x.DataType.IsLocal());
             var status = PublicationStatusHelper.GetDataStatus(args);
-            var kateQuery = query.Entity.ListQuery( filters, sorts, pagination.PlusLimitOne(), validSpan, fields, status);
+            var fields = query.Selection.Where(x => x.DataType.IsLocal());
+            var kateQuery = query.Entity.ListQuery([..query.Filters], [..query.Sorts], pagination.PlusLimitOne(), 
+                validSpan, fields, status);
             if (query.Distinct) kateQuery = kateQuery.Distinct();
             items = await executor.Many(kateQuery, ct);
             items = span.ToPage(items, pagination.Limit);
@@ -114,7 +123,16 @@ public sealed class QueryService(
         }
 
         query.Selection.SetSpan(items, query.Sorts, null);
-        return items;
+        var postParam = new QueryPostListArgs(
+            query,
+            [..query.GraphQLFieldNames],
+            query.Filters,
+            query.Sorts,
+            validSpan, pagination.PlusLimitOne(),
+            items
+        );
+        postParam = await hook.QueryPostList.Trigger(provider, postParam);
+        return postParam.RefRecords;
     }
 
     private async Task LoadAsset(GraphAttribute[] attributes, Record[] records)
@@ -151,20 +169,20 @@ public sealed class QueryService(
 
     private async Task<Record?> SingleWithAction(QueryContext ctx, StrArgs args, CancellationToken ct = default)
     {
-        var (query, filters,sorts,_) = ctx;
-        var res = await hook.QueryPreGetSingle.Trigger(provider,
-            new QueryPreGetSingleArgs(ctx.Query,  [..filters]));
+        var (query, _) = ctx;
+        var prePrams = new QueryPreSingleArgs(ctx.Query, query.Filters);
+        prePrams  = await hook.QueryPreSingle.Trigger(provider,prePrams);
+        
         Record? item;
-        if (res.OutRecord is not null)
+        if (prePrams.OutRecord is not null)
         {
-            logger.LogInformation("Query Single: Returning records from hook, query = {query}", ctx.Query.Name);
-            item = res.OutRecord;
+            item = prePrams.OutRecord;
         }
         else
         {
             var fields = query.Selection.Where(x => x.DataType.IsLocal());
             PublicationStatus? pubStatus = args.ContainsEnumKey(SpecialQueryKeys.Preview) ? null : PublicationStatus.Published;
-            var kateQuery = query.Entity.SingleQuery(filters, sorts,fields ,pubStatus).Ok();
+            var kateQuery = query.Entity.SingleQuery([..query.Filters], [..query.Sorts],fields ,pubStatus).Ok();
             item = await executor.Single(kateQuery, ct);
             if (item is not null)
             {
@@ -176,7 +194,9 @@ public sealed class QueryService(
         if (item is null) return item;
         
         query.Selection.SetSpan([item], [], null);
-        return item;
+        var postPram = new QueryPostSingleArgs(ctx.Query,query.Filters,item);
+        postPram =await hook.QueryPostSingle.Trigger(provider,postPram);
+        return postPram.RefRecord;
     }
 
     private async Task LoadItems(IEnumerable<GraphAttribute>? attrs, StrArgs args, Record[] items, CancellationToken ct)
@@ -195,7 +215,6 @@ public sealed class QueryService(
             }
         }
     }
-    
 
     private async Task AttachRelated(GraphAttribute attr, StrArgs args, Record[] items, CancellationToken ct)
     {
@@ -263,7 +282,7 @@ public sealed class QueryService(
         }
     }
 
-    private record QueryContext(LoadedQuery Query, ValidFilter[] Filters, ValidSort[] Sorts, ValidPagination Pagination);
+    private record QueryContext(LoadedQuery Query, ValidPagination Pagination);
 
     private async Task<QueryContext> FromSavedQuery(
         string name, Pagination? pagination,  bool haveCursor, StrArgs args, CancellationToken token =default)
@@ -297,6 +316,7 @@ public sealed class QueryService(
         var validPagination = PaginationHelper.ToValid(fly, query.Pagination, query.Entity.DefaultPageSize, haveCursor,args);
         var sort =(await SortHelper.ReplaceVariables(query.Sorts,args, query.Entity, resolver,PublicationStatusHelper.GetSchemaStatus(args))).Ok();
         var filters = FilterHelper.ReplaceVariables(query.Filters,args).Ok();
-        return new QueryContext(query, filters, sort,validPagination);
+        query = query with{Sorts = [..sort], Filters = [..filters]};
+        return new QueryContext(query, validPagination);
     }
 }

@@ -17,7 +17,7 @@ public interface IRelationDbDao
     Task<bool> UpdateOnConflict(string tableName, Record data, string []keyField, CancellationToken ct);
     Task BatchUpdateOnConflict(string tableName, Record[]records, string[] keyField, CancellationToken ct);
     
-    Task<long> Increase(string tableName, Record keyConditions, string valueField, long delta, CancellationToken ct);
+    Task<long> Increase(string tableName, Record keyConditions, string valueField,long initVal, long delta, CancellationToken ct);
 
     Task<Dictionary<string,T>> FetchValues<T>(
         string tableName,

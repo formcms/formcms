@@ -4,11 +4,10 @@
     <meta charset="UTF-8">
     <title><!--title--></title>
     <script src="//cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"></script>
-<!--    <script src="//cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>-->
     <script src="//code.jquery.com/jquery.min.js"></script>
     <script src="//cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
-    
+
     <script src="/_content/FormCMS/static-assets/js/pagination.js"></script>
     <script src="/_content/FormCMS/static-assets/js/activity.js"></script>
 
@@ -19,13 +18,18 @@
     <link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/utilities.min.css">
     <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css" rel="stylesheet" type="text/css"/>
     <style>
+
+        /*don't delete below line, it's place holder*/
         <!--css-->
+            /*social activity*/
         .active svg {
             fill: currentColor; /* Fills the icon when active */
         }
+
         .inactive svg {
             fill: none; /* Keeps the icon outlined when inactive */
         }
+
         /* Toast styling */
         .toast {
             position: fixed;
@@ -41,29 +45,32 @@
             opacity: 0;
             transition: opacity 0.3s ease-in-out;
         }
+
         .toast.show {
             opacity: 1;
         }
-        
     </style>
 </head>
 <body>
+<!--Place Holder-->
 <!--body-->
 
-
-<div id="cookie-consent-banner" style="position:fixed; bottom:0; background:white; width:100%; padding:10px; text-align:center; box-shadow:0 -2px 10px rgba(0,0,0,0.2);">
+<div id="cookie-consent-banner"
+     style="position:fixed; bottom:0; background:white; width:100%; padding:10px; text-align:center; box-shadow:0 -2px 10px rgba(0,0,0,0.2);">
     We use cookies to improve your experience.
     <button class="btn btn-primary btn-sm" onclick="acceptCookies()">Accept</button>
 </div>
 
 <script>
     function acceptCookies() {
-        document.cookie = "cookies-consent=true; path=/; max-age=" + (60*60*24*365);
+        document.cookie = "cookies-consent=true; path=/; max-age=" + (60 * 60 * 24 * 365);
         document.getElementById('cookie-consent-banner').style.display = 'none';
     }
+
     function hasConsent() {
         return document.cookie.split(';').some(c => c.trim().startsWith('cookies-consent=true'));
     }
+
     // Hide banner if already consented
     if (hasConsent()) {
         document.getElementById('cookie-consent-banner').style.display = 'none';

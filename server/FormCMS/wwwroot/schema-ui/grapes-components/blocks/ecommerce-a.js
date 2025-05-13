@@ -1,42 +1,50 @@
-export const ecommerceA =
-    {
-        category:'Data List',
+export const ecommerceA = {
+        category: 'Data List',
         name: 'ecommerce-a',
-        label: `Ecommerce A`,
-        media: `<svg viewBox="-0.5 0 19 19" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:sketch="http://www.bohemiancoding.com/sketch/ns">
-    
-    <title>icon/18/icon-grid-16</title>
-    <desc>Created with Sketch.</desc>
-    <defs>
-
-</defs>
-    <g id="out" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd" sketch:type="MSPage">
-        <path d="M1,9.88888892 L4.66666663,9.88888892 L4.66666663,13.5555555 L1,13.5555555 L1,9.88888892 L1,9.88888892 Z M5.44444446,9.88888892 L9.11111108,9.88888892 L9.11111108,13.5555555 L5.44444446,13.5555555 L5.44444446,9.88888892 L5.44444446,9.88888892 Z M9.88888892,9.88888892 L13.5555555,9.88888892 L13.5555555,13.5555555 L9.88888892,13.5555555 L9.88888892,9.88888892 L9.88888892,9.88888892 Z M14.3333334,9.88888892 L18,9.88888892 L18,13.5555555 L14.3333334,13.5555555 L14.3333334,9.88888892 L14.3333334,9.88888892 Z M1,14.3333334 L4.66666663,14.3333334 L4.66666663,18 L1,18 L1,14.3333334 L1,14.3333334 Z M5.44444446,14.3333334 L9.11111108,14.3333334 L9.11111108,18 L5.44444446,18 L5.44444446,14.3333334 L5.44444446,14.3333334 Z M9.88888892,14.3333334 L13.5555555,14.3333334 L13.5555555,18 L9.88888892,18 L9.88888892,14.3333334 L9.88888892,14.3333334 Z M14.3333334,14.3333334 L18,14.3333334 L18,18 L14.3333334,18 L14.3333334,14.3333334 L14.3333334,14.3333334 Z M1,5.44444446 L4.66666663,5.44444446 L4.66666663,9.11111108 L1,9.11111108 L1,5.44444446 L1,5.44444446 Z M5.44444446,5.44444446 L9.11111108,5.44444446 L9.11111108,9.11111108 L5.44444446,9.11111108 L5.44444446,5.44444446 L5.44444446,5.44444446 Z M9.88888892,5.44444446 L13.5555555,5.44444446 L13.5555555,9.11111108 L9.88888892,9.11111108 L9.88888892,5.44444446 L9.88888892,5.44444446 Z M14.3333334,5.44444446 L18,5.44444446 L18,9.11111108 L14.3333334,9.11111108 L14.3333334,5.44444446 L14.3333334,5.44444446 Z M1,1 L4.66666663,1 L4.66666663,4.66666663 L1,4.66666663 L1,1 L1,1 Z M5.44444446,1 L9.11111108,1 L9.11111108,4.66666663 L5.44444446,4.66666663 L5.44444446,1 L5.44444446,1 Z M9.88888892,1 L13.5555555,1 L13.5555555,4.66666663 L9.88888892,4.66666663 L9.88888892,1 L9.88888892,1 Z M14.3333334,1 L18,1 L18,4.66666663 L14.3333334,4.66666663 L14.3333334,1 L14.3333334,1 Z" id="path" fill="#000000" sketch:type="MSShapeGroup">
-
-</path>
-    </g>
-</svg>`,
+        label: 'Ecommerce A',
+        media: `<svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2 4h13" stroke="#000" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="9" cy="21" r="1" fill="#000"/>
+    <circle cx="20" cy="21" r="1" fill="#000"/>
+  </svg>`,
         content: `
-<section class="text-gray-600 body-font">
-  <div class="container px-5 py-10 mx-auto">
-    <h1 class="sm:text-3xl text-2xl font-medium title-font mb-2 text-gray-900">Category Name</h1>
-    <div class="flex flex-wrap -m-4" data-gjs-type="data-list" data-source="data-list">
-      <div class="lg:w-1/4 md:w-1/2 p-4 w-full">
-        <a  style="display: inline-block" href="/pageName/{{slug}}">
-          <img alt="ecommerce" class="object-cover object-center w-full h-full block" src="/files{{image}}">
-        </a>
-        <div class="mt-4">
-          <h3 class="text-gray-500 text-xs tracking-widest title-font mb-1">{{category}}</h3>
-          <h2 class="text-gray-900 title-font text-lg font-medium"><a href="/pageName/{{slug}}">{{title}}</a></h2>
-          <p class="mt-1">{{price}}</p>
+      <div class="container px-5 py-5 mx-auto text-gray-700 font-sans" data-gjs-type="data-list"  data-component="data-list"  offset="0" limit="4">
+        <h3 class="text-3xl sm:text-4xl font-bold mb-8 text-gray-900">Ecommerce A</h3>
+        <div class="flex flex-wrap -m-4" data-gjs-type="foreach" data-component="foreach">
+          <div class="p-4 md:w-1/2 lg:w-1/4 w-full">
+            <div class="bg-white rounded-xl overflow-hidden border border-gray-200 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl">
+              <a href="/page/{{id}}" title="{{title}}">
+                <img src="{{image.url}}" alt="{{title}}" class="w-full h-56 object-cover rounded-t-xl" />
+              </a>
+              <div class="p-5">
+                <p class="text-xs font-medium uppercase text-red-500 mb-1">{{tag}}</p>
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">
+                  <a class="transition-colors duration-200 hover:text-blue-600" href="/page/{{id}}">{{title}}</a>
+                </h3>
+                <div class="flex justify-between items-center">
+                  <span class="flex items-center gap-2 text-sm text-gray-500">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                    <span data-component="localDateTime">{{publishedAt}}</span>
+                  </span>
+                  <span class="flex items-center gap-2 text-sm text-gray-500">
+                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    {{viewCount}}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex justify-center mt-2 space-x-4"  data-gjs-type="pagination" >
+          <button data-component="previous" class="px-4 py-2 text-xs font-medium text-white bg-indigo-400 border border-gray-200 rounded-lg shadow-sm transition-all duration-200 ease-in-out hover:bg-indigo-500 hover:border-gray-300 hover:shadow-md hover:-translate-y-px disabled:bg-gray-200 disabled:text-gray-400 disabled:border-gray-300 disabled:shadow-none disabled:cursor-not-allowed">Previous</button>
+          <button data-component="next" class="px-4 py-2 text-xs font-medium text-white bg-indigo-400 border border-gray-200 rounded-lg shadow-sm transition-all duration-200 ease-in-out hover:bg-indigo-500 hover:border-gray-300 hover:shadow-md hover:-translate-y-px disabled:bg-gray-200 disabled:text-gray-400 disabled:border-gray-300 disabled:shadow-none disabled:cursor-not-allowed">Next</button>
         </div>
       </div>
-    </div>
-    <nav class="flex space-x-2" aria-label="Pagination">
-       <a data-command="previous" class="relative inline-flex items-center px-4 py-2 text-sm bg-gradient-to-r from-violet-300 to-indigo-300 border border-fuchsia-100 hover:border-violet-100 font-semibold cursor-pointer leading-5 rounded-md transition duration-150 ease-in-out focus:outline-none focus:shadow-outline-blue focus:border-blue-300 focus:z-10"> Previous </a>
-       <a data-command="next" class="relative inline-flex items-center px-4 py-2 text-sm bg-gradient-to-r from-violet-300 to-indigo-300 border border-fuchsia-100 hover:border-violet-100 font-semibold cursor-pointer leading-5 rounded-md transition duration-150 ease-in-out focus:outline-none focus:shadow-outline-blue focus:border-blue-300 focus:z-10"> Next </a>
-    </nav>
-  </div>
-</section> 
-        `
-    }
+  `
+};

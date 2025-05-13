@@ -1,27 +1,41 @@
 $(document).ready(function () {
     const loadingDict = new Map();
 
-    $('[data-command="previous"]').click(e => handlePaginationButton(e, e.target, false));
-    $('[data-command="next"]').click(e => handlePaginationButton(e, e.target, true));
+    $('[data-component="previous"]').click(e => handlePaginationButton(e, e.target, false));
+    $('[data-component="next"]').click(e => handlePaginationButton(e, e.target, true));
 
+    formatDate();
     initIntersectionObserver();
     updatePaginationStatus();
 
+    function formatDate () {
+        $('[data-component="localDateTime"]').each(function() {
+            const isoDate = $(this).text().trim();
+            if (isoDate) {
+                const formattedDate = utcStrToDatetimeStr(isoDate);
+                $(this).text(formattedDate || isoDate);
+            }
+        }); 
+    }
     function updatePaginationStatus() {
-        $('[data-source="data-list"]').each(function () {
+        $('[data-component="data-list"]').each(function () {
             const $list = $(this);
             const pagination = $list.attr('pagination');
-            const first = $list.attr('first');
-            const last = $list.attr('last');
-            const $nav = $list.parent().find(':has([data-command="previous"])');
+            
+            const $each = $list.find('[data-component="foreach"]');
+            const first = $each.attr('first');
+            const last = $each.attr('last');
+            const $nav = $list.find(':has([data-component="previous"])');
+            
+            console.log($nav.html());
 
             if (pagination !== 'Button' || (!first && !last)) {
                 $nav.remove();
                 return;
             }
 
-            toggleButtonVisibility($nav.find('[data-command="previous"]'), !!first);
-            toggleButtonVisibility($nav.find('[data-command="next"]'), !!last);
+            toggleButtonVisibility($nav.find('[data-component="previous"]'), !!first);
+            toggleButtonVisibility($nav.find('[data-component="next"]'), !!last);
         });
     }
 
@@ -32,7 +46,7 @@ $(document).ready(function () {
     async function handlePaginationButton(event, button, isNext) {
         event.preventDefault();
         const container = button.parentElement.parentElement;
-        const list = container.querySelector('[data-source="data-list"]');
+        const list = container.querySelector('[data-component="foreach"]');
         const token = list.attributes[isNext ? "last" : "first"].value;
         const response = await fetchPagePart(token);
         if (response) {
@@ -40,7 +54,7 @@ $(document).ready(function () {
             updatePaginationStatus();
         }
     }
-
+ 
     async function fetchPagePart(token) {
         if (!token || loadingDict.has(token)) {
             return; // Already loading
@@ -56,8 +70,21 @@ $(document).ready(function () {
 
             if (!response.ok) throw new Error('Network response was not ok');
 
-            const data = await response.text();
-            return data;
+            let htmlContent = await response.text();
+            //htmlContent might not be in a root element, 
+            const $content = $(`<div>${htmlContent}</div>`);
+
+            $content.find('[data-component="localDateTime"]').each(function() {
+                const isoDate = $(this).text().trim();
+                if (isoDate) {
+                    const formattedDate = utcStrToDatetimeStr(isoDate);
+                    $(this).text(formattedDate || isoDate);
+                }
+            });
+            const formattedHtml = $content.prop('innerHTML');
+            console.log(htmlContent, formattedHtml);
+            return formattedHtml;
+            
         } catch (error) {
             console.error('Error loading more.', error);
         } finally {
@@ -71,6 +98,7 @@ $(document).ready(function () {
                 if (entry.isIntersecting) {
                     const token = entry.target.getAttribute('last');
                     const response = await fetchPagePart(token);
+                    console.log(response);
 
                     if (response) {
                         const template = document.createElement('template');
@@ -85,5 +113,19 @@ $(document).ready(function () {
 
         const trigger = document.querySelector(".load-more-trigger");
         if (trigger) observer.observe(trigger);
+    }
+
+    function utcStrToDatetimeStr  (s)  {
+        if (!s) return null
+        const d = typeof(s) == 'string' ? utcStrToDatetime(s):s;
+        return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function utcStrToDatetime  (s)  {
+        s = s.replaceAll(' ', 'T')
+        if (!s.endsWith('Z')) {
+            s += 'Z';
+        }
+        return new Date(s);
     }
 });

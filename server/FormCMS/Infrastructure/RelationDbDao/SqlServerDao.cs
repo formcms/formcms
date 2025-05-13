@@ -204,44 +204,47 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
         }
     }
 
-    public async Task<long> Increase(string tableName, Record keyConditions, string valueField, long delta, CancellationToken ct)
+    public async Task<long> Increase(string tableName, Record keyConditions, string valueField,long initVal, long delta, CancellationToken ct)
     {
         string[] keyFields = keyConditions.Keys.ToArray();
         object[] keyValues = keyConditions.Values.ToArray();
 
+        // Build MERGE SQL
         var keyCondition = string.Join(" AND ", keyFields.Select(k => $"t.[{k}] = s.[{k}]"));
         var insertColumns = string.Join(", ", keyFields.Concat([valueField]).Select(c => $"[{c}]"));
-        var insertValues = string.Join(", ", keyFields.Select(k => $"s.[{k}]").Concat(["s.[valueField]"]));
+        var sourceColumns = string.Join(", ", keyFields.Select((k, i) => $"@p{i} AS [{k}]"));
+        var insertValues = string.Join(", ", keyFields.Select(k => $"s.[{k}]").Concat([$"s.[{valueField}]"]));
 
         var sql = $"""
+                   DECLARE @OutputTable TABLE ([count] BIGINT);
                    MERGE [{tableName}] AS t
                    USING (
-                       SELECT {string.Join(", ", keyFields.Select((k, i) => $"@p{i} AS [{k}]"))},
-                              @delta AS [valueField]
+                       SELECT {sourceColumns}, @initVal + @delta AS [{valueField}]
                    ) AS s
                    ON ({keyCondition})
                    WHEN MATCHED THEN
-                       UPDATE SET t.[{valueField}] = ISNULL(t.[{valueField}], 0) + s.[valueField]
+                       UPDATE SET t.[{valueField}] = t.[{valueField}] + @delta
                    WHEN NOT MATCHED THEN
                        INSERT ({insertColumns})
-                       VALUES ({insertValues});
-
-                   SELECT [{valueField}] FROM [{tableName}]
-                   WHERE {string.Join(" AND ", keyFields.Select((k, i) => $"[{k}] = @p{i}"))};
+                       VALUES ({insertValues})
+                   OUTPUT inserted.[{valueField}] INTO @OutputTable;
+                   SELECT [{valueField}] FROM @OutputTable;
                    """;
 
         await using var command = new SqlCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as SqlTransaction;
 
+        // Add parameters
         for (var i = 0; i < keyFields.Length; i++)
         {
-            command.Parameters.AddWithValue($"@p{i}", keyValues[i]);
+            command.Parameters.AddWithValue($"@p{i}", keyValues[i] ?? DBNull.Value);
         }
-
+        command.Parameters.AddWithValue("@initVal", initVal);
         command.Parameters.AddWithValue("@delta", delta);
 
+        // Execute and return the new value
         var result = await command.ExecuteScalarAsync(ct);
-        return result is DBNull or null ? delta : Convert.ToInt64(result);
+        return result is long value ? value : throw new InvalidOperationException("Merge failed or value is null.");
     }
 
     public async Task<Dictionary<string,T>> FetchValues<T>(

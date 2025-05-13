@@ -1,3 +1,4 @@
+using FormCMS.Activities.Services;
 using FormCMS.Utils.PageRender;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.ResultExt;
@@ -11,29 +12,13 @@ using Microsoft.AspNetCore.WebUtilities;
 namespace FormCMS.Cms.Services;
 
 public sealed class PageService(
-    KeyValueCache<Schema> pageCache,
-    ISchemaService schemaSvc,
+    
     IQueryService querySvc,
+    ITopItemService topItemSvc,
+    IPageResolver pageResolver,
     PageTemplate template
 ) : IPageService
 {
-    private const string Home = "home";
-
-    public async Task<long> GetPageId(string path, CancellationToken ct)
-    {
-        var parts = path.Split('/');
-        if (parts.Length > 2)
-        {
-            throw new ResultException("Page path contains more than 2 segments");
-        }
-
-        var matchPrefix = parts.Length > 1;
-        var name = DefaultAsHome(parts[0]);
-        
-        var schema = await GetSchemaFromCache(name,matchPrefix , ct);
-        return schema.Id;
-    }
-
     public async Task<string> GetDetail(string name, string param, StrArgs strArgs, CancellationToken ct)
     {
         var ctx = (await GetContext(name, true, strArgs, ct)).ToPageContext();
@@ -52,7 +37,6 @@ public sealed class PageService(
 
     public async Task<string> Get(string name, StrArgs strArgs, CancellationToken ct)
     {
-        name = DefaultAsHome(name);
         try
         {
             var ctx = await GetContext(name, false, strArgs, ct);
@@ -60,14 +44,14 @@ public sealed class PageService(
         }
         catch
         {
-            if (name != Home)
+            if (name == PageConstants.Home)
             {
-                throw;
+                return """
+                       <a href="/admin">Go to Admin Panel</a><br/>
+                       <a href="/schema">Go to Schema Builder</a>
+                       """;
             }
-            return """
-                   <a href="/admin">Go to Admin Panel</a><br/>
-                   <a href="/schema">Go to Schema Builder</a>
-                   """;
+            throw ;
         }
     }
 
@@ -98,7 +82,8 @@ public sealed class PageService(
         };
         TagPagination(data, items, part);
 
-        ctx.Node.SetPaginationTemplate(flatField, part.DataSource.PaginationMode);
+        ctx.Node.SetEach(flatField);
+        ctx.Node.SetPagination(flatField, part.DataSource.PaginationMode);
         var html = part.DataSource.PaginationMode == PaginationMode.Button
             ? ctx.Node.OuterHtml // for button pagination, replace the div 
             : ctx.Node.InnerHtml; // for infinite screen, append to original div
@@ -106,17 +91,21 @@ public sealed class PageService(
         return render(data);
     }
 
-    private string DefaultAsHome(string name) => string.IsNullOrWhiteSpace(name)? Home : name;
-    
     private async Task<string> RenderPage(PageContext ctx, Record data, StrArgs args, CancellationToken token)
     {
-        await LoadRelatedData(data, args, ctx.Nodes, token);
+        await LoadDataList(data, args, ctx.DateNodes, token);
         TagPagination(ctx, data, args);
-
-        foreach (var repeatNode in ctx.Nodes)
+        
+        await LoadTopList(data, ctx.TopNodes, token);
+        foreach (var (htmlNode, dataSource) in ctx.DateNodes)
         {
-            repeatNode.HtmlNode.SetPaginationTemplate(repeatNode.DataSource.Field,
-                repeatNode.DataSource.PaginationMode);
+            htmlNode.SetEach(dataSource.Field);
+            htmlNode.SetPagination(dataSource.Field, dataSource.PaginationMode);
+        }
+        
+        foreach (var node in ctx.TopNodes)
+        {
+            node.HtmlNode.SetEach(node.Field);
         }
 
         var title = Handlebars.Compile(ctx.Page.Title)(data);
@@ -127,7 +116,7 @@ public sealed class PageService(
     private static StrArgs GetLocalPaginationArgs(PageContext ctx, StrArgs strArgs)
     {
         var ret = new StrArgs(strArgs);
-        foreach (var node in ctx.Nodes.Where(x =>
+        foreach (var node in ctx.DateNodes.Where(x =>
                      string.IsNullOrWhiteSpace(x.DataSource.Query) &&
                      (x.DataSource.Offset > 0 || x.DataSource.Limit > 0)))
         {
@@ -138,7 +127,7 @@ public sealed class PageService(
         return ret;
     }
 
-    private async Task LoadRelatedData(Record data, StrArgs args, DataNode[] nodes, CancellationToken token)
+    private async Task LoadDataList(Record data, StrArgs args, DataNode[] nodes, CancellationToken token)
     {
         foreach (var node in nodes.Where(x => !string.IsNullOrWhiteSpace(x.DataSource.Query)))
         {
@@ -148,10 +137,18 @@ public sealed class PageService(
             data[node.DataSource.Field] = result;
         }
     }
+    
+    private async Task LoadTopList(Record data, TopNode[] nodes, CancellationToken ct)
+    {
+        foreach (var node in nodes)
+        {
+            data[node.Field] = await topItemSvc.GetTopItems(node.Entity, node.Offset,node.Limit, ct);
+        }
+    }
 
     private static void TagPagination(PageContext ctx, Record data, StrArgs args)
     {
-        foreach (var node in ctx.Nodes.Where(x => x.DataSource.Offset > 0 || x.DataSource.Limit > 0))
+        foreach (var node in ctx.DateNodes.Where(x => x.DataSource.Offset > 0 || x.DataSource.Limit > 0))
         {
             if (data.ByJsonPath<Record[]>(node.DataSource.Field, out var value) && value != null)
             {
@@ -183,41 +180,21 @@ public sealed class PageService(
     {
         public PartialContext ToPartialContext(string nodeId) => new(Page, Doc.GetElementbyId(nodeId));
 
-        public PageContext ToPageContext() => new(Page, Doc, Doc.GetDataNodes().Ok());
+        public PageContext ToPageContext() => new(Page, Doc, Doc.GetDataNodes().Ok(),Doc.GetTopNodes().Ok());
     }
 
-    private record PageContext(Page Page, HtmlDocument HtmlDocument, DataNode[] Nodes);
+    private record PageContext(Page Page, HtmlDocument HtmlDocument, DataNode[] DateNodes, TopNode[] TopNodes);
 
     private record PartialContext(Page Page, HtmlNode Node);
 
-    private async Task<Context> GetContext(string name, bool matchPrefix, StrArgs args, CancellationToken token)
+    private async Task<Context> GetContext(string name, bool matchPrefix, StrArgs args, CancellationToken ct)
     {
         var publicationStatus = PublicationStatusHelper.GetSchemaStatus(args);
-        var schema = publicationStatus == PublicationStatus.Published
-            ? await GetSchemaFromCache(name, matchPrefix, token)
-            : await GetPage(name, matchPrefix, publicationStatus, token);
+        var schema = await pageResolver.GetPage(name, matchPrefix, publicationStatus, ct);
 
         var doc = new HtmlDocument();
         doc.LoadHtml(schema.Settings.Page!.Html);
         return new Context(schema.Settings.Page!, doc);
-    }
-
-    private async Task<Schema> GetSchemaFromCache(string name, bool matchPrefix, CancellationToken token) =>
-        await pageCache.GetOrSet(name + ":" + matchPrefix,
-            async ct => await GetPage(name, matchPrefix, PublicationStatus.Published, ct), token);
-    
-    
-    private async Task<Schema> GetPage(
-        string name, 
-        bool matchPrefix, 
-        PublicationStatus? publicationStatus,
-        CancellationToken token)
-    {
-        var schema = matchPrefix
-            ? await schemaSvc.StartsNotEqualDefault(name, SchemaType.Page, publicationStatus, token)
-            : await schemaSvc.GetByNameDefault(name, SchemaType.Page, publicationStatus, token);
-        if (schema is not { Type: SchemaType.Page })throw new ResultException($"cannot find page {name}");
-        return schema;
     }
 }
 

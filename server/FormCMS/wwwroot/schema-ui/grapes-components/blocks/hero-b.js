@@ -18,7 +18,7 @@ export const heroB =
 \tL202.231,56.632z"/>
 </svg>`,
         content: `
-<div class="container px-8 mx-auto xl:px-5  max-w-screen-lg py-5 lg:py-8 !pt-0">
+<div data-gjs-type='hero-b' class="container px-8 mx-auto xl:px-5  max-w-screen-lg py-5 lg:py-8 !pt-0">
   <div class="mx-auto max-w-screen-md ">
     <div class="flex justify-center"> <div class="flex gap-3"> <span class="inline-block text-xs font-medium tracking-wider mt-5 text-pink-600">{{tag}}</span> </div> </div>
     <h1 class="text-brand-primary mb-3 mt-2 text-center text-3xl font-semibold tracking-tight dark:text-white lg:text-4xl lg:leading-snug">{{title}}</h1>
@@ -27,7 +27,7 @@ export const heroB =
         <div class="relative h-10 w-10 flex-shrink-0">
             <img alt="Li Bai" loading="lazy" decoding="async" data-nimg="fill" class="rounded-full object-cover" src="/files{{author.image}}" style="position: absolute; height: 100%; width: 100%; inset: 0px; color: transparent;"/>
         </div>
-        <div class="flex items-center space-x-2 text-sm"> <p class="text-gray-800 dark:text-gray-400"> <a href=""> {{author.name}} </a> </p> </div>
+        <div class="flex items-center space-x-2 text-sm"> <p class="text-gray-800 dark:text-gray-400"> <a href="/page/{{author.id}}"> {{author.name}} </a> </p> </div>
         <div> <div class="flex items-center space-x-2 text-sm"> <time class="text-gray-500 dark:text-gray-400" >{{date}}</time> <span>{{time_to_read}}</span> </div>
       </div>
     </div>

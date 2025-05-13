@@ -1,4 +1,5 @@
 export const customTypes = {
+    ['foreach']:[], /*need to generate a uniq ID*/
     ['data-list']: [
         {name:"field", label:'field'},
         {name:"query", label:'query'},
@@ -15,6 +16,11 @@ export const customTypes = {
                 { value: 'InfiniteScroll', name: 'Infinite Scroll' },
             ],
         }
+    ],
+    ['top-list']:[
+        {name:"offset", label:'offset'},
+        {name:"entity", label:'entity'},
+        {name:"limit", label:'limit'},
     ],
     ['activity-bar']:[
         {name:"data-entity", label:'Entity Name'},

@@ -23,8 +23,10 @@ function addCustomTypes(editor){
             view:{
                 openSettings: function ( e ) {
                     e.preventDefault();
-                    editor.select( this.model );
-                    editor.Panels.getButton( 'views', 'open-tm' ).set( 'active', 1 );
+                    if(traits.length> 0) {
+                        editor.select(this.model);
+                        editor.Panels.getButton('views', 'open-tm').set('active', 1);
+                    }
                 },
                 onActive() {
                     this.el.contentEditable = true;
@@ -66,7 +68,7 @@ export function loadEditor(container,  components,styles) {
             ],
             styles: [
                 'https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.0.2/tailwind.min.css',
-                'https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css'
+                'https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css',
             ],
         },
         assetManager: {

@@ -61,12 +61,14 @@ public class PageApiTest
     public async Task GetLandingPageAndPartialPage()
     {
         var html = $$$"""
-                      <body>
-                      <div id="div1" data-source="data-list" offset="0" limit="4" query={{{_query}}} pagination="button" >
-                           --{{id}}--
-                      </div>
-                      <body>
-                      """;
+                       <body>
+                       <div id="aa" data-component="data-list" offset="0" limit="4" query={{{_query}}} pagination="button">
+                       <div id="div1" data-component="foreach">
+                            --{{id}}--
+                       </div>
+                       </div>
+                       <body>
+                       """;
         var schema = new Schema(_query, SchemaType.Page, new Settings(
             Page: new Page(_query, "", null, html, "", "", "")
         ));

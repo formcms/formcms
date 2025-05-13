@@ -31,6 +31,12 @@ public class ActivityApiClient(HttpClient client)
         var url = $"/{entityName}/{recordId}".ActivityUrl();
         return client.GetResult<JsonElement>(url);
     }
+    
+    public Task<Result<JsonElement[]>> TopList(string entityName, int offset, int limit)
+    {
+        var url = $"/top/{entityName}/?offset={offset}&limit={limit}".ActivityUrl();
+        return client.GetResult<JsonElement[]>(url);
+    }
 
     public Task<Result<long>> Toggle(string entityName, long recordId, string activityType, bool active)
     {

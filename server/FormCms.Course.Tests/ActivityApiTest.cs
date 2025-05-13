@@ -1,7 +1,9 @@
+using System.Text.Json;
 using FormCMS.Core.Descriptors;
 using FormCMS.CoreKit.Test;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
+using NUlid;
 
 namespace FormCMS.Course.Tests;
 [Collection("API")]
@@ -9,6 +11,7 @@ public class ActivityApiTest(AppFactory factory)
 {
     private bool _ = factory.LoginAndInitTestData();
     private const long RecordId = 21;
+    private readonly string _queryName = "qry_query_" + Ulid.NewUlid();
 
     [Fact]
     public async Task ActivityCountNotEmpty()
@@ -27,13 +30,13 @@ public class ActivityApiTest(AppFactory factory)
         ));
         await factory.SchemaApi.Save(schema);
         
-        //anonymous visit
+        //authed visit
         await factory.ActivityApi.Visit(factory.GetHttpClient().BaseAddress + "/home");
         var authedCount = await factory.ActivityApi.VisitCounts(true).Ok();
         Assert.True(authedCount.Length > 0);
-        
-        //authed visit
         await factory.AuthApi.Logout();
+        
+        //anonymous visit
         await factory.ActivityApi.Visit(factory.GetHttpClient().BaseAddress + "/home");
         await factory.AuthApi.EnsureSaLogin().Ok();
         var anonymouseCount = await factory.ActivityApi.VisitCounts(false).Ok();
@@ -60,6 +63,32 @@ public class ActivityApiTest(AppFactory factory)
         Assert.True(res.TotalRecords < totalRecords);
     }
 
+    [Fact]
+    public async Task QueryWithViewCount()
+    {
+        await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        await $$"""
+                query {{_queryName}}{
+                   {{TestEntityNames.TestPost.Camelize()}}(idSet:{{RecordId}})
+                   {
+                     id, viewCount 
+                   }
+                }
+                """.GraphQlQuery<JsonElement>(factory.QueryApi).Ok();
+        var item = await factory.QueryApi.List(_queryName).Ok();
+        Assert.True(item.First().GetProperty("viewCount").GetInt64() > 0);
+    }
+
+    [Fact]
+    public async Task GetTopItems()
+    {
+        await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        var items = await factory.ActivityApi.TopList(TestEntityNames.TestPost.Camelize(), 0, 5).Ok();
+        Assert.True(items.Length > 0);
+
+    }
+    
+    
     [Fact]
     private async Task ViewShareLike()
     {

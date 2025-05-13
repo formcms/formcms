@@ -25,7 +25,7 @@ public sealed class EntityService(
     HookRegistry hookRegistry
 ) : IEntityService
 {
-    public async Task<Result<Entity>> GetEntityAndValidateRecordId(
+    public async Task<Result<LoadedEntity>> GetEntityAndValidateRecordId(
         string entityName,
         long recordId,
         CancellationToken ct
@@ -42,7 +42,7 @@ public sealed class EntityService(
         {
             return Result.Fail("Record id is out of range");
         }
-        return entity;
+        return entity.ToLoadedEntity();
     }
 
     public async Task<ListResponse?> ListWithAction(

@@ -1,9 +1,12 @@
 using FormCMS.Activities.Handlers;
+using FormCMS.Activities.Models;
 using FormCMS.Activities.Services;
 using FormCMS.Activities.Workers;
+using FormCMS.Core.Descriptors;
+using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.Buffers;
-using FormCMS.Infrastructure.Cache;
 using Microsoft.AspNetCore.Rewrite;
+using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Activities.Builders;
 
@@ -13,22 +16,43 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 
     public static IServiceCollection AddActivity(IServiceCollection services, bool enableBuffering)
     {
+        services.AddSingleton(
+            new ActivitySettings(
+                EnableBuffering: enableBuffering,
+                ToggleActivities: ["like"],
+                RecordActivities: ["share"],
+                AutoRecordActivities: ["view"],
+                Weights: new Dictionary<string, long>
+                {
+                    { "view", 10 },
+                    { "like", 20 },
+                    { "share", 30 },
+                },
+                ReferenceDateTime: new DateTime(2025,1,1),
+                HourBoostWeight: 10
+            )
+        );
+        
         services.AddSingleton<ActivityBuilder>();
         services.AddSingleton(new BufferSettings());
         services.AddSingleton<ICountBuffer,MemoryCountBuffer>();
         services.AddSingleton<IStatusBuffer,MemoryStatusBuffer>();
-        
-        services.AddSingleton(new ActivitySettings(enableBuffering,["like"], ["share"],["view"]));
+
+        services.AddScoped<IActivityCollectService, ActivityCollectService>();
         services.AddScoped<IActivityService, ActivityService>();
+        services.AddScoped<IQueryPluginService, QueryPluginService>();
+        services.AddScoped<ITopItemService, TopItemService>();
         services.AddScoped<IBookmarkService, BookmarkService>();
+        
         services.AddHostedService<BufferFlushWorker>();
         return services;
     }
 
     public async Task<WebApplication> UseActivity(WebApplication app)
     {
+        var activitySettings = app.Services.GetRequiredService<ActivitySettings>();
         using var scope = app.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<IActivityService>().EnsureActivityTables();
+        await scope.ServiceProvider.GetRequiredService<IActivityCollectService>().EnsureActivityTables();
         await scope.ServiceProvider.GetRequiredService<IBookmarkService>().EnsureBookmarkTables(); 
         
         var options = app.Services.GetRequiredService<SystemSettings>();
@@ -38,9 +62,9 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         apiGroup.MapGroup("/bookmarks").MapBookmarkHandler();
 
         var portalPath = "/portal";
+        RegisterHooks();
         AddCmsPortal();
         
-        var activitySettings = app.Services.GetRequiredService<ActivitySettings>();
         logger.LogInformation(
             $"""
              *********************************************************
@@ -75,6 +99,36 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
                             $"{portalPath}/index.html");
                     });
                 });
+        }
+
+        void RegisterHooks()
+        {
+            var attrs = activitySettings
+                .AllCountTypes()
+                .Select(type => new Attribute(
+                    Field: ActivityCounts.ActivityCountField(type),
+                    Header: ActivityCounts.ActivityCountField(type),
+                    DataType: DataType.Int)
+                );
+
+            var registry = app.Services.GetRequiredService<HookRegistry>();
+            registry.ExtraQueryFieldEntities.Register("", args =>
+            {
+                var entities = args.entities.Select(x => x with
+                {
+                    Attributes = [
+                        ..x.Attributes,
+                        ..attrs,
+                    ]
+                });
+                return new ExtraQueryFieldEntitiesArgs([..entities]);
+            });
+            registry.QueryPostList.RegisterDynamic("*" ,async (IQueryPluginService service, QueryPostListArgs args)=>
+            {
+                var entity = args.Query.Entity;
+                await service.LoadCounts(entity.Name, entity.PrimaryKey,[..args.Fields], args.RefRecords, CancellationToken.None);
+                return args;
+            });
         }
     }
 }

@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
 using FormCMS.Utils.DataModels;
+using GraphQLParser.AST;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -27,6 +28,7 @@ public sealed record LoadedQuery(
     ImmutableArray<ValidFilter> Filters, 
     ImmutableArray<ValidSort> Sorts,
     ImmutableArray<string> ReqVariables,
+    ImmutableArray<string> GraphQLFieldNames,
     bool Distinct
 );
 
@@ -44,7 +46,8 @@ public static class QueryHelper
         LoadedEntity entity,
         IEnumerable<GraphAttribute> selection,
         IEnumerable<ValidSort> sorts,
-        IEnumerable<ValidFilter> filters
+        IEnumerable<ValidFilter> filters,
+        IEnumerable<string> fields
     )
     {
         return new LoadedQuery(
@@ -56,6 +59,7 @@ public static class QueryHelper
             Selection: [..selection],
             Sorts: [..sorts],
             Filters: [..filters],
+            GraphQLFieldNames:[..fields],
             Distinct: query.Distinct
         );
     }

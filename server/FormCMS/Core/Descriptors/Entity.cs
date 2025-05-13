@@ -50,7 +50,13 @@ public record LoadedEntity(
     string LabelAttributeName,
     int DefaultPageSize,
     PublicationStatus DefaultPublicationStatus,
-    string PageUrl
+    string PageUrl,
+    string BookmarkQuery ,
+    string BookmarkQueryParamName ,
+    string BookmarkTitleField ,
+    string BookmarkSubtitleField,
+    string BookmarkImageField,
+    string BookmarkPublishTimeField 
 ); 
 
 public static class EntityConstants
@@ -60,19 +66,7 @@ public static class EntityConstants
 
 public static class EntityHelper
 {
-    public static string[] GetAssets(this LoadedEntity entity, Record record)
-    {
-        var paths = new List<string>();
-        foreach (var attribute in entity.Attributes.Where(x => x.DisplayType.IsAsset()))
-        {
-            if (record.TryGetValue(attribute.Field, out var value) 
-                && value is string stringValue )
-            {
-                paths.AddRange(stringValue.Split(","));
-            }
-        }
-        return paths.ToArray();
-    }
+ 
     public static LoadedEntity ToLoadedEntity(this Entity entity)
     {
         var attributes = entity.Attributes.Select(x => x.ToLoaded(entity.TableName)).ToArray();
@@ -97,10 +91,33 @@ public static class EntityHelper
             DefaultPublicationStatus:entity.DefaultPublicationStatus,
             UpdatedAtAttribute:updatedAtAttribute,
             PublicationStatusAttribute:publicationStatusAttribute,
-            PageUrl:entity.PageUrl
+            PageUrl:entity.PageUrl,
+            BookmarkQuery:entity.BookmarkQuery,
+            BookmarkQueryParamName:entity.BookmarkQueryParamName,
+            BookmarkTitleField:entity.BookmarkTitleField,
+            BookmarkSubtitleField:entity.BookmarkSubtitleField,
+            BookmarkImageField:entity.BookmarkImageField,
+            BookmarkPublishTimeField:entity.BookmarkPublishTimeField
         );
     }
-
+    public static string[] GetAssets(this LoadedEntity entity, Record record)
+    {
+        var paths = new List<string>();
+        foreach (var attribute in entity.Attributes.Where(x => x.DisplayType.IsAsset()))
+        {
+            if (record.TryGetValue(attribute.Field, out var value) 
+                && value is string stringValue )
+            {
+                paths.AddRange(stringValue.Split(","));
+            }
+        }
+        return paths.ToArray();
+    }
+    public static SqlKata.Query PublishedAt(this LoadedEntity entity, long recordId)
+    {
+        return entity.Basic().Where(entity.PrimaryKey, recordId)
+            .Select(DefaultAttributeNames.PublishedAt.Camelize());
+    }
     public static Result<SqlKata.Query> SingleQuery(
         this LoadedEntity e,
         ValidFilter[] filters,

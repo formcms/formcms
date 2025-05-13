@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FormCMS.Activities.Services;
 using FormCMS.Auth.Handlers;
 using FormCMS.Cms.Handlers;
 using FormCMS.Cms.Services;
@@ -62,7 +63,7 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         services.AddSingleton(new DbOption(databaseProvider, connectionString));
         services.AddSingleton<CmsBuilder>();
         services.AddSingleton<HookRegistry>();
-        services.AddScoped<IProfileService, DummyProfileService>();
+       
         
         services.AddDao(databaseProvider,connectionString);
         services.AddSingleton(new KateQueryExecutorOption(systemSettings.DatabaseQueryTimeout));
@@ -98,7 +99,11 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
 
             services.AddScoped<IEntityService, EntityService>();
             services.AddScoped<IQueryService, QueryService>();
+            services.AddScoped<IPageResolver, PageResolver>();
             services.AddScoped<IPageService, PageService>();
+            
+            services.AddScoped<IProfileService, DummyProfileService>();
+            services.AddScoped<ITopItemService, DummyTopItemService>(); 
             
             services.AddHttpClient();  //needed by task service
             services.AddScoped<ITaskService, TaskService>();

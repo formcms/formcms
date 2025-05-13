@@ -10,10 +10,10 @@ public static class ActivityHandler
     public static RouteGroupBuilder MapActivityHandler(this RouteGroupBuilder builder)
     {
         builder.MapGet("/page-counts", (
+            IActivityService s,
             int n,
-            CancellationToken ct,
-            IActivityService s
-        ) => s.GetTopVisitCount(n,ct));
+            CancellationToken ct
+        ) => s.GetTopVisitPages(n,ct));
         
         builder.MapGet("/visit-counts", (
             int n,
@@ -48,24 +48,31 @@ public static class ActivityHandler
         builder.MapGet("/{entityName}/{recordId:long}", (
             string entityName,
             long recordId,
-            IActivityService s,
+            IActivityCollectService s,
             HttpContext http, // Inject HttpContext
             CancellationToken ct
         ) => s.Get(UserId(http), entityName, recordId, ct));
 
+        builder.MapGet("/top/{entityName}", (
+            ITopItemService s,
+            CancellationToken ct,
+            int? offset,
+            int? limit,
+            string entityName) => s.GetTopItems(entityName, offset ?? 0, limit ?? 5, ct));
+        
         builder.MapPost("/toggle/{entityName}/{recordId:long}", (
             string entityName,
             long recordId,
             string type,
             bool active,
-            IActivityService s,
+            IActivityCollectService s,
             CancellationToken ct
         ) => s.Toggle(entityName, recordId, type, active, ct));
 
         builder.MapGet("/visit", (
             string url, 
             HttpContext context,
-            IActivityService s,CancellationToken ct
+            IActivityCollectService s,CancellationToken ct
         ) => s.Visit(UserId(context), url, ct));
         
         builder.MapPost("/record/{entityName}/{recordId:long}", async (
@@ -73,7 +80,7 @@ public static class ActivityHandler
             long recordId,
             string type,
             HttpContext context,
-            IActivityService s,
+            IActivityCollectService s,
             CancellationToken ct
         ) =>
         {

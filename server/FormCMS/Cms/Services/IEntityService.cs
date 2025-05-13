@@ -7,7 +7,7 @@ namespace FormCMS.Cms.Services;
 
 public interface IEntityService
 {
-    Task<Result<Entity>> GetEntityAndValidateRecordId(string entityName, long recordId, CancellationToken ct); 
+    Task<Result<LoadedEntity>> GetEntityAndValidateRecordId(string entityName, long recordId, CancellationToken ct); 
     Task<ListResponse?> ListWithAction(string name,ListResponseMode mode, Pagination pagination,  StrArgs args,
         CancellationToken ct= default);
 
