@@ -12,7 +12,7 @@ public class PageResolver(
     public  Task<Schema> GetPage(string path, CancellationToken ct)
     {
         var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length > 2)
+        if (parts.Length is > 2 or 0)
         {
             throw new ResultException("Page path contains more than 2 segments");
         }

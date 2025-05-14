@@ -37,10 +37,10 @@ public sealed class PageService(
 
     public async Task<string> Get(string name, StrArgs strArgs, CancellationToken ct)
     {
+        Context ctx;
         try
         {
-            var ctx = await GetContext(name, false, strArgs, ct);
-            return await RenderPage(ctx.ToPageContext(), new Dictionary<string, object>(), strArgs, ct);
+            ctx = await GetContext(name, false, strArgs, ct);
         }
         catch
         {
@@ -53,6 +53,7 @@ public sealed class PageService(
             }
             throw ;
         }
+        return await RenderPage(ctx.ToPageContext(), new Dictionary<string, object>(), strArgs, ct);
     }
 
     public async Task<string> GetPart(string partStr, CancellationToken ct)

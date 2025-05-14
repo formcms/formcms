@@ -14,8 +14,18 @@ import {breadcrumbs} from "./blocks/breadcrumbs.js";
 import {carousel} from "./blocks/carousel.js";
 import {activityBar}from "./blocks/activity-bar.js"
 import {topList} from "./blocks/top-list.js";
-import {relatedList} from "./blocks/related-list.js";
+import {featuredList} from "./blocks/featured-list.js";
 
+export function addCustomBlocks(editor){
+    for (const {name, label, media, content, category} of customBlocks){
+        editor.Blocks.add(name, {
+            media: media,
+            label:  label,
+            content: content,
+            category: category,
+        });
+    }
+}
 export const customBlocks = [
     cardA,
     contentB,
@@ -27,6 +37,6 @@ export const customBlocks = [
     breadcrumbs,
     carousel,
     activityBar,
-    relatedList,
+    featuredList,
     topList,
 ]
