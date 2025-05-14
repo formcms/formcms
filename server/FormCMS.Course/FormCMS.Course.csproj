@@ -37,19 +37,4 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="wwwroot\adminss\assets\index-BFEJUf8O.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\adminss\assets\index-D2dvX6lo.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\adminss\assets\index-DlZ3SWPl.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\adminss\assets\InterVariable-CWi-zmRD.woff2" />
-      <_ContentIncludedByDefault Remove="wwwroot\adminss\assets\InterVariable-Italic-d6KXgdvN.woff2" />
-      <_ContentIncludedByDefault Remove="wwwroot\adminss\assets\primeicons-C6QP2o4f.woff2" />
-      <_ContentIncludedByDefault Remove="wwwroot\adminss\assets\primeicons-DMOk5skT.eot" />
-      <_ContentIncludedByDefault Remove="wwwroot\adminss\assets\primeicons-Dr5RGzOO.svg" />
-      <_ContentIncludedByDefault Remove="wwwroot\adminss\assets\primeicons-MpK4pl85.ttf" />
-      <_ContentIncludedByDefault Remove="wwwroot\adminss\assets\primeicons-WjwUDZjB.woff" />
-      <_ContentIncludedByDefault Remove="wwwroot\adminss\assets\quill-BArZyAP1.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\adminss\assets\quill-Bk6BhPwY.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\adminss\index.html" />
-    </ItemGroup>
 </Project>
