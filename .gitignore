@@ -36,3 +36,11 @@ riderModule.iml
 /_ReSharper.Caches/
 /FluentCMS.Blog/wwwroot/files
 .DS_Store
+/.vs/fluent-cms/v17
+/.vs/fluent-cms/DesignTimeBuild
+/.vs/fluent-cms/FileContentIndex
+/.vs/formcms/FileContentIndex
+/.vs
+*.user
+/examples/WebApiExamples/Properties/launchSettings.json
+/.gitignore
