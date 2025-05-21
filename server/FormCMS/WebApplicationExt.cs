@@ -48,17 +48,21 @@ public static class WebApplicationExt
         this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
     ) => CmsBuilder.AddCms(services, DatabaseProvider.SqlServer, connectionString, action);
 
-    public static IServiceCollection AddCmsAuth<TUser, TRole, TContext>(this IServiceCollection services)
+    public static IServiceCollection AddCmsAuth<TUser, TRole, TContext>(this IServiceCollection services,
+        AuthConfig authConfig)
         where TUser : IdentityUser, new()
         where TRole : IdentityRole, new()
         where TContext : IdentityDbContext<TUser>
-        => AuthBuilder<TUser>.AddCmsAuth<TUser, TRole, TContext>(services);
+        => AuthBuilder<TUser>.AddCmsAuth<TUser, TRole, TContext>(services,authConfig);
 
     public static IServiceCollection AddAuditLog(this IServiceCollection services)
         => AuditLogBuilder.AddAuditLog(services);
 
     public static IServiceCollection AddActivity(this IServiceCollection services, bool enableBuffering=true)
         => ActivityBuilder.AddActivity(services,enableBuffering);
+
+    // public static IServiceCollection AddGithubOAuth(this IServiceCollection services, string clientId, string secret)
+        // => GitHubOAuthBuilder.AddGitHubOAuth(services, clientId, secret);
     
     public static IServiceCollection AddKafkaMessageProducer(
         this IServiceCollection services, string[] entities

@@ -1,4 +1,5 @@
 using FormCMS.Auth;
+using FormCMS.Auth.Builders;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Utils.ResultExt;
@@ -10,46 +11,53 @@ namespace FormCMS.Course;
 
 public class WebApp(
     WebApplicationBuilder builder,
-    string databaseProvider, 
-    string databaseConnectionString, 
+    string databaseProvider,
+    string databaseConnectionString,
     bool enableActivityBuffer,
-    string? redisConnectionString, 
+    string? redisConnectionString,
     AzureBlobStoreOptions? azureBlobStoreOptions
-    )
+)
 {
     private const string Cors = "cors";
 
     public async Task<WebApplication> Build()
     {
-        AddDbService();
-        builder.Services.AddCmsAuth<IdentityUser, IdentityRole, CmsDbContext>();
-        builder.Services.AddAuditLog();
-        builder.Services.AddActivity(enableActivityBuffer);
-        
-        AddOutputCachePolicy();
+        //add infrastructures 
         builder.AddServiceDefaults();
+        AddDbService();
+        AddOutputCachePolicy();
+        TryUserRedis();
+        TryAzureBlobStore();
         if (builder.Environment.IsDevelopment())
         {
             builder.Services.AddOpenApi();
             AddCorsPolicy();
-        }
-
-        TryUserRedis();
-        TryAzureBlobStore();
+        } 
         
+        //add formCms
+        AddCms();
+        builder.Services.AddCmsAuth<IdentityUser, IdentityRole, CmsDbContext>(GetAuthConfig());
+        builder.Services.AddAuditLog();
+        builder.Services.AddActivity(enableActivityBuffer);
+
         var app = builder.Build();
-        app.MapDefaultEndpoints();
-        app.UseOutputCache();
         if (app.Environment.IsDevelopment())
         {
             app.MapScalarApiReference();
             app.MapOpenApi();
             app.UseCors(Cors);
         }
-
         await EnsureDbCreatedAsync();
+        
+        // use formCms 
         await app.UseCmsAsync();
         await EnsureUserCreatedAsync();
+        
+        
+        // infrastructures
+        app.MapDefaultEndpoints();
+        //have to add this middleware after other middleware
+        app.UseOutputCache();
         
         return app;
 
@@ -71,20 +79,46 @@ public class WebApp(
     {
         _ = databaseProvider switch
         {
-            Constants.Sqlite => builder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlite(databaseConnectionString))
+            Constants.Sqlite => builder.Services.AddDbContext<CmsDbContext>(options =>
+                options.UseSqlite(databaseConnectionString)),
+            Constants.Postgres => builder.Services.AddDbContext<CmsDbContext>(options =>
+                options.UseNpgsql(databaseConnectionString)),
+            Constants.SqlServer => builder.Services.AddDbContext<CmsDbContext>(options =>
+                options.UseSqlServer(databaseConnectionString)),
+            _ => throw new Exception("Database provider not found")
+        };
+    }
+
+    private void AddCms()
+    {
+        _ = databaseProvider switch
+        {
+            Constants.Sqlite => builder.Services
                 .AddSqliteCms(databaseConnectionString),
-            Constants.Postgres => builder.Services.AddDbContext<CmsDbContext>(options => options.UseNpgsql(databaseConnectionString))
+            Constants.Postgres => builder.Services
                 .AddPostgresCms(databaseConnectionString),
-            Constants.SqlServer => builder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlServer(databaseConnectionString))
+            Constants.SqlServer => builder.Services
                 .AddSqlServerCms(databaseConnectionString),
             _ => throw new Exception("Database provider not found")
         };
     }
+
     private void TryAzureBlobStore()
     {
         if (azureBlobStoreOptions is null) return;
         builder.Services.AddSingleton(azureBlobStoreOptions);
         builder.Services.AddSingleton<IFileStore, AzureBlobStore>();
+    }
+
+    private AuthConfig GetAuthConfig()
+    {
+        var clientId = builder.Configuration.GetValue<string>("Authentication:GitHub:ClientId");
+        var clientSecrets = builder.Configuration.GetValue<string>("Authentication:GitHub:ClientSecret");
+
+        if (clientId is null || clientSecrets is null) return new AuthConfig();
+
+        var oAuthConfig = new OAuthConfig(new OAuthCredential(clientId, clientSecrets));
+        return new AuthConfig(oAuthConfig);
     }
 
     private void TryUserRedis()
@@ -96,7 +130,7 @@ public class WebApp(
         builder.Services.AddSingleton<ICountBuffer, RedisCountBuffer>();
         builder.Services.AddSingleton<IStatusBuffer, RedisStatusBuffer>();
     }
-    
+
 
     private void AddOutputCachePolicy()
     {
@@ -110,7 +144,7 @@ public class WebApp(
         });
     }
 
-    private  void AddCorsPolicy()
+    private void AddCorsPolicy()
     {
         builder.Services.AddCors(options =>
         {

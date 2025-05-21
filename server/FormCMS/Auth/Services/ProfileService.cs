@@ -12,33 +12,37 @@ public sealed record ProfileDto(string OldPassword, string Password);
 public class ProfileService<TUser>(
     UserManager<TUser> userManager,
     IHttpContextAccessor contextAccessor,
-    RestrictedFeatures restrictedFeatures,
-    SignInManager<TUser> signInManager
+    SignInManager<TUser> signInManager,
+    RestrictedFeatures restrictedFeatures
 ) : IProfileService
     where TUser : IdentityUser, new()
 {
     public UserAccess? GetInfo()
     {
 
-        var claimsPrincipal = contextAccessor.HttpContext?.User;
-        if (claimsPrincipal?.Identity?.IsAuthenticated != true) return null;
+        var contextUser = contextAccessor.HttpContext?.User;
+        if (contextUser?.Identity?.IsAuthenticated != true) return null;
 
-        string[] roles = [..claimsPrincipal.FindAll(ClaimTypes.Role).Select(x => x.Value)];
+        var email = contextUser.FindFirstValue(ClaimTypes.Email);
+        if (email is null) return null;
+        
+        string[] roles = [..contextUser.FindAll(ClaimTypes.Role).Select(x => x.Value)];
 
         var user = new UserAccess
         (
-            Id: claimsPrincipal.FindFirstValue(ClaimTypes.NameIdentifier) ?? "",
-            Name: claimsPrincipal.Identity.Name ?? "",
-            Email: claimsPrincipal.FindFirstValue(ClaimTypes.Email) ?? "",
+            Id: contextUser.FindFirstValue(ClaimTypes.NameIdentifier) ?? "",
+            Name: contextUser.Identity.Name ?? "",
+            Email: email,
             Roles: roles,
-            ReadWriteEntities: [..claimsPrincipal.FindAll(AccessScope.FullAccess).Select(x => x.Value)],
-            RestrictedReadWriteEntities: [..claimsPrincipal.FindAll(AccessScope.RestrictedAccess).Select(x => x.Value)],
-            ReadonlyEntities: [..claimsPrincipal.FindAll(AccessScope.FullRead).Select(x => x.Value)],
-            RestrictedReadonlyEntities: [..claimsPrincipal.FindAll(AccessScope.RestrictedRead).Select(x => x.Value)],
+            ReadWriteEntities: [..contextUser.FindAll(AccessScope.FullAccess).Select(x => x.Value)],
+            RestrictedReadWriteEntities: [..contextUser.FindAll(AccessScope.RestrictedAccess).Select(x => x.Value)],
+            ReadonlyEntities: [..contextUser.FindAll(AccessScope.FullRead).Select(x => x.Value)],
+            RestrictedReadonlyEntities: [..contextUser.FindAll(AccessScope.RestrictedRead).Select(x => x.Value)],
             AllowedMenus: roles.Contains(Roles.Sa) || roles.Contains(Roles.Admin)
                 ? restrictedFeatures.Menus.ToArray()
                 : []
         );
+        
         return user.CanAccessAdmin();
     }
 
