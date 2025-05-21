@@ -4,18 +4,18 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using FormCMS.Activities.Services;
 using FormCMS.Auth.Handlers;
+using FormCMS.Cms.Graph;
 using FormCMS.Cms.Handlers;
 using FormCMS.Cms.Services;
-using FormCMS.Cms.Graph;
-using FormCMS.Core.HookFactory;
-using FormCMS.Utils.PageRender;
 using FormCMS.Core.Descriptors;
+using FormCMS.Core.HookFactory;
 using FormCMS.Core.Identities;
 using FormCMS.Infrastructure.Cache;
-using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.FileStore;
+using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.PageRender;
 using FormCMS.Utils.ResultExt;
 using GraphQL;
 using Microsoft.AspNetCore.Diagnostics;
@@ -31,10 +31,11 @@ public enum DatabaseProvider
     SqlServer,
 }
 
-public sealed record Problem(string Title, string? Detail =null);
+public sealed record Problem(string Title, string? Detail = null);
 
 public sealed record DbOption(DatabaseProvider Provider, string ConnectionString);
-public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
+
+public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
 {
     private const string FormCmsContentRoot = "/_content/FormCMS";
 
@@ -42,30 +43,28 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         IServiceCollection services,
         DatabaseProvider databaseProvider,
         string connectionString,
-        Action<SystemSettings>? optionsAction = null)
+        Action<SystemSettings>? optionsAction = null
+    )
     {
-
-        
         //only set options to FormCMS enum types.
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<DataType>);
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<DisplayType>);
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<ListResponseMode>);
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<SchemaType>);
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<PublicationStatus>);
-        
+
         var systemSettings = new SystemSettings();
         optionsAction?.Invoke(systemSettings);
         services.AddSingleton(systemSettings);
 
         var systemResources = new RestrictedFeatures([Menus.MenuSchemaBuilder, Menus.MenuTasks]);
         services.AddSingleton(systemResources);
-        
+
         services.AddSingleton(new DbOption(databaseProvider, connectionString));
         services.AddSingleton<CmsBuilder>();
         services.AddSingleton<HookRegistry>();
-       
-        
-        services.AddDao(databaseProvider,connectionString);
+
+        services.AddDao(databaseProvider, connectionString);
         services.AddSingleton(new KateQueryExecutorOption(systemSettings.DatabaseQueryTimeout));
         services.AddScoped<KateQueryExecutor>();
         services.AddScoped<DatabaseMigrator>();
@@ -75,23 +74,35 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         AddGraphqlServices();
         AddPageTemplateServices();
         AddCmsServices();
-        
+
         return services;
 
-        void AddCamelEnumConverter<T>(Microsoft.AspNetCore.Http.Json.JsonOptions options) where T : struct, Enum
-            => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter<T>(JsonNamingPolicy.CamelCase));
-        
+        void AddCamelEnumConverter<T>(Microsoft.AspNetCore.Http.Json.JsonOptions options)
+            where T : struct, Enum =>
+            options.SerializerOptions.Converters.Add(
+                new JsonStringEnumConverter<T>(JsonNamingPolicy.CamelCase)
+            );
+
         void AddCmsServices()
         {
-            
-            services.AddSingleton(new ResizeOptions(systemSettings.ImageCompression.MaxWidth,systemSettings.ImageCompression.Quality));
-            services.AddSingleton<IResizer,ImageSharpResizer>();
-            
-            services.AddSingleton(new LocalFileStoreOptions( Path.Join(Directory.GetCurrentDirectory(), "wwwroot/files"), "/files"));
-            services.AddSingleton<IFileStore,LocalFileStore>();
-            
+            services.AddSingleton(
+                new ResizeOptions(
+                    systemSettings.ImageCompression.MaxWidth,
+                    systemSettings.ImageCompression.Quality
+                )
+            );
+            services.AddSingleton<IResizer, ImageSharpResizer>();
+
+            services.AddSingleton(
+                new LocalFileStoreOptions(
+                    Path.Join(Directory.GetCurrentDirectory(), "wwwroot/files"),
+                    "/files"
+                )
+            );
+            services.AddSingleton<IFileStore, LocalFileStore>();
+
             services.AddScoped<IAssetService, AssetService>();
-            
+
             services.AddScoped<IAdminPanelSchemaService, AdminPanelSchemaService>();
             services.AddScoped<ISchemaService, SchemaService>();
             services.AddScoped<IEntitySchemaService, EntitySchemaService>();
@@ -101,11 +112,11 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             services.AddScoped<IQueryService, QueryService>();
             services.AddScoped<IPageResolver, PageResolver>();
             services.AddScoped<IPageService, PageService>();
-            
+
             services.AddScoped<IProfileService, DummyProfileService>();
-            services.AddScoped<ITopItemService, DummyTopItemService>(); 
-            
-            services.AddHttpClient();  //needed by task service
+            services.AddScoped<ITopItemService, DummyTopItemService>();
+
+            services.AddHttpClient(); //needed by task service
             services.AddScoped<ITaskService, TaskService>();
         }
 
@@ -117,7 +128,9 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
                 var fileInfo = provider.GetFileInfo("/static-assets/templates/template.html");
                 if (!fileInfo.Exists)
                 {
-                    fileInfo =provider.GetFileInfo($"{FormCmsContentRoot}/static-assets/templates/template.html");
+                    fileInfo = provider.GetFileInfo(
+                        $"{FormCmsContentRoot}/static-assets/templates/template.html"
+                    );
                 }
                 return new PageTemplate(new PageTemplateConfig(fileInfo.PhysicalPath!));
             });
@@ -158,26 +171,40 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         void AddCacheServices()
         {
             services.AddMemoryCache();
-            services.AddSingleton<KeyValueCache<long>>(p =>
-                new KeyValueCache<long>(p, "maxRecordId", systemSettings.EntitySchemaExpiration));
-            
-            services.AddSingleton<KeyValueCache<FormCMS.Core.Descriptors.Schema>>(p =>
-                new KeyValueCache<FormCMS.Core.Descriptors.Schema>(p, "page", systemSettings.PageSchemaExpiration));
+            services.AddSingleton<KeyValueCache<long>>(p => new KeyValueCache<long>(
+                p,
+                "maxRecordId",
+                systemSettings.EntitySchemaExpiration
+            ));
 
-            services.AddSingleton<KeyValueCache<ImmutableArray<Entity>>>(p =>
-                new KeyValueCache<ImmutableArray<Entity>>(p, "entities", systemSettings.EntitySchemaExpiration));
+            services.AddSingleton<KeyValueCache<FormCMS.Core.Descriptors.Schema>>(
+                p => new KeyValueCache<FormCMS.Core.Descriptors.Schema>(
+                    p,
+                    "page",
+                    systemSettings.PageSchemaExpiration
+                )
+            );
 
-            services.AddSingleton<KeyValueCache<LoadedQuery>>(p =>
-                new KeyValueCache<LoadedQuery>(p, "query", systemSettings.QuerySchemaExpiration));
+            services.AddSingleton<KeyValueCache<ImmutableArray<Entity>>>(p => new KeyValueCache<
+                ImmutableArray<Entity>
+            >(p, "entities", systemSettings.EntitySchemaExpiration));
+
+            services.AddSingleton<KeyValueCache<LoadedQuery>>(p => new KeyValueCache<LoadedQuery>(
+                p,
+                "query",
+                systemSettings.QuerySchemaExpiration
+            ));
         }
     }
 
     public async Task UseCmsAsync(WebApplication app)
     {
         var options = app.Services.GetRequiredService<SystemSettings>();
-        var webRootFileProvider = app.Services.GetRequiredService<IWebHostEnvironment>().WebRootFileProvider;
+        var webRootFileProvider = app
+            .Services.GetRequiredService<IWebHostEnvironment>()
+            .WebRootFileProvider;
         var (adminPath, schemaBuilderPath) = ("/admin", "/schema-ui/list.html");
-        if (!webRootFileProvider.GetFileInfo(adminPath+"/index.html").Exists)
+        if (!webRootFileProvider.GetFileInfo(adminPath + "/index.html").Exists)
         {
             adminPath = FormCmsContentRoot + adminPath;
         }
@@ -198,7 +225,6 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         UseApiRouters();
         UseGraphql();
         UseExceptionHandler();
-
 
         return;
 
@@ -222,35 +248,52 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         {
             var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
             apiGroup.MapGroup("/entities").MapEntityHandlers();
-            apiGroup.MapGroup("/schemas")
+            apiGroup
+                .MapGroup("/schemas")
                 .MapSchemaBuilderSchemaHandlers()
                 .MapAdminPanelSchemaHandlers();
             apiGroup.MapGroup("/assets").MapAssetHandlers();
-            apiGroup.MapGroup("/queries").MapQueryHandlers().CacheOutput(SystemSettings.QueryCachePolicyName);
+            apiGroup
+                .MapGroup("/queries")
+                .MapQueryHandlers()
+                .CacheOutput(SystemSettings.QueryCachePolicyName);
 
             // if an auth component is not use, the handler will use fake profile service
             apiGroup.MapGroup("/profile").MapProfileHandlers();
             apiGroup.MapGroup("/tasks").MapTasksHandler();
 
             app.MapGroup(options.RouteOptions.PageBaseUrl)
-                .MapPages("admin", "doc", "files", "favicon.ico", options.RouteOptions.ApiBaseUrl)
+                .MapPages(
+                    "admin",
+                    "doc",
+                    "files",
+                    "favicon.ico",
+                    "css",
+                    "js",
+                    options.RouteOptions.ApiBaseUrl
+                )
                 .CacheOutput(SystemSettings.PageCachePolicyName);
-            if (options.MapCmsHomePage) app.MapHomePage().CacheOutput(SystemSettings.PageCachePolicyName);
+            if (options.MapCmsHomePage)
+                app.MapHomePage().CacheOutput(SystemSettings.PageCachePolicyName);
         }
 
         void UseAdminPanel()
         {
-            app.MapWhen(context => context.Request.Path.StartsWithSegments(adminPath),
+            app.MapWhen(
+                context => context.Request.Path.StartsWithSegments(adminPath),
                 subApp =>
                 {
                     subApp.UseRouting();
                     subApp.UseEndpoints(endpoints =>
                     {
                         endpoints.MapFallbackToFile(adminPath, $"{adminPath}/index.html");
-                        endpoints.MapFallbackToFile($"{adminPath}/{{*path:nonfile}}",
-                            $"{adminPath}/index.html");
+                        endpoints.MapFallbackToFile(
+                            $"{adminPath}/{{*path:nonfile}}",
+                            $"{adminPath}/index.html"
+                        );
                     });
-                });
+                }
+            );
         }
 
         async Task InitTables()
@@ -260,10 +303,9 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             var schemaService = serviceScope.ServiceProvider.GetRequiredService<ISchemaService>();
             await schemaService.EnsureSchemaTable();
             await schemaService.EnsureTopMenuBar(CancellationToken.None);
-            
+
             await serviceScope.ServiceProvider.GetRequiredService<ITaskService>().EnsureTable();
             await serviceScope.ServiceProvider.GetRequiredService<IAssetService>().EnsureTable();
-             
         }
 
         void UseExceptionHandler()
@@ -272,7 +314,6 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
             {
                 errorApp.Run(async context =>
                 {
-
                     var ex = context.Features.Get<IExceptionHandlerFeature>()?.Error;
                     if (ex is ResultException)
                     {
@@ -291,28 +332,30 @@ public sealed class CmsBuilder( ILogger<CmsBuilder> logger )
         {
             var assembly = Assembly.GetExecutingAssembly();
             var title = assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
-            var informationalVersion =
-                assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+            var informationalVersion = assembly
+                .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
+                ?.InformationalVersion;
             var dbOptions = app.Services.GetRequiredService<DbOption>();
             var parts = dbOptions.ConnectionString.Split(";").Where(x => !x.StartsWith("Password"));
 
             logger.LogInformation(
                 $"""
-                   *********************************************************
-                   Using {title}, Version {informationalVersion?.Split("+").First()}
-                   Database : {dbOptions.Provider} - {string.Join(";", parts)}
-                   Client App is Enabled :{options.EnableClient}
-                   Use CMS' home page: {options.MapCmsHomePage}
-                   Admin Panel Path: {adminPath}
-                   Schema Builder Path: {schemaBuilderPath}
-                   GraphQL Client Path: {options.GraphQlPath}
-                   RouterOption: API Base URL={options.RouteOptions.ApiBaseUrl} Page Base URL={options.RouteOptions.PageBaseUrl}
-                   Image Compression: MaxWidth={options.ImageCompression.MaxWidth}, Quality={options.ImageCompression.Quality}
-                   Schema Cache Settings: Entity Schema Expiration={options.EntitySchemaExpiration}, Query Schema Expiration = {options.QuerySchemaExpiration}
-                   Output Cache Settings: Page CachePolicy={SystemSettings.PageCachePolicyName}, Query Cache Policy={SystemSettings.QueryCachePolicyName}
-                   DOTNET_ENVIRONMENT: {Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")}
-                   *********************************************************
-                   """);
+                *********************************************************
+                Using {title}, Version {informationalVersion?.Split("+").First()}
+                Database : {dbOptions.Provider} - {string.Join(";", parts)}
+                Client App is Enabled :{options.EnableClient}
+                Use CMS' home page: {options.MapCmsHomePage}
+                Admin Panel Path: {adminPath}
+                Schema Builder Path: {schemaBuilderPath}
+                GraphQL Client Path: {options.GraphQlPath}
+                RouterOption: API Base URL={options.RouteOptions.ApiBaseUrl} Page Base URL={options.RouteOptions.PageBaseUrl}
+                Image Compression: MaxWidth={options.ImageCompression.MaxWidth}, Quality={options.ImageCompression.Quality}
+                Schema Cache Settings: Entity Schema Expiration={options.EntitySchemaExpiration}, Query Schema Expiration = {options.QuerySchemaExpiration}
+                Output Cache Settings: Page CachePolicy={SystemSettings.PageCachePolicyName}, Query Cache Policy={SystemSettings.QueryCachePolicyName}
+                DOTNET_ENVIRONMENT: {Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")}
+                *********************************************************
+                """
+            );
         }
     }
 }
