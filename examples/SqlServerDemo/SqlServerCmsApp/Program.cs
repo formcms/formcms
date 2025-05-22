@@ -1,6 +1,7 @@
 using CmsApp;
 using FormCMS;
 using FormCMS.Auth;
+using FormCMS.Auth.Builders;
 using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -8,12 +9,13 @@ using Microsoft.EntityFrameworkCore;
 var webBuilder = WebApplication.CreateBuilder(args);
 
 var connectionString = webBuilder.Configuration.GetConnectionString("sqlserver")!;
+webBuilder.Services.AddOutputCache();
 
 webBuilder.Services.AddSqlServerCms(connectionString);
 
 //add permission control service 
 webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
-webBuilder.Services.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>();
+webBuilder.Services.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>(new AuthConfig());
 webBuilder.Services.AddAuditLog();
 webBuilder.Services.AddActivity();
 
