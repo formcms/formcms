@@ -28,7 +28,7 @@ public class AppFactory : WebApplicationFactory<Program>
     public AppFactory()
     {
         Environment.SetEnvironmentVariable("EnableActivityBuffer", "false");
-        // SetTestConnectionString();
+        SetTestConnectionString();
         
         _httpClient = CreateClient(new WebApplicationFactoryClientOptions
         {

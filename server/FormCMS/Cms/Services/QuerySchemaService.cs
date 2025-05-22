@@ -4,9 +4,9 @@ using FluentResults;
 using FluentResults.Extensions;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.DisplayModels;
-using FormCMS.Utils.GraphTypeConverter;
 using FormCMS.Utils.ResultExt;
 using GraphQLParser.AST;
+using Humanizer;
 using Converter = FormCMS.Utils.GraphTypeConverter.Converter;
 using Query = FormCMS.Core.Descriptors.Query;
 using Schema = FormCMS.Core.Descriptors.Schema;
@@ -121,7 +121,7 @@ public sealed class QuerySchemaService(
         CancellationToken ct = default)
     {
         return fields
-            .Where(x=>entity.Attributes.FirstOrDefault(a=>a?.Field == x.Name) != null)
+            .Where(x=>entity.Attributes.FirstOrDefault(a=>a.Field.Camelize() == x.Name) != null)
             .ShortcutMap( async field =>
                     await entitySchemaSvc.LoadSingleAttrByName(entity, field.Name.StringValue, status, ct)
                         .Map(attr => attr.ToGraph(attr.DisplayType.IsAsset()?GetAssetFields(field): []))

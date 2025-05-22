@@ -12,16 +12,23 @@ namespace FormCMS;
 
 public static class WebApplicationExt
 {
-    public static async Task UseCmsAsync(this WebApplication app)
+    /*
+     * Order of middleware matters
+     * 1. authentication has to be the first
+     * 2. output cache
+     * 3. other FormCms endpoints
+     */
+    public static async Task UseCmsAsync(this WebApplication app, bool useOutputCache = true)
     {
-        await app.Services.GetRequiredService<CmsBuilder>().UseCmsAsync(app);
         app.Services.GetService<IAuthBuilder>()?.UseCmsAuth(app);
+        if (useOutputCache) app.UseOutputCache();
+        
+        await app.Services.GetRequiredService<CmsBuilder>().UseCmsAsync(app);
         app.Services.GetService<MongoQueryBuilder>()?.UseMongoDbQuery(app);
         app.Services.GetService<MessageProduceBuilder>()?.UseEventProducer(app);
         app.Services.GetService<AuditLogBuilder>()?.UseAuditLog(app);
         app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
         
-        //only
         app.UseRewriter(app.Services.GetRequiredService<RewriteOptions>());
     }
 
@@ -48,17 +55,21 @@ public static class WebApplicationExt
         this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
     ) => CmsBuilder.AddCms(services, DatabaseProvider.SqlServer, connectionString, action);
 
-    public static IServiceCollection AddCmsAuth<TUser, TRole, TContext>(this IServiceCollection services)
+    public static IServiceCollection AddCmsAuth<TUser, TRole, TContext>(this IServiceCollection services,
+        AuthConfig authConfig)
         where TUser : IdentityUser, new()
         where TRole : IdentityRole, new()
         where TContext : IdentityDbContext<TUser>
-        => AuthBuilder<TUser>.AddCmsAuth<TUser, TRole, TContext>(services);
+        => AuthBuilder<TUser>.AddCmsAuth<TUser, TRole, TContext>(services,authConfig);
 
     public static IServiceCollection AddAuditLog(this IServiceCollection services)
         => AuditLogBuilder.AddAuditLog(services);
 
     public static IServiceCollection AddActivity(this IServiceCollection services, bool enableBuffering=true)
         => ActivityBuilder.AddActivity(services,enableBuffering);
+
+    // public static IServiceCollection AddGithubOAuth(this IServiceCollection services, string clientId, string secret)
+        // => GitHubOAuthBuilder.AddGitHubOAuth(services, clientId, secret);
     
     public static IServiceCollection AddKafkaMessageProducer(
         this IServiceCollection services, string[] entities

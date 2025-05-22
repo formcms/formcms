@@ -1,48 +1,9 @@
-import {customTypes} from "./custom-types.js"
-import {customBlocks} from "./custom-blocks.js"
-function addCustomBlocks(editor){
-    for (const {name, label, media, content, category} of customBlocks){
-        editor.Blocks.add(name, {
-            media: media,
-            label:  label,
-            content: content,
-            category: category,
-        });
-    }
-}
-
-function addCustomTypes(editor){
-    for(const [name, traits] of  Object.entries(customTypes)){
-        editor.Components.addType(name, {
-            model: {
-                defaults: {
-                    traits,
-                    attributes: { id: `${name}-${Date.now()}-${Math.floor(Math.random() * 1000)}` },
-                },
-            },
-            view:{
-                openSettings: function ( e ) {
-                    e.preventDefault();
-                    if(traits.length> 0) {
-                        editor.select(this.model);
-                        editor.Panels.getButton('views', 'open-tm').set('active', 1);
-                    }
-                },
-                onActive() {
-                    this.el.contentEditable = true;
-                },
-                events:{
-                    dblclick: 'onActive',
-                    click: `openSettings`,
-                    selected: `openSettings`
-                }
-            }
-        });
-    }
-}
+import {addCustomTypes} from "./custom-types.js"
+import {addCustomBlocks} from "./custom-blocks.js"
+import {extendDomComponents} from "./domConponents.js";
 
 //copy from grapes.js demo
-export function loadEditor(container,  components,styles) {
+export function loadEditor(container,  components, styles) {
     let editor = grapesjs.init({
         storageManager: false,
         container: container,
@@ -72,7 +33,7 @@ export function loadEditor(container,  components,styles) {
             ],
         },
         assetManager: {
-            assets: ['{{image.url}}'],
+            assets: findUniqueImageUrls(components),
             uploadName: 'files'
 
             // options
@@ -116,5 +77,29 @@ export function loadEditor(container,  components,styles) {
     
     addCustomTypes(editor);
     addCustomBlocks(editor);
+    extendDomComponents(editor);
     return editor;
+}
+
+function findUniqueImageUrls(components) {
+    const imageUrls = new Set(['{{image.url}}']);
+
+    function iterateComponents(compArray) {
+        if (!Array.isArray(compArray)) return;
+
+        compArray.forEach(component => {
+            // Check if the component is of type "image" and has a src attribute
+            if (component.type === "image" && component.attributes && component.attributes.src) {
+                imageUrls.add(component.attributes.src);
+            }
+
+            // Recursively iterate through nested components
+            if (component.components) {
+                iterateComponents(component.components);
+            }
+        });
+    }
+
+    iterateComponents(components);
+    return Array.from(imageUrls);
 }

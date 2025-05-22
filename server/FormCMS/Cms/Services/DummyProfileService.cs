@@ -29,6 +29,7 @@ public class DummyProfileService(RestrictedFeatures restrictedFeatures): IProfil
         throw new ResultException("Not implemented yet");
     }
 
+  
     public AccessLevel MustGetReadWriteLevel(string entityName)
     {
         return AccessLevel.Full;

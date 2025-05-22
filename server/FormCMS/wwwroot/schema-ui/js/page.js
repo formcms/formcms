@@ -8,7 +8,6 @@ import {getParams} from "./searchParamUtil.js";
 let schema;
 let editor;
 
-//immutable, suitable to put to global scope
 const [navBox, headerBox,inputsBox,grapesBox, errorBox] = 
     ['#nav-box','#header-box','#inputs-box','#grapes-box','#error-box'];
 

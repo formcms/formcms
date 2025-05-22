@@ -8,19 +8,24 @@ $(document).ready(function () {
     async function loadActivityBars() {
         $(`[data-component="activity-bar"]`).each(loadActivityBar);
     }
-
-    async function loadActivityBar()
-    {
+    
+    async function loadActivityBar(){
         const activityBar = $(this);
         const entityName = activityBar.data('entity');
         const recordId = activityBar.data('record-id');
+        const fetchCount = activityBar.data('fetch-count');
 
         const likeButton = activityBar.find('[data-component="like-button"]');
         const saveButton = activityBar.find('[data-component="save-button"]');
         const shareButton = activityBar.find('[data-component="share-button"]');
         const viewButton = activityBar.find('[data-component="view-button"]');
-
-        
+        loadActivityListeners(entityName,recordId,likeButton, saveButton, shareButton);
+        if (fetchCount === 'yes') {
+            await loadActivityCounts(entityName, recordId, viewButton, likeButton);
+        }
+    }
+    
+    async function loadActivityCounts(entityName, recordId, viewButton, likeButton) {
         try {
             const data = await fetchActivity(entityName, recordId);
             updateLikeButton(likeButton, data.like);
@@ -28,8 +33,10 @@ $(document).ready(function () {
         } catch (err) {
             console.error('Error loading activity:', err);
         }
+    }
 
-        likeButton.on('click', async function (e) {
+    function loadActivityListeners(entityName, recordId,likeButton, saveButton, shareButton) {
+        likeButton && likeButton.on('click', async function (e) {
             e.preventDefault();
             if (!loggedIn){
                 window.location.href = "/portal?ref=" + encodeURIComponent(window.location.href);
@@ -45,13 +52,11 @@ $(document).ready(function () {
             }
         });
 
-        // Replace the existing shareButton click handler in loadActivityBar
-        shareButton.on('click', async function (e) {
+        shareButton && shareButton.on('click', async function (e) {
             e.preventDefault();
             showShareDialog(entityName, recordId);
         });
-
-        saveButton.on('click', () => showBookmarkModal(entityName, recordId));
+        saveButton && saveButton.on('click', () => showBookmarkModal(entityName, recordId));
     }
     // API Functions
     async function fetchActivity(entity, id) {
