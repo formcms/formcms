@@ -18,7 +18,7 @@ public static class WebApplicationExt
      * 2. output cache
      * 3. other FormCms endpoints
      */
-    public static async Task UseCmsAsync(this WebApplication app, bool useOutputCache)
+    public static async Task UseCmsAsync(this WebApplication app, bool useOutputCache = true)
     {
         app.Services.GetService<IAuthBuilder>()?.UseCmsAuth(app);
         if (useOutputCache) app.UseOutputCache();

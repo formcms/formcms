@@ -2064,14 +2064,30 @@ export default function () {
 <p>Choose the approach based on your system’s scalability requirements and infrastructure constraints.</p>
 <hr />
 <h2 id="user-portal">User Portal</h2>
-<p>Users can access their view history, liked posts, and bookmarked posts in a personalized portal.  </p>
-<p>The <strong>User Portal</strong> in FormCMS provides a centralized interface for users to manage their social activity, including viewing their interaction history, liked posts, and bookmarked content. This enhances user engagement by offering a tailored experience to revisit and organize content.</p>
+<p>Users can access their view history, liked posts, bookmarked posts, and manage authentication via GitHub OAuth in a personalized portal.  </p>
+<p>The <strong>User Portal</strong> in FormCMS provides a centralized interface for users to manage their social activity, including viewing their interaction history, liked posts, bookmarked content, and authenticating seamlessly via GitHub OAuth. This enhances user engagement by offering a tailored experience to revisit, organize content, and simplify account creation.</p>
 <h3 id="history">History</h3>
 <p>Users can view a list of all items they have previously accessed, such as pages, posts, or other content. Each item in the history is displayed with a clickable link, allowing users to easily revisit the content.</p>
 <h3 id="liked-items">Liked Items</h3>
 <p>The Liked Items section displays all posts or content that the user has liked. Users can browse their liked items, with options to unlike content or click through to view the full item, fostering seamless interaction with preferred content.</p>
 <h3 id="bookmarked-items">Bookmarked Items</h3>
 <p>Users can organize and view their saved content in the Bookmarked Items section. Bookmarks can be grouped into custom folders for easy categorization, enabling users to efficiently manage and access their saved items by folder or as a complete list.</p>
+<h3 id="github-oauth-login">GitHub OAuth Login</h3>
+<p>The User Portal supports <strong>GitHub OAuth</strong> for user authentication, streamlining the login and registration process. By integrating with GitHub's OAuth system, users can log in or register using their existing GitHub credentials, eliminating the need to create and manage a separate username and password for FormCMS.</p>
+<h4 id="how-it-works">How It Works</h4>
+<ul>
+<li><strong>Login/Registration</strong>: Users are redirected to GitHub's authentication page, where they grant FormCMS permission to access their GitHub profile (e.g., username and email).</li>
+<li><strong>Account Creation</strong>: If the user is new, FormCMS automatically creates an account using their GitHub profile information, bypassing the need for manual registration or password setup.</li>
+<li><strong>Security</strong>: The integration uses OAuth 2.0, ensuring secure token-based authentication without storing sensitive user credentials.</li>
+<li><strong>User Experience</strong>: Returning users can log in with a single click, leveraging their GitHub session for quick access to the portal.</li>
+</ul>
+<h4 id="benefits_4">Benefits</h4>
+<ul>
+<li><strong>Convenience</strong>: Users avoid the hassle of remembering a new password.</li>
+<li><strong>Speed</strong>: Instant account creation and login enhance the onboarding experience.</li>
+<li><strong>Security</strong>: Leverages GitHub's robust authentication system, reducing the risk of password-related vulnerabilities.</li>
+</ul>
+<p>Administrators can enable or configure GitHub OAuth in the <strong>Authentication Settings</strong> section, where they provide the GitHub OAuth client ID and secret, and define redirect URIs for seamless integration.</p>
 <h3 id="configuration_1">Configuration</h3>
 <p>The User Portal displays items with the following metadata:
 - <strong>Image</strong>: A thumbnail or visual representation of the item.
@@ -2227,7 +2243,7 @@ builder.AddProject&lt;Projects.FormCMS_Course&gt;(name: &quot;web&quot;)
 
 builder.Build().Run();
 </code></pre>
-<h3 id="benefits_4">Benefits:</h3>
+<h3 id="benefits_5">Benefits:</h3>
 <ol>
 <li><strong>Simplified Configuration</strong>:<br />
    No need to manually specify endpoints for the database or Redis servers. Configuration values can be retrieved using:
@@ -2598,5 +2614,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-05-13 17:17:51.778993+00:00
+Build Date UTC : 2025-05-22 16:24:59.084062+00:00
 -->
