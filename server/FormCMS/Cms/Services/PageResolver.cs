@@ -9,17 +9,22 @@ public class PageResolver(
     ISchemaService schemaSvc
     ):IPageResolver
 {
-    public  Task<Schema> GetPage(string path, CancellationToken ct)
+    public Task<Schema> GetPage(string path, CancellationToken ct)
     {
         var parts = path.Split('/', StringSplitOptions.RemoveEmptyEntries);
-        if (parts.Length is > 2 or 0)
+        bool matchPrefix;
+        string name;
+        if (parts.Length == 0)
         {
-            throw new ResultException("Page path contains more than 2 segments");
+            matchPrefix = false;
+            name = PageConstants.Home;
         }
-
-        var matchPrefix = parts.Length > 1;
-        var name = parts[0];
-        return GetCachePage(name, matchPrefix,ct);
+        else
+        {
+            matchPrefix = parts.Length > 1;
+            name = parts[0];
+        }
+        return GetCachePage(name, matchPrefix, ct);
     }
 
     public  Task<Schema> GetPage(string name, bool matchPrefix, PublicationStatus? status, CancellationToken ct)

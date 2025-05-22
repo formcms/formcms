@@ -41,23 +41,19 @@ public class WebApp(
         builder.Services.AddActivity(enableActivityBuffer);
 
         var app = builder.Build();
+        app.MapDefaultEndpoints();
+        
         if (app.Environment.IsDevelopment())
         {
             app.MapScalarApiReference();
             app.MapOpenApi();
             app.UseCors(Cors);
         }
-        await EnsureDbCreatedAsync();
         
         // use formCms 
-        await app.UseCmsAsync();
+        await EnsureDbCreatedAsync();
+        await app.UseCmsAsync(true);
         await EnsureUserCreatedAsync();
-        
-        
-        // infrastructures
-        app.MapDefaultEndpoints();
-        //have to add this middleware after other middleware
-        app.UseOutputCache();
         
         return app;
 

@@ -8,6 +8,7 @@ using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.ResultExt;
+using Humanizer;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 using SchemaType = FormCMS.Core.Descriptors.SchemaType;
 
@@ -199,7 +200,7 @@ public sealed class EntitySchemaService(
         PublicationStatus? status,
         CancellationToken ct = default)
     {
-        var loadedAttr = entity.Attributes.FirstOrDefault(x=>x.Field==attrName);
+        var loadedAttr = entity.Attributes.FirstOrDefault(x=>x.Field.Camelize()==attrName);
         if (loadedAttr is null)
             return Result.Fail($"Load single attribute fail, cannot find [{attrName}] in [{entity.Name}]");
 

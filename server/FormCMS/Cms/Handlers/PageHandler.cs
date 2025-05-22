@@ -1,4 +1,5 @@
 using FormCMS.Cms.Services;
+using FormCMS.Core.Descriptors;
 using FormCMS.Utils.HttpContextExt;
 
 namespace FormCMS.Cms.Handlers;
@@ -11,7 +12,7 @@ public static class PageHandler
             IPageService pageService,
             HttpContext context,
             CancellationToken ct
-        ) => await context.Html(await pageService.Get("home", context.Args(), ct), ct));
+        ) => await context.Html(await pageService.Get(PageConstants.Home, context.Args(), ct), ct));
     }
 
     public static RouteGroupBuilder MapPages(this RouteGroupBuilder app, params string[] knownUrls)

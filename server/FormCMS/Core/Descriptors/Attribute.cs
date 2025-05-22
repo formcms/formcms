@@ -1,8 +1,8 @@
-using System.Text.Json;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
+using Humanizer;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -147,12 +147,23 @@ public static class AttributeHelper
 
     public static void FormatForDisplay(this Attribute a, Record[] records)
     {
-        if (!Converter.NeedFormatDisplay(a.DataType, a.DisplayType)) return;
+        //camelize is graphQl convention
+        var graphQlField = a.Field.Camelize();
         foreach (var record in records)
         {
-            if (record.TryGetValue(a.Field, out var value) && value is string valueStr)
+            if (!record.TryGetValue(a.Field, out var value) ) continue;
+            if (a.Field != graphQlField)
             {
-                record[a.Field] = Converter.DbObjToDisplayObj(a.DataType, a.DisplayType, valueStr)!;
+                record.Remove(a.Field);
+            }
+            
+            if (Converter.NeedFormatDisplay(a.DataType, a.DisplayType) && value is string valueStr)
+            {
+                record[graphQlField] = Converter.DbObjToDisplayObj(a.DataType, a.DisplayType, valueStr)!;
+            }
+            else
+            {
+                record[graphQlField] = value;
             }
         }
     }

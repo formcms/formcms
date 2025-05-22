@@ -89,7 +89,7 @@ public static class BlogsTestData
         });
 
         await $$"""
-                query {{TestEntityNames.TestPost.Camelize()}}ActivityTest (${{TestFieldNames.Id.Camelize()}}:Int){
+                query {{TestEntityNames.TestPost.Camelize()}}QueryActivityBookmark (${{TestFieldNames.Id.Camelize()}}:Int){
                      {{TestEntityNames.TestPost.Camelize()}}List({{TestFieldNames.Id.Camelize()}}Set: [${{TestFieldNames.Id.Camelize()}}] ){
                          {{TestFieldNames.Id.Camelize()}}, 
                          {{TestFieldNames.Title.Camelize()}}, 
@@ -203,7 +203,7 @@ public static class BlogsTestData
         new(
             Name: TestEntityNames.TestTag.Camelize(),
             TableName: TestTableNames.TestTags.Camelize(),
-            DisplayName: TestEntityNames.TestTag.ToString(),
+            DisplayName: nameof(TestEntityNames.TestTag),
             PrimaryKey: DefaultAttributeNames.Id.Camelize(),
             Attributes:
             [
@@ -218,7 +218,7 @@ public static class BlogsTestData
         new(
             Name: TestEntityNames.TestAttachment.Camelize(),
             TableName: TestTableNames.TestAttachments.Camelize(),
-            DisplayName: TestEntityNames.TestAttachment.ToString(),
+            DisplayName: nameof(TestEntityNames.TestAttachment),
             PrimaryKey: DefaultAttributeNames.Id.Camelize(),
             Attributes:
             [
@@ -304,7 +304,7 @@ public static class BlogsTestData
                     Options = TestEntityNames.TestCategory.Camelize()
                 }
             ],
-            DisplayName: TestEntityNames.TestPost.ToString(),
+            DisplayName: nameof(TestEntityNames.TestPost),
             TableName: TestTableNames.TestPosts.Camelize(),
 
             LabelAttributeName: TestFieldNames.Title.Camelize(),
@@ -312,7 +312,7 @@ public static class BlogsTestData
             DefaultPublicationStatus: PublicationStatus.Published,
 
             PageUrl: "/" + TestEntityNames.TestPost.Camelize() + "/",
-            BookmarkQuery: TestEntityNames.TestPost.Camelize() + "ActivityTest",
+            BookmarkQuery: TestEntityNames.TestPost.Camelize() + "QueryActivityBookmark",
             BookmarkQueryParamName: TestFieldNames.Id.Camelize(),
             BookmarkTitleField: TestFieldNames.Title.Camelize(),
             BookmarkImageField: TestFieldNames.Image.Camelize(),

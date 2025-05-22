@@ -262,16 +262,19 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             apiGroup.MapGroup("/profile").MapProfileHandlers();
             apiGroup.MapGroup("/tasks").MapTasksHandler();
 
+            var knownPath = new []
+            {
+                "admin",
+                "doc",
+                "files",
+                "favicon.ico",
+                "css",
+                "js",
+                options.RouteOptions.ApiBaseUrl
+            }.Concat(options.KnownPaths);
+            
             app.MapGroup(options.RouteOptions.PageBaseUrl)
-                .MapPages(
-                    "admin",
-                    "doc",
-                    "files",
-                    "favicon.ico",
-                    "css",
-                    "js",
-                    options.RouteOptions.ApiBaseUrl
-                )
+                .MapPages([..knownPath])
                 .CacheOutput(SystemSettings.PageCachePolicyName);
             if (options.MapCmsHomePage)
                 app.MapHomePage().CacheOutput(SystemSettings.PageCachePolicyName);

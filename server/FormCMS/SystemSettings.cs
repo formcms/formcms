@@ -15,7 +15,7 @@ public sealed class SystemSettings
 {
     public const string PageCachePolicyName = "CmsPageCachePolicy";
     public const string QueryCachePolicyName = "CmsQueryCachePolicy";
-    
+
     public bool EnableClient { get; set; } = true;
     public bool MapCmsHomePage { get; set; } = true;
     public string GraphQlPath { get; set; } = "/graph";
@@ -24,6 +24,7 @@ public sealed class SystemSettings
     public TimeSpan QuerySchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);
 
     public int DatabaseQueryTimeout { get; set; } = 30;
-    public ImageCompressionOptions ImageCompression { get; set; } = new ();
-    public RouteOptions RouteOptions { get; set; } = new ();
+    public ImageCompressionOptions ImageCompression { get; set; } = new();
+    public RouteOptions RouteOptions { get; set; } = new();
+    public string[] KnownPaths { get; set; } = [];
 }

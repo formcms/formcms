@@ -12,16 +12,23 @@ namespace FormCMS;
 
 public static class WebApplicationExt
 {
-    public static async Task UseCmsAsync(this WebApplication app)
+    /*
+     * Order of middleware matters
+     * 1. authentication has to be the first
+     * 2. output cache
+     * 3. other FormCms endpoints
+     */
+    public static async Task UseCmsAsync(this WebApplication app, bool useOutputCache)
     {
-        await app.Services.GetRequiredService<CmsBuilder>().UseCmsAsync(app);
         app.Services.GetService<IAuthBuilder>()?.UseCmsAuth(app);
+        if (useOutputCache) app.UseOutputCache();
+        
+        await app.Services.GetRequiredService<CmsBuilder>().UseCmsAsync(app);
         app.Services.GetService<MongoQueryBuilder>()?.UseMongoDbQuery(app);
         app.Services.GetService<MessageProduceBuilder>()?.UseEventProducer(app);
         app.Services.GetService<AuditLogBuilder>()?.UseAuditLog(app);
         app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
         
-        //only
         app.UseRewriter(app.Services.GetRequiredService<RewriteOptions>());
     }
 
