@@ -1,13 +1,12 @@
-using FormCMS.Auth;
-using FormCMS.Auth.Services;
+using FormCMS.Auth.Models;
 using FormCMS.Core.Identities;
-using FormCMS.Utils.ResultExt;
+using AccessLevel = FormCMS.Auth.Services.AccessLevel;
 
 namespace FormCMS.Cms.Services;
 
 public class DummyProfileService(RestrictedFeatures restrictedFeatures): IProfileService
 {
-    public UserAccess GetInfo()
+    public UserAccess GetUserAccess()
     {
         return new UserAccess
         (
@@ -23,13 +22,17 @@ public class DummyProfileService(RestrictedFeatures restrictedFeatures): IProfil
             RestrictedReadWriteEntities:[]
         );
     }
-    
-    public Task ChangePassword(ProfileDto dto)
+
+    public PublicProfile? GetUserProfile()
     {
-        throw new ResultException("Not implemented yet");
+        throw new NotImplementedException();
     }
 
-  
+    public Task ChangePassword(string password, string newPassword)
+    {
+        throw new NotImplementedException();
+    }
+
     public AccessLevel MustGetReadWriteLevel(string entityName)
     {
         return AccessLevel.Full;
@@ -52,5 +55,15 @@ public class DummyProfileService(RestrictedFeatures restrictedFeatures): IProfil
     public bool HasRole(string role)
     {
         return true;
+    }
+
+    public Task<PublicProfile> GetProfiles(IEnumerable<string> userIds)
+    {
+        throw new NotImplementedException();
+    }
+
+    public Task<string> UploadAvatar(IFormFile file, CancellationToken ct)
+    {
+        throw new NotImplementedException();
     }
 }

@@ -40,7 +40,7 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 
         services.AddScoped<IActivityCollectService, ActivityCollectService>();
         services.AddScoped<IActivityService, ActivityService>();
-        services.AddScoped<IQueryPluginService, QueryPluginService>();
+        services.AddScoped<IActivityPlugin, ActivityPlugin>();
         services.AddScoped<ITopItemService, TopItemService>();
         services.AddScoped<IBookmarkService, BookmarkService>();
         
@@ -112,21 +112,16 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
                 );
 
             var registry = app.Services.GetRequiredService<HookRegistry>();
-            registry.ExtraQueryFieldEntities.Register("", args =>
+            registry.ExtraQueryFieldEntities.RegisterDynamic("", (IActivityPlugin service, ExtendingEntityArgs args)=>
             {
-                var entities = args.entities.Select(x => x with
-                {
-                    Attributes = [
-                        ..x.Attributes,
-                        ..attrs,
-                    ]
-                });
-                return new ExtraQueryFieldEntitiesArgs([..entities]);
+                var entities = service.ExtendEntities(args.entities);
+                return new ExtendingEntityArgs([..entities]);
             });
-            registry.QueryPostList.RegisterDynamic("*" ,async (IQueryPluginService service, QueryPostListArgs args)=>
+            
+            registry.QueryPostList.RegisterDynamic("*" ,async (IActivityPlugin service, QueryPostListArgs args)=>
             {
                 var entity = args.Query.Entity;
-                await service.LoadCounts(entity.Name, entity.PrimaryKey,[..args.Fields], args.RefRecords, CancellationToken.None);
+                await service.LoadCounts(entity,[..args.Fields], args.RefRecords, CancellationToken.None);
                 return args;
             });
         }

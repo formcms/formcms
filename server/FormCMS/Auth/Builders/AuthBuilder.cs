@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using FormCMS.Auth.Handlers;
 using FluentResults;
+using FormCMS.Auth.Models;
 using FormCMS.Auth.Services;
 using FormCMS.Cms.Services;
 using FormCMS.Core.HookFactory;
@@ -21,7 +22,7 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
         IServiceCollection services,
         AuthConfig authConfig 
         )
-        where TUser : IdentityUser, new()
+        where TUser : CmsUser, new()
         where TRole : IdentityRole, new()
         where TContext : IdentityDbContext<TUser>
     {
@@ -29,11 +30,10 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
         services.AddSingleton(authConfig);
         services.AddSingleton<IAuthBuilder, AuthBuilder<TUser>>();
         
+        services.AddIdentity<TUser,TRole>().AddEntityFrameworkStores<TContext>(); 
+        
         services.AddHttpContextAccessor();
-        services.AddIdentityApiEndpoints<TUser>()
-            .AddRoles<TRole>()
-            .AddEntityFrameworkStores<TContext>();
-
+        
         if (authConfig.OAuthConfig is not null)
         {
             var oAuthConfig  = authConfig.OAuthConfig;
@@ -83,7 +83,7 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
             }
         }
 
-
+        services.AddScoped<IUserClaimsPrincipalFactory<CmsUser>, CustomPrincipalFactory>();
         services.AddScoped<ILoginService, LoginService<TUser>>();
         services.AddScoped<IProfileService, ProfileService<TUser>>();
         services.AddScoped<IAccountService, AccountService<TUser, TRole, TContext>>();
@@ -104,7 +104,7 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
             app.UseAuthentication();
         }
 
-        app.Services.GetService<RestrictedFeatures>()?.Menus.AddRange(AuthMenus.MenuRoles,AuthMenus.MenuUsers);
+        app.Services.GetService<RestrictedFeatures>()?.Menus.AddRange(AuthManageMenus.MenuRoles,AuthManageMenus.MenuUsers);
         
         MapEndpoints();
         RegisterHooks();
@@ -114,7 +114,6 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
         {
             var options = app.Services.GetRequiredService<SystemSettings>();
             var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
-            apiGroup.MapIdentityApi<TCmsUser>();
             apiGroup.MapGroup("/accounts").MapAccountHandlers();
             apiGroup.MapLoginHandlers();
         }

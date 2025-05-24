@@ -4,6 +4,8 @@ using FormCMS.Core.HookFactory;
 using FluentResults;
 using FormCMS.Activities.Builders;
 using FormCMS.AuditLogging.Builders;
+using FormCMS.Auth.Models;
+using FormCMS.Comments.Builders;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Rewrite;
@@ -28,6 +30,7 @@ public static class WebApplicationExt
         app.Services.GetService<MessageProduceBuilder>()?.UseEventProducer(app);
         app.Services.GetService<AuditLogBuilder>()?.UseAuditLog(app);
         app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
+        app.Services.GetService<CommentBuilder>()?.UseComments(app);
         
         app.UseRewriter(app.Services.GetRequiredService<RewriteOptions>());
     }
@@ -57,7 +60,7 @@ public static class WebApplicationExt
 
     public static IServiceCollection AddCmsAuth<TUser, TRole, TContext>(this IServiceCollection services,
         AuthConfig authConfig)
-        where TUser : IdentityUser, new()
+        where TUser : CmsUser, new()
         where TRole : IdentityRole, new()
         where TContext : IdentityDbContext<TUser>
         => AuthBuilder<TUser>.AddCmsAuth<TUser, TRole, TContext>(services,authConfig);
@@ -68,8 +71,8 @@ public static class WebApplicationExt
     public static IServiceCollection AddActivity(this IServiceCollection services, bool enableBuffering=true)
         => ActivityBuilder.AddActivity(services,enableBuffering);
 
-    // public static IServiceCollection AddGithubOAuth(this IServiceCollection services, string clientId, string secret)
-        // => GitHubOAuthBuilder.AddGitHubOAuth(services, clientId, secret);
+    public static IServiceCollection AddComments(this IServiceCollection services, bool enableBuffering=true)
+        => CommentBuilder.AddComments(services);
     
     public static IServiceCollection AddKafkaMessageProducer(
         this IServiceCollection services, string[] entities

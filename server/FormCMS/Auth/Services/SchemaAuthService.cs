@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using FluentResults;
+using FormCMS.Auth.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.Identities;
@@ -31,7 +32,7 @@ public class SchemaAuthService(
 
     public async Task<Schema> BeforeSave(Schema schema)
     {
-        var access = profileService.GetInfo();
+        var access = profileService.GetUserAccess();
         await EnsureWritePermissionAsync(schema);
 
         schema = schema with { CreatedBy = access?.Id ??"" };
@@ -85,7 +86,7 @@ public class SchemaAuthService(
 
     private async Task<bool> IsCreatedByCurrentUser(Schema schema)
     {
-        var access = profileService.GetInfo();
+        var access = profileService.GetUserAccess();
         var find = await schemaService.ById(schema.Id,CancellationToken.None)
             ?? throw new ResultException($"Can not verify schema is created by you, can not find schema by id [{schema.Id}]");
         return find.CreatedBy == access?.Id;

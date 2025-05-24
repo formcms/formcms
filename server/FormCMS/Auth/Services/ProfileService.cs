@@ -1,38 +1,37 @@
 using System.Security.Claims;
+using FormCMS.Auth.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Identities;
+using FormCMS.Infrastructure.FileStore;
+using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
+using NUlid;
 
 namespace FormCMS.Auth.Services;
 
-public sealed record ProfileDto(string OldPassword, string Password);
-
-
 public class ProfileService<TUser>(
+    IFileStore store,
+    IResizer resizer,
     UserManager<TUser> userManager,
     IHttpContextAccessor contextAccessor,
     SignInManager<TUser> signInManager,
     RestrictedFeatures restrictedFeatures
 ) : IProfileService
-    where TUser : IdentityUser, new()
+    where TUser : CmsUser, new()
 {
-    public UserAccess? GetInfo()
+    public UserAccess? GetUserAccess()
     {
-
         var contextUser = contextAccessor.HttpContext?.User;
         if (contextUser?.Identity?.IsAuthenticated != true) return null;
 
-        var email = contextUser.FindFirstValue(ClaimTypes.Email);
-        if (email is null) return null;
-        
         string[] roles = [..contextUser.FindAll(ClaimTypes.Role).Select(x => x.Value)];
 
         var user = new UserAccess
         (
             Id: contextUser.FindFirstValue(ClaimTypes.NameIdentifier) ?? "",
             Name: contextUser.Identity.Name ?? "",
-            Email: email,
+            Email: contextUser.FindFirstValue(ClaimTypes.Email) ??"",
             Roles: roles,
             ReadWriteEntities: [..contextUser.FindAll(AccessScope.FullAccess).Select(x => x.Value)],
             RestrictedReadWriteEntities: [..contextUser.FindAll(AccessScope.RestrictedAccess).Select(x => x.Value)],
@@ -46,10 +45,22 @@ public class ProfileService<TUser>(
         return user.CanAccessAdmin();
     }
 
-    public async Task ChangePassword(ProfileDto dto)
+    public PublicProfile? GetUserProfile()
+    {
+        var contextUser = contextAccessor.HttpContext?.User;
+        if (contextUser?.Identity?.IsAuthenticated != true) return null;
+
+        return new PublicProfile(
+            Id: contextUser.FindFirstValue(ClaimTypes.NameIdentifier) ?? "",
+            Name: contextUser.Identity.Name??"",
+            AvatarUrl: contextUser.FindFirstValue("avatar_url") ?? ""
+        );
+    }
+
+    public async Task ChangePassword(string password, string newPassword)
     {
         var user = await MustGetCurrentUser();
-        var result = await userManager.ChangePasswordAsync(user, dto.OldPassword, dto.Password);
+        var result = await userManager.ChangePasswordAsync(user, password, newPassword);
         if (!result.Succeeded) throw new ResultException(IdentityErrMsg(result));
     }
 
@@ -110,7 +121,24 @@ public class ProfileService<TUser>(
 
         throw new ResultException("You don't have permission to do this operation");
     }
-    
+    public  bool HasRole(string role)
+    {
+        return contextAccessor.HttpContext?.User.IsInRole(role) ?? false;
+    }
+
+    public Task<PublicProfile> GetProfiles(IEnumerable<string> userIds)
+    {
+        throw new NotImplementedException();
+    }
+
+    public async Task<string> UploadAvatar(IFormFile file, CancellationToken ct)
+    {
+        if (file.Length ==0)  throw new ResultException($"File [{file.FileName}] is empty");
+        file = resizer.CompressImage(file);
+        var path = Path.Join("avatar", Ulid.NewUlid().ToString(), Path.GetExtension(file.FileName));
+        await store.Upload([(path,file)],ct);
+        return path;
+    } 
     private async Task<TUser> MustGetCurrentUser()
     {
         var claims = contextAccessor.HttpContext?.User;
@@ -139,10 +167,5 @@ public class ProfileService<TUser>(
         }
 
         return userClaims.Claims.FirstOrDefault(x => x.Value == value && x.Type == claimType) != null;
-    }
-    
-    public  bool HasRole(string role)
-    {
-        return contextAccessor.HttpContext?.User.IsInRole(role) ?? false;
     }
 }

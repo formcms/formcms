@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FluentResults;
+using FormCMS.Auth.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Assets;
 using Microsoft.AspNetCore.Identity;

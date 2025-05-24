@@ -5,17 +5,26 @@ namespace FormCMS.Auth.Handlers;
 
 public static class ProfileHandler
 {
+    public sealed record ChangePasswordReq(string OldPassword, string Password);
+
     public static void MapProfileHandlers(this RouteGroupBuilder app)
     {
         app.MapPost("/password", async (
-            IProfileService svc, ProfileDto dto
-        ) => await svc.ChangePassword(dto));
+            IProfileService svc, 
+            ChangePasswordReq request
+        ) => await svc.ChangePassword(request.OldPassword, request.Password));
 
+        app.MapPost("/avatar", async (
+            IProfileService svc,
+            HttpContext context,
+            CancellationToken ct
+        ) => string.Join(",", await svc.UploadAvatar(context.Request.Form.Files.First(),ct)));
+        
         app.MapGet("/info", (
             IProfileService svc
         ) =>
         {
-            var info = svc.GetInfo();
+            var info = svc.GetUserAccess();
             return info is not null ? Results.Ok(info) : Results.Unauthorized();
         });
     }

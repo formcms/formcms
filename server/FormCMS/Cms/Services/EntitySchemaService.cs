@@ -34,10 +34,10 @@ public sealed class EntitySchemaService(
         }, ct);
     }
 
-    public async ValueTask<ImmutableArray<Entity>> ExtraQueryFieldEntities(CancellationToken ct)
+    public async ValueTask<ImmutableArray<Entity>> ExtendedEntities(CancellationToken ct)
     {
         var entities = await AllEntities(ct);
-        var res = await hook.ExtraQueryFieldEntities.Trigger( provider,new ExtraQueryFieldEntitiesArgs(entities) );
+        var res = await hook.ExtraQueryFieldEntities.Trigger( provider,new ExtendingEntityArgs(entities) );
         return res.entities;
     }
 

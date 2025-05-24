@@ -22,7 +22,7 @@ public class EntityAuthService(
 
         var createBy = new LoadedAttribute(TableName: entity.TableName, Constants.CreatedBy);
         var vector = new AttributeVector("", "", [], createBy);
-        var constraint = new ValidConstraint(Matches.EqualsTo, [new ValidValue(profileService.GetInfo()!.Id)]);
+        var constraint = new ValidConstraint(Matches.EqualsTo, [new ValidValue(profileService.GetUserAccess()!.Id)]);
         var filter = new ValidFilter(vector, MatchTypes.MatchAll, [constraint]);
 
         return [..filters, filter];
@@ -53,7 +53,7 @@ public class EntityAuthService(
 
     public void AssignCreatedBy(Record record)
     {
-        record[Constants.CreatedBy] = profileService.GetInfo()!.Id;
+        record[Constants.CreatedBy] = profileService.GetUserAccess()!.Id;
     }
 
     private async Task EnsureCreatedByCurrentUser(LoadedEntity entity, object recordId)
@@ -63,7 +63,7 @@ public class EntityAuthService(
             .Select(Constants.CreatedBy);
         
         var record = await executor.Single(query, CancellationToken.None);
-        if (record is null || record.StrOrEmpty(Constants.CreatedBy) != profileService.GetInfo()!.Id)
+        if (record is null || record.StrOrEmpty(Constants.CreatedBy) != profileService.GetUserAccess()!.Id)
         {
             throw new ResultException(
                 $"You can only access record created by you, entityName={entity.Name}, record id={recordId}");

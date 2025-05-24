@@ -50,7 +50,7 @@ public class TaskService(
     public async Task<long> AddImportTask(IFormFile file)
     {
         EnsureHasPermission();
-        var task = TaskHelper.InitTask(TaskType.Import, profileService.GetInfo()?.Name ?? "");
+        var task = TaskHelper.InitTask(TaskType.Import, profileService.GetUserAccess()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
         var id = await executor.Exec(query,true);
 
@@ -67,7 +67,7 @@ public class TaskService(
         var title = assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
         var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split("+").First();
         var url = $"https://github.com/FormCMS/FormCMS/raw/refs/heads/doc/etc/{title}-demo-data-{version}.zip";
-        var task = TaskHelper.InitTask(TaskType.Import, profileService.GetInfo()?.Name ?? "");
+        var task = TaskHelper.InitTask(TaskType.Import, profileService.GetUserAccess()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
         var id = await executor.Exec(query,true);
 
@@ -80,7 +80,7 @@ public class TaskService(
     public Task<long> AddExportTask()
     {
         EnsureHasPermission();
-        var task = TaskHelper.InitTask(TaskType.Export, profileService.GetInfo()?.Name ?? "");
+        var task = TaskHelper.InitTask(TaskType.Export, profileService.GetUserAccess()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
         return executor.Exec(query,true);
     }
@@ -98,7 +98,7 @@ public class TaskService(
 
     private void EnsureHasPermission()
     {
-        if (profileService.GetInfo()?.CanAccessAdmin != true)
+        if (profileService.GetUserAccess()?.CanAccessAdmin != true)
             throw new ResultException("You don't have permission ");
     }
 }

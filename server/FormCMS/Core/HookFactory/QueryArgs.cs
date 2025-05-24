@@ -34,6 +34,6 @@ public record QueryPostSingleArgs(
     Record RefRecord
 ) : BaseArgs(Query.Name);
 
-public record ExtraQueryFieldEntitiesArgs(
+public record ExtendingEntityArgs(
     ImmutableArray<Entity> entities
 ) : BaseArgs("");

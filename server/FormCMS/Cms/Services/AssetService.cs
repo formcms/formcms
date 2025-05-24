@@ -41,7 +41,7 @@ public class AssetService(
 
     public XEntity GetEntity(bool withLinkCount)
     {
-        if (profileService.GetInfo()?.CanAccessAdmin != true)
+        if (profileService.GetUserAccess()?.CanAccessAdmin != true)
         {
             throw new ResultException("Access denied");
         }
@@ -200,7 +200,7 @@ public class AssetService(
             if (metadata is null) continue;
 
             var asset = new Asset(
-                CreatedBy: profileService.GetInfo()?.Name ?? "",
+                CreatedBy: profileService.GetUserAccess()?.Name ?? "",
                 Path: s,
                 Url: store.GetUrl(s),
                 Name: s,

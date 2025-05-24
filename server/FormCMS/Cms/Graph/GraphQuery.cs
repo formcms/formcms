@@ -11,12 +11,12 @@ public sealed class GraphQuery : ObjectGraphType
     public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService)
     {
         var entities = entitySchemaService.AllEntities(CancellationToken.None).GetAwaiter().GetResult();
-        var extraQueryFieldEntity = entitySchemaService.ExtraQueryFieldEntities(CancellationToken.None).GetAwaiter().GetResult();
+        var extendedEntities = entitySchemaService.ExtendedEntities(CancellationToken.None).GetAwaiter().GetResult();
         var graphMap = new Dictionary<string, GraphInfo>();
         
         foreach (var entity in entities)
         {
-            var t = FieldTypes.PlainType(extraQueryFieldEntity.First(e=>e.Name == entity.Name));
+            var t = FieldTypes.PlainType(extendedEntities.First(e=>e.Name == entity.Name));
             graphMap[entity.Name] = new GraphInfo(entity, t, new ListGraphType(t));
         }
         
@@ -25,6 +25,7 @@ public sealed class GraphQuery : ObjectGraphType
             FieldTypes.SetCompoundType(entity,graphMap);
         }
 
+        //extended attribute cannot be filter
         foreach (var entity in entities)
         {
             var graphInfo = graphMap[entity.Name];

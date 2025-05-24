@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using FormCMS.Activities.Models;
 using FormCMS.AuditLogging.Models;
+using FormCMS.Auth.Handlers;
 using FormCMS.Auth.Services;
 using NJsonSchema;
 using NJsonSchema.CodeGeneration.TypeScript;
@@ -13,13 +14,15 @@ using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 using NJsonSchema.Generation;
 
+//shared
 TsGenerator.GenerateCode<XEntity>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/types/xEntity.ts");
 TsGenerator.GenerateCode<ListResponse>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/types/listResponse.ts");
 TsGenerator.GenerateCode<ListResponseMode>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/types/listResponseMode.ts");
 
+//audit log
 TsGenerator.GenerateCode<AuditLog>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auditLog/types/auditLog.ts");
-TsGenerator.GenerateCode<DailyActionCount>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auditLog/types/dailyActionCount.ts");
 
+//cms
 TsGenerator.GenerateCode<Asset>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/cms/types/asset.ts");
 TsGenerator.GenerateCode<AssetLink>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/cms/types/assetLink.ts");
 TsGenerator.GenerateCode<LookupListResponse>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/cms/types/lookupListResponse.ts");
@@ -29,12 +32,16 @@ TsGenerator.GenerateCode<PublicationStatus>("../../../FormCmsAdminApp/libs/FormC
 TsGenerator.GenerateCode<SpecialQueryKeys>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/cms/types/specialQueryKeys.ts");
 TsGenerator.GenerateCode<SystemTask>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/cms/types/systemTask.ts");
 
-
+//auth
 TsGenerator.GenerateCode<Menu>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auth/types/menu.ts");
-TsGenerator.GenerateCode<ProfileDto>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auth/types/profileDto.ts");
+TsGenerator.GenerateCode<ProfileHandler.ChangePasswordReq>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auth/types/changePasswordReq.ts");
+TsGenerator.GenerateCode<LoginHandler.RegisterReq>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auth/types/registerReq.ts");
+TsGenerator.GenerateCode<LoginHandler.LoginReq>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auth/types/loginReq.ts");
 TsGenerator.GenerateCode<UserAccess>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auth/types/userAccess.ts");
 TsGenerator.GenerateCode<RoleAccess>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auth/types/roleAccess.ts");
 
+//activity
+TsGenerator.GenerateCode<DailyActionCount>("../../../FormCmsAdminApp/libs/FormCmsAdminSdk/auditLog/types/dailyActionCount.ts");
 TsGenerator.GenerateCode<Activity>("../../../FormCmsPortal/libs/FormCmsAdminSdk/activity/types/activity.ts");
 TsGenerator.GenerateCode<Bookmark>("../../../FormCmsPortal/libs/FormCmsAdminSdk/activity/types/bookmark.ts");
 TsGenerator.GenerateCode<BookmarkFolder>("../../../FormCmsPortal/libs/FormCmsAdminSdk/activity/types/bookmarkFolder.ts");

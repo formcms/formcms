@@ -40,7 +40,7 @@ public class AuditLogService(
 
     public Task AddLog(ActionType actionType, string entityName, string id, string label, Record record)
     {
-        var currentUser = profileService.GetInfo();
+        var currentUser = profileService.GetUserAccess();
         var log = new AuditLog(
             Id: 0,
             UserId: currentUser?.Id??"",
@@ -62,7 +62,7 @@ public class AuditLogService(
 
     private void EnsureHasPermission()
     {
-        var menus = profileService.GetInfo()?.AllowedMenus??[];
+        var menus = profileService.GetUserAccess()?.AllowedMenus??[];
         if (!menus.Contains(AuditLoggingConstants.MenuId))
             throw new ResultException("You don't have permission to view audit logs");
     }

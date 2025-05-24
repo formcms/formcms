@@ -10,7 +10,7 @@ public class HookRegistry
         public HookList<QueryPostListArgs> QueryPostList { get; } = new();
         public HookList<QueryPreSingleArgs> QueryPreSingle { get; } = new();
         public HookList<QueryPostSingleArgs> QueryPostSingle { get; } = new();
-        public HookList<ExtraQueryFieldEntitiesArgs> ExtraQueryFieldEntities { get; } = new();
+        public HookList<ExtendingEntityArgs> ExtraQueryFieldEntities { get; } = new();
         
         public HookList<EntityPreGetSingleArgs> EntityPreGetSingle { get; } = new();
         public HookList<EntityPreGetListArgs> EntityPreGetList { get; } = new();
