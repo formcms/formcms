@@ -22,7 +22,8 @@ public record Asset(
     DateTime UpdatedAt = default,
     long Id = 0,
     int LinkCount = 0, //calculated field, omit from attribute and columns
-    AssetLink[]? Links = null //calculated field, omit from attribute and columns
+    AssetLink[]? Links = null, //calculated field, omit from attribute and columns
+    int Progress=0// video conversion progress
 );
 
 public static class Assets

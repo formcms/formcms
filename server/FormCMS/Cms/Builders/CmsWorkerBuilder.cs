@@ -5,17 +5,18 @@ using FormCMS.Infrastructure.RelationDbDao;
 
 namespace FormCMS.Cms.Builders;
 
-public record TaskTimingSeconds(int QueryTimeout,int ExportDelay,int ImportDelay, int PublishDelay);
+public record TaskTimingSeconds(int QueryTimeout,int ExportDelay,int ImportDelay, int PublishDelay,int FFMpegDelay);
 public static class CmsWorkerBuilder
 {
     public static IServiceCollection AddWorker(
         IServiceCollection services,
         DatabaseProvider databaseProvider,
         string connectionString,
+        
         TaskTimingSeconds? taskTimingSeconds
-       ) 
+       )
     {
-        taskTimingSeconds ??= new TaskTimingSeconds(60, 30, 30, 30);
+        taskTimingSeconds ??= new TaskTimingSeconds(60, 30, 30, 30,300);
         var parts = connectionString.Split(";").Where(x => !x.StartsWith("Password"));
 
         services.AddSingleton(new ResizeOptions(1200,90));
@@ -39,6 +40,8 @@ public static class CmsWorkerBuilder
         
         services.AddSingleton(new DataPublishingWorkerOptions(taskTimingSeconds.PublishDelay));
         services.AddHostedService<DataPublishingWorker>();
+        services.AddSingleton(new FFMepgConversionDelayOptions(taskTimingSeconds.FFMpegDelay));
+        services.AddHostedService<FFMpegWorker>();
         Console.WriteLine(
             $"""
              *********************************************************
@@ -50,5 +53,10 @@ public static class CmsWorkerBuilder
        
         return services;
     }
-    
+    public static IServiceCollection AddMessaging(this IServiceCollection services,
+        MessagingProvider messagingProvider,
+        string connectionString
+        )=> services.AddMsg(messagingProvider, connectionString);
+
+   
 }

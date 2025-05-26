@@ -44,3 +44,4 @@ riderModule.iml
 *.user
 /examples/WebApiExamples/Properties/launchSettings.json
 /.gitignore
+/examples/SqlServerDemo/SqlServerCmsApp/wwwroot/files
