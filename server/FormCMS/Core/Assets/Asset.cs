@@ -70,7 +70,7 @@ public static class Assets
         ColumnHelper.CreateCamelColumn<Asset, string>(x => x.CreatedBy),
         
         ColumnHelper.CreateCamelColumn<Asset>(x => x.Metadata, ColumnType.Text),
-
+        ColumnHelper.CreateCamelColumn<Asset>(x=>x.Progress, ColumnType.Int),
         DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
