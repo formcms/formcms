@@ -8,7 +8,7 @@ namespace FormCMS.Comments.Services;
 
 public class CommentsService(
     DatabaseMigrator migrator,
-    IProfileService profileService,
+    IIdentityService identityService,
     KateQueryExecutor executor
     ):ICommentsService
 {
@@ -20,7 +20,7 @@ public class CommentsService(
 
     public async Task Delete(long id, CancellationToken ct)
     {
-        var userId = profileService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
+        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
         var commentRec = await executor.Single(CommentHelper.Single(id),ct);
         if (commentRec is null) throw new ResultException("Comment not found");
 
@@ -32,7 +32,7 @@ public class CommentsService(
     
     public async Task Update(Comment comment, CancellationToken ct)
     {
-        var userId = profileService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
+        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
         comment = comment with { UserId = userId};
             
         var affected = await executor.Exec(comment.Update(),false, ct);
@@ -41,7 +41,7 @@ public class CommentsService(
     
     public async Task<Comment> Add(Comment comment, CancellationToken ct)
     {
-        var userId = profileService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
+        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
         comment = comment with { UserId = userId };
         var query = comment.Insert();
         var id = await executor.Exec(query, true, ct);

@@ -18,14 +18,6 @@ public static class ProfileHandler
             IProfileService svc,
             HttpContext context,
             CancellationToken ct
-        ) => string.Join(",", await svc.UploadAvatar(context.Request.Form.Files.First(),ct)));
-        
-        app.MapGet("/info", (
-            IProfileService svc
-        ) =>
-        {
-            var info = svc.GetUserAccess();
-            return info is not null ? Results.Ok(info) : Results.Unauthorized();
-        });
+        ) => await svc.UploadAvatar(context.Request.Form.Files.First(),ct));
     }
 }

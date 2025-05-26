@@ -4,5 +4,5 @@ namespace FormCMS.Auth.Models;
 
 public class CmsUser: IdentityUser
 {
-    public string? AvatarUrl { get; set; }
+    public string? AvatarPath { get; set; }
 }

@@ -20,7 +20,7 @@ public class EntityAuthTest
     public EntityAuthTest(AppFactory factory)
     {
         Factory = factory;
-        Factory.AuthApi.Register(_email, Pwd).GetAwaiter().GetResult();
+        Factory.AuthApi.Register(_email.Split('@')[0],_email, Pwd).GetAwaiter().GetResult();
         EnsureEntityExists().GetAwaiter().GetResult();
     }
 

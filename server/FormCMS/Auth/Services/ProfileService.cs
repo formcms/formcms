@@ -1,7 +1,5 @@
 using System.Security.Claims;
 using FormCMS.Auth.Models;
-using FormCMS.Cms.Services;
-using FormCMS.Core.Identities;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Utils.ResultExt;
@@ -15,55 +13,44 @@ public class ProfileService<TUser>(
     IResizer resizer,
     UserManager<TUser> userManager,
     IHttpContextAccessor contextAccessor,
-    SignInManager<TUser> signInManager,
-    RestrictedFeatures restrictedFeatures
-) : IProfileService
+    SignInManager<TUser> signInManager
+    ):IProfileService
     where TUser : CmsUser, new()
+
 {
-    public UserAccess? GetUserAccess()
-    {
-        var contextUser = contextAccessor.HttpContext?.User;
-        if (contextUser?.Identity?.IsAuthenticated != true) return null;
-
-        string[] roles = [..contextUser.FindAll(ClaimTypes.Role).Select(x => x.Value)];
-
-        var user = new UserAccess
-        (
-            Id: contextUser.FindFirstValue(ClaimTypes.NameIdentifier) ?? "",
-            Name: contextUser.Identity.Name ?? "",
-            Email: contextUser.FindFirstValue(ClaimTypes.Email) ??"",
-            Roles: roles,
-            ReadWriteEntities: [..contextUser.FindAll(AccessScope.FullAccess).Select(x => x.Value)],
-            RestrictedReadWriteEntities: [..contextUser.FindAll(AccessScope.RestrictedAccess).Select(x => x.Value)],
-            ReadonlyEntities: [..contextUser.FindAll(AccessScope.FullRead).Select(x => x.Value)],
-            RestrictedReadonlyEntities: [..contextUser.FindAll(AccessScope.RestrictedRead).Select(x => x.Value)],
-            AllowedMenus: roles.Contains(Roles.Sa) || roles.Contains(Roles.Admin)
-                ? restrictedFeatures.Menus.ToArray()
-                : []
-        );
-        
-        return user.CanAccessAdmin();
-    }
-
-    public PublicProfile? GetUserProfile()
-    {
-        var contextUser = contextAccessor.HttpContext?.User;
-        if (contextUser?.Identity?.IsAuthenticated != true) return null;
-
-        return new PublicProfile(
-            Id: contextUser.FindFirstValue(ClaimTypes.NameIdentifier) ?? "",
-            Name: contextUser.Identity.Name??"",
-            AvatarUrl: contextUser.FindFirstValue("avatar_url") ?? ""
-        );
-    }
-
     public async Task ChangePassword(string password, string newPassword)
     {
         var user = await MustGetCurrentUser();
         var result = await userManager.ChangePasswordAsync(user, password, newPassword);
         if (!result.Succeeded) throw new ResultException(IdentityErrMsg(result));
     }
+    
+    public async Task UploadAvatar(IFormFile file, CancellationToken ct)
+    {
+        //delete old avatar
+        var user = await MustGetCurrentUser();
+        if (user.AvatarPath != null)
+        {
+            try
+            {
+                await store.Del(user.AvatarPath, ct);
+            }
+            catch
+            {
+                //ignore
+            }
+        }
 
+        if (file.Length ==0)  throw new ResultException($"File [{file.FileName}] is empty");
+        file = resizer.CompressImage(file);
+        var path = Path.Join("avatar", Ulid.NewUlid().ToString()) + Path.GetExtension(file.FileName);
+        await store.Upload([(path,file)],ct);
+
+        user.AvatarPath = path;
+        await userManager.UpdateAsync(user);
+        await signInManager.RefreshSignInAsync(user);
+    }
+    
     public AccessLevel MustGetReadWriteLevel(string entityName)
     {
         if (HasRole(Roles.Sa) || CanFullReadWrite(entityName))
@@ -79,7 +66,7 @@ public class ProfileService<TUser>(
         throw new ResultException("You don't have permission to write [" + entityName + "]");
     }
 
-    public AccessLevel MustGetReadLevel(string entityName)
+    public Models.AccessLevel MustGetReadLevel(string entityName)
     {
         if (HasRole(Roles.Sa) || CanFullReadOnly(entityName) || CanFullReadWrite(entityName))
         {
@@ -124,21 +111,8 @@ public class ProfileService<TUser>(
     public  bool HasRole(string role)
     {
         return contextAccessor.HttpContext?.User.IsInRole(role) ?? false;
-    }
-
-    public Task<PublicProfile> GetProfiles(IEnumerable<string> userIds)
-    {
-        throw new NotImplementedException();
-    }
-
-    public async Task<string> UploadAvatar(IFormFile file, CancellationToken ct)
-    {
-        if (file.Length ==0)  throw new ResultException($"File [{file.FileName}] is empty");
-        file = resizer.CompressImage(file);
-        var path = Path.Join("avatar", Ulid.NewUlid().ToString(), Path.GetExtension(file.FileName));
-        await store.Upload([(path,file)],ct);
-        return path;
     } 
+    
     private async Task<TUser> MustGetCurrentUser()
     {
         var claims = contextAccessor.HttpContext?.User;
@@ -168,4 +142,5 @@ public class ProfileService<TUser>(
 
         return userClaims.Claims.FirstOrDefault(x => x.Value == value && x.Type == claimType) != null;
     }
+    
 }

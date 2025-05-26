@@ -55,36 +55,17 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
                     options.ClientSecret = github.ClientSecret;
                     options.Scope.Add("user:email");
 
-                    options.Events.OnCreatingTicket = async context =>
-                    {
-                        var email = context.Identity?.FindFirst(ClaimTypes.Email)?.Value
-                                    ?? context.User.GetProperty("email").GetString();
-
-                        if (string.IsNullOrEmpty(email))
-                        {
-                            throw new Exception("Email not found from GitHub.");
-                        }
-
-                        var userManager = context.HttpContext.RequestServices
-                            .GetRequiredService<UserManager<IdentityUser>>();
-                        var signInManager = context.HttpContext.RequestServices
-                            .GetRequiredService<SignInManager<IdentityUser>>();
-
-                        var user = await userManager.FindByEmailAsync(email);
-                        if (user == null)
-                        {
-                            user = new IdentityUser { UserName = email, Email = email };
-                            await userManager.CreateAsync(user);
-                        }
-
-                        await signInManager.SignInAsync(user, isPersistent: false);
-                    };
+                    options.Events.OnCreatingTicket =
+                        context =>
+                            context.HttpContext.RequestServices.GetRequiredService<ILoginService>()
+                                .HandleGithubCallback(context);
                 });
             }
         }
 
         services.AddScoped<IUserClaimsPrincipalFactory<CmsUser>, CustomPrincipalFactory>();
         services.AddScoped<ILoginService, LoginService<TUser>>();
+        services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IProfileService, ProfileService<TUser>>();
         services.AddScoped<IAccountService, AccountService<TUser, TRole, TContext>>();
         
@@ -114,8 +95,9 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
         {
             var options = app.Services.GetRequiredService<SystemSettings>();
             var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
-            apiGroup.MapGroup("/accounts").MapAccountHandlers();
             apiGroup.MapLoginHandlers();
+            apiGroup.MapGroup("/accounts").MapAccountHandlers();
+            apiGroup.MapGroup("/profile").MapProfileHandlers();
         }
 
         void RegisterHooks()

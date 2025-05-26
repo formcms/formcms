@@ -1,6 +1,8 @@
+using System.Security.Claims;
 using FormCMS.Auth.Models;
 using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
 
 namespace FormCMS.Auth.Services;
@@ -35,6 +37,25 @@ public class LoginService<TUser>(
         await signInManager.SignInAsync(user, isPersistent: true); 
     }
 
+    public async Task HandleGithubCallback(OAuthCreatingTicketContext context)
+    {
+        var email = context.Identity?.FindFirst(ClaimTypes.Email)?.Value
+                 ?? context.User.GetProperty("email").GetString();
+
+        if (string.IsNullOrEmpty(email))
+        {
+            throw new Exception("Email not found from GitHub.");
+        }
+
+        var user = await userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            user = new TUser { UserName = context.Identity.Name, Email = email };
+            await userManager.CreateAsync(user);
+        }
+        await signInManager.SignInAsync(user, isPersistent: false);
+    }
+    
     public async Task Register(string username, string email, string password)
     {
         var user = new TUser

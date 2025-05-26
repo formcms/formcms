@@ -35,6 +35,7 @@
     </ItemGroup>
     <ItemGroup>
       <Folder Include="wwwroot\" />
+      <Folder Include="wwwroot\files\avatar\" />
     </ItemGroup>
     <ItemGroup>
         <None Update="cms.db">

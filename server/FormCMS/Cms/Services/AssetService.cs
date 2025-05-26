@@ -16,7 +16,7 @@ public class AssetService(
     IFileStore store,
     DatabaseMigrator migrator,
     KateQueryExecutor executor,
-    IProfileService profileService,
+    IIdentityService identityService,
     IRelationDbDao dao,
     IResizer resizer,
     IServiceProvider provider,
@@ -41,7 +41,7 @@ public class AssetService(
 
     public XEntity GetEntity(bool withLinkCount)
     {
-        if (profileService.GetUserAccess()?.CanAccessAdmin != true)
+        if (identityService.GetUserAccess()?.CanAccessAdmin != true)
         {
             throw new ResultException("Access denied");
         }
@@ -200,7 +200,7 @@ public class AssetService(
             if (metadata is null) continue;
 
             var asset = new Asset(
-                CreatedBy: profileService.GetUserAccess()?.Name ?? "",
+                CreatedBy: identityService.GetUserAccess()?.Name ?? "",
                 Path: s,
                 Url: store.GetUrl(s),
                 Name: s,

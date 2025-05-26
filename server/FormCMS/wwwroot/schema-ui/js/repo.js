@@ -2,7 +2,7 @@ const apiPrefix = "/api";
 axios.defaults.withCredentials = true
 
 export async function getUserInfo() {
-    return await tryFetch(async ()=> await axios.get(apiPrefix + `/profile/info`));
+    return await tryFetch(async ()=> await axios.get(apiPrefix + `/me`));
 }
 
 export async function logout() {

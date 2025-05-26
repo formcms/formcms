@@ -10,7 +10,7 @@ using Humanizer;
 namespace FormCMS.Activities.Services;
 
 public class ActivityService(
-    IProfileService profileService,
+    IIdentityService identityService,
     KateQueryExecutor executor,
     ActivitySettings settings,
     IRelationDbDao dao
@@ -18,21 +18,21 @@ public class ActivityService(
 {
     public Task<Record[]> GetDailyActivityCount(int daysAgo, CancellationToken ct)
     {
-        if (!profileService.GetUserAccess()?.CanAccessAdmin == true || daysAgo > 30)
+        if (!identityService.GetUserAccess()?.CanAccessAdmin == true || daysAgo > 30)
             throw new Exception("Can't access daily count");
         return executor.Many(Models.Activities.GetDailyActivityCount(dao.CastDate, daysAgo), ct);
     }
 
     public Task<Record[]> GetDailyPageVisitCount(int daysAgo, bool authed, CancellationToken ct)
     {
-        if (!profileService.GetUserAccess()?.CanAccessAdmin == true || daysAgo > 30)
+        if (!identityService.GetUserAccess()?.CanAccessAdmin == true || daysAgo > 30)
             throw new Exception("Can't access daily count");
         return executor.Many(Models.Activities.GetDailyVisitCount(dao.CastDate, daysAgo, authed), ct);
     }
 
     public async Task<Record[]> GetTopVisitPages(int topN, CancellationToken ct)
     {
-        if (!profileService.GetUserAccess()?.CanAccessAdmin == true || topN > 30)
+        if (!identityService.GetUserAccess()?.CanAccessAdmin == true || topN > 30)
             throw new Exception("Can't access daily count");
         var counts = await executor.Many(ActivityCounts.PageVisites(topN), ct);
         var ids = counts.Select(x => x[nameof(ActivityCount.RecordId).Camelize()]).ToArray();
@@ -55,7 +55,7 @@ public class ActivityService(
             throw new ResultException("Unknown activity type");
         }
         
-        var userId = profileService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
+        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
         var (filters, sorts) = QueryStringParser.Parse(args);
         var query = Models.Activities.List(userId, activityType, offset, limit);
         var items = await executor.Many(query, Models.Activities.Columns,filters,sorts,ct);
@@ -66,7 +66,7 @@ public class ActivityService(
 
     public Task Delete(long id, CancellationToken ct = default)
     {
-        var userId = profileService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
+        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
         return executor.Exec(Models.Activities.Delete(userId, id), false,ct);
     }
 }

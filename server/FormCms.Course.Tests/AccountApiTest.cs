@@ -21,7 +21,7 @@ public class AccountApiTest(AppFactory factory)
     [Fact]
     public async Task GetUsers()
     {
-        await  factory.AuthApi.RegisterAndLogin(_email, "Admin!1");
+        await  factory.AuthApi.RegisterAndLogin(_email.Split('@')[0],_email, "Admin!1");
         await  factory.AuthApi.SaDo(async () =>
         {
             var users = await factory.AccountApi.GetUsers().Ok();
@@ -32,7 +32,7 @@ public class AccountApiTest(AppFactory factory)
     [Fact]
     public async Task SingleUser()
     {
-        await  factory.AuthApi.RegisterAndLogin(_email, "Admin!1");
+        await  factory.AuthApi.RegisterAndLogin(_email.Split('@')[0],_email, "Admin!1");
         await  factory.AuthApi.SaDo(async () =>
         {
             var user = await factory.AccountApi.GetSingleUserByEmail(_email);
@@ -43,7 +43,7 @@ public class AccountApiTest(AppFactory factory)
     [Fact]
     public async Task DeleteUser()
     {
-        await  factory.AuthApi.RegisterAndLogin(_email, "Admin!1");
+        await  factory.AuthApi.RegisterAndLogin(_email.Split("@")[0],_email, "Admin!1");
         await  factory.AuthApi.SaDo(async () =>
         {
             var user = await factory.AccountApi.GetSingleUserByEmail(_email).Ok();

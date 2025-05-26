@@ -17,7 +17,7 @@ public class SchemaAuthTest
     public SchemaAuthTest(AppFactory factory)
     {
         Factory = factory;
-        factory.AuthApi.RegisterAndLogin(_email,Pwd).GetAwaiter().GetResult();
+        factory.AuthApi.RegisterAndLogin(_email.Split('@')[0],_email,Pwd).GetAwaiter().GetResult();
         EnsureEntityExists().GetAwaiter().GetResult();
     }
 

@@ -1,7 +1,6 @@
 using System.Security.Claims;
 using FluentResults;
 using FormCMS.Auth.Models;
-using FormCMS.Cms.Services;
 using FormCMS.Core.Assets;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -67,6 +66,7 @@ public class AccountService<TUser, TRole,TCtx>(
             Email: item.Key.Email!,
             Id: item.Key.Id,
             Name:item.Key.UserName??"",
+            AvatarUrl:"",
             Roles: [..item.Values.Where(x => x.role is not null).Select(x => x.role.Name!).Distinct()],
             ReadWriteEntities:
             [
@@ -117,6 +117,7 @@ public class AccountService<TUser, TRole,TCtx>(
             Email : x.Key.Email!,
             Id : x.Key.Id,
             Name : x.Key.UserName??"",
+            AvatarUrl:"",
             Roles : [..x.Roles.Where(val=>val?.role is not null).Select(val => val.role.Name!).Distinct()],
             AllowedMenus:[],
             ReadonlyEntities:[],

@@ -16,7 +16,7 @@ public class AssetAuthTest
     public AssetAuthTest(AppFactory factory)
     {
         Factory = factory;
-        factory.AuthApi.Register(_email, Pwd).GetAwaiter().GetResult();
+        factory.AuthApi.Register(_email.Split('@')[0],_email, Pwd).GetAwaiter().GetResult();
         SaAssetId = AddSaAssetAndGetId().GetAwaiter().GetResult();
     }
 

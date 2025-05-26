@@ -13,7 +13,7 @@ public class ActivityCollectService(
     IStatusBuffer statusBuffer,
         
     ActivitySettings settings,
-    IProfileService profileService,
+    IIdentityService identityService,
     IEntitySchemaService entitySchemaService,  
     IEntityService entityService,
     IQueryService queryService,
@@ -62,7 +62,7 @@ public class ActivityCollectService(
         }
 
         string[] types = [..settings.ToggleActivities, ..settings.RecordActivities];
-        var userId = profileService.GetUserAccess()?.Id;
+        var userId = identityService.GetUserAccess()?.Id;
         
         var counts = types.Select(x => 
             new ActivityCount(entityName, recordId, x)).ToArray();
@@ -138,7 +138,7 @@ public class ActivityCollectService(
         if (!settings.ToggleActivities.Contains(activityType))
             throw new ResultException($"Activity type {activityType} is not supported");
 
-        if (profileService.GetUserAccess() is not { Id: var userId })
+        if (identityService.GetUserAccess() is not { Id: var userId })
             throw new ResultException("User is not logged in");
 
         var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId, ct).Ok();
@@ -268,7 +268,7 @@ public class ActivityCollectService(
         CancellationToken ct
     ){
 
-        var userId = profileService.GetUserAccess()?.Id ?? cookieUserId;
+        var userId = identityService.GetUserAccess()?.Id ?? cookieUserId;
         var activities = activityTypes.Select(x => new Activity(entityName, recordId, x, userId)).ToArray();
 
         var counts = activityTypes
@@ -371,7 +371,7 @@ public class ActivityCollectService(
     
     private  async Task<Dictionary<string,bool>> GetDbStatusDict(Activity[] activities, CancellationToken ct)
     {
-        var userId = profileService.GetUserAccess()?.Id;
+        var userId = identityService.GetUserAccess()?.Id;
         if (activities.Length == 0 || userId is null) return [];
         
         return await dao.FetchValues<bool>(

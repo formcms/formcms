@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FormCMS.Auth.Models;
+using Humanizer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
 
@@ -15,9 +16,9 @@ public class CustomPrincipalFactory(
     {
         var identity = await base.GenerateClaimsAsync(user);
 
-        if (!string.IsNullOrEmpty(user.AvatarUrl))
+        if (!string.IsNullOrEmpty(user.AvatarPath))
         {
-            identity.AddClaim(new Claim("avatar_url", user.AvatarUrl));
+            identity.AddClaim(new Claim(nameof(CmsUser.AvatarPath).Camelize(), user.AvatarPath));
         }
 
         return identity;

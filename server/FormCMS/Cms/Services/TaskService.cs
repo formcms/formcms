@@ -12,7 +12,7 @@ using TaskStatus = FormCMS.Core.Tasks.TaskStatus;
 namespace FormCMS.Cms.Services;
 
 public class TaskService(
-    IProfileService profileService,
+    IIdentityService identityService,
     KateQueryExecutor executor,
     DatabaseMigrator migrator,
     IFileStore store,
@@ -50,7 +50,7 @@ public class TaskService(
     public async Task<long> AddImportTask(IFormFile file)
     {
         EnsureHasPermission();
-        var task = TaskHelper.InitTask(TaskType.Import, profileService.GetUserAccess()?.Name ?? "");
+        var task = TaskHelper.InitTask(TaskType.Import, identityService.GetUserAccess()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
         var id = await executor.Exec(query,true);
 
@@ -67,7 +67,7 @@ public class TaskService(
         var title = assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
         var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split("+").First();
         var url = $"https://github.com/FormCMS/FormCMS/raw/refs/heads/doc/etc/{title}-demo-data-{version}.zip";
-        var task = TaskHelper.InitTask(TaskType.Import, profileService.GetUserAccess()?.Name ?? "");
+        var task = TaskHelper.InitTask(TaskType.Import, identityService.GetUserAccess()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
         var id = await executor.Exec(query,true);
 
@@ -80,7 +80,7 @@ public class TaskService(
     public Task<long> AddExportTask()
     {
         EnsureHasPermission();
-        var task = TaskHelper.InitTask(TaskType.Export, profileService.GetUserAccess()?.Name ?? "");
+        var task = TaskHelper.InitTask(TaskType.Export, identityService.GetUserAccess()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
         return executor.Exec(query,true);
     }
@@ -98,7 +98,7 @@ public class TaskService(
 
     private void EnsureHasPermission()
     {
-        if (profileService.GetUserAccess()?.CanAccessAdmin != true)
+        if (identityService.GetUserAccess()?.CanAccessAdmin != true)
             throw new ResultException("You don't have permission ");
     }
 }
