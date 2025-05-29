@@ -4,9 +4,7 @@ namespace FormCMS.Infrastructure.FileStore;
 
 public record LocalFileStoreOptions(string PathPrefix, string UrlPrefix);
 
-public class LocalFileStore(
-    LocalFileStoreOptions options
-) : IFileStore
+public class LocalFileStore(LocalFileStoreOptions options) : IFileStore
 {
     private readonly FileExtensionContentTypeProvider _provider = new();
 
@@ -28,18 +26,31 @@ public class LocalFileStore(
         {
             var dest = Path.Join(options.PathPrefix, fileName);
             var dir = Path.GetDirectoryName(dest);
-
             if (!string.IsNullOrEmpty(dir) && !set.Contains(dir) && !Directory.Exists(dir))
             {
                 Directory.CreateDirectory(dir);
+
                 set.Add(dir);
+            }
+            if (file.ContentType.Contains("video/"))
+            {
+                var videoDir = Path.Join(dir, "/hls");
+                if (
+                    !string.IsNullOrEmpty(videoDir)
+                    && !set.Contains(videoDir)
+                    && !Directory.Exists(videoDir)
+                )
+                {
+                    Directory.CreateDirectory(videoDir);
+
+                    set.Add(videoDir);
+                }
             }
 
             await using var fileStream = new FileStream(dest, FileMode.Create, FileAccess.Write);
             await file.CopyToAsync(fileStream);
         }
     }
-
 
     public Task<FileMetadata?> GetMetadata(string filePath, CancellationToken ct)
     {
@@ -74,11 +85,10 @@ public class LocalFileStore(
         return Task.CompletedTask;
     }
 
-    private string GetContentType(string filePath)
-        => _provider.TryGetContentType(filePath, out var contentType)
+    private string GetContentType(string filePath) =>
+        _provider.TryGetContentType(filePath, out var contentType)
             ? contentType
             : "application/octet-stream"; // Default fallback
-
 
     private void CreateDirAndCopy(string source, string dest)
     {

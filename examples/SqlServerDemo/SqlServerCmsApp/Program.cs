@@ -1,7 +1,10 @@
 using CmsApp;
 using FormCMS;
+using FormCMS.App;
 using FormCMS.Auth;
 using FormCMS.Auth.Builders;
+using FormCMS.Cms.Workers;
+using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -9,24 +12,30 @@ using Microsoft.EntityFrameworkCore;
 var webBuilder = WebApplication.CreateBuilder(args);
 
 var connectionString = webBuilder.Configuration.GetConnectionString("sqlserver")!;
+var natsConnectionString =
+    webBuilder.Configuration.GetConnectionString("nats")
+    ?? throw new Exception("missing nats connection");
 webBuilder.Services.AddOutputCache();
 
 webBuilder.Services.AddSqlServerCms(connectionString);
 
-//add permission control service 
+//add permission control service
 webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
 webBuilder.Services.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>(new AuthConfig());
 webBuilder.Services.AddAuditLog();
 webBuilder.Services.AddActivity();
+webBuilder.Services.AddNatsMessageProducer(["asset"]);
+webBuilder.AddNatsClient(AppConstants.Nats);
+webBuilder.Services.AddSingleton<IStringMessageProducer, NatsProducer>();
 
 var webApp = webBuilder.Build();
 
 //ensure identity tables are created
 using var scope = webApp.Services.CreateScope();
 var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-await  ctx.Database.EnsureCreatedAsync();
+await ctx.Database.EnsureCreatedAsync();
 
-//use cms' CRUD 
+//use cms' CRUD
 await webApp.UseCmsAsync();
 
 //add two default admin users
@@ -35,9 +44,9 @@ await webApp.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
 
 //worker run in the background do Cron jobs
 var workerBuilder = Host.CreateApplicationBuilder(args);
-workerBuilder.Services.AddSqlServerCmsWorker(connectionString);
+workerBuilder.AddNatsClient(AppConstants.Nats);
+workerBuilder.Services.AddSingleton<IStringMessageConsumer, NatsConsumer>();
 
-await Task.WhenAll(
-    webApp.RunAsync(),
-    workerBuilder.Build().RunAsync()
-);
+workerBuilder.Services.AddSqlServerCmsWorker(connectionString).WithNats(natsConnectionString);
+
+await Task.WhenAll(webApp.RunAsync(), workerBuilder.Build().RunAsync());

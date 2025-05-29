@@ -1,6 +1,8 @@
+
 using FormCMS.Auth;
 using FormCMS.Auth.Builders;
 using FormCMS.Infrastructure.Buffers;
+using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
@@ -39,9 +41,11 @@ public class WebApp(
         builder.Services.AddCmsAuth<IdentityUser, IdentityRole, CmsDbContext>(GetAuthConfig());
         builder.Services.AddAuditLog();
         builder.Services.AddActivity(enableActivityBuffer);
-
+        builder.Services.AddSingleton<IStringMessageProducer,NatsProducer>();
+        builder.Services.AddNatsMessageProducer(["asset"]);
+        builder.AddNatsClient("nats");
         var app = builder.Build();
-        app.MapDefaultEndpoints();
+        //app.MapDefaultEndpoints();
         
         if (app.Environment.IsDevelopment())
         {
