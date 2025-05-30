@@ -14,9 +14,6 @@ public record QueryPreListArgs(
 
 public record QueryPostListArgs(
     LoadedQuery Query,
-    ImmutableArray<string> Fields,
-    ImmutableArray<ValidFilter> Filters,
-    ImmutableArray<ValidSort> Sorts,
     ValidSpan Span,
     ValidPagination Pagination,
     Record[] RefRecords 
@@ -24,15 +21,21 @@ public record QueryPostListArgs(
 
 public record QueryPreSingleArgs(
     LoadedQuery Query,
-    ImmutableArray<ValidFilter> Filters,
     Record? OutRecord = null
 ) : BaseArgs(Query.Name);
 
 public record QueryPostSingleArgs(
     LoadedQuery Query,
-    ImmutableArray<ValidFilter> Filters,
     Record RefRecord
 ) : BaseArgs(Query.Name);
+
+public record QueryPartialArgs(
+    LoadedQuery Query,
+    ExtendedGraphAttribute Attribute,
+    Span Span,
+    long SourceId,
+    Record[]? OutRecords  = null 
+):BaseArgs(Query.Name);
 
 public record ExtendingEntityArgs(
     ImmutableArray<Entity> entities

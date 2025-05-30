@@ -1,7 +1,8 @@
-$(document).ready(function () {
-    let loggedIn = false;
-    isUserLoggedIn().then(x=> loggedIn = x);
+import {currentUser, showToast} from "./utils.js";
 
+$(document).ready(function () {
+    let user = false;
+    currentUser().then(x=> user = x);
     trackVisit();
     loadActivityBars();
 
@@ -10,35 +11,35 @@ $(document).ready(function () {
     }
     
     async function loadActivityBar(){
-        const activityBar = $(this);
-        const entityName = activityBar.data('entity');
-        const recordId = activityBar.data('record-id');
-        const fetchCount = activityBar.data('fetch-count');
+        const $activityBar = $(this);
+        const entityName = $activityBar.data('entity');
+        const recordId = $activityBar.data('record-id');
+        const fetchCount = $activityBar.data('fetch-count');
 
-        const likeButton = activityBar.find('[data-component="like-button"]');
-        const saveButton = activityBar.find('[data-component="save-button"]');
-        const shareButton = activityBar.find('[data-component="share-button"]');
-        const viewButton = activityBar.find('[data-component="view-button"]');
-        loadActivityListeners(entityName,recordId,likeButton, saveButton, shareButton);
+        const $likeButton = $activityBar.find('[data-component="like-button"]');
+        const $saveButton = $activityBar.find('[data-component="save-button"]');
+        const $shareButton = $activityBar.find('[data-component="share-button"]');
+        const $viewButton = $activityBar.find('[data-component="view-button"]');
+        loadActivityListeners(entityName,recordId,$likeButton, $saveButton, $shareButton);
         if (fetchCount === 'yes') {
-            await loadActivityCounts(entityName, recordId, viewButton, likeButton);
+            await loadActivityCounts(entityName, recordId, $viewButton, $likeButton);
         }
     }
     
-    async function loadActivityCounts(entityName, recordId, viewButton, likeButton) {
+    async function loadActivityCounts(entityName, recordId, $viewButton, $likeButton) {
         try {
             const data = await fetchActivity(entityName, recordId);
-            updateLikeButton(likeButton, data.like);
-            updateViewButton(viewButton, data.view);
+            updateLikeButton($likeButton, data.like);
+            updateViewButton($viewButton, data.view);
         } catch (err) {
             console.error('Error loading activity:', err);
         }
     }
 
-    function loadActivityListeners(entityName, recordId,likeButton, saveButton, shareButton) {
-        likeButton && likeButton.on('click', async function (e) {
+    function loadActivityListeners(entityName, recordId,$likeButton, $saveButton, $shareButton) {
+        $likeButton && $likeButton.on('click', async function (e) {
             e.preventDefault();
-            if (!loggedIn){
+            if (!user){
                 window.location.href = "/portal?ref=" + encodeURIComponent(window.location.href);
                 return;
             }
@@ -46,17 +47,17 @@ $(document).ready(function () {
             const active = $(this).hasClass('active');
             try {
                 const newCount = await toggleActivity(entityName, recordId, 'like', !active);
-                updateLikeButton(likeButton, { count: newCount, active: !active });
+                updateLikeButton($likeButton, { count: newCount, active: !active });
             } catch (err) {
                 console.error('Error toggling like:', err);
             }
         });
 
-        shareButton && shareButton.on('click', async function (e) {
+        $shareButton && $shareButton.on('click', async function (e) {
             e.preventDefault();
             showShareDialog(entityName, recordId);
         });
-        saveButton && saveButton.on('click', () => showBookmarkModal(entityName, recordId));
+        $saveButton && $saveButton.on('click', () => showBookmarkModal(entityName, recordId));
     }
     // API Functions
     async function fetchActivity(entity, id) {
@@ -107,7 +108,7 @@ $(document).ready(function () {
     }
 
     async function showBookmarkModal(entityName, recordId) {
-        if (!loggedIn){
+        if (!user){
             window.location.href = "/portal?ref=" + encodeURIComponent(window.location.href);
             return;
         }
@@ -182,29 +183,7 @@ $(document).ready(function () {
         return count.toString();
     }
 
-    function showToast(message) {
-        $('.toast').remove();
-        const $toast = $('<div class="toast"></div>').text(message);
-        $('body').append($toast);
-        setTimeout(() => $toast.addClass('show'), 10);
-        setTimeout(() => {
-            $toast.removeClass('show');
-            setTimeout(() => $toast.remove(), 300);
-        }, 2000);
-    }
-    async function isUserLoggedIn() {
-        try {
-            const response = await fetch('/api/profile/info', {
-                credentials: 'include' // ensures cookies are sent with the request
-            });
-            return response.ok; // true if 200 OK
-        } catch (error) {
-            console.error('API call failed:', error);
-            return false;
-        }
-    }
-
-  
+ 
 
     // Add new function to show share dialog
     async function showShareDialog(entityName, recordId) {

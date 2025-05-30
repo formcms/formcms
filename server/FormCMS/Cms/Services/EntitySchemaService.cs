@@ -37,7 +37,7 @@ public sealed class EntitySchemaService(
     public async ValueTask<ImmutableArray<Entity>> ExtendedEntities(CancellationToken ct)
     {
         var entities = await AllEntities(ct);
-        var res = await hook.ExtraQueryFieldEntities.Trigger( provider,new ExtendingEntityArgs(entities) );
+        var res = await hook.ExtendEntity.Trigger( provider,new ExtendingEntityArgs(entities) );
         return res.entities;
     }
 

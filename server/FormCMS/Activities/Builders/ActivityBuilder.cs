@@ -103,16 +103,8 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 
         void RegisterHooks()
         {
-            var attrs = activitySettings
-                .AllCountTypes()
-                .Select(type => new Attribute(
-                    Field: ActivityCounts.ActivityCountField(type),
-                    Header: ActivityCounts.ActivityCountField(type),
-                    DataType: DataType.Int)
-                );
-
             var registry = app.Services.GetRequiredService<HookRegistry>();
-            registry.ExtraQueryFieldEntities.RegisterDynamic("", (IActivityPlugin service, ExtendingEntityArgs args)=>
+            registry.ExtendEntity.RegisterDynamic("", (IActivityPlugin service, ExtendingEntityArgs args)=>
             {
                 var entities = service.ExtendEntities(args.entities);
                 return new ExtendingEntityArgs([..entities]);
@@ -121,7 +113,7 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
             registry.QueryPostList.RegisterDynamic("*" ,async (IActivityPlugin service, QueryPostListArgs args)=>
             {
                 var entity = args.Query.Entity;
-                await service.LoadCounts(entity,[..args.Fields], args.RefRecords, CancellationToken.None);
+                await service.LoadCounts(entity, args.Query.ExtendedSelection, args.RefRecords, CancellationToken.None);
                 return args;
             });
         }

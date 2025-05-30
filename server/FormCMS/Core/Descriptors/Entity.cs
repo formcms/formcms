@@ -139,7 +139,7 @@ public static class EntityHelper
             return Result.Fail(result.Errors);
         }
 
-        query.ApplySorts(sorts);
+        query.ApplyValidSorts(sorts);
         return query;
     }
 
@@ -170,11 +170,11 @@ public static class EntityHelper
         ValidFilter[] filters, 
         ValidSort[] sorts, 
         ValidPagination? pagination, 
-        ValidSpan? cursor, 
+        ValidSpan? span, 
         IEnumerable<LoadedAttribute> attributes,PublicationStatus? publicationStatus
         )
     {
-        var query = e.GetCommonListQuery(filters,sorts,pagination,cursor,attributes,publicationStatus);
+        var query = e.GetCommonListQuery(filters,sorts,pagination,span,attributes,publicationStatus);
         query.ApplyJoin([..filters.Select(x => x.Vector), ..sorts.Select(x => x.Vector)], publicationStatus);
         return query;
     }
@@ -195,8 +195,8 @@ public static class EntityHelper
         }
 
         q.ApplyFilters(filters);
-        q.ApplySorts(SpanHelper.IsForward(span?.Span) ? sorts : sorts.ReverseOrder());
-        q.ApplyCursor(span, sorts);
+        q.ApplyValidSorts(SpanHelper.IsForward(span?.Span) ? sorts : sorts.ReverseOrder());
+        q.ApplySpanFilter(span, sorts, x=>x.Vector.Attribute.AddTableModifier(x.Vector.TableAlias),x=>x.Vector.FullPath);
         if (pagination is not null)
         {
             q.ApplyPagination(pagination);

@@ -4,6 +4,6 @@ namespace FormCMS.Activities.Services;
 
 public interface IActivityPlugin
 {
-    Task LoadCounts(LoadedEntity entity, HashSet<string>fields, IEnumerable<Record> records, CancellationToken ct);
+    Task LoadCounts(LoadedEntity entity, IEnumerable<ExtendedGraphAttribute> attributes, IEnumerable<Record> records, CancellationToken ct);
     Entity[] ExtendEntities(IEnumerable<Entity> entities);
 }

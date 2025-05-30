@@ -124,7 +124,7 @@ public static class JunctionHelper
         c.ApplyNotRelatedFilter(baseQuery, sourceIds);
         baseQuery.ApplyPagination(pagination);
         baseQuery.ApplyFilters(filters);
-        baseQuery.ApplySorts(sorts);
+        baseQuery.ApplyValidSorts(sorts);
         return baseQuery;
     }
 

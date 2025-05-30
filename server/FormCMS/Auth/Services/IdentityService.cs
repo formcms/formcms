@@ -4,15 +4,21 @@ using FormCMS.Cms.Services;
 using FormCMS.Core.Identities;
 using FormCMS.Infrastructure.FileStore;
 using Humanizer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace FormCMS.Auth.Services;
 
-public class IdentityService(
+public class IdentityService<TUser>(
     IFileStore store,
     IHttpContextAccessor contextAccessor,
+    UserManager<TUser> userManager,
     RestrictedFeatures restrictedFeatures
 ) : IIdentityService
+    where TUser : CmsUser, new()
+
 {
+    private const string DefaultUrl = "/_content/FormCMS/static-assets/imgs/avatar.jpg";
     public UserAccess? GetUserAccess()
     {
         var contextUser = contextAccessor.HttpContext?.User;
@@ -26,7 +32,7 @@ public class IdentityService(
             Name: contextUser.Identity.Name ?? "",
             Email: contextUser.FindFirstValue(ClaimTypes.Email) ??"",
             Roles: roles,
-            AvatarUrl: store.GetUrl(contextUser.FindFirstValue(nameof(CmsUser.AvatarPath).Camelize()) ?? ""),
+            AvatarUrl: store.GetUrl(contextUser.FindFirstValue(nameof(CmsUser.AvatarPath).Camelize()) ?? DefaultUrl),
             ReadWriteEntities: [..contextUser.FindAll(AccessScope.FullAccess).Select(x => x.Value)],
             RestrictedReadWriteEntities: [..contextUser.FindAll(AccessScope.RestrictedAccess).Select(x => x.Value)],
             ReadonlyEntities: [..contextUser.FindAll(AccessScope.FullRead).Select(x => x.Value)],
@@ -39,8 +45,13 @@ public class IdentityService(
         return user.CanAccessAdmin();
     }
 
-    public Task<UserPublicProfile> GetProfiles(IEnumerable<string> userIds)
+    public async Task<PublicUserInfo[]> GetPublicUserInfos(IEnumerable<string> userIds,CancellationToken ct)
     {
-        throw new NotImplementedException();
+        var users =   await userManager.Users
+            .Where(u => userIds.Contains(u.Id))
+            .ToListAsync(ct);
+        return users.Select(x =>
+            new PublicUserInfo(x.Id, x.UserName ?? "", x.AvatarPath is not null ? store.GetUrl(x.AvatarPath) : DefaultUrl))
+            .ToArray();
     }
 }

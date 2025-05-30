@@ -1,8 +1,8 @@
+using Azure.Core;
 using FormCMS.Activities.Services;
 using FormCMS.Utils.PageRender;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.ResultExt;
-using FormCMS.Infrastructure.Cache;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.StrArgsExt;
 using HandlebarsDotNet;
@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.WebUtilities;
 namespace FormCMS.Cms.Services;
 
 public sealed class PageService(
-    
     IQueryService querySvc,
     ITopItemService topItemSvc,
     IPageResolver pageResolver,
@@ -56,7 +55,8 @@ public sealed class PageService(
         return await RenderPage(ctx.ToPageContext(), new Dictionary<string, object>(), strArgs, ct);
     }
 
-    public async Task<string> GetPart(string partStr, CancellationToken ct)
+    //
+    public async Task<string> GetPart(long? sourceId,string partStr,bool replace, CancellationToken ct)
     {
         var part = PagePartHelper.Parse(partStr) ?? throw new ResultException("Invalid Partial Part");
         var cursor = new Span(part.First, part.Last);
@@ -72,22 +72,30 @@ public sealed class PageService(
         }
         else
         {
-            items = await querySvc.Partial(ctx.Page.Query!, part.DataSource.Field, cursor, part.DataSource.Limit, args,
+            items = await querySvc.Partial(ctx.Page.Query!, 
+                part.DataSource.Field,
+                sourceId!.Value, 
+                cursor, 
+                part.DataSource.Limit, 
+                args,
                 ct);
         }
 
         var flatField = RenderUtil.Flat(part.DataSource.Field);
         var data = new Dictionary<string, object>
         {
-            [flatField] = items
+            [flatField] = items,
         };
-        TagPagination(data, items, part);
+        if (sourceId.HasValue)
+        {
+            data[RenderUtil.SourceIdTag(part.DataSource.Field)] = sourceId.Value;
+        }
+            
+        TagPagination(data,items, part);
 
         ctx.Node.SetEach(flatField);
         ctx.Node.SetPagination(flatField, part.DataSource.PaginationMode);
-        var html = part.DataSource.PaginationMode == PaginationMode.Button
-            ? ctx.Node.OuterHtml // for button pagination, replace the div 
-            : ctx.Node.InnerHtml; // for infinite screen, append to original div
+        var html = replace ? ctx.Node.OuterHtml : ctx.Node.InnerHtml; 
         var render = Handlebars.Compile(html);
         return render(data);
     }
@@ -158,23 +166,40 @@ public sealed class PageService(
                     DataSource = node.DataSource with { QueryString = node.MergeArgs(args).ToQueryString() }
                 };
                 TagPagination(data, value, nodeWithArg.ToPagePart(ctx.Page.Name));
+                TagSourceId(data, value, nodeWithArg.ToPagePart(ctx.Page.Name));
             }
         }
     }
 
+
+    private static void TagSourceId(Record data, Record[] items, PagePart token)
+    {
+        var field = token.DataSource.Field;
+        var parts = field.Split('.');
+        var sourceIdField = string.Join(".",[..parts[..^1],QueryConstants.RecordId]);
+        if (data.ByJsonPath<long>(sourceIdField,out var sourceId))
+        {
+            data[RenderUtil.SourceIdTag(field)] = sourceId;
+        }
+    }
     private static void TagPagination(Record data, Record[] items, PagePart token)
     {
+        var field = token.DataSource.Field;
         if (SpanHelper.HasPrevious(items))
         {
-            data[RenderUtil.FirstAttrTag(token.DataSource.Field)] =
+            data[RenderUtil.FirstAttrTag(field)] =
                 PagePartHelper.ToString(token with { First = SpanHelper.FirstCursor(items), Last = "" });
         }
 
         if (SpanHelper.HasNext(items))
         {
-            data[RenderUtil.LastAttrTag(token.DataSource.Field)] =
+            data[RenderUtil.LastAttrTag(field)] =
                 PagePartHelper.ToString(token with { Last = SpanHelper.LastCursor(items), First = "" });
         }
+        
+        //use to reload first page
+        data[RenderUtil.FirstPageTag(field)] = PagePartHelper.ToString(token with { Last = "", First = "" });
+
     }
 
     record Context(Page Page, HtmlDocument Doc)

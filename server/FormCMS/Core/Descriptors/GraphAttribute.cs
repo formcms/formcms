@@ -1,8 +1,16 @@
 using System.Collections.Immutable;
 using FormCMS.Core.Assets;
+using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
 
 namespace FormCMS.Core.Descriptors;
+
+public sealed record ExtendedGraphAttribute(
+    string Field,
+    Pagination Pagination ,
+    Sort[] Sorts
+);
+
 
 public sealed record GraphAttribute(
     ImmutableArray<GraphAttribute> Selection,
@@ -228,12 +236,10 @@ public static class GraphAttributeExtensions
         }
     }
 
-    public static bool SetSpan(this IEnumerable<GraphAttribute> attrs, Record[] items,
-        IEnumerable<ValidSort> sortList, object? sourceId)
+    public static bool SetSpan(this IEnumerable<GraphAttribute> attrs, Record[] items, ValidSort[] sorts)
     {
-        var sorts = sortList.ToArray();
-        if (SpanHelper.HasPrevious(items)) SpanHelper.SetCursor(sourceId, items.First(), sorts);
-        if (SpanHelper.HasNext(items)) SpanHelper.SetCursor(sourceId, items.Last(), sorts);
+        if (SpanHelper.HasPrevious(items)) SpanHelper.SetCursor( items.First(), sorts);
+        if (SpanHelper.HasNext(items)) SpanHelper.SetCursor( items.Last(), sorts);
 
         foreach (var attr in attrs)
         {
@@ -244,9 +250,8 @@ public static class GraphAttributeExtensions
                     continue;
                 _ = v switch
                 {
-                    Record rec => attr.Selection.SetSpan([rec], [], null),
-                    Record[] { Length: > 0 } records => attr.Selection.SetSpan(records, attr.Sorts,
-                        attr.GetEntityLinkDesc().Value.TargetAttribute.GetValueOrLookup(records[0])),
+                    Record rec => attr.Selection.SetSpan([rec], []),
+                    Record[] { Length: > 0 } records => attr.Selection.SetSpan(records, [..attr.Sorts]),
                     _ => true
                 };
             }

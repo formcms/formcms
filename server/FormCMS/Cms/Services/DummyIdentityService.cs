@@ -23,7 +23,7 @@ public class DummyIdentityService(RestrictedFeatures restrictedFeatures): IIdent
         );
     }
 
-    public Task<UserPublicProfile> GetProfiles(IEnumerable<string> userIds)
+    public Task<PublicUserInfo[]> GetPublicUserInfos(IEnumerable<string> userIds, CancellationToken ct)
     {
         throw new NotImplementedException();
     }

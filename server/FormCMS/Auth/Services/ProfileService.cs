@@ -35,9 +35,7 @@ public class ProfileService<TUser>(
             {
                 await store.Del(user.AvatarPath, ct);
             }
-            catch
-            {
-                //ignore
+            catch { //ignore
             }
         }
 

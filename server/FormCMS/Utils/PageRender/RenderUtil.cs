@@ -1,4 +1,5 @@
 using FluentResults;
+using FormCMS.Core.Descriptors;
 using HandlebarsDotNet;
 
 namespace FormCMS.Utils.PageRender;
@@ -10,6 +11,8 @@ public static class RenderUtil
     public static string FirstAttrTag(string field) => $"{Flat(field)}_first";
     
     public static string LastAttrTag(string field) => $"{Flat(field)}_last";
+    public static string FirstPageTag(string field) => $"{Flat(field)}_first_page";
+    public static string SourceIdTag(string field) => $"{Flat(field)}_source_id";
     
     public static string RenderBody(this HtmlDocument doc, Record data)
     {
@@ -83,10 +86,18 @@ public static class RenderUtil
     }
     public static void SetPagination(this HtmlNode node, string field, PaginationMode paginationMode)
     {
+        node.Attributes.Add("source_id", $"{{{{{SourceIdTag(field)}}}}}");
+        node.Attributes.Add("first_page", $"{{{{{FirstPageTag(field)}}}}}");
+        
         switch (paginationMode)
         {
             case PaginationMode.InfiniteScroll:
-                node.InnerHtml += $"<div class=\"load-more-trigger\" style=\"visibility:hidden;\" last=\"{{{{{field}_last}}}}\"></div>";
+                node.InnerHtml += $$$"""
+                                  <div class="load-more-trigger" style="visibility:hidden" 
+                                    source_id="{{{{{SourceIdTag(field)}}}}}" 
+                                    last="{{{{{field}}}_last}}">
+                                  </div>
+                                  """;
                 break;
             case PaginationMode.Button:
                 node.Attributes.Add("first", $"{{{{{FirstAttrTag(field)}}}}}");

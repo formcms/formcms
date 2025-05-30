@@ -92,7 +92,23 @@ public static class KateQueryExt
     {
         query.Offset(pagination.Offset).Limit(pagination.Limit);
     }
-    public static void ApplySorts(this SqlKata.Query query, IEnumerable<ValidSort> sorts)
+    
+    public static void ApplySorts(this SqlKata.Query query, IEnumerable<Sort> sorts)
+    {
+        foreach (var sort in sorts)
+        {
+            if (sort.Order == SortOrder.Desc)
+            {
+                query.OrderByDesc(sort.Field);
+            }
+            else
+            {
+                query.OrderBy(sort.Field);
+            }
+        }
+    }
+    
+    public static void ApplyValidSorts(this SqlKata.Query query, IEnumerable<ValidSort> sorts)
     {
         foreach (var sort in sorts)
         {
@@ -137,10 +153,11 @@ public static class KateQueryExt
 
    
     
-    public static void ApplyCursor(this SqlKata.Query? query,  ValidSpan? cursor,ValidSort[] sorts)
+    public static void ApplySpanFilter<T>(this SqlKata.Query? query,  ValidSpan? span,T[] sorts, Func<T, string> tableModify, Func<T, string> fullPath)
+    where T:Sort
     {
         
-        if (query is null || cursor?.EdgeItem is null)
+        if (query is null || span?.EdgeItem is null)
         {
             return;
         }
@@ -168,17 +185,17 @@ public static class KateQueryExt
             ApplyCompare(q,sorts[idx]);
         }
 
-        void ApplyEq(SqlKata.Query q, ValidSort sort)
+        void ApplyEq(SqlKata.Query q, T sort)
         {
-            q.Where(sort.Vector.Attribute.AddTableModifier(sort.Vector.TableAlias),  cursor.Edge(sort.Vector.FullPath).ObjectValue);
+            q.Where(tableModify(sort),  span.Edge(fullPath(sort)));
         }
 
-        void ApplyCompare(SqlKata.Query q, ValidSort sort)
+        void ApplyCompare(SqlKata.Query q, T sort)
         {
             q.Where(
-                sort.Vector.Attribute.AddTableModifier(sort.Vector.TableAlias), 
-                cursor.Span.GetCompareOperator(sort.Order), 
-                cursor.Edge(sort.Vector.FullPath).ObjectValue);
+                tableModify(sort),
+                span.Span.GetCompareOperator(sort.Order), 
+                span.Edge(fullPath(sort)));
         }
         
     }

@@ -3,6 +3,7 @@ using FormCMS.Comments.Models;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
+using Humanizer;
 
 namespace FormCMS.Comments.Services;
 
@@ -14,9 +15,8 @@ public class CommentsService(
 {
     public async Task EnsureTable()
     {
-        await migrator.MigrateTable(CommentConstants.TableName, CommentHelper.Columns);
+        await migrator.MigrateTable(CommentHelper.Entity.TableName, CommentHelper.Columns);
     }
-    
 
     public async Task Delete(long id, CancellationToken ct)
     {
@@ -25,7 +25,7 @@ public class CommentsService(
         if (commentRec is null) throw new ResultException("Comment not found");
 
         var comment = commentRec.ToObject<Comment>().Ok();
-        if (userId != comment.UserId) throw new ResultException("You don't have permission to delete this comment");
+        if (userId != comment.User) throw new ResultException("You don't have permission to delete this comment");
         
         await executor.Exec(CommentHelper.Delete(userId, id), false, ct);
     }
@@ -33,7 +33,7 @@ public class CommentsService(
     public async Task Update(Comment comment, CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
-        comment = comment with { UserId = userId};
+        comment = comment with { User = userId};
             
         var affected = await executor.Exec(comment.Update(),false, ct);
         if (affected == 0) throw new ResultException("Failed to update comment.");
@@ -41,11 +41,10 @@ public class CommentsService(
     
     public async Task<Comment> Add(Comment comment, CancellationToken ct)
     {
-        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
-        comment = comment with { UserId = userId };
+        var user = identityService.GetUserAccess() ?? throw new ResultException("User is not logged in.");
+        comment = comment with { User = user.Id };
         var query = comment.Insert();
         var id = await executor.Exec(query, true, ct);
-        comment = comment with { Id = id };
-        return comment;       
+        return comment with { Id = id };
     } 
 }

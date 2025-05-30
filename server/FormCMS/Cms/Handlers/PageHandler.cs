@@ -1,6 +1,8 @@
+using Azure.Core;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.HttpContextExt;
+using MongoDB.Driver.Core.Operations.ElementNameValidators;
 
 namespace FormCMS.Cms.Handlers;
 
@@ -23,9 +25,11 @@ public static class PageHandler
         app.MapGet("/page_part", async (
             IPageService pageService,
             HttpContext context,
+            long ?source,
             string token,
+            bool replace,
             CancellationToken ct
-        ) => await context.Html(await pageService.GetPart(token, ct), ct));
+        ) => await context.Html(await pageService.GetPart(source,token, replace, ct), ct));
 
         app.MapGet(prefix, async (
             IPageService pageService,

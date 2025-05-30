@@ -10,11 +10,12 @@ public class ActivityPlugin(
     IActivityCollectService activityCollectService 
     ):IActivityPlugin
 {
-    public async Task LoadCounts(LoadedEntity entity, HashSet<string> fields, IEnumerable<Record> records, CancellationToken ct)
+    public async Task LoadCounts(LoadedEntity entity, IEnumerable<ExtendedGraphAttribute> attributes, IEnumerable<Record> records, CancellationToken ct)
     {
+        var set = attributes.Select(x=>x.Field).ToHashSet();
         var types = settings
             .AllCountTypes()
-            .Where(x => fields.Contains(ActivityCounts.ActivityCountField(x))).ToArray();
+            .Where(x => set.Contains(ActivityCounts.ActivityCountField(x))).ToArray();
         
         if (types.Length == 0)
         {

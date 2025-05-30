@@ -24,11 +24,11 @@ public sealed record LoadedQuery(
     string Source,
     LoadedEntity Entity,
     Pagination? Pagination,
-    ImmutableArray<GraphAttribute> Selection ,
+    ImmutableArray<GraphAttribute> Selection , 
+    ImmutableArray<ExtendedGraphAttribute> ExtendedSelection,
     ImmutableArray<ValidFilter> Filters, 
     ImmutableArray<ValidSort> Sorts,
     ImmutableArray<string> ReqVariables,
-    ImmutableArray<string> GraphQLFieldNames,
     bool Distinct
 );
 
@@ -36,6 +36,7 @@ public static class QueryConstants
 {
     public const string DistinctKey = "distinct";
     public const string VariablePrefix = "$";
+    public const string RecordId = "__record_id";
 }
 
 public record QueryArgs(Sort[] Sorts, Filter[] Filters, Pagination Pagination, bool Distinct);
@@ -45,9 +46,9 @@ public static class QueryHelper
     public static LoadedQuery ToLoadedQuery(this Query query,
         LoadedEntity entity,
         IEnumerable<GraphAttribute> selection,
+        IEnumerable<ExtendedGraphAttribute> extendedSelection,
         IEnumerable<ValidSort> sorts,
-        IEnumerable<ValidFilter> filters,
-        IEnumerable<string> fields
+        IEnumerable<ValidFilter> filters
     )
     {
         return new LoadedQuery(
@@ -57,9 +58,9 @@ public static class QueryHelper
             ReqVariables: query.ReqVariables,
             Entity: entity,
             Selection: [..selection],
+            ExtendedSelection: [..extendedSelection],
             Sorts: [..sorts],
             Filters: [..filters],
-            GraphQLFieldNames:[..fields],
             Distinct: query.Distinct
         );
     }

@@ -1,33 +1,42 @@
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
-using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Core.Identities;
 using GraphQL.Types;
 
 namespace FormCMS.Cms.Graph;
 
-public record GraphInfo(Entity Entity,  ObjectGraphType SingleType, ListGraphType ListType);
+public record GraphInfo(Entity Entity, ObjectGraphType SingleType, ListGraphType ListType);
+
 public sealed class GraphQuery : ObjectGraphType
 {
     public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService)
     {
-        var entities = entitySchemaService.AllEntities(CancellationToken.None).GetAwaiter().GetResult();
-        var extendedEntities = entitySchemaService.ExtendedEntities(CancellationToken.None).GetAwaiter().GetResult();
+        Entity[] extendedEntities =
+        [
+            ..entitySchemaService.ExtendedEntities(CancellationToken.None).GetAwaiter().GetResult(),
+            PublicUserInfos.Entity
+        ];
+
         var graphMap = new Dictionary<string, GraphInfo>();
-        
-        foreach (var entity in entities)
+
+        foreach (var entity in extendedEntities)
         {
-            var t = FieldTypes.PlainType(extendedEntities.First(e=>e.Name == entity.Name));
+            var t = FieldTypes.PlainType(extendedEntities.First(e => e.Name == entity.Name));
             graphMap[entity.Name] = new GraphInfo(entity, t, new ListGraphType(t));
         }
-        
-        foreach (var entity in entities)
+
+        foreach (var entity in extendedEntities)
         {
-            FieldTypes.SetCompoundType(entity,graphMap);
+            FieldTypes.SetCompoundType(entity, graphMap);
         }
 
-        //extended attribute cannot be filter
-        foreach (var entity in entities)
+        var entities = entitySchemaService.AllEntities(CancellationToken.None).GetAwaiter().GetResult();
+        foreach (var entity in extendedEntities)
         {
+            //only field in original entity can be filtered, sort
+            var original = entities.FirstOrDefault(e => e.Name == entity.Name);
+            if (original is null) continue;
+
             var graphInfo = graphMap[entity.Name];
             AddField(new FieldType
             {
@@ -35,11 +44,11 @@ public sealed class GraphQuery : ObjectGraphType
                 ResolvedType = graphInfo.SingleType,
                 Resolver = Resolvers.GetSingleResolver(queryService, entity.Name),
                 Arguments = new QueryArguments([
-                    ..Args.FilterArgs(entity,graphMap), 
+                    ..Args.FilterArgs(original, graphMap),
                     Args.FilterExprArg
                 ])
             });
-            
+
             AddField(new FieldType
             {
                 Name = entity.Name + "List",
@@ -49,8 +58,8 @@ public sealed class GraphQuery : ObjectGraphType
                     Args.DistinctArg,
                     Args.OffsetArg,
                     Args.LimitArg,
-                    Args.SortArg(entity),
-                    ..Args.FilterArgs(entity,graphMap), 
+                    Args.SortArg(original),
+                    ..Args.FilterArgs(original, graphMap),
                     Args.SortExprArg,
                     Args.FilterExprArg
                 ])
