@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Confluent.Kafka;
+using FormCMS.Core.Assets;
+using FormCMS.CoreKit.ApiClient;
 using FormCMS.DataLink.Workers;
 using FormCMS.Infrastructure.DocumentDbDao;
 using FormCMS.Infrastructure.EventStreaming;
@@ -20,17 +22,19 @@ public sealed class FFMpegWorker : BackgroundService
     private readonly IStringMessageConsumer _consumer;
     private readonly LocalFileStoreOptions? _fileStoreOptions;
     private readonly FFMepgConversionDelayOptions _delayOptions;
+    private readonly AssetApiClient _assetApiClient;
 
     public FFMpegWorker(
         ILogger<FFMpegWorker> logger,
         IStringMessageConsumer consumer,
         FFMepgConversionDelayOptions delayOptions,
-        LocalFileStoreOptions? fileStoreOptions
+        LocalFileStoreOptions? fileStoreOptions,
+        AssetApiClient apiClient
     )
     {
         ArgumentNullException.ThrowIfNull(fileStoreOptions);
         _logger = logger;
-
+        _assetApiClient = apiClient;
         _consumer = consumer;
         _delayOptions = delayOptions;
         _fileStoreOptions = fileStoreOptions ?? throw new Exception(nameof(fileStoreOptions));
@@ -76,7 +80,12 @@ public sealed class FFMpegWorker : BackgroundService
                             var videoFolder = file.DirectoryName + "/hls";
 
                             var filesToConvert = new Queue<FileInfo>([file]);
-                            await RunConversion(filesToConvert, videoFolder, message.TargetFormat);
+                            await RunConversion(
+                                filesToConvert,
+                                videoFolder,
+                                message.TargetFormat,
+                                message.AssetName
+                            );
                         }
 
                         _logger.LogInformation(
@@ -96,7 +105,12 @@ public sealed class FFMpegWorker : BackgroundService
         }
     }
 
-    async Task RunConversion(Queue<FileInfo> filesToConvert, string outPutFolder, string tgtFormat)
+    async Task RunConversion(
+        Queue<FileInfo> filesToConvert,
+        string outPutFolder,
+        string tgtFormat,
+        string assetName
+    )
     {
         var path = Environment.GetEnvironmentVariable("FFMPEG_EXEC_PATH");
         while (filesToConvert.TryDequeue(out var fileToConvert))
@@ -112,7 +126,30 @@ public sealed class FFMpegWorker : BackgroundService
             );
 
             await conversion.Start();
-            await Console.Out.WriteLineAsync($"Finished converion file [{fileToConvert.Name}]");
+            var id = await _assetApiClient.GetAssetIdByName(assetName);
+            var asset = await _assetApiClient.Single(id);
+            if (asset != null)
+            {
+                path = outputFileName;
+                var assetToUpdated = new Asset(
+                    asset.Value.Path,
+                    Url: $"{outPutFolder}/{outputFileName}",
+                    assetName,
+                    asset.Value.Title,
+                    asset.Value.Size,
+                    asset.Value.Type,
+                    asset.Value.Metadata,
+                    asset.Value.CreatedBy,
+                    asset.Value.CreatedAt,
+                    DateTime.UtcNow,
+                    asset.Value.Id,
+                    asset.Value.LinkCount,
+                    asset.Value.Links,
+                    100
+                );
+                await _assetApiClient.UpdateProgress(assetToUpdated);
+            }
+            _logger.LogInformation($"Finished converion file [{fileToConvert.Name}]");
         }
     }
 }

@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
@@ -5,6 +6,7 @@ using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using Humanizer;
 using SqlKata;
+using SqlKata.Compilers;
 using Column = FormCMS.Utils.DataModels.Column;
 
 namespace FormCMS.Core.Assets;
@@ -23,7 +25,7 @@ public record Asset(
     long Id = 0,
     int LinkCount = 0, //calculated field, omit from attribute and columns
     AssetLink[]? Links = null, //calculated field, omit from attribute and columns
-    int Progress=0// video conversion progress
+    int Progress = 0 // video conversion progress
 );
 
 public static class Assets
@@ -36,27 +38,36 @@ public static class Assets
         defaultPageSize: DefaultPageSize,
         attributes:
         [
-            XAttrExtensions.CreateAttr<Asset, string>(x => x.Path, displayType: DisplayType.Image, isDefault:true),
-            XAttrExtensions.CreateAttr<Asset, long>(x => x.Id, isDefault:true),
-            XAttrExtensions.CreateAttr<Asset, string>(x => x.Url,inList:false, isDefault:true),
-            XAttrExtensions.CreateAttr<Asset, string>(x => x.Name,isDefault:true),
+            XAttrExtensions.CreateAttr<Asset, string>(
+                x => x.Path,
+                displayType: DisplayType.Image,
+                isDefault: true
+            ),
+            XAttrExtensions.CreateAttr<Asset, long>(x => x.Id, isDefault: true),
+            XAttrExtensions.CreateAttr<Asset, string>(x => x.Url, inList: false, isDefault: true),
+            XAttrExtensions.CreateAttr<Asset, string>(x => x.Name, isDefault: true),
             XAttrExtensions.CreateAttr<Asset, string>(x => x.Title),
-            XAttrExtensions.CreateAttr<Asset, long>(x => x.Size, isDefault:true),
-            XAttrExtensions.CreateAttr<Asset, string>(x => x.Type, isDefault:true),
-            XAttrExtensions.CreateAttr<Asset, object>(x => x.Metadata, inList:false, displayType:DisplayType.Dictionary),
-            XAttrExtensions.CreateAttr<Asset, string>(x => x.CreatedBy, isDefault:true),
-            XAttrExtensions.CreateAttr<Asset, DateTime>(x => x.CreatedAt, isDefault:true),
-            XAttrExtensions.CreateAttr<Asset, DateTime>(x => x.UpdatedAt, isDefault:true),
-        ]);
+            XAttrExtensions.CreateAttr<Asset, long>(x => x.Size, isDefault: true),
+            XAttrExtensions.CreateAttr<Asset, string>(x => x.Type, isDefault: true),
+            XAttrExtensions.CreateAttr<Asset, object>(
+                x => x.Metadata,
+                inList: false,
+                displayType: DisplayType.Dictionary
+            ),
+            XAttrExtensions.CreateAttr<Asset, string>(x => x.CreatedBy, isDefault: true),
+            XAttrExtensions.CreateAttr<Asset, DateTime>(x => x.CreatedAt, isDefault: true),
+            XAttrExtensions.CreateAttr<Asset, DateTime>(x => x.UpdatedAt, isDefault: true),
+        ]
+    );
 
-    public static readonly XEntity EntityWithLinkCount = 
-        Entity with
-        {
-            Attributes = [
-                ..Entity.Attributes,
-                XAttrExtensions.CreateAttr<Asset, int>(x => x.LinkCount, isDefault:true),
-            ]
-        };
+    public static readonly XEntity EntityWithLinkCount = Entity with
+    {
+        Attributes =
+        [
+            .. Entity.Attributes,
+            XAttrExtensions.CreateAttr<Asset, int>(x => x.LinkCount, isDefault: true),
+        ],
+    };
 
     public static readonly Column[] Columns =
     [
@@ -68,9 +79,8 @@ public static class Assets
         ColumnHelper.CreateCamelColumn<Asset, long>(x => x.Size),
         ColumnHelper.CreateCamelColumn<Asset, string>(x => x.Type),
         ColumnHelper.CreateCamelColumn<Asset, string>(x => x.CreatedBy),
-        
         ColumnHelper.CreateCamelColumn<Asset>(x => x.Metadata, ColumnType.Text),
-        ColumnHelper.CreateCamelColumn<Asset>(x=>x.Progress, ColumnType.Int),
+        ColumnHelper.CreateCamelColumn<Asset>(x => x.Progress, ColumnType.Int),
         DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
@@ -78,17 +88,23 @@ public static class Assets
 
     public static Record[] ToInsertRecords(this IEnumerable<Asset> assets)
     {
-        return assets.Select(x => RecordExtensions.FormObject(x,
-            whiteList:
-            [
-                nameof(Asset.Path),
-                nameof(Asset.Url),
-                nameof(Asset.Name),
-                nameof(Asset.Title),
-                nameof(Asset.Size),
-                nameof(Asset.Type),
-                nameof(Asset.CreatedBy),
-            ])).ToArray();
+        return assets
+            .Select(x =>
+                RecordExtensions.FormObject(
+                    x,
+                    whiteList:
+                    [
+                        nameof(Asset.Path),
+                        nameof(Asset.Url),
+                        nameof(Asset.Name),
+                        nameof(Asset.Title),
+                        nameof(Asset.Size),
+                        nameof(Asset.Type),
+                        nameof(Asset.CreatedBy),
+                    ]
+                )
+            )
+            .ToArray();
     }
 
     public static Query UpdateMetaData(this Asset asset)
@@ -97,40 +113,48 @@ public static class Assets
             asset,
             whiteList: [nameof(Asset.Title), nameof(Asset.Metadata)]
         );
-        return new Query(TableName)
-            .Where(nameof(Asset.Id).Camelize(), asset.Id)
-            .AsUpdate(record);
+        return new Query(TableName).Where(nameof(Asset.Id).Camelize(), asset.Id).AsUpdate(record);
     }
 
-    public static Query Single(long id)
-        => new Query(TableName)
+    public static Query UpdateAssetProgress(this Asset asset)
+    {
+        var record = RecordExtensions.FormObject(asset, whiteList: [nameof(Asset.Progress)]);
+        var q =
+         new Query(TableName).Where(nameof(Asset.Id).Camelize(), asset.Id).AsUpdate(record);
+        var compiler = new SqlServerCompiler();
+       var sql =   compiler.Compile(q).RawSql;
+        return q;
+    }
+
+    public static Query Single(long id) =>
+        new Query(TableName)
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
-            .Where(nameof(Asset.Id).Camelize(),id)
+            .Where(nameof(Asset.Id).Camelize(), id)
             .Select(Entity.Attributes.Select(x => x.Field));
 
-    public static Query Single(string path)
-        => new Query(TableName)
+    public static Query Single(string path) =>
+        new Query(TableName)
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .Where(nameof(Asset.Path).Camelize(), path)
             .Select(Entity.Attributes.Select(x => x.Field));
-        
-    public static Query List(int?offset = null, int? limit = null)
+
+    public static Query List(int? offset = null, int? limit = null)
     {
         var q = new Query(TableName)
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .Select(
-                Entity.Attributes
-                    .Where(x => x.InList || x.Field == nameof(Asset.Id).Camelize())
+                Entity
+                    .Attributes.Where(x => x.InList || x.Field == nameof(Asset.Id).Camelize())
                     .Select(x => x.Field)
             );
-        if (offset > 0) q.Offset(offset.Value);
+        if (offset > 0)
+            q.Offset(offset.Value);
         q.Limit(limit ?? DefaultPageSize);
         return q;
     }
 
-    public static bool IsValidPath(string path)=> 
-        !string.IsNullOrWhiteSpace(path) 
-        && !path.StartsWith("http"); // not external link
+    public static bool IsValidPath(string path) =>
+        !string.IsNullOrWhiteSpace(path) && !path.StartsWith("http"); // not external link
 
     public static Query UpdateFile(long id, string fileName, long size, string contentType) =>
         new Query(TableName)
@@ -139,33 +163,28 @@ public static class Assets
                 [
                     nameof(Asset.Name).Camelize(),
                     nameof(Asset.Size).Camelize(),
-                    nameof(Asset.Type).Camelize()
+                    nameof(Asset.Type).Camelize(),
                 ],
-                [
-                    fileName,
-                    size,
-                    contentType
-                ]
+                [fileName, size, contentType]
             );
 
-    public static Query GetAssetIDsByPaths(IEnumerable<string> paths)
-        => new Query(TableName)
-            .Select( nameof(Asset.Id).Camelize(), nameof(Asset.Path).Camelize())
+    public static Query GetAssetIDsByPaths(IEnumerable<string> paths) =>
+        new Query(TableName)
+            .Select(nameof(Asset.Id).Camelize(), nameof(Asset.Path).Camelize())
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .WhereIn(nameof(Asset.Path).Camelize(), paths);
 
-    public static Query GetAssetsByPaths(IEnumerable<string> fields,IEnumerable<string> paths)
-        => new Query(TableName)
+    public static Query GetAssetsByPaths(IEnumerable<string> fields, IEnumerable<string> paths) =>
+        new Query(TableName)
             .Select(fields)
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .WhereIn(nameof(Asset.Path).Camelize(), paths);
 
-    public static Query Count() => new Query(TableName)
-        .Where(DefaultColumnNames.Deleted.Camelize(), false);
+    public static Query Count() =>
+        new Query(TableName).Where(DefaultColumnNames.Deleted.Camelize(), false);
 
     public static Query Deleted(long id) =>
         new Query(TableName)
             .Where(nameof(Asset.Id).Camelize(), id)
             .AsUpdate([DefaultColumnNames.Deleted.Camelize()], [true]);
-
 }

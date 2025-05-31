@@ -16,7 +16,7 @@ public static class CmsWorkerBuilder
         TaskTimingSeconds? taskTimingSeconds
        )
     {
-        taskTimingSeconds ??= new TaskTimingSeconds(60, 30, 30, 30,300);
+        taskTimingSeconds ??= new TaskTimingSeconds(60, 30, 30, 30,30);
         var parts = connectionString.Split(";").Where(x => !x.StartsWith("Password"));
 
         services.AddSingleton(new ResizeOptions(1200,90));

@@ -15,34 +15,43 @@ public class AssetApiClient(HttpClient client)
         return list.Items[0].LongOrZero("id");
     }
 
-    public Task<Result<string>> GetEntityBaseUrl()
-        => client.GetStringResult($"/base".ToAssetApi());
-    
-    public Task<Result<XEntity>> GetEntity(bool withLinkCount)
-        => client.GetResult<XEntity>($"/entity?linkCount={withLinkCount}".ToAssetApi());
-    
-    public Task<Result<string>> AddAsset(IEnumerable<(string, byte[])> files)
-        => client.PostFileResult("/".ToAssetApi(), "files", files);
+    public Task<Result<string>> GetEntityBaseUrl() => client.GetStringResult($"/base".ToAssetApi());
 
-    public Task<Result<ListResponse>> List(bool withLinkCount, string qs)
-        => client.GetResult<ListResponse>($"/?linkCount={withLinkCount}&{qs}".ToAssetApi());
-    
-    public Task<Result<Asset>> Single(long id)
-        => client.GetResult<Asset>($"/{id}".ToAssetApi());
+    public Task<Result<XEntity>> GetEntity(bool withLinkCount) =>
+        client.GetResult<XEntity>($"/entity?linkCount={withLinkCount}".ToAssetApi());
 
-    public Task<Result<Asset>> Single(string path)
-        => client.GetResult<Asset>($"/path?path={path}".ToAssetApi());
+    public Task<Result<string>> AddAsset(IEnumerable<(string, byte[])> files) =>
+        client.PostFileResult("/".ToAssetApi(), "files", files);
+
+    public Task<Result<ListResponse>> List(bool withLinkCount, string qs) =>
+        client.GetResult<ListResponse>($"/?linkCount={withLinkCount}&{qs}".ToAssetApi());
+
+    public Task<Result<Asset>> Single(long id) => client.GetResult<Asset>($"/{id}".ToAssetApi());
+
+    public Task<Result<Asset>> Single(string path) =>
+        client.GetResult<Asset>($"/path?path={path}".ToAssetApi());
+
     public async Task<Result> Replace(long id, string fileName, byte[] fileContent)
     {
-       var res = await client.PostFileResult($"/{id}".ToAssetApi(),"files",[(fileName, fileContent)]);
-       return res.IsFailed ? Result.Fail(res.Errors) : Result.Ok();
+        var res = await client.PostFileResult(
+            $"/{id}".ToAssetApi(),
+            "files",
+            [(fileName, fileContent)]
+        );
+        return res.IsFailed ? Result.Fail(res.Errors) : Result.Ok();
     }
-     public Task<Result> UpdateMeta(Asset asset)
-         => client.PostResult($"/meta".ToAssetApi(), asset);
 
-     public async Task<long> AddAssetAndGetId((string name, byte[] content) file)
-     {
-         await AddAsset([file]);
-         return await GetAssetIdByName(file.name);
-     }
+    public Task<Result> UpdateMeta(Asset asset) => client.PostResult($"/meta".ToAssetApi(), asset);
+
+    public async Task<long> AddAssetAndGetId((string name, byte[] content) file)
+    {
+        await AddAsset([file]);
+        return await GetAssetIdByName(file.name);
+    }
+
+    public async Task<Result> UpdateProgress(Asset asset)
+    {
+        var res = await client.PutResult($"/progress".ToAssetApi(), asset);
+        return res.IsFailed ? Result.Fail(res.Errors) : Result.Ok();
+    }
 }

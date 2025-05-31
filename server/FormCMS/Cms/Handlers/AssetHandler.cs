@@ -64,5 +64,10 @@ public static class AssetHandler
             long id,
             CancellationToken ct
         ) => svc.Delete(id, ct));
+
+        app.MapPut("/progress", async (IAssetService svc,
+            Asset asset,
+            CancellationToken ct
+            ) => await svc.UpdateProgress(asset, ct));
     }
 }

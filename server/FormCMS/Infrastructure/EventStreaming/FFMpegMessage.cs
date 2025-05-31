@@ -1,6 +1,6 @@
 ﻿namespace FormCMS.Infrastructure.EventStreaming
 {
-    public record FFMpegMessage(string Id,string Path,string TargetFormat)
+    public record FFMpegMessage(string AssetName,string Path,string TargetFormat)
     {
     }
 }

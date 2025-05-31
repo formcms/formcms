@@ -4,6 +4,7 @@ using FormCMS.App;
 using FormCMS.Auth;
 using FormCMS.Auth.Builders;
 using FormCMS.Cms.Workers;
+using FormCMS.CoreKit.ApiClient;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
@@ -28,7 +29,15 @@ webBuilder.Services.AddActivity();
 webBuilder.Services.AddNatsMessageProducer(["asset"]);
 webBuilder.AddNatsClient(AppConstants.Nats);
 webBuilder.Services.AddSingleton<IStringMessageProducer, NatsProducer>();
-
+webBuilder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", builder =>
+    {
+        builder.AllowAnyOrigin()
+               .AllowAnyHeader()
+               .AllowAnyMethod();
+    });
+});
 var webApp = webBuilder.Build();
 
 //ensure identity tables are created
@@ -47,6 +56,11 @@ await webApp.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
 var workerBuilder = Host.CreateApplicationBuilder(args);
 workerBuilder.AddNatsClient(AppConstants.Nats);
 workerBuilder.Services.AddSingleton<IStringMessageConsumer, NatsConsumer>();
+//workerBuilder.Services.AddHttpClient("assetApi", c =>
+//{
+//    c.BaseAddress = new Uri("http://localhost:5049/api/assets");
+//});
+workerBuilder.Services.AddSingleton(new AssetApiClient(new HttpClient() {  BaseAddress= new Uri("http://localhost:5049/api/assets") }));
 
 workerBuilder.Services.AddSqlServerCmsWorker(connectionString).WithNats(natsConnectionString);
 

@@ -86,8 +86,7 @@ public class AssetApiTest(AppFactory factory)
             {
                 s.AddSingleton<IStringMessageProducer, NatsProducer>();
                 s.AddScoped<ITopItemService, DummyTopItemService>();
-            }
-            );
+            });
         });
         var txtFileName = $"{Ulid.NewUlid()}.txt";
         var bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
@@ -196,6 +195,48 @@ public class AssetApiTest(AppFactory factory)
         Assert.Null(await EntityHasAsset(updateImage, _post, id));
         Assert.Null(await EntityHasAsset(img1, _post, id));
         Assert.Null(await EntityHasAsset(img2, _post, id));
+    }
+
+    [Fact]
+    public async Task AssestShouldUpdateProgress()
+    {
+        // arrange
+        factory.WithWebHostBuilder(b =>
+        {
+            b.ConfigureServices(s =>
+            {
+              //  s.AddSingleton<IStringMessageProducer, NatsProducer>();
+              //  s.AddScoped<ITopItemService, DummyTopItemService>();
+            });
+        });
+        var txtFileName = $"{Ulid.NewUlid()}.txt";
+        var bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
+        await factory.AssetApi.AddAsset([(txtFileName, bs)]).Ok();
+        var id = await factory.AssetApi.GetAssetIdByName(txtFileName);
+
+        var asset = await factory.AssetApi.Single(id).Ok();
+        var assetToUpdate = new Asset(
+            asset.Path,
+            asset.Url,
+            asset.Name,
+            asset.Title,
+            asset.Size,
+            asset.Type,
+            asset.Metadata,
+            asset.CreatedBy,
+            asset.CreatedAt,
+            DateTime.UtcNow,
+            asset.Id,
+            asset.LinkCount,
+            asset.Links,
+            100
+        );
+        // action
+        await factory.AssetApi.UpdateProgress(assetToUpdate).Ok();
+        //asset
+        var asset1 = await factory.AssetApi.Single(id).Ok();
+        Assert.Equal(100, asset1.Progress);
+        Assert.NotEqual(asset.Progress, asset1.Progress);
     }
 
     private byte[] Create2048TileImage()

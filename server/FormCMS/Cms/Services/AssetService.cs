@@ -158,7 +158,7 @@ public class AssetService(
         await executor.BatchInsert(Assets.TableName, assets.ToInsertRecords());
         if (!string.IsNullOrEmpty(videoPath))
         {
-            var msg = JsonSerializer.Serialize(new FFMpegMessage("placeholder", videoPath, "m3u8"));
+            var msg = JsonSerializer.Serialize(new FFMpegMessage(asset!.Name, videoPath, "m3u8"));
             await producer.Produce(Topics.Rdy4FfMpeg, msg);
         }
 
@@ -309,5 +309,11 @@ public class AssetService(
             var id = item.StrOrEmpty(nameof(Asset.Id).Camelize());
             item[nameof(Asset.LinkCount).Camelize()] = dict.TryGetValue(id, out var val) ? val : 0;
         }
+    }
+
+    public async Task UpdateProgress(Asset asset, CancellationToken ct)
+    {
+        await hookRegistry.AssetPreUpdate.Trigger(provider, new AssetPreUpdateArgs(asset.Id));
+        await executor.Exec(asset.UpdateAssetProgress(), false, ct);
     }
 }
