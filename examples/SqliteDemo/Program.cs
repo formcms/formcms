@@ -1,6 +1,6 @@
 using FormCMS;
-using FormCMS.Auth;
 using FormCMS.Auth.Builders;
+using FormCMS.Auth.Models;
 using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -15,9 +15,10 @@ webBuilder.Services.AddSqliteCms(connectionString);
 
 //add permission control service 
 webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
-webBuilder.Services.AddCmsAuth<IdentityUser, IdentityRole, AppDbContext>(new AuthConfig());
+webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, AppDbContext>(new AuthConfig());
 webBuilder.Services.AddAuditLog();
 webBuilder.Services.AddActivity();
+webBuilder.Services.AddComments();
 
 var webApp = webBuilder.Build();
 
