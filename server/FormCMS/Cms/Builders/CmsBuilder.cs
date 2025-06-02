@@ -3,7 +3,6 @@ using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FormCMS.Activities.Services;
-using FormCMS.Auth.Handlers;
 using FormCMS.Cms.Graph;
 using FormCMS.Cms.Handlers;
 using FormCMS.Cms.Services;
@@ -113,7 +112,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             services.AddScoped<IPageResolver, PageResolver>();
             services.AddScoped<IPageService, PageService>();
 
-            services.AddScoped<IProfileService, DummyProfileService>();
+            services.AddScoped<IIdentityService, DummyIdentityService>();
             services.AddScoped<ITopItemService, DummyTopItemService>();
 
             services.AddHttpClient(); //needed by task service
@@ -259,7 +258,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 .CacheOutput(SystemSettings.QueryCachePolicyName);
 
             // if an auth component is not use, the handler will use fake profile service
-            apiGroup.MapGroup("/profile").MapProfileHandlers();
+            apiGroup.MapIdentityHandlers();
             apiGroup.MapGroup("/tasks").MapTasksHandler();
 
             var knownPath = new []

@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 
 namespace FormCMS.Core.HookFactory;
@@ -14,9 +15,6 @@ public record QueryPreListArgs(
 
 public record QueryPostListArgs(
     LoadedQuery Query,
-    ImmutableArray<string> Fields,
-    ImmutableArray<ValidFilter> Filters,
-    ImmutableArray<ValidSort> Sorts,
     ValidSpan Span,
     ValidPagination Pagination,
     Record[] RefRecords 
@@ -24,16 +22,26 @@ public record QueryPostListArgs(
 
 public record QueryPreSingleArgs(
     LoadedQuery Query,
-    ImmutableArray<ValidFilter> Filters,
     Record? OutRecord = null
 ) : BaseArgs(Query.Name);
 
 public record QueryPostSingleArgs(
     LoadedQuery Query,
-    ImmutableArray<ValidFilter> Filters,
     Record RefRecord
 ) : BaseArgs(Query.Name);
 
-public record ExtraQueryFieldEntitiesArgs(
+public record QueryPartialArgs(
+    LoadedQuery Query,
+    ExtendedGraphAttribute Attribute,
+    Span Span,
+    long SourceId,
+    Record[]? OutRecords  = null 
+):BaseArgs(Query.Name);
+
+/*
+ * allow plugins to add fields/entities to GraphQl
+ * this hook is called in synchronizing context, 
+ */
+public record ExtendingGraphQlFieldArgs(
     ImmutableArray<Entity> entities
 ) : BaseArgs("");

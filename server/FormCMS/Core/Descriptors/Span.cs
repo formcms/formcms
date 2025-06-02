@@ -1,8 +1,6 @@
 using System.Collections.Immutable;
 using System.Text.Json;
-using Microsoft.IdentityModel.Tokens;
 using FluentResults;
-using FormCMS.Utils.jsonElementExt;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.RecordExt;
 
@@ -17,7 +15,6 @@ public static class SpanConstants
     public const string Cursor = "cursor";
     public const string HasPreviousPage = "hasPreviousPage";
     public const string HasNextPage = "hasNextPage";
-    public const string SourceId = "sourceId";
 }
 
 public static class SpanHelper
@@ -53,8 +50,7 @@ public static class SpanHelper
         items.FirstOrDefault() is { } item ? Cursor(item) : "";
 
 
-    public static ValidValue SourceId(this ValidSpan c) => c.EdgeItem![SpanConstants.SourceId].ToValidValue();
-    public static ValidValue Edge(this ValidSpan c, string fld) => c.EdgeItem![fld].ToValidValue();
+    public static object Edge(this ValidSpan c, string fld) => c.EdgeItem![fld];
 
     public static bool IsEmpty(this Span c) => string.IsNullOrWhiteSpace(c.First) && string.IsNullOrWhiteSpace(c.Last);
 
@@ -68,7 +64,7 @@ public static class SpanHelper
                 ? "<"
                 : ">";
 
-    public static Record[] ToPage(this Span c, Record[] items, int takeCount)
+    public static Record[] ToPage(this Span span, Record[] items, int takeCount)
     {
         if (items.Length == 0) return [];
 
@@ -78,12 +74,12 @@ public static class SpanHelper
             items = items[..^1]; // remove last item
         }
 
-        if (!IsForward(c))
+        if (!IsForward(span))
         {
             items = [..items.Reverse()];
         }
 
-        var (pre, next) = (hasMore, c.First ?? "", c.Last ?? "") switch
+        var (pre, next) = (hasMore, span.First ?? "", span.Last ?? "") switch
         {
             (true, "", "") => (false, true), // home page should not have previous
             (false, "", "") => (false, false), // home page
@@ -97,9 +93,7 @@ public static class SpanHelper
         return items;
     }
 
-
-
-    public static void SetCursor(object? sourceId, Record item, IEnumerable<ValidSort> sorts)
+    public static void SetCursor(Record item, IEnumerable<Sort> sorts)
     {
         var dict = new Dictionary<string, object>();
         foreach (var sort in sorts)
@@ -107,15 +101,10 @@ public static class SpanHelper
             if (item.ByJsonPath<object>(sort.Field, out var val)) dict[sort.Field] = val!;
         }
 
-        if (sourceId is not null)
-        {
-            dict[SpanConstants.SourceId] = sourceId;
-        }
-
-        item[SpanConstants.Cursor] = dict.ToToken();
+        item[SpanConstants.Cursor] = dict.ToToken();       
     }
 
-    public static Result<ValidSpan> ToValid(this Span c, IEnumerable<LoadedAttribute> attrs)
+    public static Result<ValidSpan> ToValid(this Span c, LoadedAttribute[] attrs)
     {
         if (c.IsEmpty()) return new ValidSpan(c);
 
@@ -131,7 +120,7 @@ public static class SpanHelper
                 {
                     return Result.Fail($"Fail to cast s to {attr.DataType}");
                 }
-                dict[key] = result!.Value;
+                dict[key] = result!.Value.ObjectValue!;
             }
             return new ValidSpan(c, dict.ToImmutableDictionary());
         }

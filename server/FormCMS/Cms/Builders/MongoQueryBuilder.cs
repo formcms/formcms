@@ -41,7 +41,7 @@ public class MongoQueryBuilder(ILogger<MongoQueryBuilder> logger, QueryCollectio
                 query,
                 async (IDocumentDbQuery dao, QueryPreSingleArgs p) =>
                 {
-                    var records = (await dao.Query(collection, p.Filters, [], new ValidPagination(0, 1))).Ok();
+                    var records = await dao.Query(collection, p.Query.Filters, [], new ValidPagination(0, 1)).Ok();
                     return p with { OutRecord = records.First() };
                 }
             );

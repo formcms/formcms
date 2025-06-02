@@ -169,7 +169,8 @@ public static class SortHelper
         return ret.ToArray();
     }
     
-    public static ImmutableArray<ValidSort> ReverseOrder(this IEnumerable<ValidSort> sorts)
+    public static T[] ReverseOrder<T>(this IEnumerable<T> sorts)
+    where T : Sort
     {
         return [
             ..sorts.Select(sort =>

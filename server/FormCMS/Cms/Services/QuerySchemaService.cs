@@ -85,7 +85,7 @@ public sealed class QuerySchemaService(
 
     private async Task<LoadedQuery> ToLoadedQuery(
         Query query, 
-        IEnumerable<GraphQLField> fields,
+        GraphQLField[] fields,
         PublicationStatus? status,
         CancellationToken ct = default)
     {
@@ -93,8 +93,10 @@ public sealed class QuerySchemaService(
         var selection = await ParseGraphFields("", entity, fields, null, status, ct).Ok();
         var sorts = await query.Sorts.ToValidSorts(entity, entitySchemaSvc,status).Ok();
         var validFilter = await query.Filters.ToValidFilters(entity,status, entitySchemaSvc).Ok();
-        var names = fields.Select(f => f.Name.StringValue);
-        return query.ToLoadedQuery(entity, selection, sorts, validFilter,names);
+        var extendedSelection = fields
+            .Where(f => selection.FirstOrDefault(x => x.Field == f.Name.StringValue) is null)
+            .Select(ParseExtendedField);
+        return query.ToLoadedQuery(entity, selection, extendedSelection, sorts, validFilter);
     }
 
     private async Task VerifyQuery(Query? query, PublicationStatus? status, CancellationToken ct = default)
@@ -112,6 +114,14 @@ public sealed class QuerySchemaService(
         await query.Sorts.ToValidSorts(entity, entitySchemaSvc,status).Ok();
     }
 
+    private ExtendedGraphAttribute ParseExtendedField(GraphQLField field)
+    {
+        
+        var arguments = field.Arguments?.Select(x => new GraphArgument(x)) ?? [];
+        var args = QueryHelper.ParseSimpleArguments(arguments).Ok();
+        return new ExtendedGraphAttribute(field.Name.StringValue, args.Pagination,args.Sorts);
+    }
+    
     private Task<Result<GraphAttribute[]>> ParseGraphFields(
         string prefix,
         LoadedEntity entity,

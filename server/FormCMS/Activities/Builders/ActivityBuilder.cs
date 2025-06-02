@@ -40,7 +40,7 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 
         services.AddScoped<IActivityCollectService, ActivityCollectService>();
         services.AddScoped<IActivityService, ActivityService>();
-        services.AddScoped<IQueryPluginService, QueryPluginService>();
+        services.AddScoped<IActivityQueryPlugin, ActivityQueryPlugin>();
         services.AddScoped<ITopItemService, TopItemService>();
         services.AddScoped<IBookmarkService, BookmarkService>();
         
@@ -103,17 +103,16 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 
         void RegisterHooks()
         {
-            var attrs = activitySettings
-                .AllCountTypes()
-                .Select(type => new Attribute(
-                    Field: ActivityCounts.ActivityCountField(type),
-                    Header: ActivityCounts.ActivityCountField(type),
-                    DataType: DataType.Int)
-                );
-
             var registry = app.Services.GetRequiredService<HookRegistry>();
-            registry.ExtraQueryFieldEntities.Register("", args =>
+            registry.ExtendEntity.RegisterDynamic("", (ActivitySettings settings, ExtendingGraphQlFieldArgs args)=>
             {
+                var attrs = settings
+                    .AllCountTypes()
+                    .Select(type => new Attribute(
+                        Field: ActivityCounts.ActivityCountField(type),
+                        Header: ActivityCounts.ActivityCountField(type),
+                        DataType: DataType.Int)
+                    );
                 var entities = args.entities.Select(x => x with
                 {
                     Attributes = [
@@ -121,12 +120,13 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
                         ..attrs,
                     ]
                 });
-                return new ExtraQueryFieldEntitiesArgs([..entities]);
+                return new ExtendingGraphQlFieldArgs([..entities]);
             });
-            registry.QueryPostList.RegisterDynamic("*" ,async (IQueryPluginService service, QueryPostListArgs args)=>
+            
+            registry.QueryPostList.RegisterDynamic("*" ,async (IActivityQueryPlugin service, QueryPostListArgs args)=>
             {
                 var entity = args.Query.Entity;
-                await service.LoadCounts(entity.Name, entity.PrimaryKey,[..args.Fields], args.RefRecords, CancellationToken.None);
+                await service.LoadCounts(entity, args.Query.ExtendedSelection, args.RefRecords, CancellationToken.None);
                 return args;
             });
         }

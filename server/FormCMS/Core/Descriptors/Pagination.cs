@@ -3,7 +3,7 @@ using Microsoft.Extensions.Primitives;
 
 namespace FormCMS.Core.Descriptors;
 
-// Offset, Limit have to be nullable so they can be resolved from controller
+// 'Offset', 'Limit' have to be nullable so they can be resolved from controller
 // set it to sting to support graphQL variable
 public sealed record Pagination(string? Offset = null, string? Limit = null);
 
@@ -33,26 +33,26 @@ public static class PaginationHelper
             Limit: args.ResolveVariable(pagination.Limit, QueryConstants.VariablePrefix).ToString());
     }
 
-    public static ValidPagination ToValid(Pagination? fly, int defaultPageSize) =>
-        ToValid(fly, null, defaultPageSize, false, []);
+    public static ValidPagination ToValid(Pagination? pagination, int defaultPageSize) =>
+        ToValid(pagination, null, defaultPageSize, false, []);
         
-    public static ValidPagination ToValid(Pagination? fly, Pagination? fallback, int defaultPageSize, bool haveCursor, StrArgs args)
+    public static ValidPagination ToValid(Pagination? runtime, Pagination? fallback, int defaultPageSize, bool haveCursor, StrArgs args)
     {
-        fly ??= fallback ??= new Pagination();
-        if (fly.Offset is null)
+        runtime ??= fallback ??= new Pagination();
+        if (runtime.Offset is null)
         {
-            fly = fly with { Offset = fallback?.Offset };
+            runtime = runtime with { Offset = fallback?.Offset };
         }
 
-        if (fly.Limit is null)
+        if (runtime.Limit is null)
         {
-            fly = fly with { Limit = fallback?.Limit };
+            runtime = runtime with { Limit = fallback?.Limit };
         }
 
-        fly = fly.ReplaceVariable(args);
+        runtime = runtime.ReplaceVariable(args);
         
-        var offset = !haveCursor && int.TryParse(fly.Offset, out var offsetVal) ? offsetVal : 0;
-        var limit = int.TryParse(fly.Limit, out var limitVal) && limitVal > 0 && limitVal < defaultPageSize
+        var offset = !haveCursor && int.TryParse(runtime.Offset, out var offsetVal) ? offsetVal : 0;
+        var limit = int.TryParse(runtime.Limit, out var limitVal) && limitVal > 0 && limitVal < defaultPageSize
             ? limitVal
             : defaultPageSize;
         return new ValidPagination(offset, limit);
@@ -63,8 +63,7 @@ public static class PaginationHelper
         return pagination with { Limit = pagination.Limit + 1 };
     }
 
-    public static Pagination? ResolvePagination(GraphAttribute attribute,
-        Dictionary<string, StringValues> dictionary)
+    public static Pagination? ResolvePagination(GraphAttribute attribute, StrArgs args)
     {
         var key = attribute.Prefix;
         if (!string.IsNullOrWhiteSpace(attribute.Prefix))
@@ -73,9 +72,14 @@ public static class PaginationHelper
         }
 
         key += attribute.Field;
+        return ResolvePagination(key,args);
 
-        var offsetOk = dictionary.TryGetValue(key + PaginationConstants.OffsetSuffix, out var offset);
-        var limitOk = dictionary.TryGetValue(key + PaginationConstants.LimitSuffix, out var limit);
+    }
+    
+    public static Pagination? ResolvePagination(string key,StrArgs args)
+    {
+        var offsetOk = args.TryGetValue(key + PaginationConstants.OffsetSuffix, out var offset);
+        var limitOk = args.TryGetValue(key + PaginationConstants.LimitSuffix, out var limit);
         return offsetOk || limitOk ? new Pagination(offset, limit) : null;
     }
 }

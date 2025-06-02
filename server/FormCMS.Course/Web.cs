@@ -1,5 +1,6 @@
 using FormCMS.Auth;
 using FormCMS.Auth.Builders;
+using FormCMS.Auth.Models;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Utils.ResultExt;
@@ -36,9 +37,10 @@ public class WebApp(
         
         //add formCms
         AddCms();
-        builder.Services.AddCmsAuth<IdentityUser, IdentityRole, CmsDbContext>(GetAuthConfig());
+        builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(GetAuthConfig());
         builder.Services.AddAuditLog();
         builder.Services.AddActivity(enableActivityBuffer);
+        builder.Services.AddComments();
 
         var app = builder.Build();
         app.MapDefaultEndpoints();

@@ -11,7 +11,7 @@ using Humanizer;
 namespace FormCMS.Activities.Services;
 
 public class BookmarkService(
-    IProfileService profileService,
+    IIdentityService identityService,
     IQueryService queryService,
     IEntitySchemaService schemaService,
     KeyValueCache<long> maxRecordIdCache,
@@ -35,13 +35,13 @@ public class BookmarkService(
 
     public Task<Record[]> Folders(CancellationToken ct)
     {
-        var userId = profileService.GetInfo()?.Id ?? throw new ResultException("User is not logged in.");
+        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
         return GetFoldersByUserId(userId, ct);
     }
 
     public async Task<Record[]> FolderWithRecordStatus(string entityName, long recordId, CancellationToken ct)
     {
-        var userId = profileService.GetInfo()?.Id ?? throw new ResultException("User is not logged in.");
+        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
         var folders = await GetFoldersByUserId(userId, ct);
         var existingFolderIds = await GetFolderIdsByUserAndRecord(userId, entityName, recordId, ct);
         foreach (var folder in folders)
@@ -55,7 +55,7 @@ public class BookmarkService(
 
     public async Task UpdateFolder(long id,BookmarkFolder folder, CancellationToken ct)
     {
-        var userId = profileService.GetInfo()?.Id ?? throw new ResultException("User is not logged in.");
+        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
         folder = folder with { UserId = userId, Id=id};
             
         var affected = await executor.Exec(folder.Update(),false, ct);
@@ -64,7 +64,7 @@ public class BookmarkService(
 
     public async Task DeleteFolder(long folderId, CancellationToken ct)
     {
-        var userId = profileService.GetInfo()?.Id ?? throw new ResultException("User is not logged in.");
+        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
         using var trans = await dao.BeginTransaction();
         try
         {
@@ -81,7 +81,7 @@ public class BookmarkService(
     
     public async Task<ListResponse> List(long folderId, StrArgs args, int?offset, int?limit, CancellationToken ct)
     {
-        var userId = profileService.GetInfo()?.Id ?? throw new ResultException("User is not logged in");
+        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
         var (filters, sorts) = QueryStringParser.Parse(args); 
         var listQuery = Bookmarks.List(userId, folderId, offset, limit);
         var items = await executor.Many(listQuery, Models.Bookmarks.Columns,filters,sorts,ct);
@@ -97,7 +97,7 @@ public class BookmarkService(
         Console.Write($"""
                       adding bookmark {entityName} to {newFolderName}""
                       """);
-        var userId = profileService.GetInfo()?.Id ?? throw new ResultException("User is not logged in.");
+        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
         var entity =
             await Utils.EnsureEntityRecordExists(schemaService, dao, maxRecordIdCache, entityName, recordId, ct);
         var existingFolderIds = await GetFolderIdsByUserAndRecord(userId, entityName, recordId, ct);
@@ -135,7 +135,7 @@ public class BookmarkService(
 
     public Task DeleteBookmark(long bookmarkId, CancellationToken ct)
     {
-        var userId = profileService.GetInfo()?.Id ?? throw new ResultException("User is not logged in.");
+        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
         return executor.Exec(Bookmarks.Delete(userId, bookmarkId), false, ct);
     }
 

@@ -8,20 +8,24 @@
     <script src="//cdn.jsdelivr.net/npm/gasparesganga-jquery-loading-overlay@2.1.7/dist/loadingoverlay.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <script src="/_content/FormCMS/static-assets/js/pagination.js"></script>
-    <script src="/_content/FormCMS/static-assets/js/activity.js"></script>
+    <script src="/_content/FormCMS/static-assets/js/cookies.js" type="module"></script>
+    <script src="/_content/FormCMS/static-assets/js/pagination.js" type="module"></script>
+    <script src="/_content/FormCMS/static-assets/js/activity.js" type="module"></script>
+    <script src="/_content/FormCMS/static-assets/js/comment.js" type="module"></script>
 
 
     <link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/base.min.css">
     <link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/components.min.css">
     <link rel="stylesheet" href="https://unpkg.com/@tailwindcss/typography@0.1.2/dist/typography.min.css">
     <link rel="stylesheet" href="https://unpkg.com/tailwindcss@1.4.6/dist/utilities.min.css">
+    
+    <!--use daisy ui to display carousal-->
     <link href="https://cdn.jsdelivr.net/npm/daisyui@latest/dist/full.min.css" rel="stylesheet" type="text/css"/>
     <style>
 
         /*don't delete below line, it's place holder*/
         <!--css-->
-            /*social activity*/
+        /*social activity*/
         .active svg {
             fill: currentColor; /* Fills the icon when active */
         }
@@ -55,26 +59,6 @@
 <!--Place Holder-->
 <!--body-->
 
-<div id="cookie-consent-banner"
-     style="position:fixed; bottom:0; background:white; width:100%; padding:10px; text-align:center; box-shadow:0 -2px 10px rgba(0,0,0,0.2);">
-    We use cookies to improve your experience.
-    <button class="btn btn-primary btn-sm" onclick="acceptCookies()">Accept</button>
-</div>
 
-<script>
-    function acceptCookies() {
-        document.cookie = "cookies-consent=true; path=/; max-age=" + (60 * 60 * 24 * 365);
-        document.getElementById('cookie-consent-banner').style.display = 'none';
-    }
-
-    function hasConsent() {
-        return document.cookie.split(';').some(c => c.trim().startsWith('cookies-consent=true'));
-    }
-
-    // Hide banner if already consented
-    if (hasConsent()) {
-        document.getElementById('cookie-consent-banner').style.display = 'none';
-    }
-</script>
 </body>
 </html>

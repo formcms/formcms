@@ -9,7 +9,7 @@ using FormCMS.Utils.ResultExt;
 namespace FormCMS.AuditLogging.Services;
 
 public class AuditLogService(
-    IProfileService profileService,
+    IIdentityService identityService,
     KateQueryExecutor executor,
     DatabaseMigrator migrator,
     IRelationDbDao dao
@@ -40,7 +40,7 @@ public class AuditLogService(
 
     public Task AddLog(ActionType actionType, string entityName, string id, string label, Record record)
     {
-        var currentUser = profileService.GetInfo();
+        var currentUser = identityService.GetUserAccess();
         var log = new AuditLog(
             Id: 0,
             UserId: currentUser?.Id??"",
@@ -62,7 +62,7 @@ public class AuditLogService(
 
     private void EnsureHasPermission()
     {
-        var menus = profileService.GetInfo()?.AllowedMenus??[];
+        var menus = identityService.GetUserAccess()?.AllowedMenus??[];
         if (!menus.Contains(AuditLoggingConstants.MenuId))
             throw new ResultException("You don't have permission to view audit logs");
     }

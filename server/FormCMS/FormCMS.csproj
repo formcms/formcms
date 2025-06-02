@@ -57,11 +57,15 @@
         <None Include="../../doc/mkdoc/docs/index.md" Pack="true" PackagePath="\readme.md" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="wwwroot\static-assets\imgs\" />
+    </ItemGroup>
+
     <PropertyGroup>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net9.0</TargetFramework>
         <PackageId>FormCMS</PackageId>
-        <Version>0.5.1</Version>
+        <Version>0.5.2</Version>
         <Authors>Jason Chen</Authors>
         <Company>FormCms</Company>
         <Description>A headless CMS with GraphQL API and drag-and-drop page designer.</Description>

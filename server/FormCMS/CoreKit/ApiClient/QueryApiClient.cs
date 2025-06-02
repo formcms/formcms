@@ -39,9 +39,9 @@ public class QueryApiClient(HttpClient client)
 
 
     public Task<Result<JsonElement[]>> Part(
-        string query, string attr, string? first = null, string? last = null, int limit = 0
+        string query, string attr, long sourceId,  string? first = null, string? last = null, int limit = 0
     ) => client.GetResult<JsonElement[]>(
-        $"/{query}/part/{attr}?first={first ?? ""}&last={last ?? ""}&limit={limit}".ToQueryApi());
+        $"/{query}/part/{attr}?source={sourceId}&first={first ?? ""}&last={last ?? ""}&limit={limit}".ToQueryApi());
 
     public Task<Result<JsonElement[]>> ListGraphQl(
         string entity, string[] fields, string? queryName = null

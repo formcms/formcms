@@ -13,10 +13,10 @@ public class AuthApiClient(HttpClient client)
     
     public Task<Result> EnsureSaLogin() => Login(Sa, Pwd);
 
-    private Task<Result> Login(string email, string password)
+    private Task<Result> Login(string usernameOrEmail, string password)
     {
-        var loginData = new {email, password};
-        return client.PostAndSaveCookie("/api/login?useCookies=true", loginData);
+        var loginData = new {usernameOrEmail, password};
+        return client.PostAndSaveCookie("/api/login", loginData);
     }
 
     public async Task Logout()
@@ -25,17 +25,16 @@ public class AuthApiClient(HttpClient client)
         client.DefaultRequestHeaders.Remove("Cookie");
     }
 
-    public async Task Register(string email, string password)
+    public async Task Register(string username,string email, string password)
     {
-        var loginData = new { email, password };
+        var loginData = new {username, email, password };
         await client.PostResult("/api/register", loginData).Ok();
     }
 
-    public async Task RegisterAndLogin(string email, string password)
+    public async Task RegisterAndLogin(string username, string email, string password)
     {
-        var loginData = new { email, password};
-        await client.PostResult("/api/register", loginData ).Ok();
-        await client.PostAndSaveCookie("/api/login?useCookies=true", loginData).Ok();
+        await client.PostResult("/api/register", new { username, email, password} ).Ok();
+        await client.PostAndSaveCookie("/api/login", new {usernameOrEmail= email, password} ).Ok();
     }
 
     public async Task Sudo(string email, string password, Func<Task> action)

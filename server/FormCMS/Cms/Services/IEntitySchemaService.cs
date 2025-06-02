@@ -13,7 +13,7 @@ public interface IEntitySchemaService: IEntityVectorResolver
 
     Task<Result<LoadedAttribute>> LoadSingleAttrByName(LoadedEntity entity, string attrName, PublicationStatus? status, CancellationToken ct);
     ValueTask<ImmutableArray<Entity>> AllEntities(CancellationToken ct );
-    ValueTask<ImmutableArray<Entity>> ExtraQueryFieldEntities(CancellationToken ct );
+    ValueTask<ImmutableArray<Entity>> ExtendedEntities(CancellationToken ct );
     Task Delete(Schema schema, CancellationToken ct);
     Task<Schema> Save(Schema schema, CancellationToken ct);
     Task SaveTableDefine(Entity entity, CancellationToken token );

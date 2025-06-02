@@ -1,3 +1,4 @@
+using Azure.Core;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.HttpContextExt;
@@ -31,11 +32,12 @@ public static class QueryHandlers
             HttpContext ctx,
             string name,
             string attr,
+            long source,
             string? first,
             string? last,
             int limit,
             CancellationToken token
-        ) =>  svc.Partial(name, attr, new Span(first, last), limit, ctx.Args(), token));
+        ) =>  svc.Partial(name, attr,source, new Span(first, last), limit, ctx.Args(), token));
         return app;
     }
 }

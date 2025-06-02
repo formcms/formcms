@@ -4,6 +4,7 @@ public sealed record UserAccess(
     string Id,
     string Email,
     string Name,
+    string AvatarUrl,
     string[] Roles,
     string[] ReadWriteEntities,
     string[] ReadonlyEntities,

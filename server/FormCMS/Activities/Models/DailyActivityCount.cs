@@ -1,3 +1,3 @@
 namespace FormCMS.Activities.Models;
 
-public record DailyActivityCount(string ActivityType, string Day, string Count);
+public record DailyActivityCount(string ActivityType, DateTime Day, long Count);
