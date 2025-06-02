@@ -1,4 +1,5 @@
 using System.Collections.Immutable;
+using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 
 namespace FormCMS.Core.HookFactory;
@@ -37,6 +38,10 @@ public record QueryPartialArgs(
     Record[]? OutRecords  = null 
 ):BaseArgs(Query.Name);
 
-public record ExtendingEntityArgs(
+/*
+ * allow plugins to add fields/entities to GraphQl
+ * this hook is called in synchronizing context, 
+ */
+public record ExtendingGraphQlFieldArgs(
     ImmutableArray<Entity> entities
 ) : BaseArgs("");

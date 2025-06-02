@@ -10,7 +10,7 @@ public class PageApiClient(HttpClient client)
         public Task<Result<string>> GetDetailPage( string pageName, string slug ) 
                 => client.GetStringResult($"/{pageName}/{slug}");
  
-        public Task<Result<string>> GetPagePart( string token) 
-                => client.GetStringResult($"/page_part/?token={token}");
+        public Task<Result<string>> GetPagePart( string token, bool replace) 
+                => client.GetStringResult($"/page_part/?token={token}&replace={replace}");
     
 }

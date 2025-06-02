@@ -120,7 +120,7 @@ public static class SpanHelper
                 {
                     return Result.Fail($"Fail to cast s to {attr.DataType}");
                 }
-                dict[key] = result!.Value.ObjectValue;
+                dict[key] = result!.Value.ObjectValue!;
             }
             return new ValidSpan(c, dict.ToImmutableDictionary());
         }

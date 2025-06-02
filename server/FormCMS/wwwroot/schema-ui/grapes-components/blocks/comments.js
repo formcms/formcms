@@ -12,10 +12,10 @@ export const comments = {
       </svg>
     `,
     content: `
-<div class="py-6 px-8 mx-auto max-w-screen-lg" data-gjs-type="data-list"  data-component="data-list" field="comments" offset="0" limit="5" >
+<div class="py-6 px-8 mx-auto max-w-screen-lg" data-gjs-type="data-list"  data-component="data-list" field="comments" offset="0" limit="5"  >
     <h3 class="sm:text-2xl text-2xl font-bold title-font mb-4 text-gray-900">Comments</h3>
     <div class="mb-6">
-        <form data-component="comment-form" data-gjs-type="comment-form" class="flex flex-col gap-4 py-1">
+        <form data-component="comment-form" data-gjs-type="comment-form" class="flex flex-col gap-4 py-1"  data-record-id="{{id}}">
             <div class="flex items-center gap-4">
                 <textarea data-component="comment-text" placeholder="Add a comment..." class="textarea textarea-bordered w-full" rows="3" required></textarea>
             </div>

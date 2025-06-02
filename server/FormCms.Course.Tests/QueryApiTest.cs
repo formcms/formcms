@@ -269,9 +269,10 @@ public class QueryApiTest
             && v is object[] arr
             && arr.Last() is Dictionary<string, object> last)
         {
+            var id = (long)post["id"];
 
             var cursor = SpanHelper.Cursor(last);
-            var items = (await Factory.QueryApi.Part(query: _queryName, attr: attrName, last: cursor, limit: limit)).Ok();
+            var items = (await Factory.QueryApi.Part(sourceId:id,query: _queryName, attr: attrName, last: cursor, limit: limit)).Ok();
             Assert.Equal(limit, items.Length);
         }
         else

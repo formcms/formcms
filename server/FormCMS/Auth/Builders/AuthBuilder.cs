@@ -65,7 +65,8 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
 
         services.AddScoped<IUserClaimsPrincipalFactory<CmsUser>, CustomPrincipalFactory>();
         services.AddScoped<ILoginService, LoginService<TUser>>();
-        services.AddScoped<IIdentityService, IdentityService<TUser>>();
+        services.AddScoped<IIdentityService, IdentityService>();
+        services.AddScoped<IUserManageService, UserManageService<TUser>>();
         services.AddScoped<IProfileService, ProfileService<TUser>>();
         services.AddScoped<IAccountService, AccountService<TUser, TRole, TContext>>();
         

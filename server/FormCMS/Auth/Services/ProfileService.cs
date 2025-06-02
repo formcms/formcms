@@ -9,10 +9,10 @@ using NUlid;
 namespace FormCMS.Auth.Services;
 
 public class ProfileService<TUser>(
+    IHttpContextAccessor contextAccessor,
     IFileStore store,
     IResizer resizer,
     UserManager<TUser> userManager,
-    IHttpContextAccessor contextAccessor,
     SignInManager<TUser> signInManager
     ):IProfileService
     where TUser : CmsUser, new()

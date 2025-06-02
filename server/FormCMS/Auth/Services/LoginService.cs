@@ -50,7 +50,7 @@ public class LoginService<TUser>(
         var user = await userManager.FindByEmailAsync(email);
         if (user == null)
         {
-            user = new TUser { UserName = context.Identity.Name, Email = email };
+            user = new TUser { UserName = context.Identity?.Name, Email = email };
             await userManager.CreateAsync(user);
         }
         await signInManager.SignInAsync(user, isPersistent: false);

@@ -81,7 +81,7 @@ public class PageApiTest
 
         var divNode = doc.DocumentNode.SelectSingleNode("//div[@id='div1']");
         var lastValue = divNode.GetAttributeValue("last", "Attribute not found");
-        html = await Factory.PageApi.GetPagePart(lastValue).Ok();
+        html = await Factory.PageApi.GetPagePart(lastValue,true).Ok();
         Assert.True(html.IndexOf("--5--", StringComparison.Ordinal) > 0);
         
         

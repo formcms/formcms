@@ -40,7 +40,7 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 
         services.AddScoped<IActivityCollectService, ActivityCollectService>();
         services.AddScoped<IActivityService, ActivityService>();
-        services.AddScoped<IActivityPlugin, ActivityPlugin>();
+        services.AddScoped<IActivityQueryPlugin, ActivityQueryPlugin>();
         services.AddScoped<ITopItemService, TopItemService>();
         services.AddScoped<IBookmarkService, BookmarkService>();
         
@@ -104,13 +104,26 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         void RegisterHooks()
         {
             var registry = app.Services.GetRequiredService<HookRegistry>();
-            registry.ExtendEntity.RegisterDynamic("", (IActivityPlugin service, ExtendingEntityArgs args)=>
+            registry.ExtendEntity.RegisterDynamic("", (ActivitySettings settings, ExtendingGraphQlFieldArgs args)=>
             {
-                var entities = service.ExtendEntities(args.entities);
-                return new ExtendingEntityArgs([..entities]);
+                var attrs = settings
+                    .AllCountTypes()
+                    .Select(type => new Attribute(
+                        Field: ActivityCounts.ActivityCountField(type),
+                        Header: ActivityCounts.ActivityCountField(type),
+                        DataType: DataType.Int)
+                    );
+                var entities = args.entities.Select(x => x with
+                {
+                    Attributes = [
+                        ..x.Attributes,
+                        ..attrs,
+                    ]
+                });
+                return new ExtendingGraphQlFieldArgs([..entities]);
             });
             
-            registry.QueryPostList.RegisterDynamic("*" ,async (IActivityPlugin service, QueryPostListArgs args)=>
+            registry.QueryPostList.RegisterDynamic("*" ,async (IActivityQueryPlugin service, QueryPostListArgs args)=>
             {
                 var entity = args.Query.Entity;
                 await service.LoadCounts(entity, args.Query.ExtendedSelection, args.RefRecords, CancellationToken.None);
