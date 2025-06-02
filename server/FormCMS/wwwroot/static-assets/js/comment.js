@@ -18,18 +18,20 @@ $(document).ready(function () {
         const dataList = $(this);
         const $commentForm = dataList.find(`[data-component="comment-form"]`);
         const $foreach = dataList.find(`[data-component="foreach"]`);
-        if (!$commentForm || !$foreach) return;
-        
-        
+        if (!$commentForm || $commentForm.length === 0) return;
         
         const $commentText = $commentForm.find(`[data-component="comment-text"]`);
         const entityName = $commentForm.data('entity');
         const recordId = $commentForm.data('record-id');
-        
+
         $commentText.on('focus', function () {
             if (!user) {
-                alert("Please login first");
-                window.location.href = "/portal?ref=" + encodeURIComponent(window.location.href);
+                const proceed = confirm("You must log in to comment. Do you want to log in now?");
+                if (proceed) {
+                    window.location.href = "/portal?ref=" + encodeURIComponent(window.location.href);
+                }else {
+                    $(this).blur();
+                }
             }
         });
 

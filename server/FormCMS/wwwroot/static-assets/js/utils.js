@@ -73,12 +73,6 @@ export function showToast(message) {
 let currentUserPromise = null;
 
 export async function currentUser() {
-    // Check if user exists in localStorage
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-        return JSON.parse(storedUser);
-    }
-
     // If an API call is already in progress, return its promise
     if (currentUserPromise) {
         return currentUserPromise;
