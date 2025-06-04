@@ -1,23 +1,10 @@
 const apiPrefix = "/api";
 
 async function tryFetch(cb) {
-    try {
-        const res = await cb();
-
-        // Check if response has content
-        const contentType = res.headers.get('content-type');
-        const hasBody = res.status !== 204 && contentType && contentType.includes('application/json');
-
-        const data = hasBody ? await res.json() : undefined;
-
-        return { data };
-    } catch (err) {
-        return {
-            error:
-                err?.response?.data?.title ||
-                'An error has occurred. Please try again.',
-        };
-    }
+    const res = await cb();
+    const text = await res.text();
+    const  data = text ? JSON.parse(text):  null;
+    return res.ok ? {data} : {error: (data?.title ??"An error has occurred. Please try again.")};
 }
 
 

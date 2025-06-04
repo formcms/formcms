@@ -12,7 +12,13 @@ export const comments = {
       </svg>
     `,
     content: `
-<div class="py-6 px-8 mx-auto max-w-screen-lg" data-gjs-type="data-list"  data-component="data-list" field="comments" offset="0" limit="5"  >
+<div class="py-6 px-8 mx-auto max-w-screen-lg" 
+    data-gjs-type="data-list"  
+    data-component="data-list" 
+    field="comments" 
+    offset="0" 
+    limit="5"
+    >
     <h3 class="sm:text-2xl text-2xl font-bold title-font mb-4 text-gray-900">Comments</h3>
     <div class="mb-6">
         <form data-component="comment-form" data-gjs-type="comment-form" class="flex flex-col gap-4 py-1"  data-record-id="{{id}}">
@@ -26,35 +32,36 @@ export const comments = {
         </form>
     </div>
     <div class="space-y-4" data-gjs-type="foreach" data-component="foreach">
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200">
-             <div class="flex items-start">
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200" data-component='comment-container' data-id="{{id}}" data-user-id="{{user.id}}">
+             <div class="flex items-start" >
                   <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3 overflow-hidden">
                        <img src="{{user.avatarUrl}}" alt="User Avatar" class="w-full h-full object-cover">
                   </div>
                   <div class="flex-1">
-                       <p id="data" class="text-xs text-gray-400 mt-1">{{user.name}} · {{createdAt}}</p>
-                       <p class="text-sm text-gray-600">{{content}}</p>
+                       <p class="text-xs text-gray-400 mt-1">{{user.name}} · {{createdAt}}</p>
+                       <p data-component="comment-content" class="text-sm text-gray-600">{{content}}</p>
                   </div>
-                  <div class="flex items-center gap-2 mt-2">
-                    <button onclick="handleLike(1)" class="btn btn-ghost btn-sm flex items-center gap-1">
+             </div>
+                  
+             <div class="flex items-center gap-2 mt-2">
+                 <button data-component="comment-like" class="btn btn-ghost btn-sm flex items-center gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                         Like
-                    </button>
-                    <span class="text-xs text-gray-500">(<span id="like-count-1">0</span>)</span>
-            <button onclick="handleReply(1)" class="btn btn-ghost btn-sm flex items-center gap-1">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m0-12l-6 6"></path></svg>
-              Reply
-            </button>
-            <span class="text-xs text-gray-500">(<span id="reply-count-1">0</span>)</span>
-            <button onclick="handleEdit(1)" class="btn btn-ghost btn-sm flex items-center gap-1">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-              Edit
-            </button>
-            <button onclick="handleDelete(1)" class="btn btn-ghost btn-sm flex items-center gap-1">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4"></path></svg>
-              Delete
-            </button>
-          </div>
+                 </button>
+                 <span class="text-xs text-gray-500">(<span data-component="like-count">0</span>)</span>
+                 <button data-component="comment-reply" class="btn btn-ghost btn-sm flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m0-12l-6 6"></path></svg>
+                        Reply
+                 </button>
+                 <span class="text-xs text-gray-500">(<span data-component="reply-count">0</span>)</span>
+                 <button data-component="comment-edit" class="btn btn-ghost btn-sm flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                        Edit
+                 </button>
+                 <button data-component="comment-del" class="btn btn-ghost btn-sm flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4"></path></svg>
+                        Delete
+                 </button>
              </div>
         </div> 
     </div>

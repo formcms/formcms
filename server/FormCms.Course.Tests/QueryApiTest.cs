@@ -123,7 +123,7 @@ public class QueryApiTest
             {"name","post21"},
             {"name1","post22"},
         };
-        await Factory.EntityApi.Insert(_post, payload);
+        await Factory.EntityApi.Insert(_post, payload).Ok();
 
         await $$"""
                 query {{_queryName}}{
@@ -131,8 +131,6 @@ public class QueryApiTest
                 }
                 """.GraphQlQuery(Factory.QueryApi).Ok();
 
-
-        
         // remove name1 this latest version is draft
         await Factory.SchemaApi.EnsureSimpleEntity(_post, "name", false).Ok();
         await Factory.EntityApi.Insert(_post, "name", "post1").Ok();// should be draft now

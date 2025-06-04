@@ -26,8 +26,8 @@ export async function fetchUser() {
             });
 
             if (response.ok) {
-                const userData = await response.json();
-                user = JSON.stringify(userData);
+                user = await response.json();
+                return user;
             }else {
                 throw new Error('API call failed');
             }
