@@ -59,7 +59,7 @@ public static class WebApp
             var res = await entitySchemaService.LoadEntity(TestEntityNames.TestPost.Camelize(),null,CancellationToken.None);
             if (res.IsFailed)
             {
-                await BlogsTestData.EnsureBlogEntities(x => entitySchemaService.SaveTableDefine(x,CancellationToken.None));
+                await BlogsTestData.EnsureBlogEntities(x => entitySchemaService.SaveTableDefine(x,true,CancellationToken.None));
                 await app.AddQuery();
                 await app.AddData();
             }

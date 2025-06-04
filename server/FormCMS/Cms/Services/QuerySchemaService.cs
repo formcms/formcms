@@ -65,7 +65,7 @@ public sealed class QuerySchemaService(
         };
         await VerifyQuery(query, status, ct);
         var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query));
-        await schemaSvc.AddOrUpdateByNameWithAction(schema, ct);
+        await schemaSvc.AddOrUpdateByNameWithAction(schema,false, ct);
 
     }
 

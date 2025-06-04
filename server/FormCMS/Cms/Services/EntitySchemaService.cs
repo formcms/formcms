@@ -41,17 +41,16 @@ public sealed class EntitySchemaService(
         return res.entities;
     }
 
-    public async Task<Schema> AddOrUpdateByName(Entity entity, CancellationToken ct)
+    public async Task<Schema> AddOrUpdateByName(Entity entity,bool asPublished, CancellationToken ct)
     {
         var find = await schemaSvc.GetByNameDefault(entity.Name, SchemaType.Entity,null, ct);
         var schema = ToSchema(entity,find?.SchemaId??"", find?.Id ?? 0);
-        return await SaveTableDefine(schema, ct);
+        return await SaveTableDefine(schema, asPublished,ct);
     }
 
-
-    public async Task<Schema> Save(Schema schema, CancellationToken ct)
+    public async Task<Schema> Save(Schema schema,bool asPublished, CancellationToken ct)
     {
-        var ret = await schemaSvc.SaveWithAction(schema, ct);
+        var ret = await schemaSvc.SaveWithAction(schema, asPublished,ct);
         await entityCache.Remove("", ct);
         return ret;
     }
@@ -112,12 +111,12 @@ public sealed class EntitySchemaService(
             );
     }
 
-    public async Task SaveTableDefine(Entity entity, CancellationToken token = default)
+    public async Task SaveTableDefine(Entity entity, bool asPublished, CancellationToken token = default)
     {
-        await SaveTableDefine(ToSchema(entity), token);
+        await SaveTableDefine(ToSchema(entity), asPublished,token);
     }
 
-    public async Task<Schema> SaveTableDefine(Schema schema, CancellationToken ct = default)
+    public async Task<Schema> SaveTableDefine(Schema schema, bool asPublished, CancellationToken ct = default)
     {
         schema = schema with { Name = schema.Settings.Entity!.Name };
         
@@ -134,7 +133,7 @@ public sealed class EntitySchemaService(
         
         try
         {
-            schema = await schemaSvc.Save(schema, ct);
+            schema = await schemaSvc.Save(schema, asPublished, ct);
             await CreateMainTable(schema.Settings.Entity!, cols, ct);
             await schemaSvc.EnsureEntityInTopMenuBar(schema.Settings.Entity!, ct);
             

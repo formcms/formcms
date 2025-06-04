@@ -1,146 +1,155 @@
-import {loadEditor} from "../grapes-components/grapes.js";
-import {checkUser} from "./checkUser.js";
-import {loadNavBar} from "./nav-bar.js";
-import {single, save} from "./repo.js";
-import {queryKeys, schemaTypes} from "./types.js";
-import {getParams} from "./searchParamUtil.js";
+import { loadEditor } from "../grapes-components/grapes.js";
+import { checkUser } from "./util/checkUser.js";
+import { loadNavBar } from "./components/navbar.js";
+import { single, save } from "./services/services.js";
+import { queryKeys, schemaTypes } from "./models/types.js";
+import { getParams } from "./util/searchParamUtil.js";
+import { hideOverlay, showOverlay } from "./util/loadingOverlay.js";
 
 let schema;
 let editor;
 
-const [navBox, headerBox,inputsBox,grapesBox, errorBox] = 
-    ['#nav-box','#header-box','#inputs-box','#grapes-box','#error-box'];
+const [navBox, headerBox, inputsBox, grapesBox, errorBox] = [
+    document.querySelector("#nav-box"),
+    document.querySelector("#header-box"),
+    document.querySelector("#inputs-box"),
+    document.querySelector("#grapes-box"),
+    document.querySelector("#error-box")
+];
 
-$(document).ready(function() {
-    // as small scope as possible
-    const [id,refId] = getParams([queryKeys.id,queryKeys.refId]);
-    loadNavBar(navBox);
-    addActionButtons();
-    addInputs();
-    checkUser(()=>init(id,refId));
-});
+const [id, refId] = getParams([queryKeys.id, queryKeys.refId]);
+loadNavBar(navBox);
+addActionButtons();
+addInputs();
+checkUser(() => init(id, refId));
 
 async function init(id, refId) {
     if (!id && !refId) {
         editor = loadEditor(grapesBox);
-        return
+        return;
     }
-    
+
     const schemaData = await loadSchema(id || refId);
     if (schemaData) {
         const pageData = schemaData.settings[schemaTypes.page];
         if (id) {
             schema = schemaData;
         } else {
-            schema = {type: schemaTypes.page, settings: {[schemaTypes.page]: pageData}};
+            schema = { type: schemaTypes.page, settings: { [schemaTypes.page]: pageData } };
         }
         restoreFormData(pageData);
         editor = loadEditor(grapesBox, JSON.parse(pageData.components), JSON.parse(pageData.styles));
     }
 }
 
-async function handleSave() {
-
+async function handleSave(publish) {
     const payload = {
         html: editor.getHtml(),
         css: editor.getCss(),
-        components:JSON.stringify(editor.getComponents()),
+        components: JSON.stringify(editor.getComponents()),
         styles: JSON.stringify(editor.getStyle()),
-        type: schemaTypes.page,
+        type: schemaTypes.page
     };
-    if (!attachFormData(payload)){
+
+    if (!attachFormData(payload)) {
         return false;
     }
 
-    schema = schema ||{type:schemaTypes.page};
-    schema.settings = {page:payload};
+    schema = schema || { type: schemaTypes.page };
+    schema.settings = { page: payload };
 
-    $.LoadingOverlay("show");
-    const {data, error} = await save(schema);
-    $.LoadingOverlay("hide");
+    showOverlay();
+    const { data, error } = await save(schema,publish);
+    hideOverlay();
 
     if (data) {
-        $.toast({
-            heading: 'Success',
-            text: 'submit succeed!',
-            showHideTransition: 'slide',
-            icon: 'success'
-        })
+        // Replace $.toast with a simple alert or custom toast logic
+        alert("Submit succeeded!");
 
         schema = data;
         history.pushState(null, "", `page.html?${queryKeys.id}=${data.id}`);
-        $(errorBox).text('').hide();
+        errorBox.textContent = "";
+        errorBox.style.display = "none";
     } else {
-        $(errorBox).text(error).show();
+        errorBox.textContent = error;
+        errorBox.style.display = "block";
     }
 }
 
-async function loadSchema(idVal){
-    if (!idVal){
-        return null;
-    }
-    $.LoadingOverlay("show");
-    const {data: schemaData, error} = await single(idVal);
-    $.LoadingOverlay("hide");
+async function loadSchema(idVal) {
+    if (!idVal) return null;
+
+    showOverlay();
+    const { data: schemaData, error } = await single(idVal);
+    hideOverlay();
 
     if (error) {
-        $(errorBox).text(error).show();
+        errorBox.textContent = error;
+        errorBox.style.display = "block";
         return null;
     }
+
     return schemaData;
 }
 
-function addInputs(){
-    $(inputsBox).html(`
-          <div class="row">
-             <div class="col-md-4 mb-3">
-                 <label for="name" class="form-label">Page Name</label>
-                 <input id="name" type="text" class="form-control" required>
-             </div>
-             
-             <div class="col-md-4 mb-3">
-                 <label for="title" class="form-label">Page Title</label>
-                 <input id="title" type="text" class="form-control" required>
-             </div>
-
-             <div class="col-md-4 mb-3">
-                 <label for="query" class="form-label">Query</label>
-                 <input id="query" type="text" class="form-control">
-             </div>
-         </div>
-    `);
+function addInputs() {
+    inputsBox.innerHTML = `
+    <div class="row">
+      <div class="col-md-4 mb-3">
+        <label for="name" class="form-label">Page Name</label>
+        <input id="name" type="text" class="form-control" required>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="title" class="form-label">Page Title</label>
+        <input id="title" type="text" class="form-control" required>
+      </div>
+      <div class="col-md-4 mb-3">
+        <label for="query" class="form-label">Query</label>
+        <input id="query" type="text" class="form-control">
+      </div>
+    </div>
+  `;
 }
-const controls = ['name','title', 'query'];
-function restoreFormData(payload){
-    for (const ctl of controls){
-        $(`#${ctl}`).val(payload[ctl]);
+
+const controls = ['name', 'title', 'query'];
+
+function restoreFormData(payload) {
+    for (const ctl of controls) {
+        const el = document.getElementById(ctl);
+        if (el) el.value = payload[ctl] || "";
     }
 }
 
-function attachFormData(payload){
-    for (const ctlName of controls){
-        const ctl = $(`#${ctlName}`);
-        if (ctl.prop('required') && !ctl.val()){
-            $(errorBox).text(`${ctlName} can not be empty`).show();
+function attachFormData(payload) {
+    for (const ctlName of controls) {
+        const el = document.getElementById(ctlName);
+        if (el.required && !el.value) {
+            errorBox.textContent = `${ctlName} cannot be empty`;
+            errorBox.style.display = "block";
             return false;
         }
-        payload[ctlName] = ctl.val();
+        payload[ctlName] = el.value;
     }
     return true;
 }
 
 function addActionButtons() {
-    $(headerBox).html(`
-     <button id='savePage' class="btn btn-primary">Save Page</button>
-     <button id='visitPage' class="btn btn-primary">View Page</button>
-    `);
+    headerBox.innerHTML = `
+    <button id="savePage" class="btn btn-primary">Save Page</button>
+    <button id="saveAndPublish" class="btn btn-primary">Save and Publish</button>
+    <button id="visitPage" class="btn btn-primary">View Page</button>
+  `;
 
-    $('#visitPage').on('click', function () {
-        const name = $(`#name`).val();
-        if (name){
-            window.open(`/${name}/?${queryKeys.sandbox}=1`, '_blank'); // Opens in a new tab
+    const saveBtn = document.getElementById("savePage");
+    const saveAndPublish = document.getElementById("saveAndPublish");
+    const visitBtn = document.getElementById("visitPage");
+
+    saveBtn.addEventListener("click", ()=>handleSave(false));
+    saveAndPublish.addEventListener("click", ()=>handleSave(true));
+    visitBtn.addEventListener("click", () => {
+        const name = document.getElementById("name").value;
+        if (name) {
+            window.open(`/${name}/?${queryKeys.sandbox}=1`, "_blank");
         }
     });
-    
-    $('#savePage').on('click', handleSave);
 }

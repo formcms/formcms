@@ -1,28 +1,33 @@
-import {checkUser} from "./checkUser.js";
-import {getHistory} from "./repo.js";
-import {renderSchemaTable} from "./listUtil.js";
-import {loadNavBar} from "./nav-bar.js";
-import {queryKeys} from "./types.js";
-import {getParams} from "./searchParamUtil.js";
+import { checkUser } from "./util/checkUser.js";
+import { renderSchemaTable } from "./util/listUtil.js";
+import { getParams } from "./util/searchParamUtil.js";
 
-const [navBox, headerBox, tableBox, errorBox] 
-    = ['#nav-box','#header-box','#table-box','#error-box'];
+import { getHistory } from "./services/services.js";
+import { loadNavBar } from "./components/navbar.js";
+import { queryKeys } from "./models/types.js";
 
-$(document).ready( function() {
-    const [schemaId, type] = getParams([queryKeys.schemaId, queryKeys.type]);
+const [navBox, headerBox, tableBox, errorBox] = [
+    document.querySelector("#nav-box"),
+    document.querySelector("#header-box"),
+    document.querySelector("#table-box"),
+    document.querySelector("#error-box")
+];
+
+const [schemaId, type] = getParams([queryKeys.schemaId, queryKeys.type]);
+
+checkUser(async () => {
     loadNavBar(navBox);
-    AddActionButton(type);
-    
-    checkUser(async ()=>        
-        renderSchemaTable(
-            tableBox,
-            errorBox,
-            ()=>getHistory(schemaId),
-            {showDiff:true, showDelete:false, showViewHistory: false}
-        )
+    addActionButton(type);
+    await renderSchemaTable(
+        tableBox,
+        errorBox,
+        () => getHistory(schemaId),
+        { showDiff: true, showDelete: false, showViewHistory: false }
     );
-});
 
-function AddActionButton(type) {
-    $(headerBox).html(`<a href="list.html?${queryKeys.type}=${type}"  class="btn btn-secondary btn-sm badge">Back</a>`);
-}
+    function addActionButton(type) {
+        headerBox.innerHTML = `
+      <a href="list.html?${queryKeys.type}=${type}" class="btn btn-secondary btn-sm badge">Back</a>
+    `;
+    }
+});

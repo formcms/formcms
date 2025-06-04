@@ -1,72 +1,56 @@
-import {currentUser, showToast, fetchPagePart, initIntersectionObserver} from "./utils.js";
+import {showToast} from "./utils/formatter.js";
+import {fetchUser, getUser} from "./utils/user.js";
+import {fetchPagePart, initIntersectionObserver} from "./utils/datalist.js";
+import {saveComments} from "./services/commentService.js";
 
-$(document).ready(function () {
-    let user = false;
-    currentUser().then(x => user = x);
-    $(`[data-component="data-list"]`).each(loadComments);
+const dataLists = document.querySelectorAll('[data-component="data-list"]');
+dataLists.forEach(loadComments);
+fetchUser();
 
+function loadComments(dataList) {
+    const commentForm = dataList.querySelector('[data-component="comment-form"]');
+    const foreachElement = dataList.querySelector('[data-component="foreach"]');
+    if (!commentForm) return;
+    console.log(commentForm);
 
-    async function reloadDataList($foreach) {
-        const token = $foreach.attr("first_page");
-        const sorceId = $foreach.attr("source_id");
-        const html = await fetchPagePart(sorceId, token, true);
-        $foreach.html(html);
+    const commentText = commentForm.querySelector('[data-component="comment-text"]');
+    const entityName = commentForm.dataset.entity;
+    const recordId = commentForm.dataset.recordId;
+
+    commentText.addEventListener('focus', function () {
+        if (!getUser()) { // Reference global user
+            const proceed = confirm("You must log in to comment. Do you want to log in now?");
+            if (proceed) {
+                window.location.href = "/portal?ref=" + encodeURIComponent(window.location.href);
+            } else {
+                this.blur();
+            }
+        }
+    });
+
+    // Rest of the code remains the same
+    commentForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const text = commentText.value.trim();
+        if (text) {
+            try {
+                await saveComments(entityName, recordId, text);
+                await reloadDataList(foreachElement);
+                commentForm.reset();
+                showToast('Comment added!');
+            } catch (error) {
+                showToast('Failed to add comment: ' + error.message);
+            }
+        } else {
+            showToast('Please fill comment.');
+        }
+    })
+
+    async function reloadDataList(foreachElement) {
+        const token = foreachElement.getAttribute("first_page");
+        const sourceId = foreachElement.getAttribute("source_id");
+        const html = await fetchPagePart(sourceId, token, true);
+        foreachElement.innerHTML = html;
         await initIntersectionObserver();
     }
-    
-    function loadComments() {
-        const dataList = $(this);
-        const $commentForm = dataList.find(`[data-component="comment-form"]`);
-        const $foreach = dataList.find(`[data-component="foreach"]`);
-        if (!$commentForm || $commentForm.length === 0) return;
-        
-        const $commentText = $commentForm.find(`[data-component="comment-text"]`);
-        const entityName = $commentForm.data('entity');
-        const recordId = $commentForm.data('record-id');
-
-        $commentText.on('focus', function () {
-            if (!user) {
-                const proceed = confirm("You must log in to comment. Do you want to log in now?");
-                if (proceed) {
-                    window.location.href = "/portal?ref=" + encodeURIComponent(window.location.href);
-                }else {
-                    $(this).blur();
-                }
-            }
-        });
-
-        // Handle form submission
-        $commentForm.on('submit', async function (e) {
-            e.preventDefault();
-            const text = $commentText.val().trim();
-            if (text) {
-                const commentData = {
-                    EntityName: entityName,
-                    RecordId: recordId,
-                    Content: text,
-                };
-
-                try {
-                    const response = await fetch('/api/comments', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify(commentData)
-                    });
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
-                    await reloadDataList($foreach)
-                    $commentForm[0].reset();
-                    showToast('Comment added!');
-                } catch (error) {
-                    showToast('Failed to add comment: ' + error.message);
-                }
-            } else {
-                showToast('Please fill comment.');
-            }
-        });
-    }
-});
+}
