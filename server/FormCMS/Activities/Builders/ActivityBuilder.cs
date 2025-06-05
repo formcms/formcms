@@ -41,7 +41,6 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         services.AddScoped<IActivityCollectService, ActivityCollectService>();
         services.AddScoped<IActivityService, ActivityService>();
         services.AddScoped<IActivityQueryPlugin, ActivityQueryPlugin>();
-        services.AddScoped<ITopItemService, TopItemService>();
         services.AddScoped<IBookmarkService, BookmarkService>();
         
         services.AddHostedService<BufferFlushWorker>();
@@ -51,6 +50,9 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
     public async Task<WebApplication> UseActivity(WebApplication app)
     {
         var activitySettings = app.Services.GetRequiredService<ActivitySettings>();
+        var querySettings = app.Services.GetRequiredService<QuerySettings>();
+        querySettings.BuildInQueries.Add(ActivityQueryPluginConstants.TopList);
+        
         using var scope = app.Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<IActivityCollectService>().EnsureActivityTables();
         await scope.ServiceProvider.GetRequiredService<IBookmarkService>().EnsureBookmarkTables(); 
@@ -104,6 +106,13 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         void RegisterHooks()
         {
             var registry = app.Services.GetRequiredService<HookRegistry>();
+            registry.BuildInQueryArgs.RegisterDynamic(ActivityQueryPluginConstants.TopList, async (IActivityQueryPlugin s,BuildInQueryArgs args) =>
+            {
+                var pg = PaginationHelper.ToValid(args.Pagination, 10);
+                var items = await s.GetTopList(args.Args[ActivityQueryPluginConstants.EntityName],pg.Offset,pg.Limit,CancellationToken.None);
+                return args with { OutRecords = items };
+            });
+            
             registry.ExtendEntity.RegisterDynamic("", (ActivitySettings settings, ExtendingGraphQlFieldArgs args)=>
             {
                 var attrs = settings

@@ -65,14 +65,12 @@ public static class QueryHelper
         );
     }
 
-    public static Result VerifyVariable(this LoadedQuery query, StrArgs args)
+    public static void VerifyVariable(this LoadedQuery query, StrArgs args)
     {
         foreach (var key in query.ReqVariables.Where(key => !args.ContainsKey(key)))
         {
-            return Result.Fail($"Variable {key} doesn't exist");
+            throw new  ResultException($"Variable {key} doesn't exist");
         }
-
-        return Result.Ok();
     }
 
     public static Result<QueryArgs> ParseArguments(IArgument[] args)

@@ -21,24 +21,6 @@ public static class RenderUtil
         return template(data);
     }
     
-    public static Result<TopNode[]> GetTopNodes(this HtmlDocument doc)
-    {
-        var parentNodes = doc.DocumentNode.SelectNodes($"//*[@{Constants.AttrDataComponent}='{Constants.TopList}']");
-        if (parentNodes is null) return Result.Ok<TopNode[]>([]);
-        var ret = new List<TopNode>();
-        foreach (var parent in parentNodes)
-        {
-            if (!GetInt(parent, Constants.AttrLimit, out var limit)) return Result.Fail("Failed to parse limit");
-            if (!GetInt(parent, Constants.AttrOffset, out var offset)) return Result.Fail("Failed to parse offset");
-            ret.AddRange(
-                from foreachNode in parent.SelectNodes($".//*[@{Constants.AttrDataComponent}='{Constants.Foreach}']")
-                let entity = parent.GetAttributeValue(Constants.AttrEntity, string.Empty)
-                select new TopNode(foreachNode, entity, offset, limit, parent.Id));
-        }
-
-        return ret.ToArray();
-    }
-
     public static Result<DataNode[]> GetDataNodes(this HtmlDocument doc)
     {
         var parentNodes = doc.DocumentNode.SelectNodes($"//*[@{Constants.AttrDataComponent}='{Constants.DataList}']");

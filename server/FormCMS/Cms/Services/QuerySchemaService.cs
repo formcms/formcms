@@ -35,7 +35,7 @@ public sealed class QuerySchemaService(
         return await ToLoadedQuery(query, fields,null);
     }
 
-    public async Task<LoadedQuery> ByNameAndCache(string name, PublicationStatus? status, CancellationToken ct = default)
+    public async Task<LoadedQuery> GetSetCacheByName(string name, PublicationStatus? status, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(name)) throw new ResultException("Query name should not be empty");
         var query = status == PublicationStatus.Published

@@ -4,6 +4,7 @@ using FormCMS.Core.Descriptors;
 
 namespace FormCMS.Core.HookFactory;
 
+public record QuerySettings(HashSet<string> BuildInQueries);
 public record QueryPreListArgs(
     LoadedQuery Query,
     ImmutableArray<ValidFilter> Filters,
@@ -37,6 +38,8 @@ public record QueryPartialArgs(
     long SourceId,
     Record[]? OutRecords  = null 
 ):BaseArgs(Query.Name);
+
+public record BuildInQueryArgs(string Name, Span Span, Pagination Pagination, StrArgs Args, Record[]? OutRecords = null):BaseArgs(Name);
 
 /*
  * allow plugins to add fields/entities to GraphQl

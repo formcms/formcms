@@ -12,7 +12,7 @@ public class HookRegistry
         public HookList<QueryPostSingleArgs> QueryPostSingle { get; } = new();
         public HookList<QueryPartialArgs>  QueryPartial{ get; } = new();
         public HookList<ExtendingGraphQlFieldArgs> ExtendEntity { get; } = new();
-        
+        public HookList<BuildInQueryArgs> BuildInQueryArgs { get; } = new();
         public HookList<EntityPreGetSingleArgs> EntityPreGetSingle { get; } = new();
         public HookList<EntityPreGetListArgs> EntityPreGetList { get; } = new();
         public HookList<EntityPreUpdateArgs> EntityPreUpdate { get; } = new();

@@ -53,13 +53,6 @@ public static class ActivityHandler
             CancellationToken ct
         ) => s.Get(UserId(http), entityName, recordId, ct));
 
-        builder.MapGet("/top/{entityName}", (
-            ITopItemService s,
-            CancellationToken ct,
-            int? offset,
-            int? limit,
-            string entityName) => s.GetTopItems(entityName, offset ?? 0, limit ?? 5, ct));
-        
         builder.MapPost("/toggle/{entityName}/{recordId:long}", (
             string entityName,
             long recordId,

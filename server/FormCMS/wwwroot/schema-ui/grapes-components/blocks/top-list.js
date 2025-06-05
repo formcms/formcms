@@ -4,7 +4,7 @@ export const topList = {
     label: 'Top List',
     media: `<svg viewBox="0 0 1024 1024" class="icon" xmlns="http://www.w3.org/2000/svg"><path d="M128 128h768v768H128z" fill="#E1F0FF"/><path d="M128 128h768v128H128zM128 256h768v128H128zM128 384h768v128H128zM128 512h768v128H128zM128 640h768v128H128z" fill="#446EB1"/><path d="M128 128h128v640H128z" fill="#6D9EE8"/></svg>`,
     content: `
-<div class="py-6" data-gjs-type="top-list"  data-component="top-list" offset="0" limit="5">
+<div class="py-6" data-gjs-type="data-list"  data-component="data-list" query="topList" qs="entity=" offset="0" limit="5">
     <h3 class="sm:text-2xl text-2xl font-bold title-font mb-2 text-gray-900">Top List</h3>
     <div class="mt-4"  data-gjs-type="foreach" data-component="foreach">
         <div class="lg:border-t5-100 max-md:border-t5-100 bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 mb-2">

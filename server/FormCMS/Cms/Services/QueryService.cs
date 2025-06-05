@@ -1,3 +1,4 @@
+using FluentResults;
 using FormCMS.Cms.Graph;
 using FormCMS.Core.Assets;
 using FormCMS.Core.Descriptors;
@@ -15,7 +16,8 @@ public sealed class QueryService(
     IQuerySchemaService schemaSvc,
     IEntitySchemaService resolver,
     IServiceProvider provider,
-    HookRegistry hook
+    HookRegistry hook,
+    QuerySettings  querySettings
 ) : IQueryService
 {
     public async Task<Record[]> ListWithAction(GraphQlRequestDto dto)
@@ -23,7 +25,16 @@ public sealed class QueryService(
 
     public async Task<Record[]> ListWithAction(string name, Span span, Pagination pagination, StrArgs args,
         CancellationToken ct)
-        => await ListWithAction(await FromSavedQuery(name, args, ct), pagination, span, args, ct);
+    {
+        if (querySettings.BuildInQueries.Contains(name))
+        {
+            var queryRes =
+                await hook.BuildInQueryArgs.Trigger(provider, new BuildInQueryArgs(name, span, pagination, args));
+            return queryRes.OutRecords??throw new ResultException($"Fail to get query result for [{name}]");
+        }
+        var query = await FromSavedQuery(name, args, ct);
+        return await ListWithAction(query, pagination, span, args, ct);
+    }
 
     public async Task<Record?> SingleWithAction(GraphQlRequestDto dto)
         => await SingleWithAction(await FromGraphQlRequest(dto, dto.Args), dto.Args);
@@ -31,12 +42,11 @@ public sealed class QueryService(
     public async Task<Record?> SingleWithAction(string name, StrArgs args, CancellationToken ct)
         => await SingleWithAction(await FromSavedQuery(name, args, ct), args, ct);
 
-
     public async Task<Record[]> Partial(string name, string attr, long sourceId, Span span, int limit, StrArgs args,
         CancellationToken ct)
     {
         var runtimePagination = new Pagination(null, limit.ToString());
-        var query = await schemaSvc.ByNameAndCache(name, PublicationStatusHelper.GetSchemaStatus(args), ct);
+        var query = await schemaSvc.GetSetCacheByName(name, PublicationStatusHelper.GetSchemaStatus(args), ct);
         var extendedAttrs = query.ExtendedSelection.Select(x =>
             x with { Pagination = PaginationHelper.ResolvePagination(x.Field, args) ?? x.Pagination });
         query = query with { ExtendedSelection = [..extendedAttrs] };
@@ -199,7 +209,6 @@ public sealed class QueryService(
                 await LoadItems(query.Selection, args, [item], ct);
                 await LoadAsset([..query.Selection], [item]);
             }
-            
         }
 
         if (item is null) return item;
@@ -312,9 +321,8 @@ public sealed class QueryService(
         string name, StrArgs args, CancellationToken token = default)
     {
         var status = PublicationStatusHelper.GetSchemaStatus(args);
-        var query = await schemaSvc.ByNameAndCache(name, status, token);
-        ResultExt.Ensure(query.VerifyVariable(args));
-
+        var query = await schemaSvc.GetSetCacheByName(name, status, token);
+        query.VerifyVariable(args);
         if (status != PublicationStatus.Published)
         {
             //remove preview variables
@@ -326,9 +334,7 @@ public sealed class QueryService(
                 }
             }
         }
-
         return await ReplaceVariables(query, args, token);
-
     }
 
     private async Task<LoadedQuery> FromGraphQlRequest(GraphQlRequestDto dto, StrArgs args)

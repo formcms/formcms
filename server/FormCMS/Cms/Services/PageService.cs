@@ -13,7 +13,6 @@ namespace FormCMS.Cms.Services;
 
 public sealed class PageService(
     IQueryService querySvc,
-    ITopItemService topItemSvc,
     IPageResolver pageResolver,
     PageTemplate template
 ) : IPageService
@@ -105,18 +104,12 @@ public sealed class PageService(
         await LoadDataList(data, args, ctx.DateNodes, token);
         TagPagination(ctx, data, args);
         
-        await LoadTopList(data, ctx.TopNodes, token);
         foreach (var (htmlNode, dataSource) in ctx.DateNodes)
         {
             htmlNode.SetEach(dataSource.Field);
             htmlNode.SetPagination(dataSource.Field, dataSource.PaginationMode);
         }
         
-        foreach (var node in ctx.TopNodes)
-        {
-            node.HtmlNode.SetEach(node.Field);
-        }
-
         var title = Handlebars.Compile(ctx.Page.Title)(data);
         var body = ctx.HtmlDocument.RenderBody(data);
         return template.Build(title, body, ctx.Page.Css);
@@ -147,14 +140,6 @@ public sealed class PageService(
         }
     }
     
-    private async Task LoadTopList(Record data, TopNode[] nodes, CancellationToken ct)
-    {
-        foreach (var node in nodes)
-        {
-            data[node.Field] = await topItemSvc.GetTopItems(node.Entity, node.Offset,node.Limit, ct);
-        }
-    }
-
     private static void TagPagination(PageContext ctx, Record data, StrArgs args)
     {
         foreach (var node in ctx.DateNodes.Where(x => x.DataSource.Offset > 0 || x.DataSource.Limit > 0))
@@ -206,10 +191,10 @@ public sealed class PageService(
     {
         public PartialContext ToPartialContext(string nodeId) => new(Page, Doc.GetElementbyId(nodeId));
 
-        public PageContext ToPageContext() => new(Page, Doc, Doc.GetDataNodes().Ok(),Doc.GetTopNodes().Ok());
+        public PageContext ToPageContext() => new(Page, Doc, Doc.GetDataNodes().Ok());
     }
 
-    private record PageContext(Page Page, HtmlDocument HtmlDocument, DataNode[] DateNodes, TopNode[] TopNodes);
+    private record PageContext(Page Page, HtmlDocument HtmlDocument, DataNode[] DateNodes);
 
     private record PartialContext(Page Page, HtmlNode Node);
 

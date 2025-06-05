@@ -45,6 +45,8 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         Action<SystemSettings>? optionsAction = null
     )
     {
+        services.AddSingleton<CmsBuilder>();
+        
         //only set options to FormCMS enum types.
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<DataType>);
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<DisplayType>);
@@ -58,9 +60,9 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
 
         var systemResources = new RestrictedFeatures([Menus.MenuSchemaBuilder, Menus.MenuTasks]);
         services.AddSingleton(systemResources);
+        services.AddSingleton(new QuerySettings(BuildInQueries:[]));
 
         services.AddSingleton(new DbOption(databaseProvider, connectionString));
-        services.AddSingleton<CmsBuilder>();
         services.AddSingleton<HookRegistry>();
 
         services.AddDao(databaseProvider, connectionString);
@@ -113,7 +115,6 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             services.AddScoped<IPageService, PageService>();
 
             services.AddScoped<IIdentityService, DummyIdentityService>();
-            services.AddScoped<ITopItemService, DummyTopItemService>();
 
             services.AddHttpClient(); //needed by task service
             services.AddScoped<ITaskService, TaskService>();
