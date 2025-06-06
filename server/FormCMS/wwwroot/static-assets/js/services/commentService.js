@@ -1,39 +1,17 @@
-import {apiPrefix} from "./util.js";
+import {postData} from "./util.js";
 
-export async function saveComments(entityName, recordId, text) {
-    const commentData = {
-        EntityName: entityName,
-        RecordId: recordId,
-        Content: text,
-    };
-    const response = await fetch(`${apiPrefix}/comments`, {
-        method: 'POST',
-        body: JSON.stringify(commentData)
-    });
-    if (!response.ok) {
-        return {error: `HTTP error! Status: ${response.status}`};
-    }
+export async function saveComments(entityName, recordId, content) {
+    return  await postData("/comments", {entityName, recordId, content});
 }
 
 export async function deleteComments(id) {
-    const response = await fetch(`${apiPrefix}/comments/delete/${id}`, {
-        method: 'POST',
-    });
-    if (!response.ok) {
-        return {error: `HTTP error! Status: ${response.status}`};
-    }
+    return  await postData(`/comments/delete/${id}`);
 }
 
-export async function updateComments(id, text) {
-    const commentData = {
-        id,
-        Content: text,
-    };
-    const response = await fetch(`${apiPrefix}/comments/update`, {
-        method: 'POST',
-        body: JSON.stringify(commentData)
-    });
-    if (!response.ok) {
-        return {error:`HTTP error! Status: ${response.status}`};
-    }
+export async function updateComments(id, content) {
+    return  await postData(`/comments/update`, {id, content});
+}
+
+export async function replyComments(referencedId, content) {
+    return  await postData(`/comments/reply/${referencedId}`, {content});
 }

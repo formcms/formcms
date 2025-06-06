@@ -59,15 +59,6 @@ export const customTypes = [
         openTm: true
     },
     {
-        name: 'top-list',
-        traits:[
-            {name:"offset", label:'offset'},
-            {name:"entity", label:'entity'},
-            {name:"limit", label:'limit'},
-        ],
-        openTm:true
-    },
-    {
         name: 'comment-form',
         traits: [
             {name: "data-entity", label: 'Entity Name'},

@@ -61,6 +61,11 @@
       <Folder Include="wwwroot\static-assets\imgs\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\toast\jquery.toast.min.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\toast\jquery.toast.min.js" />
+    </ItemGroup>
+
     <PropertyGroup>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net9.0</TargetFramework>

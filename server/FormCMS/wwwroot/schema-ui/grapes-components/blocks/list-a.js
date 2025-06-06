@@ -15,7 +15,7 @@ export const listA =
         <ul class="border border-gray-200 rounded overflow-hidden shadow-md p-1"  data-gjs-type="foreach" data-component="foreach">
             <li class="px-4 py-2 bg-white hover:bg-sky-100 hover:text-sky-900 border-b last:border-none border-gray-200 transition-all duration-300 ease-in-out">{{title}}</li>
         </ul>
-        <nav class="flex space-x-2" aria-label="Pagination">
+        <nav class="flex space-x-2" data-component="pagination">
             <a data-component="previous" class="relative inline-flex items-center px-4 py-2 text-sm bg-gradient-to-r from-violet-300 to-indigo-300 border border-fuchsia-100 hover:border-violet-100 font-semibold cursor-pointer leading-5 rounded-md transition duration-150 ease-in-out focus:outline-none focus:shadow-outline-blue focus:border-blue-300 focus:z-10"> Previous </a>
             <a data-component="next" class="relative inline-flex items-center px-4 py-2 text-sm bg-gradient-to-r from-violet-300 to-indigo-300 border border-fuchsia-100 hover:border-violet-100 font-semibold cursor-pointer leading-5 rounded-md transition duration-150 ease-in-out focus:outline-none focus:shadow-outline-blue focus:border-blue-300 focus:z-10"> Next </a>
         </nav>

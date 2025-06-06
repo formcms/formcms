@@ -1,6 +1,6 @@
-import {formatCount} from "./utils/formatter.js";
-import {showToast} from "./utils/toast.js";
-import {getUser} from "./utils/user.js";
+import {formatCount} from "../utils/formatter.js";
+import {showToast} from "../utils/toast.js";
+import {getUser} from "../utils/user.js";
 
 import {
     fetchActivity,
@@ -9,14 +9,25 @@ import {
     saveBookmark,
     toggleActivity,
     trackVisit
-} from "./services/activityService.js";
+} from "../services/activityService.js";
 import {shareDialogHTML} from "./components/shareDiaogHtml.js";
 import {bookmarkDialogHtml} from "./components/bookmarkDialogHtml.js";
+const style = document.createElement('style');
+style.textContent = `
+    .active svg {
+        fill: currentColor;
+    }
 
+    .inactive svg {
+        fill: none;
+    }
+`;
+document.head.appendChild(style);
 trackVisit();
 loadActivityBars();
 
 async function loadActivityBars() {
+    
     document.querySelectorAll('[data-component="activity-bar"]').forEach(loadActivityBar);
 }
 

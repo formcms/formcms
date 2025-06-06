@@ -1,8 +1,6 @@
-using Azure.Core;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.HttpContextExt;
-using MongoDB.Driver.Core.Operations.ElementNameValidators;
 
 namespace FormCMS.Cms.Handlers;
 
@@ -13,8 +11,20 @@ public static class PageHandler
         return app.MapGet("/", async (
             IPageService pageService,
             HttpContext context,
+            string? node,
+            long ? source,
+            string? first,
+            string? last,
             CancellationToken ct
-        ) => await context.Html(await pageService.Get(PageConstants.Home, context.Args(), ct), ct));
+        ) =>
+        {
+            var html = await pageService.Get(PageConstants.Home, context.Args(), 
+                nodeId:node,
+                sourceId:source,
+                span: new Span(first,last),
+                ct: ct);
+            await context.Html(html , ct);
+        });
     }
 
     public static RouteGroupBuilder MapPages(this RouteGroupBuilder app, params string[] knownUrls)
@@ -22,29 +32,45 @@ public static class PageHandler
         var excludedUrls = string.Join("|", knownUrls.Select(x => x.Replace("/", "")));
         var prefix = $"/{{page:regex(^(?!({excludedUrls})).*)}}";
         
-        app.MapGet("/page_part", async (
-            IPageService pageService,
-            HttpContext context,
-            long ?source,
-            string token,
-            bool replace,
-            CancellationToken ct
-        ) => await context.Html(await pageService.GetPart(source,token, replace, ct), ct));
-
         app.MapGet(prefix, async (
             IPageService pageService,
             HttpContext context,
             string page,
+            string? node,
+            long ? source,
+            string? first,
+            string? last,
             CancellationToken ct
-        ) => await context.Html(await pageService.Get(page, context.Args(), ct), ct));
+        ) =>
+        {
+            var html = await pageService.Get(page, context.Args(),
+                nodeId:node,
+                sourceId:source,
+                span: new Span(first,last),
+                ct: ct);
+            await context.Html(html, ct);
+        });
 
         app.MapGet(prefix + "/{slug}", async (
             IPageService pageService,
             HttpContext context,
             string page,
             string slug,
+            string? node,
+            long ? source,
+            string? first,
+            string? last,
+            bool? replace,
             CancellationToken ct
-        ) => await context.Html(await pageService.GetDetail(page, slug, context.Args(), ct), ct));
+        ) =>
+        {
+            var html = await pageService.GetDetail(page, slug, context.Args(),
+                nodeId:node,
+                sourceId:source,
+                span: new Span(first,last),
+                ct:ct);
+            await context.Html(html, ct);
+        });
         return app;
     }
 }

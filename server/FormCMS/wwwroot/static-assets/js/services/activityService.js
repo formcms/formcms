@@ -1,36 +1,24 @@
-import {apiPrefix} from "./util.js";
+import {getJson, postData} from "./util.js";
 
 export async function saveBookmark(entity, id, payload) {
-    const res = await fetch(`${apiPrefix}/bookmarks/${entity}/${id}`, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-    });
-    if (!res.ok) throw new Error('Failed to save bookmark');
+    return await postData(`/bookmarks/${entity}/${id}`, payload)
 }
 
 export async function fetchBookmarkFolders(entity, id) {
-    const res = await fetch(`${apiPrefix}/bookmarks/folders/${entity}/${id}`);
-    return await res.json();
+    return await getJson(`/bookmarks/folders/${entity}/${id}`)
 }
 
 export async function recordActivity(entity, id, type) {
-    await fetch(`${apiPrefix}/activities/record/${entity}/${id}?type=${type}`, {
-        method: 'POST'
-    });
+    return await postData(`/activities/record/${entity}/${id}?type=${type}`)
 }
 
 export async function toggleActivity(entity, id, type, active) {
-    const res = await fetch(`${apiPrefix}/activities/toggle/${entity}/${id}?type=${type}&active=${active}`, {
-        method: 'POST'
-    });
-    return await res.json();
+    return await postData(`/activities/toggle/${entity}/${id}?type=${type}&active=${active}`);
 }
 
-// API Functions
 export async function fetchActivity(entity, id) {
-    const res = await fetch(`${apiPrefix}/activities/${entity}/${id}`);
-    return await res.json();
+    return await getJson(`/activities/${entity}/${id}`)
 }
 export async function trackVisit() {
-    await fetch(`${apiPrefix}/activities/visit?url=${encodeURIComponent(window.location.href)}`);
+    return await getJson(`/activities/visit?url=${encodeURIComponent(window.location.href)}`);
 }

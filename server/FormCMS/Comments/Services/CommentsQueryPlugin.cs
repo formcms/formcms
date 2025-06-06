@@ -24,6 +24,7 @@ public class CommentsQueryPlugin(
         var kateQuery = CommentHelper.List(query.Entity.Name, recordId, commentsAttr.Sorts, sp, pg.PlusLimitOne());
         var comments = await executor.Many(kateQuery, ct);
         comments = SetSpan(comments,span, commentsAttr.Sorts,pg.Limit);
+        SetRecordId(comments);
       
         var userIds = GetUserIds(comments);
         var users = await userManageService.GetPublicUserInfos(userIds,ct);
@@ -43,22 +44,13 @@ public class CommentsQueryPlugin(
         await LoadPublicUserInfos(userManageService,records, ct);
     }
 
-    public Entity[] ExtendEntities(IEnumerable<Entity> entities)
+    private static void SetRecordId(Record[] records)
     {
-        var result = entities.Select(e => e with
+        foreach (var record in records)
         {
-            Attributes =
-            [
-                ..e.Attributes,
-                new Attribute(Field: CommentHelper.CommentsField, Header: "Comments", DataType: DataType.Collection,
-                    Options: CommentHelper.Entity.Name + "." + nameof(Comment.RecordId).Camelize())
-            ]
-        }).ToList();
-
-        result.Add(CommentHelper.Entity);
-        return result.ToArray();
+            record[QueryConstants.RecordId] = record[nameof(Comment.Id).Camelize()];
+        }
     }
-    
     private static Record[] SetSpan(Record[] comments, Span span,Sort[] sorts, int limit)
     {
         comments = span.ToPage(comments,limit);
@@ -79,6 +71,7 @@ public class CommentsQueryPlugin(
             var comments = await executor.Many(query, ct);
             
             comments = SetSpan(comments,span, sorts,pg.Limit);
+            SetRecordId(comments);
             record[CommentHelper.CommentsField] = comments;
         }
     }

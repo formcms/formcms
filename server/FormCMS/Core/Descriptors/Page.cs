@@ -13,4 +13,5 @@ public sealed record Page(
 public class PageConstants
 {
     public const string Home = "home";
+    public const string PageName = "pageName";
 }

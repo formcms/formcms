@@ -115,7 +115,9 @@ public static class CommentHelper
                     nameof(Comment.EntityName),
                     nameof(Comment.RecordId),
                     nameof(Comment.User),
-                    nameof(Comment.Content)
+                    nameof(Comment.Content),
+                    nameof(Comment.Parent),
+                    nameof(Comment.Mention)
                 ]
             ),true);
     

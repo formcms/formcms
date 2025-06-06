@@ -17,7 +17,7 @@ export const comments = {
     data-component="data-list" 
     field="comments" 
     offset="0" 
-    limit="5"
+    limit="20"
     >
     <h3 class="sm:text-2xl text-2xl font-bold title-font mb-4 text-gray-900">Comments</h3>
     <div class="mb-6">
@@ -31,7 +31,7 @@ export const comments = {
             </div>
         </form>
     </div>
-    <div class="space-y-4" data-gjs-type="foreach" data-component="foreach">
+    <div class="space-y-4" data-gjs-type="foreach" data-component="foreach" source_id="{{__record_id}}">
         <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200" data-component='comment-container' data-id="{{id}}" data-user-id="{{user.id}}">
              <div class="flex items-start" >
                   <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3 overflow-hidden">
@@ -53,6 +53,10 @@ export const comments = {
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m0-12l-6 6"></path></svg>
                         Reply
                  </button>
+                 <button data-component="view-reply" class="btn btn-ghost btn-sm flex items-center gap-1">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0zm6.293-3.293a1 1 0 011.414 1.414l-2.5 2.5a1 1 0 01-1.414 0l-2.5-2.5a1 1 0 011.414-1.414L18 10.586V5a1 1 0 012 0v5.586l1.293-1.293zM3 10h10a8 8 0 018 8v2"></path></svg>
+                        View Reply
+                 </button>
                  <span class="text-xs text-gray-500">(<span data-component="reply-count">0</span>)</span>
                  <button data-component="comment-edit" class="btn btn-ghost btn-sm flex items-center gap-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
@@ -62,6 +66,22 @@ export const comments = {
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4"></path></svg>
                         Delete
                  </button>
+             </div>
+             
+             <div  data-gjs-type="data-list" data-component="data-list"  field="replies" offset="0" limit="20" paginition="Button">
+                <div class="space-y-4" data-component="foreach"  source_id="{{__record_id}}">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200" data-component='reply-container' data-id="{{id}}" data-user-id="{{user.id}}">
+                        <div class="flex items-start" >
+                            <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3 overflow-hidden">
+                                <img src="{{user.avatarUrl}}" alt="User Avatar" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-xs text-gray-400 mt-1">{{user.name}} · {{createdAt}}</p>
+                                <p data-component="comment-content" class="text-sm text-gray-600">{{content}}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
              </div>
         </div> 
     </div>

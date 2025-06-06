@@ -5,6 +5,7 @@ import { single, save } from "./services/services.js";
 import { queryKeys, schemaTypes } from "./models/types.js";
 import { getParams } from "./util/searchParamUtil.js";
 import { hideOverlay, showOverlay } from "./util/loadingOverlay.js";
+import {showToast} from "./util/toast.js";
 
 let schema;
 let editor;
@@ -64,7 +65,7 @@ async function handleSave(publish) {
 
     if (data) {
         // Replace $.toast with a simple alert or custom toast logic
-        alert("Submit succeeded!");
+        showToast("Submit Success!");
 
         schema = data;
         history.pushState(null, "", `page.html?${queryKeys.id}=${data.id}`);

@@ -43,9 +43,9 @@ export const contentB = {
                 </div>
             </div>
         </div>
-        <nav  data-gjs-type="pagination" aria-label="Pagination" class="flex justify-center space-x-3 mt-8">
-            <a data-component="previous" class="relative inline-flex items-center px-5 py-2 text-sm bg-gradient-to-r from-violet-300 to-indigo-300 border border-fuchsia-100 hover:border-violet-100 font-semibold cursor-pointer leading-5 rounded-full transition duration-150 ease-in-out hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-300" >Previous</a>
-            <a data-component="next" class="relative inline-flex items-center px-5 py-2 text-sm bg-gradient-to-r from-violet-300 to-indigo-300 border border-fuchsia-100 hover:border-violet-100 font-semibold cursor-pointer leading-5 rounded-full transition duration-150 ease-in-out hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-300"  >Next</a>
+        <nav  data-component="pagination" aria-label="Pagination" class="flex justify-center space-x-3 mt-8">
+            <a data-component="previous"  class="relative inline-flex items-center px-5 py-2 text-sm bg-gradient-to-r from-violet-300 to-indigo-300 border border-fuchsia-100 hover:border-violet-100 font-semibold cursor-pointer leading-5 rounded-full transition duration-150 ease-in-out hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-300" >Previous</a>
+            <a data-component="next"  class="relative inline-flex items-center px-5 py-2 text-sm bg-gradient-to-r from-violet-300 to-indigo-300 border border-fuchsia-100 hover:border-violet-100 font-semibold cursor-pointer leading-5 rounded-full transition duration-150 ease-in-out hover:scale-105 focus:outline-none focus:ring-2 focus:ring-blue-300"  >Next</a>
         </nav>
     </div>
 `
