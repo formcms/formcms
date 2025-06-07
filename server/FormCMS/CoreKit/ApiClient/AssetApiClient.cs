@@ -45,4 +45,7 @@ public class AssetApiClient(HttpClient client)
          await AddAsset([file]);
          return await GetAssetIdByName(file.name);
      }
+
+    public async Task<Result> UpdateHlsProgress(Asset asset) =>
+        await client.PutResult($"/hls/progress".ToAssetApi(), asset);
 }

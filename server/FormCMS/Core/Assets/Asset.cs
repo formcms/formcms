@@ -22,7 +22,8 @@ public record Asset(
     DateTime UpdatedAt = default,
     long Id = 0,
     int LinkCount = 0, //calculated field, omit from attribute and columns
-    AssetLink[]? Links = null //calculated field, omit from attribute and columns
+    AssetLink[]? Links = null, //calculated field, omit from attribute and columns
+    int Progress = 0 // video conversion progress
 );
 
 public static class Assets
@@ -46,6 +47,8 @@ public static class Assets
             XAttrExtensions.CreateAttr<Asset, string>(x => x.CreatedBy, isDefault:true),
             XAttrExtensions.CreateAttr<Asset, DateTime>(x => x.CreatedAt, isDefault:true),
             XAttrExtensions.CreateAttr<Asset, DateTime>(x => x.UpdatedAt, isDefault:true),
+            XAttrExtensions.CreateAttr<Asset, int>(x => x.Progress, isDefault:true),
+
         ]);
 
     public static readonly XEntity EntityWithLinkCount = 
@@ -69,7 +72,7 @@ public static class Assets
         ColumnHelper.CreateCamelColumn<Asset, string>(x => x.CreatedBy),
         
         ColumnHelper.CreateCamelColumn<Asset>(x => x.Metadata, ColumnType.Text),
-
+        ColumnHelper.CreateCamelColumn<Asset, int>(x => x.Progress),
         DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),

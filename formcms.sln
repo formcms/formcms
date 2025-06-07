@@ -1,5 +1,8 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.12.35527.113 d17.12
+MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS", "server\FormCMS\FormCMS.csproj", "{D96BB1DD-4E2B-4DFB-B8A0-73854275AB5A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCms.Course.Tests", "server\FormCms.Course.Tests\FormCms.Course.Tests.csproj", "{AB78C514-3519-41D1-9234-9E9151B1A548}"
@@ -30,6 +33,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostgresAppHost", "examples
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostgresWebApp", "examples\PostgresDemo\PostgresWebApp\PostgresWebApp.csproj", "{C8BB873C-C0D9-467C-92A2-5353EED97BF5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlVideoWebApp", "examples\FormCMSVideoApp\SqlVideoWebApp.csproj", "{BBF31AC1-ABA4-4D2C-A566-6252490E9617}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,14 +45,6 @@ Global
 		{D96BB1DD-4E2B-4DFB-B8A0-73854275AB5A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D96BB1DD-4E2B-4DFB-B8A0-73854275AB5A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D96BB1DD-4E2B-4DFB-B8A0-73854275AB5A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{6EDECA16-B67A-4EAA-A296-F21FBDC7561E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{6EDECA16-B67A-4EAA-A296-F21FBDC7561E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{6EDECA16-B67A-4EAA-A296-F21FBDC7561E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{6EDECA16-B67A-4EAA-A296-F21FBDC7561E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{38458E78-BC9D-46EE-8532-A04E8BDB3DF4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{38458E78-BC9D-46EE-8532-A04E8BDB3DF4}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{38458E78-BC9D-46EE-8532-A04E8BDB3DF4}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{38458E78-BC9D-46EE-8532-A04E8BDB3DF4}.Release|Any CPU.Build.0 = Release|Any CPU
 		{AB78C514-3519-41D1-9234-9E9151B1A548}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{AB78C514-3519-41D1-9234-9E9151B1A548}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AB78C514-3519-41D1-9234-9E9151B1A548}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -56,10 +53,6 @@ Global
 		{026D0D09-ED38-4244-9417-FF74562C0A9B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{026D0D09-ED38-4244-9417-FF74562C0A9B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{026D0D09-ED38-4244-9417-FF74562C0A9B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2046DC4C-DDD1-4DB9-882D-89390D85A669}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2046DC4C-DDD1-4DB9-882D-89390D85A669}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2046DC4C-DDD1-4DB9-882D-89390D85A669}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2046DC4C-DDD1-4DB9-882D-89390D85A669}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2D4A4323-F357-4ADD-A5A8-46563CE77B8C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{2D4A4323-F357-4ADD-A5A8-46563CE77B8C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{2D4A4323-F357-4ADD-A5A8-46563CE77B8C}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -108,6 +101,12 @@ Global
 		{C8BB873C-C0D9-467C-92A2-5353EED97BF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C8BB873C-C0D9-467C-92A2-5353EED97BF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C8BB873C-C0D9-467C-92A2-5353EED97BF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BBF31AC1-ABA4-4D2C-A566-6252490E9617}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BBF31AC1-ABA4-4D2C-A566-6252490E9617}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BBF31AC1-ABA4-4D2C-A566-6252490E9617}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BBF31AC1-ABA4-4D2C-A566-6252490E9617}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
-
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
 EndGlobal

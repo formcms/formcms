@@ -40,8 +40,8 @@ public static class RecordExtensions
         var item = JsonSerializer.Deserialize<JsonElement>(recordStr,JsonSerializerOptions);
         return item.ToDictionary();
     }
-    
-    public static Result<T> ToObject<T>(this Record r) 
+
+    public static Result<T> ToObject<T>(this Record r)
     {
         var constructor = typeof(T).GetConstructors().FirstOrDefault();
         if (constructor == null)
@@ -49,27 +49,50 @@ public static class RecordExtensions
 
         var parameters = constructor.GetParameters();
         var args = new object?[parameters.Length];
+
         foreach (var parameter in parameters)
         {
             var propertyName = parameter.Name?.Camelize();
-            if (propertyName == null || !r.TryGetValue(propertyName, out var value)) continue;
-            args[parameter.Position] = value switch
-            {
-                string enumStr when parameter.ParameterType.IsEnum =>
-                    Enum.Parse(parameter.ParameterType, enumStr, ignoreCase: true),
+            if (propertyName == null || !r.TryGetValue(propertyName, out var value))
+                continue;
 
-                string jsonStr when typeof(Record).IsAssignableFrom(parameter.ParameterType) ||
-                                    parameter.ParameterType.IsClass &&
-                                    parameter.ParameterType != typeof(string) =>
-                    JsonSerializer.Deserialize(jsonStr, parameter.ParameterType, JsonSerializerOptions),
-
-                null when Nullable.GetUnderlyingType(parameter.ParameterType) != null => null,
-                _ => Convert.ChangeType(value, parameter.ParameterType)
-            };
+            args[parameter.Position] = TryConvert(value, parameter.ParameterType);
         }
+
         return (T)constructor.Invoke(args);
     }
-    
+
+    private static object? TryConvert(object? value, Type targetType)
+    {
+        if (value == null)
+        {
+            // Handle nullable types
+            if (!targetType.IsValueType || Nullable.GetUnderlyingType(targetType) != null)
+                return null;
+
+            // For non-nullable value types, return default
+            return Activator.CreateInstance(targetType);
+        }
+
+        // Handle enum from string
+        if (value is string enumStr && targetType.IsEnum)
+        {
+            return Enum.Parse(targetType, enumStr, ignoreCase: true);
+        }
+
+        // Handle JSON string to object deserialization
+        if (value is string jsonStr &&
+            (typeof(Record).IsAssignableFrom(targetType) ||
+             (targetType.IsClass && targetType != typeof(string))))
+        {
+            return JsonSerializer.Deserialize(jsonStr, targetType, JsonSerializerOptions);
+        }
+
+        // Handle Nullable<T> unwrapping
+        var underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+        return Convert.ChangeType(value, underlyingType);
+    }
+
     public static Record FormObject(object input, HashSet<string>? whiteList = null, HashSet<string>? blackList = null)
     {
         if (input == null) throw new ArgumentNullException(nameof(input));
