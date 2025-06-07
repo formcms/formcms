@@ -27,8 +27,7 @@ public sealed class QueryService(
     {
         if (querySettings.BuildInQueries.Contains(name))
         {
-            var queryRes =
-                await hook.BuildInQueryArgs.Trigger(provider, new BuildInQueryArgs(name, span, pagination, args));
+            var queryRes = await hook.BuildInQueryArgs.Trigger(provider, new BuildInQueryArgs(name, span, pagination, args));
             return queryRes.OutRecords??throw new ResultException($"Fail to get query result for [{name}]");
         }
         var query = await FromSavedQuery(name, args, ct);

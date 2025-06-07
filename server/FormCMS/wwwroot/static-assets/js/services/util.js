@@ -17,11 +17,6 @@ export async function getJson(url) {
     return await parseResponse(res);
 }
 
-export async function getTextWithFullUrl(url){
-    const res = await fetch(url);
-    return await res.text();
-}
-
 async function parseResponse(response) {
     if (!response.ok) {
         return {error:`HTTP error! Status: ${response.status}`};

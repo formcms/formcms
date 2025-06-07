@@ -39,7 +39,13 @@ public record QueryPartialArgs(
     Record[]? OutRecords  = null 
 ):BaseArgs(Query.Name);
 
-public record BuildInQueryArgs(string Name, Span Span, Pagination Pagination, StrArgs Args, Record[]? OutRecords = null):BaseArgs(Name);
+public record BuildInQueryArgs(
+    string Name,
+    Span Span,
+    Pagination Pagination,
+    StrArgs Args,
+    Record[]? OutRecords = null
+) : BaseArgs(Name);
 
 /*
  * allow plugins to add fields/entities to GraphQl

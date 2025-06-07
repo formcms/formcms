@@ -1,7 +1,6 @@
 import {updateComments} from "../../services/commentService.js";
 
-export function editComment(commentContainer) {
-    const id = commentContainer.dataset.id;
+export function editComment(commentContainer,id) {
     const commentTextElement = commentContainer.querySelector('[data-component="comment-content"]');
     const originalText = commentTextElement.textContent.trim();
 

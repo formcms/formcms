@@ -2,6 +2,10 @@ let user;
 let currentUserPromise;
 
 export function getUser() {
+    return user;
+}
+
+export function ensureUser(){
     if (user) {
         return user;
     }
@@ -10,7 +14,7 @@ export function getUser() {
     if (proceed) {
         window.location.href = "/portal?ref=" + encodeURIComponent(window.location.href);
     }
-    return false;
+    return false; 
 }
 
 export async function fetchUser() {

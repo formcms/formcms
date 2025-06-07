@@ -1,10 +1,15 @@
 import {replyComments} from "../../services/commentService.js";
 import {showToast} from "../../utils/toast.js";
+import {reloadDataList} from "../../utils/datalist.js";
 
-export async function replyComment (commentContainer) {
+export async function showReply(commentContainer){
+    const replyList  = commentContainer.querySelector('[data-component="data-list"]');
+    await reloadDataList(replyList); 
+}
+
+export async function replyComment (commentContainer,id) {
     if (commentContainer.querySelector('textarea')) return;
     
-    const id = commentContainer.dataset.id;
     const replyForm = document.createElement('form');
     replyForm.className = 'mt-2 p-2 border border-gray-300 rounded-md';
 
@@ -51,16 +56,12 @@ export async function replyComment (commentContainer) {
             errorMessage.classList.remove('hidden');
             return;
         }
-
         try {
-            const  data = await replyComments(id,replyText);
-            console.log(data);
-            // const entityName = dataList.dataset.entity;
-            // const recordId = dataList.dataset.recordId;
-            
-            // await saveComments(entityName, recordId, replyText, id);
-            // await reloadDataList(dataList.querySelector('[data-component="foreach"]'));
+            await replyComments(id,replyText);
             removeReplyForm();
+            await showReply(commentContainer)
+            
+           
             showToast('Reply added!');
         } catch (error) {
             errorMessage.textContent = 'Failed to save reply: ' + error.message;

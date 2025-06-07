@@ -11,18 +11,20 @@ public static class Constants
     public const string AttrLimit = "limit";
     public const string AttrQueryString = "qs";
     public const string AttrField = "field";
+    public const string AttrLazy = "lazy";
+    
     public const string DataList = "data-list";
     public const string Foreach = "foreach";
 }
 
-public record DataNode(HtmlNode HtmlNode,string Field, string Query, string QueryString, int Offset, int Limit);
+public record DataNode(HtmlNode HtmlNode,string Field, string Query, string QueryString, int Offset, int Limit, bool Lazy=false);
 
 public static class DataNodeHelper
 {
     //one data-node has multiple each-node use case: Carousel 
-    public static Result<DataNode[]> GetDataNodes(this HtmlDocument doc)
+    public static Result<DataNode[]> GetDataNodes(this HtmlNode root)
     {
-        var dataNodes = doc.DocumentNode.SelectNodes($"//*[@{Constants.AttrDataComponent}='{Constants.DataList}']");
+        var dataNodes = root.SelectNodes($".//*[@{Constants.AttrDataComponent}='{Constants.DataList}']");
         if (dataNodes is null) return Result.Ok<DataNode[]>([]);
 
         var ret = new List<DataNode>();
@@ -43,9 +45,17 @@ public static class DataNodeHelper
         return ret.ToArray();
     }
 
-    public static Result<DataNode> GetDataNode(this HtmlNode eachNode)
+    public static Result<DataNode[]> GetDataNodesIncludeRoot(this HtmlNode eachNode)
     {
-        return GetDataNode(eachNode.ParentNode, eachNode);
+        var ret = new List<DataNode>();
+        var rootRes = GetDataNode(eachNode.ParentNode,eachNode);
+        if (rootRes.IsFailed) return Result.Fail<DataNode[]>(rootRes.Errors);
+        ret.Add(rootRes.Value);
+
+        var subRes = GetDataNodes(eachNode);
+        if (subRes.IsFailed) return Result.Fail<DataNode[]>(subRes.Errors);
+        ret.AddRange(subRes.Value);
+        return ret.ToArray();
     }
 
     private static Result<DataNode> GetDataNode(HtmlNode listNode, HtmlNode eachNode)
@@ -56,6 +66,7 @@ public static class DataNodeHelper
         var query = listNode.GetAttributeValue(Constants.AttrQuery, string.Empty);
         var qs = listNode.GetAttributeValue(Constants.AttrQueryString, string.Empty);
         var field = listNode.GetAttributeValue(Constants.AttrField, string.Empty);
+        var lazy = listNode.GetAttributeValue(Constants.AttrLazy, false);
 
         if (string.IsNullOrWhiteSpace(field) && string.IsNullOrWhiteSpace(query))
         {
@@ -64,7 +75,7 @@ public static class DataNodeHelper
         }
 
         field = string.IsNullOrWhiteSpace(field) ? listNode.Id : field;
-        return new DataNode(eachNode, field, query, qs, offset, limit);       
+        return new DataNode(eachNode, field, query, qs, offset, limit,lazy);       
     }
 
     public static void SetEach(this HtmlNode node, string field)

@@ -1,6 +1,5 @@
-import {getTextWithFullUrl} from "./util.js";
 
-export function getPart(node,source,first,last){
+export async function getPart(node,source,first,last){
     const url = new URL(window.location.href);
     url.searchParams.append("node",node);
     
@@ -8,5 +7,10 @@ export function getPart(node,source,first,last){
     if (first) url.searchParams.append("first",first);
     if (last) url.searchParams.append("last",last);
     
-    return getTextWithFullUrl(url);
+    const res= await fetch(url);
+    if (!res.ok) {
+        return {error: res.text()}
+    }
+    return await res.text();
+    
 }

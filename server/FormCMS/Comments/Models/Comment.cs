@@ -28,6 +28,7 @@ public static class CommentHelper
 {
     public  const int MaxCommentCount = 20;
     public const string CommentsField = "comments";
+    public const string CommentRepliesQuery = "commentReplies";
 
     public static readonly Column[] Columns = [
         ColumnHelper.CreateCamelColumn<Comment>(x => x.Id, ColumnType.Id),
@@ -76,12 +77,33 @@ public static class CommentHelper
         nameof(Comment.CreatedAt).Camelize(),
         nameof(Comment.UpdatedAt).Camelize(),
     ];
+    public static Query List(long parent,Sort[] sorts, ValidSpan span, ValidPagination pg)
+    {
+        var query = new Query(Entity.TableName)
+            .Where(nameof(Comment.Parent).Camelize(), parent)
+            .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false)
+            .Select(Fields)
+            .Offset(pg.Offset)
+            .Limit(pg.Limit);
+        
+        if (span.Span.IsEmpty())
+        {
+            query.ApplySorts(sorts);
+        }
+        else
+        {
+            query.ApplySpanFilter(span,sorts,s=>s.Field,s=>s.Field);
+            query.ApplySorts(SpanHelper.IsForward(span.Span) ? sorts : sorts.ReverseOrder());
+        }
+        return query;
+    }
 
     public static Query List(string entityName, long recordId, Sort[] sorts, ValidSpan span, ValidPagination pg)
     {
         var query = new Query(Entity.TableName)
             .Where(nameof(Comment.EntityName).Camelize(), entityName)
             .Where(nameof(Comment.RecordId).Camelize(), recordId)
+            .Where(nameof(Comment.Parent).Camelize(), null)
             .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false)
             .Select(Fields)
             .Offset(pg.Offset)

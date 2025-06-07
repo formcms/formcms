@@ -65,11 +65,17 @@ public sealed class PageService(
     private async Task<string> RenderPartialPage(PartialContext ctx, long? sourceId, Span span, StrArgs args, CancellationToken ct)
     {
         Record[] items;
-        var node = ctx.DataNode;
+        var node = ctx.DataNodes.First();
+        
         if (!string.IsNullOrWhiteSpace(node.Query))
         {
             var pagination = new Pagination(null, node.Limit.ToString());
-            items = await querySvc.ListWithAction(node.Query, span, pagination, args.OverwrittenBy(QueryHelpers.ParseQuery(node.QueryString)), ct);
+            args = args.OverwrittenBy(QueryHelpers.ParseQuery(node.QueryString));
+            if (sourceId is not null)
+            {
+                args[QueryConstants.RecordId] = sourceId.Value.ToString();
+            }
+            items = await querySvc.ListWithAction(node.Query, span, pagination,args , ct);
         }
         else
         {
@@ -88,15 +94,30 @@ public sealed class PageService(
             data[QueryConstants.RecordId] = sourceId.Value;
         }
 
-        SetMetadata(ctx.Node);
-        ctx.Node.SetEach(node.Field);
+        foreach (var n in ctx.DataNodes)
+        {
+            SetMetadata(n.HtmlNode);
+            n.HtmlNode.SetEach(node.Field);
+        }
         return Handlebars.Compile(ctx.Node.InnerHtml)(data);
     }
-    
+
     private async Task<string> RenderPage(PageContext ctx, Record data, StrArgs args, CancellationToken token)
     {
-        await LoadDataList(data, args, ctx.DateNodes, token);
-        foreach ( var dataNode in ctx.DateNodes)
+        foreach (var node in ctx.DateNodes.Where(x =>
+                     //lazy query wait to load partial
+                     !string.IsNullOrWhiteSpace(x.Query) && !x.Lazy))
+        {
+            var pagination = new Pagination(node.Offset.ToString(), node.Limit.ToString());
+            var result = await querySvc.ListWithAction(
+                node.Query,
+                new Span(), pagination,
+                args.OverwrittenBy(QueryHelpers.ParseQuery(node.QueryString)),
+                token);
+            data[node.Field] = result;
+        }
+
+        foreach (var dataNode in ctx.DateNodes)
         {
             SetMetadata(dataNode.HtmlNode);
             dataNode.HtmlNode.SetEach(dataNode.Field);
@@ -105,20 +126,6 @@ public sealed class PageService(
         var title = Handlebars.Compile(ctx.Page.Title)(data);
         var body = Handlebars.Compile(ctx.HtmlDocument.DocumentNode.FirstChild.InnerHtml)(data);
         return template.Build(title, body, ctx.Page.Css);
-        
-        async Task LoadDataList(Record data, StrArgs args, DataNode[] nodes, CancellationToken token)
-        {
-            foreach (var node in nodes.Where(x => !string.IsNullOrWhiteSpace(x.Query)))
-            {
-                var pagination = new Pagination(node.Offset.ToString(), node.Limit.ToString());
-                var result = await querySvc.ListWithAction(
-                    node.Query, 
-                    new Span(), pagination,
-                    args.OverwrittenBy(QueryHelpers.ParseQuery(node.QueryString)),
-                    token);
-                data[node.Field] = result;
-            }
-        }
     }
 
     private static void SetMetadata(HtmlNode node)
@@ -137,15 +144,15 @@ public sealed class PageService(
         public PartialContext LoadPartialContext(string nodeId)
         {
             var htmlNode = Doc.GetElementbyId(nodeId);
-            return new PartialContext(Page,htmlNode , htmlNode.GetDataNode().Ok());
+            return new PartialContext(Page,htmlNode , htmlNode.GetDataNodesIncludeRoot().Ok());
         }
 
-        public PageContext LoadPageContext() => new(Page, Doc, Doc.GetDataNodes().Ok());
+        public PageContext LoadPageContext() => new(Page, Doc, Doc.DocumentNode.GetDataNodes().Ok());
     }
 
     private record PageContext(Page Page, HtmlDocument HtmlDocument, DataNode[] DateNodes);
 
-    private record PartialContext(Page Page, HtmlNode Node, DataNode DataNode);
+    private record PartialContext(Page Page, HtmlNode Node, DataNode[] DataNodes);
 
     private async Task<Context> GetContext(string name, bool matchPrefix, StrArgs args, CancellationToken ct)
     {
