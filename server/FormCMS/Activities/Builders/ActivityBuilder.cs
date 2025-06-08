@@ -2,6 +2,7 @@ using FormCMS.Activities.Handlers;
 using FormCMS.Activities.Models;
 using FormCMS.Activities.Services;
 using FormCMS.Activities.Workers;
+using FormCMS.Core.Plugins;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.Buffers;
@@ -50,8 +51,8 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
     public async Task<WebApplication> UseActivity(WebApplication app)
     {
         var activitySettings = app.Services.GetRequiredService<ActivitySettings>();
-        var querySettings = app.Services.GetRequiredService<QuerySettings>();
-        querySettings.BuildInQueries.Add(ActivityQueryPluginConstants.TopList);
+        var registry = app.Services.GetRequiredService<PluginRegistry>();
+        registry.PluginQueries.Add(ActivityQueryPluginConstants.TopList);
         
         using var scope = app.Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<IActivityCollectService>().EnsureActivityTables();

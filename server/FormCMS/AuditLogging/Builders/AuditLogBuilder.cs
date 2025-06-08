@@ -4,7 +4,7 @@ using FormCMS.AuditLogging.Handlers;
 using FormCMS.AuditLogging.Models;
 using FormCMS.AuditLogging.Services;
 using FormCMS.Core.HookFactory;
-using FormCMS.Core.Identities;
+using FormCMS.Core.Plugins;
 using FormCMS.Utils.RecordExt;
 
 namespace FormCMS.AuditLogging.Builders;
@@ -32,7 +32,7 @@ public sealed class AuditLogBuilder(ILogger<AuditLogBuilder> logger )
             *********************************************************
             """);
 
-        app.Services.GetService<RestrictedFeatures>()?.Menus.Add(AuditLoggingConstants.MenuId);
+        app.Services.GetService<PluginRegistry>()?.FeatureMenus.Add(AuditLoggingConstants.MenuId);
 
         using var scope = app.Services.CreateScope();
         var auditLogService = scope.ServiceProvider.GetRequiredService<IAuditLogService>();

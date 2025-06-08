@@ -1,18 +1,17 @@
 using System.Security.Claims;
 using FormCMS.Auth.Models;
 using FormCMS.Cms.Services;
+using FormCMS.Core.Plugins;
 using FormCMS.Core.Identities;
 using FormCMS.Infrastructure.FileStore;
 using Humanizer;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 namespace FormCMS.Auth.Services;
 
 public class IdentityService(
     IFileStore store,
     IHttpContextAccessor contextAccessor,
-    RestrictedFeatures restrictedFeatures
+    PluginRegistry registry
 ) : IIdentityService
 
 {
@@ -35,7 +34,7 @@ public class IdentityService(
             ReadonlyEntities: [..contextUser.FindAll(AccessScope.FullRead).Select(x => x.Value)],
             RestrictedReadonlyEntities: [..contextUser.FindAll(AccessScope.RestrictedRead).Select(x => x.Value)],
             AllowedMenus: roles.Contains(Roles.Sa) || roles.Contains(Roles.Admin)
-                ? restrictedFeatures.Menus.ToArray()
+                ? [..registry.FeatureMenus]
                 : []
         );
         

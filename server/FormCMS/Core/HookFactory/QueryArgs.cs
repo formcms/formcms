@@ -4,7 +4,6 @@ using FormCMS.Core.Descriptors;
 
 namespace FormCMS.Core.HookFactory;
 
-public record QuerySettings(HashSet<string> BuildInQueries);
 public record QueryPreListArgs(
     LoadedQuery Query,
     ImmutableArray<ValidFilter> Filters,

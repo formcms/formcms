@@ -44,8 +44,8 @@ export const comments = {
                   </div>
              </div>
                   
-             <div class="flex items-center gap-2 mt-2">
-                 <button data-component="comment-like" class="btn btn-ghost btn-sm flex items-center gap-1">
+             <div class="flex items-center gap-2 mt-2" data-component="activity-bar" data-gjs-type="activity-bar" data-record-id="{{__record_id}}" data-entity="comments" data-fetch-count="no" >
+                 <button data-component="like-button" class="btn btn-ghost btn-sm flex items-center gap-1">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                         Like
                  </button>

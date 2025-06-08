@@ -1,4 +1,5 @@
 using FormCMS.Cms.Graph;
+using FormCMS.Core.Plugins;
 using FormCMS.Core.Assets;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
@@ -16,7 +17,7 @@ public sealed class QueryService(
     IEntitySchemaService resolver,
     IServiceProvider provider,
     HookRegistry hook,
-    QuerySettings  querySettings
+    PluginRegistry  registry
 ) : IQueryService
 {
     public async Task<Record[]> ListWithAction(GraphQlRequestDto dto)
@@ -25,7 +26,7 @@ public sealed class QueryService(
     public async Task<Record[]> ListWithAction(string name, Span span, Pagination pagination, StrArgs args,
         CancellationToken ct)
     {
-        if (querySettings.BuildInQueries.Contains(name))
+        if (registry.PluginQueries.Contains(name))
         {
             var queryRes = await hook.BuildInQueryArgs.Trigger(provider, new BuildInQueryArgs(name, span, pagination, args));
             return queryRes.OutRecords??throw new ResultException($"Fail to get query result for [{name}]");

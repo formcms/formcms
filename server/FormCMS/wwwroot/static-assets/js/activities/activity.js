@@ -23,16 +23,12 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+document.querySelectorAll('[data-component="activity-bar"]').forEach(loadActivityBar);
 trackVisit();
-loadActivityBars();
 
-async function loadActivityBars() {
-    
-    document.querySelectorAll('[data-component="activity-bar"]').forEach(loadActivityBar);
-}
 
-async function loadActivityBar(barElement) {
-    const activityBar = barElement;
+async function loadActivityBar(activityBar) {
+    console.log('load activity bar', activityBar);
     const entityName = activityBar.dataset.entity;
     const recordId = activityBar.dataset.recordId;
     const fetchCount = activityBar.dataset.fetchCount;

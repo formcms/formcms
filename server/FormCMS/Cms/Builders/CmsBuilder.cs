@@ -9,6 +9,7 @@ using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Identities;
+using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.Cache;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
@@ -58,9 +59,19 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         optionsAction?.Invoke(systemSettings);
         services.AddSingleton(systemSettings);
 
-        var systemResources = new RestrictedFeatures([Menus.MenuSchemaBuilder, Menus.MenuTasks]);
-        services.AddSingleton(systemResources);
-        services.AddSingleton(new QuerySettings(BuildInQueries:[]));
+        var registry = new PluginRegistry(
+            FeatureMenus:[Menus.MenuSchemaBuilder, Menus.MenuTasks],
+            PluginQueries: [],
+            PluginEntities:[],
+            PluginAttributes:[])
+        {
+            PluginEntities =
+            {
+                [PublicUserInfos.Entity.Name] = PublicUserInfos.Entity
+            }
+        };
+
+        services.AddSingleton(registry);
 
         services.AddSingleton(new DbOption(databaseProvider, connectionString));
         services.AddSingleton<HookRegistry>();

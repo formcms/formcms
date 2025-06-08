@@ -6,6 +6,7 @@ using FormCMS.Auth.Services;
 using FormCMS.Cms.Services;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Identities;
+using FormCMS.Core.Plugins;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
@@ -86,7 +87,8 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
             app.UseAuthentication();
         }
 
-        app.Services.GetService<RestrictedFeatures>()?.Menus.AddRange(AuthManageMenus.MenuRoles,AuthManageMenus.MenuUsers);
+        app.Services.GetService<PluginRegistry>()?.FeatureMenus.Add(AuthManageMenus.MenuRoles);
+        app.Services.GetService<PluginRegistry>()?.FeatureMenus.Add(AuthManageMenus.MenuUsers);
         
         MapEndpoints();
         RegisterHooks();

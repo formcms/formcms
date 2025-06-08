@@ -1,9 +1,10 @@
 using FormCMS.Auth.Models;
+using FormCMS.Core.Plugins;
 using FormCMS.Core.Identities;
 
 namespace FormCMS.Cms.Services;
 
-public class DummyIdentityService(RestrictedFeatures restrictedFeatures): IIdentityService
+public class DummyIdentityService(PluginRegistry registry): IIdentityService
 {
     public UserAccess GetUserAccess()
     {
@@ -15,7 +16,7 @@ public class DummyIdentityService(RestrictedFeatures restrictedFeatures): IIdent
             Email : "sadmin@cms.com",
             AvatarUrl:"",
             Roles : [Roles.Sa],
-            AllowedMenus :[..restrictedFeatures.Menus],
+            AllowedMenus :[..registry.FeatureMenus],
             ReadonlyEntities:[],
             RestrictedReadonlyEntities:[],
             ReadWriteEntities:[],

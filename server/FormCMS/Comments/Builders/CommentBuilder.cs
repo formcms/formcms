@@ -3,6 +3,7 @@ using FormCMS.Comments.Models;
 using FormCMS.Comments.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
+using FormCMS.Core.Plugins;
 using Humanizer;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
@@ -20,8 +21,8 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
 
     public async Task<WebApplication> UseComments(WebApplication app)
     {
-        var querySettings = app.Services.GetRequiredService<QuerySettings>();
-        querySettings.BuildInQueries.Add(CommentHelper.CommentRepliesQuery);
+        var registry = app.Services.GetRequiredService<PluginRegistry>();
+        registry.PluginQueries.Add(CommentHelper.CommentRepliesQuery);
 
         logger.LogInformation(
             $"""
