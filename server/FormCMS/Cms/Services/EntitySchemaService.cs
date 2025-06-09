@@ -34,13 +34,6 @@ public sealed class EntitySchemaService(
         }, ct);
     }
 
-    public async ValueTask<ImmutableArray<Entity>> ExtendedEntities(CancellationToken ct)
-    {
-        var entities = await AllEntities(ct);
-        var res = await hook.ExtendEntity.Trigger( provider,new ExtendingGraphQlFieldArgs(entities) );
-        return res.entities;
-    }
-
     public async Task<Schema> AddOrUpdateByName(Entity entity,bool asPublished, CancellationToken ct)
     {
         var find = await schemaSvc.GetByNameDefault(entity.Name, SchemaType.Entity,null, ct);

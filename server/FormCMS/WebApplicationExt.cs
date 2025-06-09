@@ -29,8 +29,9 @@ public static class WebApplicationExt
         app.Services.GetService<MongoQueryBuilder>()?.UseMongoDbQuery(app);
         app.Services.GetService<MessageProduceBuilder>()?.UseEventProducer(app);
         app.Services.GetService<AuditLogBuilder>()?.UseAuditLog(app);
-        app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
+        //have to use comments before activity, activity query plugin can add like count
         app.Services.GetService<CommentBuilder>()?.UseComments(app);
+        app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
         
         app.UseRewriter(app.Services.GetRequiredService<RewriteOptions>());
     }

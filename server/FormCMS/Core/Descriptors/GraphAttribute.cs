@@ -1,68 +1,27 @@
 using System.Collections.Immutable;
 using FormCMS.Core.Assets;
-using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
 
 namespace FormCMS.Core.Descriptors;
 
-public sealed record ExtendedGraphAttribute(
+public sealed record GraphNode(
+    //for plugin attribute and normal attribute
     string Field,
-    Pagination Pagination ,
-    Sort[] Sorts
-);
-
-
-public sealed record GraphAttribute(
-    ImmutableArray<GraphAttribute> Selection,
-    ImmutableArray<ValidSort> Sorts,
-    ImmutableArray<ValidFilter> Filters,
-    ImmutableArray<string> AssetFields,
-    
-    
     string Prefix,
-    string TableName,
-    string Field,
-
-    string Header = "",
-    DataType DataType = DataType.String,
-    DisplayType DisplayType = DisplayType.Text,
-
-    bool InList = true,
-    bool InDetail = true,
-    bool IsDefault = false,
-
-    string Options = "", 
-    string Validation = "",
+    QueryArgs QueryArgs,
+    ImmutableArray<GraphNode> Selection,
+    LoadedAttribute LoadedAttribute,
+    bool IsNormalAttribute= false,
     
-    Lookup? Lookup = null,
-    Junction? Junction = null,
-    Collection? Collection = null,
-    
-    Pagination? Pagination = null
-    
-) : LoadedAttribute(
-    TableName:TableName,
-    Field:Field,
-
-    Header :Header,
-    DataType : DataType,
-    DisplayType : DisplayType,
-
-    InList : InList,
-    InDetail : InDetail,
-    IsDefault : IsDefault,
-
-    Options :Options, 
-    Validation : Validation,
-    
-    Junction:Junction,
-    Lookup :Lookup,
-    Collection:Collection
+    //only for normal attribute
+    ImmutableArray<ValidSort>? Sorts = null,
+    ImmutableArray<ValidFilter>? Filters  = null,
+    ImmutableArray<string>? AssetFields = null
 );
 
-public static class GraphAttributeExtensions
+public static class GraphNodeExtensions
 {
-    public static GraphAttribute? RecursiveFind(this IEnumerable<GraphAttribute> attributes, string name)
+    public static GraphNode? RecursiveFind(this IEnumerable<GraphNode> attributes, string name)
     {
         var parts = name.Split('.');
         var attrs = attributes;
@@ -80,17 +39,20 @@ public static class GraphAttributeExtensions
         return attrs.FirstOrDefault(x => x.Field == parts.Last());
     }
 
-    public static void ReplaceAsset(this IEnumerable<GraphAttribute> attributes, Record[] items,
+    public static void ReplaceAsset(this IEnumerable<GraphNode> attributes, Record[] items,
         Dictionary<string, Asset> assets)
     {
         Bfs(attributes, items);
 
-        void Bfs(IEnumerable<GraphAttribute> attrs, Record[] records)
+        void Bfs(IEnumerable<GraphNode> nodes, Record[] records)
         {
             foreach (var record in records)
             {
-                foreach (var attr in attrs)
+                foreach (var node in nodes)
                 {
+                    var attr = node.LoadedAttribute;
+                    if (!node.IsNormalAttribute) continue;
+                    
                     if (attr.DataType.IsCompound())
                     {
                         var (_, _, linkDesc) = attr.GetEntityLinkDesc();
@@ -98,14 +60,14 @@ public static class GraphAttributeExtensions
                         {
                             if (record.TryGetValue(attr.Field, out var value) && value is Record[] sub)
                             {
-                                Bfs(attr.Selection, sub);
+                                Bfs(node.Selection, sub);
                             } 
                         }
                         else
                         {
                             if (record.TryGetValue(attr.Field, out var value) && value is Record sub)
                             {
-                                Bfs(attr.Selection, [sub]);
+                                Bfs(node.Selection, [sub]);
                             } 
                         }
                     }
@@ -150,23 +112,25 @@ public static class GraphAttributeExtensions
         }
     }
 
-    public static string[] GetAssetFields(this IEnumerable<GraphAttribute> attributes)
+    public static string[] GetAssetFields(this IEnumerable<GraphNode> nodes)
     {
         var ret = new HashSet<string>();
-        Bfs(attributes);
+        Bfs(nodes);
         return ret.ToArray();
 
-        void Bfs(IEnumerable<GraphAttribute> attrs)
+        void Bfs(IEnumerable<GraphNode> nodes)
         {
-            foreach (var attr in attrs)
+            foreach (var node in nodes)
             {
-                if (attr.DataType.IsCompound())
+                if (!node.IsNormalAttribute) continue;
+                
+                if (node.LoadedAttribute.DataType.IsCompound())
                 {
-                    Bfs(attr.Selection);
+                    Bfs(node.Selection);
                 }
-                else
+                else if (node.AssetFields is not null)
                 {
-                    foreach (var field in attr.AssetFields)
+                    foreach (var field in node.AssetFields)
                     {
                         ret.Add(field);
                     }
@@ -175,43 +139,44 @@ public static class GraphAttributeExtensions
         }
     }
 
-    public static string[] GetAllAssetPath(this GraphAttribute[] attributes, Record[] items)
+    public static string[] GetAllAssetPath(this GraphNode[] nodes, Record[] items)
     {
         var ret = new HashSet<string>();
-        Bfs(attributes, items);
+        Bfs(nodes, items);
         return ret.ToArray();
 
-        void Bfs(GraphAttribute[] attrs, Record[] records)
+        void Bfs(GraphNode[] nodes, Record[] records)
         {
             foreach (var record in records)
             {
-                foreach (var attr in attrs)
+                foreach (var node in nodes)
                 {
-                    if (attr.DataType.IsCompound())
+                    if (!node.IsNormalAttribute) continue;
+                    if (node.LoadedAttribute.DataType.IsCompound())
                     {
-                        var (_, _, linkDesc) = attr.GetEntityLinkDesc();
+                        var (_, _, linkDesc) = node.LoadedAttribute.GetEntityLinkDesc();
                         if (linkDesc.IsCollective)
                         {
-                            if (record.TryGetValue(attr.Field, out var value) && value is Record[] sub)
+                            if (record.TryGetValue(node.Field, out var value) && value is Record[] sub)
                             {
-                                Bfs(attr.Selection.ToArray(), sub);
+                                Bfs(node.Selection.ToArray(), sub);
                             }
                         }
                         else
                         {
-                            if (record.TryGetValue(attr.Field, out var value) && value is Record sub)
+                            if (record.TryGetValue(node.Field, out var value) && value is Record sub)
                             {
-                                Bfs(attr.Selection.ToArray(), [sub]);
+                                Bfs([..node.Selection], [sub]);
                             }
                         }
                     }
                     else
                     {
-                        switch (attr.DisplayType)
+                        switch (node.LoadedAttribute.DisplayType)
                         {
                             case DisplayType.File or DisplayType.Image:
                             {
-                                if (record.TryGetValue(attr.Field, out var value) && value is string s)
+                                if (record.TryGetValue(node.Field, out var value) && value is string s)
                                 {
                                     ret.Add(s);
                                 }
@@ -220,7 +185,7 @@ public static class GraphAttributeExtensions
                             }
                             case DisplayType.Gallery:
                             {
-                                if (!record.TryGetValue(attr.Field, out var value) || value is not string[] arr)
+                                if (!record.TryGetValue(node.Field, out var value) || value is not string[] arr)
                                     continue;
                                 foreach (var se in arr)
                                 {
@@ -236,27 +201,26 @@ public static class GraphAttributeExtensions
         }
     }
 
-    public static bool SetSpan(this IEnumerable<GraphAttribute> attrs, Record[] items, ValidSort[] sorts)
+    public static bool SetSpan(this IEnumerable<GraphNode> nodes, Record[] items, ValidSort[] sorts)
     {
         if (SpanHelper.HasPrevious(items)) SpanHelper.SetCursor( items.First(), sorts);
         if (SpanHelper.HasNext(items)) SpanHelper.SetCursor( items.Last(), sorts);
 
-        foreach (var attr in attrs)
+        foreach (var node in nodes)
         {
-            if (!attr.DataType.IsCompound()) continue;
+            if (!node.IsNormalAttribute || !node.LoadedAttribute.DataType.IsCompound()) continue;
             foreach (var item in items)
             {
-                if (!item.TryGetValue(attr.Field, out var v))
+                if (!item.TryGetValue(node.Field, out var v))
                     continue;
                 _ = v switch
                 {
-                    Record rec => attr.Selection.SetSpan([rec], []),
-                    Record[] { Length: > 0 } records => attr.Selection.SetSpan(records, [..attr.Sorts]),
+                    Record rec => node.Selection.SetSpan([rec], []),
+                    Record[] { Length: > 0 } records => node.Selection.SetSpan(records, [..node.Sorts??[]]),
                     _ => true
                 };
             }
         }
-
         return true;
     }
 }

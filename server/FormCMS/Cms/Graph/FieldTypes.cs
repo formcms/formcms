@@ -9,7 +9,7 @@ namespace FormCMS.Cms.Graph;
 
 public static class FieldTypes
 {
-    public static ObjectGraphType PlainType(Entity entity)
+    public static ObjectGraphType PlainType(this Entity entity)
     {
         var entityType = new ObjectGraphType
         {

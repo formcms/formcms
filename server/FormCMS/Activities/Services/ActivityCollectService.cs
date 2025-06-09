@@ -1,6 +1,7 @@
 using FormCMS.Activities.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
+using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.EnumExt;
@@ -174,6 +175,7 @@ public class ActivityCollectService(
                     ct))
                 .FirstOrDefault().Value
         };
+        
         await UpdateScore(entity,[count],ct);
         return ret;
 
@@ -201,6 +203,8 @@ public class ActivityCollectService(
 
     private async Task UpdateScore(LoadedEntity entity,ActivityCount[] counts, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(entity.BookmarkQuery)) return;
+        
         foreach (var a in counts)
         {
             await UpdateOneScore(a);
@@ -304,6 +308,11 @@ public class ActivityCollectService(
     }
     private async Task<Activity[]> LoadMetaData(LoadedEntity entity, Activity[] activities, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(entity.BookmarkQuery))
+        {
+            return activities;
+        }
+        
         var ids = activities
             .Where(x=>x.IsActive)
             .Select(x => x.RecordId.ToString())

@@ -1,4 +1,6 @@
 using FormCMS.Core.Descriptors;
+using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Utils.EnumExt;
 using Humanizer;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
@@ -18,6 +20,10 @@ public static class PublicUserInfos
             new Attribute(Field:nameof(PublicUserInfo.Id).Camelize() ),
             new Attribute(Field:nameof(PublicUserInfo.Name).Camelize() ),
             new Attribute(Field:nameof(PublicUserInfo.AvatarUrl).Camelize() ),
+            
+            //to allow toLoadedAttribute() pass
+            new Attribute(DefaultAttributeNames.PublicationStatus.Camelize()),
+            new Attribute(DefaultColumnNames.UpdatedAt.Camelize()),
         ],
         Name: "publicUserProfile",
         DisplayName: "Public User Profile",
@@ -25,5 +31,4 @@ public static class PublicUserInfos
         LabelAttributeName: nameof(PublicUserInfo.Name).Camelize(),
         PrimaryKey: nameof(PublicUserInfo.Id).Camelize()
     );
-    
 }

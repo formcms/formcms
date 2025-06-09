@@ -45,31 +45,6 @@ public static class LoadedAttributeExtensions
 
         return $"{tableAlias}.{attribute.Field}";
     }
-    public static GraphAttribute ToGraph(this LoadedAttribute a, string[] assetFields)
-    {
-        return new GraphAttribute(
-            AssetFields: [..assetFields],
-            Prefix: "",
-            Selection: [],
-            Filters: [],
-            Sorts: [],
-            Pagination: new Pagination(),
-            Lookup: a.Lookup,
-            Junction: a.Junction,
-            Collection: a.Collection,
-            TableName: a.TableName,
-            Field: a.Field,
-            Header: a.Header,
-            DataType: a.DataType,
-            DisplayType: a.DisplayType,
-            InList: a.InList,
-            InDetail: a.InDetail,
-            IsDefault: a.IsDefault,
-            Options: a.Options,
-            Validation: a.Validation
-        );
-    }
-    
     public static Result<EntityLinkDesc> GetEntityLinkDesc(
         this LoadedAttribute attribute
     ) => attribute.DataType switch

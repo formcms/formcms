@@ -45,30 +45,30 @@ public sealed class QueryService(
         CancellationToken ct)
     {
         var runtimePagination = new Pagination(null, limit.ToString());
-        var query = await schemaSvc.GetSetCacheByName(name, PublicationStatusHelper.GetSchemaStatus(args), ct);
-        var extendedAttrs = query.ExtendedSelection.Select(x =>
-            x with { Pagination = PaginationHelper.ResolvePagination(x.Field, args) ?? x.Pagination });
-        query = query with { ExtendedSelection = [..extendedAttrs] };
-
-        var extendedAttr = query.ExtendedSelection.FirstOrDefault(x => x.Field == attr);
-        if (extendedAttr is not null)
+        var query = await FromSavedQuery(name, args, ct);
+        if (registry.PluginAttributes.ContainsKey(name))
         {
-            var queryPartialArgs = new QueryPartialArgs(query,extendedAttr  ,span, sourceId);
+            var addOnNode = query.Selection.First(x => x.Field == name);
+            var queryPartialArgs = new QueryPartialArgs(query,addOnNode  ,span, sourceId);
             var res = await hook.QueryPartial.Trigger(provider, queryPartialArgs);
             return res.OutRecords ?? [];
         }
 
-        var attribute = query.Selection.RecursiveFind(attr) ?? throw new ResultException("can not find attribute");
-        var desc = attribute.GetEntityLinkDesc().Ok();
+        var node = query.Selection.RecursiveFind(attr) ?? throw new ResultException("can not find attribute");
+        var desc = node.LoadedAttribute!.GetEntityLinkDesc().Ok();
 
-        var pagination = PaginationHelper.ToValid(runtimePagination, attribute.Pagination,
+        var pagination = PaginationHelper.ToValid(
+            runtimePagination, 
+            node.QueryArgs.Pagination,
             desc.TargetEntity.DefaultPageSize, true, args);
 
-        var fields = attribute.Selection.Where(x => x.DataType.IsLocal()).ToArray();
+        var fields = node.Selection
+            .Where(x =>x is { IsNormalAttribute: true, LoadedAttribute: not null } && x.LoadedAttribute.DataType.IsLocal())
+            .Select(x => x.LoadedAttribute!).ToArray()??[];
         var validSpan = span.ToValid(fields).Ok();
 
-        var filters = FilterHelper.ReplaceVariables(attribute.Filters, args).Ok();
-        var sorts = await SortHelper.ReplaceVariables(attribute.Sorts, args, desc.TargetEntity, resolver,
+        var filters = FilterHelper.ReplaceVariables(node.Filters??[], args).Ok();
+        var sorts = await SortHelper.ReplaceVariables(node.Sorts??[], args, desc.TargetEntity, resolver,
             PublicationStatusHelper.GetSchemaStatus(args)).Ok();
 
         var kateQuery = desc.GetQuery(fields,
@@ -84,9 +84,9 @@ public sealed class QueryService(
         if (records.Length <= 0) return records;
 
         SetRecordId(desc.TargetEntity, records);
-        await LoadItems(attribute.Selection, args, records, ct);
-        await LoadAsset([..attribute.Selection], records);
-        new[] { attribute }.SetSpan(records, sorts);
+        await LoadItems(node.Selection, args, records, ct);
+        await LoadAsset([..node.Selection], records);
+        new[] { node }.SetSpan(records, sorts);
         return records;
     }
 
@@ -128,7 +128,9 @@ public sealed class QueryService(
         else
         {
             var status = PublicationStatusHelper.GetDataStatus(args);
-            var fields = query.Selection.Where(x => x.DataType.IsLocal());
+            var fields = query.Selection
+                .Where(x =>x is { IsNormalAttribute: true, LoadedAttribute: not null } && x.LoadedAttribute.DataType.IsLocal())
+                .Select(x=>x.LoadedAttribute!);
             var kateQuery = query.Entity.ListQuery([..query.Filters], [..query.Sorts], pagination.PlusLimitOne(),
                 validSpan, fields, status);
             if (query.Distinct) kateQuery = kateQuery.Distinct();
@@ -153,7 +155,7 @@ public sealed class QueryService(
         return postParam.RefRecords;
     }
 
-    private async Task LoadAsset(GraphAttribute[] attributes, Record[] records)
+    private async Task LoadAsset(GraphNode[] attributes, Record[] records)
     {
         var fields = attributes.GetAssetFields();
         if (fields.Length == 0) return;
@@ -197,7 +199,9 @@ public sealed class QueryService(
         }
         else
         {
-            var fields = query.Selection.Where(x => x.DataType.IsLocal());
+            var fields = query.Selection
+                .Where(x =>x is { IsNormalAttribute: true, LoadedAttribute: not null } && x.LoadedAttribute.DataType.IsLocal())
+                .Select(x=>x.LoadedAttribute!);
             PublicationStatus? pubStatus =
                 args.ContainsEnumKey(SpecialQueryKeys.Preview) ? null : PublicationStatus.Published;
             var kateQuery = query.Entity.SingleQuery([..query.Filters], [..query.Sorts], fields, pubStatus).Ok();
@@ -228,15 +232,17 @@ public sealed class QueryService(
         }
     }
 
-    private async Task LoadItems(IEnumerable<GraphAttribute>? attrs, StrArgs args, Record[] items, CancellationToken ct)
+    private async Task LoadItems(IEnumerable<GraphNode>? nodes, StrArgs args, Record[] items, CancellationToken ct)
     {
-        if (attrs is null) return;
+        if (nodes is null) return;
 
-        foreach (var attr in attrs)
+        foreach (var node in nodes)
         {
+            if (node is not { IsNormalAttribute: true, LoadedAttribute: not null }) continue;
+            var attr = node.LoadedAttribute;
             if (attr.DataType.IsCompound())
             {
-                await AttachRelated(attr, args, items, ct);
+                await AttachRelated(node, args, items, ct);
             }
             else
             {
@@ -245,8 +251,11 @@ public sealed class QueryService(
         }
     }
 
-    private async Task AttachRelated(GraphAttribute attr, StrArgs args, Record[] items, CancellationToken ct)
+    private async Task AttachRelated(GraphNode node, StrArgs args, Record[] items, CancellationToken ct)
     {
+        var attr = node.LoadedAttribute;
+        if (attr is null) return;
+        
         var desc = attr.GetEntityLinkDesc().Ok();
         var ids = desc.SourceAttribute.GetUniq(items);
         if (ids.Length == 0) return;
@@ -254,20 +263,24 @@ public sealed class QueryService(
         CollectiveQueryArgs? collectionArgs = null;
         if (desc.IsCollective)
         {
-            var filters = FilterHelper.ReplaceVariables(attr.Filters, args).Ok();
-            var sorts = await SortHelper.ReplaceVariables(attr.Sorts, args, desc.TargetEntity, resolver,
+            var filters = FilterHelper.ReplaceVariables(node.Filters??[], args).Ok();
+            var sorts = await SortHelper.ReplaceVariables(node.Sorts??[], args, desc.TargetEntity, resolver,
                 PublicationStatusHelper.GetSchemaStatus(args)).Ok();
-            var fly = PaginationHelper.ResolvePagination(attr, args) ?? attr.Pagination;
+            var fly = PaginationHelper.ResolvePagination(node, args) ?? new Pagination();
             var validPagination = fly.IsEmpty()
                 ? null
-                : PaginationHelper.ToValid(fly, attr.Pagination, desc.TargetEntity.DefaultPageSize, false, args);
+                : PaginationHelper.ToValid(fly, node.QueryArgs.Pagination, desc.TargetEntity.DefaultPageSize, false, args);
             collectionArgs = new CollectiveQueryArgs(filters, sorts, validPagination, null);
         }
 
         if (collectionArgs?.Pagination is null)
         {
             //get all items and no pagination
-            var query = desc.GetQuery(attr.Selection.Where(x => x.DataType.IsLocal()), ids, collectionArgs,
+            var attrs = node.Selection
+                .Where(x => x is { IsNormalAttribute: true} && x.LoadedAttribute.DataType.IsLocal())
+                .Select(x => x.LoadedAttribute!) ?? [];
+            
+            var query = desc.GetQuery(attrs, ids, collectionArgs,
                 PublicationStatusHelper.GetDataStatus(args));
             var targetRecords = await executor.Many(query, ct);
 
@@ -286,12 +299,14 @@ public sealed class QueryService(
                 }
 
                 SetRecordId(desc.TargetEntity, targetRecords);
-                await LoadItems(attr.Selection, args, targetRecords, ct);
+                await LoadItems(node.Selection, args, targetRecords, ct);
             }
         }
         else
         {
-            var fields = attr.Selection.Where(x => x.DataType.IsLocal()).ToArray();
+            var fields = node.Selection
+                .Where(x =>x is { IsNormalAttribute: true, LoadedAttribute: not null } && x.LoadedAttribute.DataType.IsLocal()).ToArray()
+                .Select(x=>x.LoadedAttribute!).ToArray()??[];
             var pubStatus = PublicationStatusHelper.GetDataStatus(args);
             var plusOneArgs = collectionArgs with { Pagination = collectionArgs.Pagination.PlusLimitOne() };
             foreach (var id in ids)
@@ -310,7 +325,7 @@ public sealed class QueryService(
                     }
 
                     SetRecordId(desc.TargetEntity, targetRecords);
-                    await LoadItems(attr.Selection, args, targetRecords, ct);
+                    await LoadItems(node.Selection, args, targetRecords, ct);
                 }
             }
         }
@@ -347,8 +362,14 @@ public sealed class QueryService(
         var sort = await SortHelper.ReplaceVariables(query.Sorts, args, query.Entity, resolver,
             PublicationStatusHelper.GetSchemaStatus(args)).Ok();
         var filters = FilterHelper.ReplaceVariables(query.Filters, args).Ok();
-        var extendedAttrs = query.ExtendedSelection.Select(x =>
-            x with { Pagination = PaginationHelper.ResolvePagination(x.Field, args) ?? x.Pagination });
-        return query with { Sorts = [..sort], Filters = [..filters], ExtendedSelection = [..extendedAttrs] };
+
+        var nodes = query.Selection.Select(node => node with
+        {
+            QueryArgs = node.QueryArgs with
+            {
+                Pagination = PaginationHelper.ResolvePagination(node, args) ?? node.QueryArgs.Pagination
+            }
+        });
+        return query with { Sorts = [..sort], Filters = [..filters], Selection = [..nodes] };
     }
 }

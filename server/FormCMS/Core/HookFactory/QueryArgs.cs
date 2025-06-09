@@ -32,7 +32,7 @@ public record QueryPostSingleArgs(
 
 public record QueryPartialArgs(
     LoadedQuery Query,
-    ExtendedGraphAttribute Attribute,
+    GraphNode Node,
     Span Span,
     long SourceId,
     Record[]? OutRecords  = null 
@@ -45,11 +45,3 @@ public record BuildInQueryArgs(
     StrArgs Args,
     Record[]? OutRecords = null
 ) : BaseArgs(Name);
-
-/*
- * allow plugins to add fields/entities to GraphQl
- * this hook is called in synchronizing context, 
- */
-public record ExtendingGraphQlFieldArgs(
-    ImmutableArray<Entity> entities
-) : BaseArgs("");

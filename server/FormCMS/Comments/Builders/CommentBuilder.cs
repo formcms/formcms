@@ -21,8 +21,15 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
 
     public async Task<WebApplication> UseComments(WebApplication app)
     {
-        var registry = app.Services.GetRequiredService<PluginRegistry>();
-        registry.PluginQueries.Add(CommentHelper.CommentRepliesQuery);
+        var pluginRegistry = app.Services.GetRequiredService<PluginRegistry>();
+        pluginRegistry.PluginQueries.Add(CommentHelper.CommentRepliesQuery);
+        pluginRegistry.PluginEntities.Add(CommentHelper.Entity.Name,CommentHelper.Entity);
+        pluginRegistry.PluginAttributes.Add(CommentHelper.CommentsField, new Attribute(
+            Field: CommentHelper.CommentsField,
+            Header: CommentHelper.CommentsField,
+            DataType: DataType.Collection,
+            Options: $"{CommentHelper.Entity.Name}.{nameof(Comment.Id).Camelize()}"
+        ));
 
         logger.LogInformation(
             $"""
@@ -43,24 +50,6 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
         void RegisterHooks()
         {
             var registry = app.Services.GetRequiredService<HookRegistry>();
-            registry.ExtendEntity.RegisterDynamic("*", (ExtendingGraphQlFieldArgs args) =>
-            {
-                var entities = args.entities.Select(e => e with
-                {
-                    Attributes =
-                    [
-                        ..e.Attributes,
-                        new Attribute(
-                            Field: CommentHelper.CommentsField,
-                            Header: CommentHelper.CommentsField,
-                            DataType: DataType.Collection,
-                            Options: $"{CommentHelper.Entity.Name}.{nameof(Comment.RecordId).Camelize()}"
-                        )
-                    ]
-                });
-                return new ExtendingGraphQlFieldArgs([..entities, CommentHelper.Entity]);
-            });
-
             registry.BuildInQueryArgs.RegisterDynamic(
                 CommentHelper.CommentRepliesQuery,
                 async (ICommentsQueryPlugin svc, BuildInQueryArgs args) =>
@@ -76,8 +65,8 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
             
             registry.QueryPartial.RegisterDynamic("*", async (ICommentsQueryPlugin p, QueryPartialArgs args) =>
             {
-                if (args.Attribute.Field != CommentHelper.CommentsField) return args;
-                var records = await p.GetComments(args.Query.Entity.Name, args.SourceId, args.Attribute,
+                if (args.Node.Field != CommentHelper.CommentsField) return args;
+                var records = await p.GetComments(args.Query.Entity.Name, args.SourceId, args.Node,
                     args.Span, CancellationToken.None);
                 return args with { OutRecords = records };
             });

@@ -2,6 +2,7 @@ using FormCMS.Activities.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Utils.ResultExt;
 using Humanizer;
 
 namespace FormCMS.Activities.Services;
@@ -14,6 +15,9 @@ public class ActivityQueryPlugin(
     IActivityCollectService activityCollectService 
     ):IActivityQueryPlugin
 {
+    private readonly Dictionary<string,string> _countFieldToCountType = settings
+        .AllCountTypes().ToDictionary(ActivityCounts.ActivityCountField,x=> x);
+    
     public async Task<Record[]> GetTopList(string entityName, int offset, int limit, CancellationToken ct)
     {
         if (limit > 30 || offset > 30) throw new Exception("Can't access top items");
@@ -44,25 +48,40 @@ public class ActivityQueryPlugin(
         return items;
     }  
     
-    public async Task LoadCounts(LoadedEntity entity, IEnumerable<ExtendedGraphAttribute> attributes, IEnumerable<Record> records, CancellationToken ct)
+    public async Task LoadCounts(LoadedEntity entity, GraphNode[] nodes, Record[] records, CancellationToken ct)
     {
-        var set = attributes.Select(x=>x.Field).ToHashSet();
-        var types = settings
-            .AllCountTypes()
-            .Where(x => set.Contains(ActivityCounts.ActivityCountField(x))).ToArray();
-        
-        if (types.Length == 0)
+        var types = nodes
+            .Where(x=>_countFieldToCountType.ContainsKey(x.Field))
+            .Select(x => _countFieldToCountType[x.Field])
+            .ToArray();
+
+        if (types.Length > 0)
         {
-            return;
+            foreach (var record in records)
+            {
+                var id = (long)record[entity.PrimaryKey];
+                var countDict = await activityCollectService.GetCountDict(entity.Name, id, types, ct);
+                foreach (var t in types)
+                {
+                    record[ActivityCounts.ActivityCountField(t)] = countDict.TryGetValue(t, out var j) ? j : 0;
+                }
+            }
         }
 
-        foreach (var record in records)
+        foreach (var graphNode in nodes)
         {
-            var id =(long)record[entity.PrimaryKey];
-            var countDict = await activityCollectService.GetCountDict(entity.Name, id, types, ct);
-            foreach (var t in types)
+            if (!graphNode.LoadedAttribute.DataType.IsCompound()) continue;
+            foreach (var record in records)
             {
-                record[ActivityCounts.ActivityCountField(t)] = countDict.TryGetValue(t, out var j) ? j : 0;
+                var desc = graphNode.LoadedAttribute.GetEntityLinkDesc().Ok();
+                if (desc.IsCollective && record.TryGetValue(graphNode.Field,out var val) && val is Record[] subRecords)
+                {
+                    await LoadCounts(desc.TargetEntity, [..graphNode.Selection], subRecords, ct);
+                }
+                else if (record.TryGetValue(graphNode.Field,out var va) && va is Record subRecord)
+                {
+                    await LoadCounts(desc.TargetEntity, [..graphNode.Selection], [subRecord], ct);
+                }
             }
         }
     }

@@ -53,13 +53,22 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         var activitySettings = app.Services.GetRequiredService<ActivitySettings>();
         var registry = app.Services.GetRequiredService<PluginRegistry>();
         registry.PluginQueries.Add(ActivityQueryPluginConstants.TopList);
+        foreach (var type in activitySettings.AllCountTypes())
+        {
+            var field = ActivityCounts.ActivityCountField(type); 
+            registry.PluginAttributes[field] = new Attribute(
+                Field: field,
+                Header: field,
+                DataType: DataType.Int);
+        }
         
         using var scope = app.Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<IActivityCollectService>().EnsureActivityTables();
         await scope.ServiceProvider.GetRequiredService<IBookmarkService>().EnsureBookmarkTables(); 
         
-        var options = app.Services.GetRequiredService<SystemSettings>();
-        var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
+        var systemSettings = app.Services.GetRequiredService<SystemSettings>();
+        var apiGroup = app.MapGroup(systemSettings.RouteOptions.ApiBaseUrl);
+        
 
         apiGroup.MapGroup("/activities").MapActivityHandler();
         apiGroup.MapGroup("/bookmarks").MapBookmarkHandler();
@@ -114,29 +123,16 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
                 return args with { OutRecords = items };
             });
             
-            registry.ExtendEntity.RegisterDynamic("", (ActivitySettings settings, ExtendingGraphQlFieldArgs args)=>
-            {
-                var attrs = settings
-                    .AllCountTypes()
-                    .Select(type => new Attribute(
-                        Field: ActivityCounts.ActivityCountField(type),
-                        Header: ActivityCounts.ActivityCountField(type),
-                        DataType: DataType.Int)
-                    );
-                var entities = args.entities.Select(x => x with
-                {
-                    Attributes = [
-                        ..x.Attributes,
-                        ..attrs,
-                    ]
-                });
-                return new ExtendingGraphQlFieldArgs([..entities]);
-            });
-            
             registry.QueryPostList.RegisterDynamic("*" ,async (IActivityQueryPlugin service, QueryPostListArgs args)=>
             {
                 var entity = args.Query.Entity;
-                await service.LoadCounts(entity, args.Query.ExtendedSelection, args.RefRecords, CancellationToken.None);
+                await service.LoadCounts(entity, [..args.Query.Selection], args.RefRecords, CancellationToken.None);
+                return args;
+            });
+            registry.QueryPostSingle.RegisterDynamic("*" ,async (IActivityQueryPlugin service, QueryPostSingleArgs args)=>
+            {
+                var entity = args.Query.Entity;
+                await service.LoadCounts(entity, [..args.Query.Selection], [args.RefRecord], CancellationToken.None);
                 return args;
             });
         }

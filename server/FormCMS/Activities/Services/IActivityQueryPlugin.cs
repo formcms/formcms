@@ -9,6 +9,6 @@ public static class ActivityQueryPluginConstants
 }
 public interface IActivityQueryPlugin
 {
-    Task LoadCounts(LoadedEntity entity, IEnumerable<ExtendedGraphAttribute> attributes, IEnumerable<Record> records, CancellationToken ct);
+    Task LoadCounts(LoadedEntity entity, GraphNode[] nodes, Record[] records, CancellationToken ct);
     Task<Record[]> GetTopList(string entityName, int offset, int limit, CancellationToken ct);
 }

@@ -6,7 +6,6 @@ using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
-using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Comments.Services;
 
@@ -31,14 +30,14 @@ public class CommentsQueryPlugin(
     }
     
     public async Task<Record[]> GetComments(string entityName, long recordId,
-        ExtendedGraphAttribute commentsAttr,Span span,CancellationToken ct)
+        GraphNode commentsAttr,Span span,CancellationToken ct)
     {
-        var pg = PaginationHelper.ToValid(commentsAttr.Pagination, null,CommentHelper.MaxCommentCount,!span.IsEmpty(),[]);
+        var pg = PaginationHelper.ToValid(commentsAttr.QueryArgs.Pagination, null,CommentHelper.MaxCommentCount,!span.IsEmpty(),[]);
         var sp = span.ToValid([..CommentHelper.LoadedEntity.Attributes]).Ok();
         
-        var kateQuery = CommentHelper.List(entityName, recordId, commentsAttr.Sorts, sp, pg.PlusLimitOne());
+        var kateQuery = CommentHelper.List(entityName, recordId, commentsAttr.QueryArgs.Sorts, sp, pg.PlusLimitOne());
         var comments = await executor.Many(kateQuery, ct);
-        comments = SetSpan(comments,span, commentsAttr.Sorts,pg.Limit);
+        comments = SetSpan(comments,span, commentsAttr.QueryArgs.Sorts,pg.Limit);
         SetRecordId(comments);
         await AttachUserInfo(comments, ct);
         return comments;
@@ -49,7 +48,7 @@ public class CommentsQueryPlugin(
         Record record,
         CancellationToken ct)
     {
-        var commentsAttr = query.ExtendedSelection.FirstOrDefault(x => x.Field == CommentHelper.CommentsField);
+        var commentsAttr = query.Selection.FirstOrDefault(x => x.Field == CommentHelper.CommentsField);
         if (commentsAttr is null) return;
 
         record[CommentHelper.CommentsField] =

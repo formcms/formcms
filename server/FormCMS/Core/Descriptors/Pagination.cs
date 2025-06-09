@@ -63,7 +63,7 @@ public static class PaginationHelper
         return pagination with { Limit = pagination.Limit + 1 };
     }
 
-    public static Pagination? ResolvePagination(GraphAttribute attribute, StrArgs args)
+    public static Pagination? ResolvePagination(GraphNode attribute, StrArgs args)
     {
         var key = attribute.Prefix;
         if (!string.IsNullOrWhiteSpace(attribute.Prefix))

@@ -3,6 +3,7 @@ using FluentResults;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.Assets;
+using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.Cache;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
@@ -22,7 +23,8 @@ public sealed class EntityService(
     IAssetService assetService,
     IServiceProvider provider,
     KeyValueCache<long> maxRecordIdCache,
-    HookRegistry hookRegistry
+    HookRegistry hookRegistry,
+    PluginRegistry pluginRegistry
 ) : IEntityService
 {
     public async Task<Result<LoadedEntity>> GetEntityAndValidateRecordId(
@@ -31,9 +33,12 @@ public sealed class EntityService(
         CancellationToken ct
     )
     {
-        var entities = await entitySchemaSvc.AllEntities(ct);
-        var entity = entities.FirstOrDefault(x => x.Name == entityName);
-        if (entity is null) throw new ResultException("Entity not found");
+        if (!pluginRegistry.PluginEntities.TryGetValue(entityName, out var entity))
+        {
+            var entities = await entitySchemaSvc.AllEntities(ct);
+            entity = entities.FirstOrDefault(x => x.Name == entityName);
+            if (entity is null) throw new ResultException("Entity not found");
+        }
 
         var maxId = await maxRecordIdCache.GetOrSet(entityName,
             async _ => await relationDbDao.MaxId(entity.TableName, entity.PrimaryKey, ct), ct);

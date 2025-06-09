@@ -56,7 +56,7 @@ public record LoadedEntity(
     string BookmarkTitleField ,
     string BookmarkSubtitleField,
     string BookmarkImageField,
-    string BookmarkPublishTimeField 
+    string BookmarkPublishTimeField
 ); 
 
 public static class EntityConstants
