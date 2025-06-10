@@ -24,7 +24,6 @@ public sealed class FFMpegWorker : BackgroundService
     private readonly LocalFileStoreOptions? _fileStoreOptions;
     private readonly FFMepgConversionDelayOptions _delayOptions;
     private readonly AssetApiClient _assetApiClient;
-    private readonly AuthApiClient _authApiClient;
 
     public FFMpegWorker(
         ILogger<FFMpegWorker> logger,
@@ -38,7 +37,6 @@ public sealed class FFMpegWorker : BackgroundService
         ArgumentNullException.ThrowIfNull(fileStoreOptions);
         _logger = logger;
         _assetApiClient = apiClient;
-        _authApiClient = authApiClient;
         _consumer = consumer;
         _delayOptions = delayOptions;
         _fileStoreOptions = fileStoreOptions ?? throw new Exception(nameof(fileStoreOptions));
@@ -138,29 +136,22 @@ public sealed class FFMpegWorker : BackgroundService
             );
 
             await conversion.Start();
-           await   _authApiClient.SaDo(async () => { 
-              var id =  await _assetApiClient.GetAssetIdByName(assetName);
-              var asset = await _assetApiClient.Single(id);
-           });
             var id = await _assetApiClient.GetAssetIdByName(assetName);
             var asset = await _assetApiClient.Single(id);
+
             if (asset != null)
             {
                 path = outputFileName;
                 var assetToUpdated = asset.Value with
                 {
-                    Url = $"{outPutFolder}/{outputFileName}",
+                    Url = $"{outPutFolder}/{outputFileName}", //TODO:  Correct as Url
                     Progress = 100,
                 };
 
-                await _authApiClient.SaDo(async () =>
-                {
-                    await _assetApiClient.UpdateHlsProgress(assetToUpdated);
-                });
+                await _assetApiClient.UpdateHlsProgress(assetToUpdated);
 
                 _logger.LogInformation($"Finished converion file [{fileToConvert.Name}]");
             }
-
         }
     }
 }

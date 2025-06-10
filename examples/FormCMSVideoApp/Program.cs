@@ -1,12 +1,16 @@
-using Confluent.Kafka;
+﻿using Confluent.Kafka;
 using FormCMS;
 using FormCMS.App;
 using FormCMS.Auth.ApiClient;
 using FormCMS.Auth.Builders;
+using FormCMS.Auth.Handlers;
 using FormCMS.Auth.Models;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Utils.ResultExt;
+using Google.Protobuf.WellKnownTypes;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,7 +30,13 @@ webBuilder.Services.AddSqlServerCms(connectionString);
 
 //add permission control service
 webBuilder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlServer(connectionString));
-webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(new AuthConfig());
+webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(new AuthConfig( KeyAuthConfig:new KeyAuthConfig("123456")));
+
+    
+
+
+
+
 webBuilder.Services.AddAuditLog();
 webBuilder.Services.AddActivity();
 webBuilder.Services.AddComments();
@@ -43,7 +53,15 @@ webBuilder.Services.AddCors(options =>
         }
     );
 });
+webBuilder.Services.AddAuthorization();
 var webApp = webBuilder.Build();
+webApp.UseStaticFiles();
+webApp.UseAuthentication();
+webApp.UseAuthorization();
+
+
+
+
 
 //ensure identity tables are created
 using var scope = webApp.Services.CreateScope();
@@ -62,7 +80,7 @@ var workerBuilder = Host.CreateApplicationBuilder(args);
 workerBuilder.AddNatsClient(AppConstants.Nats);
 workerBuilder.Services.AddSingleton<IStringMessageConsumer, NatsConsumer>();
 
-//workerBuilder.Services.AddOptions<HttpEndpointOptions>();
+
 workerBuilder.Services.AddHttpClient<AuthApiClient>(
     (serviceProvider, client) =>
     {
@@ -73,9 +91,13 @@ workerBuilder.Services.AddHttpClient<AuthApiClient>(
 workerBuilder.Services.AddHttpClient<AssetApiClient>(
     (serviceProvider, client) =>
     {
-        // var options = serviceProvider.GetRequiredService<HttpEndpointOptions>();
-        client.BaseAddress = new Uri("http://localhost:5049/");
+       
+            
+            client.BaseAddress = new Uri(webBuilder.Configuration.GetValue<string>("ApiInfo:Url")??throw new InvalidOperationException("Missing ApiInfo:Url"));
+            client.DefaultRequestHeaders.Add("X-Cms-Adm-Api-Key", webBuilder.Configuration.GetValue<string>("ApiInfo:Key"));
+        
     }
+       
 );
 
 workerBuilder.Services.AddSqlServerCmsWorker(connectionString).WithNats(natsConnectionString);

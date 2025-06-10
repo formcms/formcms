@@ -103,6 +103,16 @@ public static class Assets
             .Where(nameof(Asset.Id).Camelize(), asset.Id)
             .AsUpdate(record);
     }
+    public static Query UpdateHlsProgress(this Asset asset)
+    {
+        var record = RecordExtensions.FormObject(
+            asset,
+            whiteList: [nameof(Asset.Progress), nameof(Asset.Url)]
+        );
+        return new Query(TableName)
+            .Where(nameof(Asset.Id).Camelize(), asset.Id)
+            .AsUpdate(record);
+    }
 
     public static Query Single(long id)
         => new Query(TableName)

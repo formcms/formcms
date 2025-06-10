@@ -9,4 +9,6 @@ public interface ILoginService
     Task Logout();
     Task ExternalLogin(string provider, string returnUrl);
     Task HandleGithubCallback(OAuthCreatingTicketContext context);
+
+    Task HandleApiKeyAuthCallback(ApiKeyValidatedContext context);
 }

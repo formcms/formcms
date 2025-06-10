@@ -264,4 +264,10 @@ public class AssetService(
             item[nameof(Asset.LinkCount).Camelize()] = dict.TryGetValue(id, out var val) ? val : 0;
         }
     }
+
+    public async  Task UpdateHlsProgress(Asset asset, CancellationToken ct)
+    {
+        await hookRegistry.AssetPreUpdate.Trigger(provider, new AssetPreUpdateArgs(asset.Id));
+        await executor.Exec(asset.UpdateHlsProgress(), false, ct);
+    }
 }
