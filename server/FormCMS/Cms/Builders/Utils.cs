@@ -2,6 +2,7 @@ using FormCMS.Infrastructure.RelationDbDao;
 using Microsoft.Data.Sqlite;
 using Npgsql;
 using Microsoft.Data.SqlClient;
+using NATS.Client.Core;
 
 namespace FormCMS.Cms.Builders;
 
@@ -35,6 +36,25 @@ public static class Utils
         {
             services.AddScoped(_ => new NpgsqlConnection(connectionString));
             services.AddScoped<IRelationDbDao, PostgresDao>();
+            return services;
+        }
+        return services;
+    }
+    public static IServiceCollection AddMsg(
+        this IServiceCollection services,
+        MessagingProvider msgProvider,
+        string connectionString
+    )
+    {
+        _ = msgProvider switch
+        {
+            MessagingProvider.Nats => AddNatsMessing(),
+            _ => throw new Exception("unsupported Messing Provider"),
+        };
+        IServiceCollection AddNatsMessing()
+        {
+            services.AddScoped(_ => new NatsConnection(new NatsOpts() { Url = connectionString }));
+
             return services;
         }
         return services;

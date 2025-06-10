@@ -20,4 +20,22 @@ public class KafkaConsumer(ILogger<KafkaConsumer> logger, IConsumer<string, stri
             }
         }
     }
+
+    public async Task SubscribeTopic(string topic, Func<string, Task> handler, CancellationToken ct)
+    {
+        consumer.Subscribe(topic);
+        while (!ct.IsCancellationRequested)
+        {
+            var s = consumer.Consume(ct).Message.Value;
+            if (s is not null)
+            {
+                await handler(s);
+            }
+            else
+            {
+                logger.LogError("Got null message");
+            }
+        }
+    }
+
 }

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using FormCMS.Auth.Models;
 using FormCMS.Utils.ResultExt;
+using GraphQL;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
@@ -81,5 +82,23 @@ public class LoginService<TUser>(
         var props = new AuthenticationProperties { RedirectUri = returnUrl};
         return contextAccessor.HttpContext!.ChallengeAsync(provider, props);
     }
-    
+
+    public  async Task HandleApiKeyAuthCallback(ApiKeyValidatedContext context)
+    {
+        var email = context.Principal?.FindFirst(ClaimTypes.Email)?.Value
+                ?? "";
+
+        if (string.IsNullOrEmpty(email))
+        {
+            throw new Exception("Email not found from GitHub.");
+        }
+
+        var user = await userManager.FindByEmailAsync(email);
+        if (user == null)
+        {
+            user = new TUser { UserName = context.HttpContext.User.Identity?.Name, Email = email };
+            await userManager.CreateAsync(user);
+        }
+          await  signInManager.SignInAsync(user, isPersistent: false);
+    }
 }

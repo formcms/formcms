@@ -112,8 +112,10 @@ public class WebApp(
     {
         var clientId = builder.Configuration.GetValue<string>("Authentication:GitHub:ClientId");
         var clientSecrets = builder.Configuration.GetValue<string>("Authentication:GitHub:ClientSecret");
+        var ApiKey = builder.Configuration.GetValue<string>("Authentication:ApiKey");
 
         if (clientId is null || clientSecrets is null) return new AuthConfig();
+        if(ApiKey is not null) return new AuthConfig(KeyAuthConfig:new KeyAuthConfig(ApiKey));
 
         var oAuthConfig = new OAuthConfig(new OAuthCredential(clientId, clientSecrets));
         return new AuthConfig(oAuthConfig);
