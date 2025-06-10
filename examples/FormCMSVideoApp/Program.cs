@@ -30,12 +30,14 @@ webBuilder.Services.AddSqlServerCms(connectionString);
 
 //add permission control service
 webBuilder.Services.AddDbContext<CmsDbContext>(options => options.UseSqlServer(connectionString));
-webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(new AuthConfig( KeyAuthConfig:new KeyAuthConfig("123456")));
-
-    
-
-
-
+webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(
+    new AuthConfig(
+        KeyAuthConfig: new KeyAuthConfig(
+            webBuilder.Configuration.GetValue<string>("ApiInfo:Key")
+                ?? throw new InvalidOperationException("Missing setting ApiInfo:Key")
+        )
+    )
+);
 
 webBuilder.Services.AddAuditLog();
 webBuilder.Services.AddActivity();
@@ -59,10 +61,6 @@ webApp.UseStaticFiles();
 webApp.UseAuthentication();
 webApp.UseAuthorization();
 
-
-
-
-
 //ensure identity tables are created
 using var scope = webApp.Services.CreateScope();
 var ctx = scope.ServiceProvider.GetRequiredService<CmsDbContext>();
@@ -80,7 +78,6 @@ var workerBuilder = Host.CreateApplicationBuilder(args);
 workerBuilder.AddNatsClient(AppConstants.Nats);
 workerBuilder.Services.AddSingleton<IStringMessageConsumer, NatsConsumer>();
 
-
 workerBuilder.Services.AddHttpClient<AuthApiClient>(
     (serviceProvider, client) =>
     {
@@ -91,13 +88,15 @@ workerBuilder.Services.AddHttpClient<AuthApiClient>(
 workerBuilder.Services.AddHttpClient<AssetApiClient>(
     (serviceProvider, client) =>
     {
-       
-            
-            client.BaseAddress = new Uri(webBuilder.Configuration.GetValue<string>("ApiInfo:Url")??throw new InvalidOperationException("Missing ApiInfo:Url"));
-            client.DefaultRequestHeaders.Add("X-Cms-Adm-Api-Key", webBuilder.Configuration.GetValue<string>("ApiInfo:Key"));
-        
+        client.BaseAddress = new Uri(
+            webBuilder.Configuration.GetValue<string>("ApiInfo:Url")
+                ?? throw new InvalidOperationException("Missing ApiInfo:Url")
+        );
+        client.DefaultRequestHeaders.Add(
+            "X-Cms-Adm-Api-Key",
+            webBuilder.Configuration.GetValue<string>("ApiInfo:Key")
+        );
     }
-       
 );
 
 workerBuilder.Services.AddSqlServerCmsWorker(connectionString).WithNats(natsConnectionString);

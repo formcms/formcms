@@ -7,7 +7,7 @@ namespace FormCMS.Auth
     {
         public const string DefaultScheme = "ApiKey";
         public string Scheme => DefaultScheme;
-        public string ApiKeyHeaderName { get; set; } = "X-ADM-API-KEY";
+        public string ApiKeyHeaderName { get; set; } = "X-Cms-Adm-Api-Key";
 
         public Func<ApiKeyValidatedContext, Task> OnApiKeyValidated { get; set; } = context => Task.CompletedTask;
     }
