@@ -15,7 +15,7 @@ public record PublicUserInfo(
 
 public static class PublicUserInfos
 {
-    public static Entity Entity = new (
+    public static readonly Entity Entity = new (
         Attributes: [
             new Attribute(Field:nameof(PublicUserInfo.Id).Camelize() ),
             new Attribute(Field:nameof(PublicUserInfo.Name).Camelize() ),
@@ -25,7 +25,7 @@ public static class PublicUserInfos
             new Attribute(DefaultAttributeNames.PublicationStatus.Camelize()),
             new Attribute(DefaultColumnNames.UpdatedAt.Camelize()),
         ],
-        Name: "publicUserProfile",
+        Name: "sysPublicUserProfile",
         DisplayName: "Public User Profile",
         TableName: "",
         LabelAttributeName: nameof(PublicUserInfo.Name).Camelize(),

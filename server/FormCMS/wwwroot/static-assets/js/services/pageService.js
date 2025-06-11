@@ -9,7 +9,7 @@ export async function getPart(node,source,first,last){
     
     const res= await fetch(url);
     if (!res.ok) {
-        return {error: res.text()}
+        return {error: await res.text()}
     }
     return await res.text();
     

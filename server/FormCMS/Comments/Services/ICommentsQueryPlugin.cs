@@ -4,10 +4,16 @@ namespace FormCMS.Comments.Services;
 
 public interface ICommentsQueryPlugin
 {
-    Task AttachComments(LoadedQuery query, Record records, CancellationToken ct);
+    Task AttachComments(
+        LoadedEntity entity,
+        GraphNode[] nodes,
+        Record record,
+        StrArgs args,
+        CancellationToken ct);
 
-    Task<Record[]> GetComments(string entityName, long recordId,
-        GraphNode commentsAttr, Span span, CancellationToken ct);
+    Task<Record[]> GetByFilters(ValidFilter[] filters, ValidSort[] sorts, ValidPagination pagination, ValidSpan span,
+        CancellationToken ct);
 
-    Task<Record[]> GetCommentReplies(long parentId, Pagination pagination, Span span, CancellationToken ct);
+    Task<Record[]> GetByEntityRecordId(string entityName, long recordId,
+        ValidPagination pg, ValidSpan sp, ValidSort[] sorts, CancellationToken ct);
 }

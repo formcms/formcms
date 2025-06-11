@@ -4,6 +4,7 @@ using FluentResults;
 using FluentResults.Extensions;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
+using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
@@ -19,7 +20,8 @@ public sealed class EntitySchemaService(
     IRelationDbDao dao,
     KeyValueCache<ImmutableArray<Entity>> entityCache,
     HookRegistry hook,
-    IServiceProvider provider
+    IServiceProvider provider,
+    PluginRegistry registry
 ) : IEntitySchemaService
 {
     public ValueTask<ImmutableArray<Entity>> AllEntities(CancellationToken ct)
@@ -192,7 +194,10 @@ public sealed class EntitySchemaService(
         PublicationStatus? status,
         CancellationToken ct = default)
     {
-        var loadedAttr = entity.Attributes.FirstOrDefault(x=>x.Field.Camelize()==attrName);
+        var loadedAttr = registry.PluginAttributes.TryGetValue(attrName,out var attribute)?
+            attribute.ToLoaded(""):
+            entity.Attributes.FirstOrDefault(x=>x.Field.Camelize()==attrName);
+        
         if (loadedAttr is null)
             return Result.Fail($"Load single attribute fail, cannot find [{attrName}] in [{entity.Name}]");
 
@@ -202,6 +207,11 @@ public sealed class EntitySchemaService(
 
     private async Task<Result<Entity>> GetEntity(string name, PublicationStatus?status, CancellationToken token = default)
     {
+        if (registry.PluginEntities.TryGetValue(name, out var plugin))
+        {
+            return plugin;
+        }
+        
         var item = await schemaSvc.GetByNameDefault(name, SchemaType.Entity, status, token);
         if (item is null)
         {

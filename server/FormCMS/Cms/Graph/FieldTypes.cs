@@ -21,21 +21,22 @@ public static class FieldTypes
             var fieldType = new FieldType
             {
                 Name = attr.Field,
-                Resolver = Resolvers.ValueResolver
+                Resolver = Resolvers.ValueResolver,
+                ResolvedType = PlainGraphType(attr)
             };
 
-            switch (attr.DisplayType)
-            {
-                case DisplayType.File or DisplayType.Image:
-                    fieldType.Type = typeof(AssetGraphType);
-                    break;
-                case DisplayType.Gallery:
-                    fieldType.Type = typeof(ListGraphType<AssetGraphType>);
-                    break;
-                default:
-                    fieldType.ResolvedType = PlainGraphType(attr);
-                    break;
-            }
+            // switch (attr.DisplayType)
+            // {
+            //     case DisplayType.File or DisplayType.Image:
+            //         fieldType.Type = typeof(AssetGraphType);
+            //         break;
+            //     case DisplayType.Gallery:
+            //         fieldType.Type = typeof(ListGraphType<AssetGraphType>);
+            //         break;
+            //     default:
+            //         fieldType.ResolvedType = PlainGraphType(attr);
+            //         break;
+            // }
 
             entityType.AddField(fieldType);
         }
@@ -80,23 +81,23 @@ public static class FieldTypes
     }
 }
 
-public sealed class AssetGraphType : ObjectGraphType<Asset>
-{
-    public AssetGraphType()
-    {
-        Name = "Asset";
-        Description = "Represents an asset in the system.";
-
-        Field(x => x.Id).Description("Unique identifier of the asset.");
-        Field(x => x.Path).Description("Unique name of the asset (yyyy-MM date + ULID).");
-        Field(x => x.Url).Description("URL of the asset.");
-        Field(x => x.Name).Description("Original name of the asset for search.");
-        Field(x => x.Title).Description("Title of the asset, used for link titles or captions.");
-        Field(x => x.Size).Description("Size of the asset in bytes.");
-        Field(x => x.Type).Description("Type of the asset (e.g., image/png).");
-        Field(x => x.Metadata, type: typeof(JsonGraphType)).Description("Metadata associated with the asset.");
-    }
-}
+// public sealed class AssetGraphType : ObjectGraphType<Asset>
+// {
+//     public AssetGraphType()
+//     {
+//         Name = "Asset";
+//         Description = "Represents an asset in the system.";
+//
+//         Field(x => x.Id).Description("Unique identifier of the asset.");
+//         Field(x => x.Path).Description("Unique name of the asset (yyyy-MM date + ULID).");
+//         Field(x => x.Url).Description("URL of the asset.");
+//         Field(x => x.Name).Description("Original name of the asset for search.");
+//         Field(x => x.Title).Description("Title of the asset, used for link titles or captions.");
+//         Field(x => x.Size).Description("Size of the asset in bytes.");
+//         Field(x => x.Type).Description("Type of the asset (e.g., image/png).");
+//         Field(x => x.Metadata, type: typeof(JsonGraphType)).Description("Metadata associated with the asset.");
+//     }
+// }
 
 // Optional: Define a custom JSON scalar type if not already available
 public class JsonGraphType : ScalarGraphType

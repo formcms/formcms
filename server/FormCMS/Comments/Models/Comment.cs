@@ -3,6 +3,7 @@ using FormCMS.Core.Identities;
 using FormCMS.CoreKit.RelationDbQuery;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
+using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using Humanizer;
@@ -26,9 +27,8 @@ public record Comment(
 
 public static class CommentHelper
 {
-    public  const int MaxCommentCount = 20;
+    public  const int DefaultPageSize = 20;
     public const string CommentsField = "comments";
-    public const string CommentRepliesQuery = "commentReplies";
 
     public static readonly Column[] Columns = [
         ColumnHelper.CreateCamelColumn<Comment>(x => x.Id, ColumnType.Id),
@@ -47,12 +47,13 @@ public static class CommentHelper
     public static readonly Entity Entity = new (
         Attributes: [
             new Attribute(nameof(Comment.Id).Camelize(),DataType:DataType.Int),
-            new Attribute(nameof(Comment.EntityName).Camelize()),
-            new Attribute(nameof(Comment.RecordId).Camelize(),DataType:DataType.Int),
+            new Attribute(nameof(Comment.EntityName).Camelize(),DisplayType:DisplayType.Number),
+            new Attribute(nameof(Comment.RecordId).Camelize(),DataType:DataType.Int,DisplayType:DisplayType.Number),
+            new Attribute(nameof(Comment.Parent).Camelize(),DataType:DataType.Int,DisplayType:DisplayType.Number),
             new Attribute(nameof(Comment.User).Camelize(),DataType: DataType.Lookup, Options:PublicUserInfos.Entity.Name),
             new Attribute(nameof(Comment.Content).Camelize()),
-            new Attribute(nameof(Comment.CreatedAt).Camelize(),DataType: DataType.Datetime),
-            new Attribute(nameof(Comment.UpdatedAt).Camelize(),DataType:DataType.Datetime),
+            new Attribute(nameof(Comment.CreatedAt).Camelize(),DataType: DataType.Datetime,DisplayType:DisplayType.LocalDatetime),
+            new Attribute(nameof(Comment.UpdatedAt).Camelize(),DataType:DataType.Datetime,DisplayType:DisplayType.LocalDatetime),
             new Attribute(DefaultAttributeNames.PublicationStatus.Camelize()),
         ],
         
@@ -77,14 +78,15 @@ public static class CommentHelper
         nameof(Comment.CreatedAt).Camelize(),
         nameof(Comment.UpdatedAt).Camelize(),
     ];
-    public static Query List(long parent,Sort[] sorts, ValidSpan span, ValidPagination pg)
+    public static Query List(ValidFilter[] filters,Sort[] sorts, ValidSpan span, ValidPagination pg)
     {
         var query = new Query(Entity.TableName)
-            .Where(nameof(Comment.Parent).Camelize(), parent)
             .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false)
             .Select(Fields)
             .Offset(pg.Offset)
             .Limit(pg.Limit);
+
+        query.ApplyFilters(filters);
         
         if (span.Span.IsEmpty())
         {
@@ -98,7 +100,7 @@ public static class CommentHelper
         return query;
     }
 
-    public static Query List(string entityName, long recordId, Sort[] sorts, ValidSpan span, ValidPagination pg)
+    public static Query List(string entityName, long recordId, ValidSort[] sorts, ValidSpan? span, ValidPagination pg)
     {
         var query = new Query(Entity.TableName)
             .Where(nameof(Comment.EntityName).Camelize(), entityName)
@@ -109,14 +111,14 @@ public static class CommentHelper
             .Offset(pg.Offset)
             .Limit(pg.Limit);
         
-        if (span.Span.IsEmpty())
+        if (span is not null && span.Span.IsEmpty())
         {
             query.ApplySorts(sorts);
         }
         else
         {
             query.ApplySpanFilter(span,sorts,s=>s.Field,s=>s.Field);
-            query.ApplySorts(SpanHelper.IsForward(span.Span) ? sorts : sorts.ReverseOrder());
+            query.ApplySorts(SpanHelper.IsForward(span?.Span) ? sorts : sorts.ReverseOrder());
         }
         return query;
     }

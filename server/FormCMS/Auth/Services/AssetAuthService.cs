@@ -18,13 +18,13 @@ public class AssetAuthService(
 {
     public Asset PreAdd(Asset asset)
     {
-        profileService.MustGetReadWriteLevel(Assets.Entity.Name);
+        profileService.MustGetReadWriteLevel(Assets.XEntity.Name);
         return asset with{CreatedBy = identityService.GetUserAccess()!.Id};
     }
     
     public async Task PreGetSingle(long id)
     {
-        var level = profileService.MustGetReadLevel(Assets.Entity.Name);
+        var level = profileService.MustGetReadLevel(Assets.XEntity.Name);
         if (level == AccessLevel.Restricted)
         {
             await EnsureCreatedByCurrentUser(id);
@@ -33,7 +33,7 @@ public class AssetAuthService(
 
     public async Task PreUpdate(long id)
     {
-        var level = profileService.MustGetReadWriteLevel(Assets.Entity.Name);
+        var level = profileService.MustGetReadWriteLevel(Assets.XEntity.Name);
         if (level == AccessLevel.Restricted)
         {
             await EnsureCreatedByCurrentUser(id);
@@ -42,7 +42,7 @@ public class AssetAuthService(
 
     public ImmutableArray<Filter> PreList(ImmutableArray<Filter> filters)
     {
-        var level = profileService.MustGetReadLevel(Assets.Entity.Name);
+        var level = profileService.MustGetReadLevel(Assets.XEntity.Name);
         if (level == AccessLevel.Full) return filters;
         var constraint = new Constraint(Matches.EqualsTo, [identityService.GetUserAccess()!.Id]);
         var filter = new Filter(nameof(Asset.CreatedBy).Camelize(), MatchTypes.MatchAll, [constraint]);

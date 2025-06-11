@@ -1,6 +1,6 @@
 import {formatCount} from "../utils/formatter.js";
 import {showToast} from "../utils/toast.js";
-import {getUser} from "../utils/user.js";
+import {ensureUser, getUser} from "../utils/user.js";
 
 import {
     fetchActivity,
@@ -27,8 +27,7 @@ document.querySelectorAll('[data-component="activity-bar"]').forEach(loadActivit
 trackVisit();
 
 
-async function loadActivityBar(activityBar) {
-    console.log('load activity bar', activityBar);
+export async function loadActivityBar(activityBar) {
     const entityName = activityBar.dataset.entity;
     const recordId = activityBar.dataset.recordId;
     const fetchCount = activityBar.dataset.fetchCount;
@@ -79,7 +78,7 @@ function loadActivityListeners(entityName, recordId, likeButton, saveButton, sha
 }
 
 async function handleLikeButtonClick(likeButton,entityName, recordId) {
-    if (!getUser()) return;
+    if (!ensureUser()) return;
 
     const active = likeButton.classList.contains('active');
     try {

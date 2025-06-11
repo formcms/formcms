@@ -93,12 +93,12 @@ public static class SpanHelper
         return items;
     }
 
-    public static void SetCursor(Record item, IEnumerable<Sort> sorts)
+    public static void SetCursor(Record item, string[] sortFields)
     {
         var dict = new Dictionary<string, object>();
-        foreach (var sort in sorts)
+        foreach (var sort in sortFields)
         {
-            if (item.ByJsonPath<object>(sort.Field, out var val)) dict[sort.Field] = val!;
+            if (item.ByJsonPath<object>(sort, out var val)) dict[sort] = val!;
         }
 
         item[SpanConstants.Cursor] = dict.ToToken();       

@@ -1,22 +1,17 @@
-import {getUser} from "../../utils/user.js";
+import {ensureUser} from "../../utils/user.js";
 import {saveComments} from "../../services/commentService.js";
 import {showToast} from "../../utils/toast.js";
 import {reloadDataList} from "../../utils/datalist.js";
 
-export function loadComments(dataList) {
+
+export function initCommentForm(dataList) {
     const commentForm = dataList.querySelector('[data-component="comment-form"]');
-    
     if (!commentForm) return;
 
     const commentText = commentForm.querySelector('[data-component="comment-text"]');
     commentText.addEventListener('focus', function () {
-        if (!getUser()) { // Reference global user
-            const proceed = confirm("You must log in to comment. Do you want to log in now?");
-            if (proceed) {
-                window.location.href = "/portal?ref=" + encodeURIComponent(window.location.href);
-            } else {
-                this.blur();
-            }
+        if (!ensureUser()) { 
+            this.blur();
         }
     });
 

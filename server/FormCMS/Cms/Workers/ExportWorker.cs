@@ -49,7 +49,7 @@ public class ExportWorker(
                 destExecutor,
                 Assets.TableName,
                 nameof(Asset.Id).Camelize(),
-                Assets.Entity.Attributes.Select(x => x.Field),
+                Assets.XEntity.Attributes.Select(x => x.Field),
                 async records =>
                 {
                     foreach (string path in records.Select(x => x[nameof(Asset.Path).Camelize()]))

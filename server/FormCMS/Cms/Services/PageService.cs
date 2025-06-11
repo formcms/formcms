@@ -71,10 +71,6 @@ public sealed class PageService(
         {
             var pagination = new Pagination(null, node.Limit.ToString());
             args = args.OverwrittenBy(QueryHelpers.ParseQuery(node.QueryString));
-            if (sourceId is not null)
-            {
-                args[QueryConstants.RecordId] = sourceId.Value.ToString();
-            }
             items = await querySvc.ListWithAction(node.Query, span, pagination,args , ct);
         }
         else

@@ -88,8 +88,6 @@ export function  setPaginationStatus(list) {
     }
 
     function initButton() {
-        console.log({nav,nodeId,recordId})
-
         const pre = nav.querySelector('[data-component="previous"]');
         const next = nav.querySelector('[data-component="next"]');
 

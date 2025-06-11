@@ -1,8 +1,11 @@
 using FormCMS.Cms.Services;
+using FormCMS.Core.Assets;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.Identities;
 using FormCMS.Core.Plugins;
+using FormCMS.Utils.DisplayModels;
 using GraphQL.Types;
+using Humanizer;
 
 namespace FormCMS.Cms.Graph;
 
@@ -12,26 +15,45 @@ public sealed class GraphQuery : ObjectGraphType
 {
     public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService, PluginRegistry registry)
     {
-        var entities = entitySchemaService.AllEntities(CancellationToken.None).GetAwaiter().GetResult();
-        List<Entity> extendedEntities = [..entities];
-        extendedEntities.AddRange(registry.PluginEntities.Values);
-        extendedEntities = extendedEntities.Select(x => x with { Attributes = [..x.Attributes, ..registry.PluginAttributes.Values] }).ToList();
-        extendedEntities.Add(PublicUserInfos.Entity);
-
+        var entities = entitySchemaService.AllEntities(CancellationToken.None).GetAwaiter().GetResult().ToList();
+        entities.AddRange(registry.PluginEntities.Values);
+        for (var i = 0; i < entities.Count; i++)
+        {
+            entities[i] = entities[i] with
+            {
+                Attributes =
+                [
+                    ..entities[i].Attributes.Select(attr =>
+                        attr switch
+                        {
+                            _ when attr.DisplayType is DisplayType.File or DisplayType.Image => attr with
+                            {
+                                DataType = DataType.Lookup, Options = Assets.Entity.Name
+                            },
+                            _ when attr.DisplayType is DisplayType.Gallery => attr with
+                            {
+                                DataType = DataType.Collection, Options = $"{Assets.Entity.Name}.{nameof(Asset.Path).Camelize()}"
+                            },
+                            _ => attr
+                        }),
+                    ..registry.PluginAttributes.Values
+                ]
+            };
+        }
+        
         var graphMap = new Dictionary<string, GraphInfo>();
 
-        foreach (var entity in extendedEntities)
+        foreach (var entity in entities)
         {
             var t = entity.PlainType();
             graphMap[entity.Name] = new GraphInfo(entity, t, new ListGraphType(t));
         }
 
-        foreach (var entity in extendedEntities)
+        foreach (var entity in entities)
         {
             FieldTypes.SetCompoundType(entity, graphMap);
         }
 
-        //filter sort, only apply to normal entity
         foreach (var entity in entities)
         {
             var graphInfo = graphMap[entity.Name];

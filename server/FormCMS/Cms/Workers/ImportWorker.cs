@@ -55,7 +55,7 @@ public class ImportWorker(
                 destinationExecutor,
                 Assets.TableName,
                 nameof(Asset.Id).Camelize(),
-                Assets.Entity.Attributes.Select(x => x.Field),
+                Assets.XEntity.Attributes.Select(x => x.Field),
                 async records =>
                 {
                     RenamePrimaryKeyToImportKey(records, nameof(Asset.Id).Camelize());

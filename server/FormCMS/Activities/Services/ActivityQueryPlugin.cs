@@ -2,7 +2,6 @@ using FormCMS.Activities.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
-using FormCMS.Utils.ResultExt;
 using Humanizer;
 
 namespace FormCMS.Activities.Services;
@@ -50,14 +49,14 @@ public class ActivityQueryPlugin(
     
     public async Task LoadCounts(LoadedEntity entity, GraphNode[] nodes, Record[] records, CancellationToken ct)
     {
-        var types = nodes
-            .Where(x=>_countFieldToCountType.ContainsKey(x.Field))
-            .Select(x => _countFieldToCountType[x.Field])
-            .ToArray();
-
-        if (types.Length > 0)
+        await nodes.IterateAsync(entity,records, batchAction: async (entity,nodes, items) =>
         {
-            foreach (var record in records)
+            var types = nodes
+                .Where(x=>_countFieldToCountType.ContainsKey(x.Field))
+                .Select(x => _countFieldToCountType[x.Field])
+                .ToArray();
+            
+            foreach (var record in items)
             {
                 var id = (long)record[entity.PrimaryKey];
                 var countDict = await activityCollectService.GetCountDict(entity.Name, id, types, ct);
@@ -66,23 +65,6 @@ public class ActivityQueryPlugin(
                     record[ActivityCounts.ActivityCountField(t)] = countDict.TryGetValue(t, out var j) ? j : 0;
                 }
             }
-        }
-
-        foreach (var graphNode in nodes)
-        {
-            if (!graphNode.LoadedAttribute.DataType.IsCompound()) continue;
-            foreach (var record in records)
-            {
-                var desc = graphNode.LoadedAttribute.GetEntityLinkDesc().Ok();
-                if (desc.IsCollective && record.TryGetValue(graphNode.Field,out var val) && val is Record[] subRecords)
-                {
-                    await LoadCounts(desc.TargetEntity, [..graphNode.Selection], subRecords, ct);
-                }
-                else if (record.TryGetValue(graphNode.Field,out var va) && va is Record subRecord)
-                {
-                    await LoadCounts(desc.TargetEntity, [..graphNode.Selection], [subRecord], ct);
-                }
-            }
-        }
+        });
     }
 }

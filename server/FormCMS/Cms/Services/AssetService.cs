@@ -45,7 +45,7 @@ public class AssetService(
         {
             throw new ResultException("Access denied");
         }
-        return withLinkCount ? Assets.EntityWithLinkCount : Assets.Entity;
+        return withLinkCount ? Assets.EntityWithLinkCount : Assets.XEntity;
     }
 
     public string GetBaseUrl() => store.GetUrl("");

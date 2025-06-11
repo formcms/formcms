@@ -2,10 +2,8 @@ using FormCMS.Infrastructure.Cache;
 using FormCMS.Cms.Graph;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.Plugins;
-using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.ResultExt;
 using GraphQLParser.AST;
-using Attribute = FormCMS.Core.Descriptors.Attribute;
 using Converter = FormCMS.Utils.GraphTypeConverter.Converter;
 using Query = FormCMS.Core.Descriptors.Query;
 using Schema = FormCMS.Core.Descriptors.Schema;
@@ -65,7 +63,11 @@ public sealed class QuerySchemaService(
             IdeUrl =
             $"{systemSettings.GraphQlPath}?query={Uri.EscapeDataString(query.Source)}"
         };
-        await VerifyQuery(query, status, ct);
+        if (!registry.PluginEntities.ContainsKey(query.EntityName))
+        {
+            await VerifyQuery(query, status, ct);
+        }
+
         var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query));
         await schemaSvc.AddOrUpdateByNameWithAction(schema, false, ct);
     }
@@ -90,8 +92,11 @@ public sealed class QuerySchemaService(
         PublicationStatus? status,
         CancellationToken ct = default)
     {
-        var entity = await entitySchemaSvc.LoadEntity(query.EntityName, status, ct).Ok();
         var selection = ParseGraphNodes(fields, "");
+        var entity = registry.PluginEntities.TryGetValue(query.EntityName, out var pluginEntity)
+            ? pluginEntity.ToLoadedEntity()
+            : await entitySchemaSvc.LoadEntity(query.EntityName, status, ct).Ok();
+        
         selection = await LoadAttributes(selection, entity, null, status, ct);
         var sorts = await query.Sorts.ToValidSorts(entity, entitySchemaSvc, status).Ok();
         var validFilter = await query.Filters.ToValidFilters(entity, status, entitySchemaSvc).Ok();
@@ -125,10 +130,15 @@ public sealed class QuerySchemaService(
             var queryArgs = QueryHelper.ParseSimpleArguments(arguments).Ok();
             var node = new GraphNode(
                 Field: fieldName, 
-                QueryArgs: queryArgs, 
+                Sorts:[..queryArgs.Sorts],
+                Pagination:queryArgs.Pagination,
+                Filters:[..queryArgs.Filters],
                 Prefix: prefix, 
                 Selection: [],
-                LoadedAttribute: new LoadedAttribute("", fieldName));
+                LoadedAttribute: new LoadedAttribute("", fieldName),
+                ValidFilters:[],
+                ValidSorts:[]
+                );
             if (field.SelectionSet is not null)
             {
                 var newPrefix = string.IsNullOrWhiteSpace(prefix)
@@ -153,17 +163,12 @@ public sealed class QuerySchemaService(
         var ret = new List<GraphNode>();
         foreach (var node in nodes)
         {
-            var n = registry.PluginAttributes.TryGetValue(node.Field, out var pluginAttr)
-                    ? await LoadPluginAttr(node, pluginAttr)
-                    : parent is not null && !parent.IsNormalAttribute
-                        ? await LoadPluginChildren(node)
-                        : await LoadNormalAttr(node);
+            var n = await LoadAttr(node);
             ret.Add(n);
         }
-
         return ret.ToArray();
 
-        async Task<GraphNode> LoadNormalAttr(GraphNode node)
+        async Task<GraphNode> LoadAttr(GraphNode node)
         {
             var attr = await entitySchemaSvc.LoadSingleAttrByName(entity, node.Field, status, ct).Ok();
 
@@ -179,69 +184,27 @@ public sealed class QuerySchemaService(
 
             var newNode = node with
             {
-                IsNormalAttribute = true,
+                IsNormalAttribute = !registry.PluginAttributes.ContainsKey(node.Field)
+                                    && !registry.PluginEntities.ContainsKey(entity.Name)
+                                    && (parent is null || parent.IsNormalAttribute),
                 LoadedAttribute = attr,
-                AssetFields = attr.DisplayType.IsAsset()
-                    ? [..node.Selection.Select(x => x.Field)]
-                    : [],
             };
 
             if (!attr.DataType.IsCompound()) return newNode;
             var desc = attr.GetEntityLinkDesc().Ok();
             newNode = newNode with
             {
-                Sorts =
+                ValidSorts =
                 [
-                    ..await node.QueryArgs.Sorts.ToValidSorts(desc.TargetEntity, entitySchemaSvc, status).Ok()
+                    ..await node.Sorts.ToValidSorts(desc.TargetEntity, entitySchemaSvc, status).Ok()
                 ],
-                Filters =
+                ValidFilters =
                 [
-                    ..await node.QueryArgs.Filters.ToValidFilters(desc.TargetEntity, status, entitySchemaSvc)
-                        .Ok()
+                    ..await node.Filters.ToValidFilters(desc.TargetEntity, status, entitySchemaSvc).Ok()
                 ],
                 Selection = [..await LoadAttributes([..node.Selection], desc.TargetEntity, newNode, status, ct)]
             };
             return newNode;
         }
-
-        Task<GraphNode> LoadPluginChildren(GraphNode node)
-        {
-            var attr = entity.Attributes.First(x => x.Field == node.Field);
-            return LoadPluginAttr(node, attr);
-        }
-        
-        async Task<GraphNode> LoadPluginAttr(GraphNode node, Attribute pluginAttr)
-        {
-            var loadedAttribute = PlugInAttributeToLoaded(pluginAttr);
-            var newPluginNode = node with { LoadedAttribute = loadedAttribute };
-            if (!loadedAttribute.DataType.IsCompound()) return newPluginNode;
-            var desc = loadedAttribute.GetEntityLinkDesc().Ok();
-            newPluginNode = newPluginNode with
-            {
-                Selection = [..await LoadAttributes([..node.Selection], desc.TargetEntity, newPluginNode, status, ct)]
-            };
-            return newPluginNode;
-        }
-
-        LoadedAttribute PlugInAttributeToLoaded(Attribute attribute)
-        {
-            var loadedAttribute = attribute.ToLoaded("");
-            if (attribute.DataType == DataType.Collection
-                && attribute.GetCollectionTarget(out var target, out var linkAttrName)
-                && registry.PluginEntities.TryGetValue(target, out var targetEntity))
-            {
-                var linkAttr = new LoadedAttribute("", linkAttrName);
-                var collection = new Collection(entity, targetEntity.ToLoadedEntity(), linkAttr);
-                loadedAttribute = loadedAttribute with { Collection = collection };
-            }else if (attribute.DataType == DataType.Lookup 
-                      && attribute.GetLookupTarget(out var lookupTarget)
-                      && registry.PluginEntities.TryGetValue(lookupTarget, out var lookupEntity))
-            {
-                loadedAttribute = loadedAttribute with { Lookup = new Lookup(lookupEntity.ToLoadedEntity()) };
-            }
-            return loadedAttribute;
-        }
     }
-    
-    
 }

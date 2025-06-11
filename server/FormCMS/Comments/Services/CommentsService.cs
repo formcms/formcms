@@ -3,6 +3,7 @@ using FormCMS.Comments.Models;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
+using Humanizer;
 
 namespace FormCMS.Comments.Services;
 
@@ -23,9 +24,7 @@ public class CommentsService(
         var commentRec = await executor.Single(CommentHelper.Single(id),ct);
         if (commentRec is null) throw new ResultException("Comment not found");
 
-        var comment = commentRec.ToObject<Comment>().Ok();
-        if (userId != comment.User) throw new ResultException("You don't have permission to delete this comment");
-        
+        if (userId != (string)commentRec[nameof(Comment.User).Camelize()]) throw new ResultException("You don't have permission to delete this comment");
         await executor.Exec(CommentHelper.Delete(userId, id), false, ct);
     }
 

@@ -27,18 +27,20 @@ public record QueryPreSingleArgs(
 
 public record QueryPostSingleArgs(
     LoadedQuery Query,
-    Record RefRecord
+    Record RefRecord,
+    StrArgs StrArgs
 ) : BaseArgs(Query.Name);
 
 public record QueryPartialArgs(
-    LoadedQuery Query,
+    LoadedEntity Entity,
     GraphNode Node,
-    Span Span,
+    ValidSpan Span,
+    ValidPagination Pagination,
     long SourceId,
     Record[]? OutRecords  = null 
-):BaseArgs(Query.Name);
+):BaseArgs(Node.Field);
 
-public record BuildInQueryArgs(
+public record PlugInQueryArgs(
     string Name,
     Span Span,
     Pagination Pagination,

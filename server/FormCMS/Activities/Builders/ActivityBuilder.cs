@@ -6,6 +6,7 @@ using FormCMS.Core.Plugins;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.Buffers;
+using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Rewrite;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
@@ -115,21 +116,25 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 
         void RegisterHooks()
         {
-            var registry = app.Services.GetRequiredService<HookRegistry>();
-            registry.BuildInQueryArgs.RegisterDynamic(ActivityQueryPluginConstants.TopList, async (IActivityQueryPlugin s,BuildInQueryArgs args) =>
+            var hookRegistry = app.Services.GetRequiredService<HookRegistry>();
+            hookRegistry.PlugInQueryArgs.RegisterDynamic(ActivityQueryPluginConstants.TopList, async (IActivityQueryPlugin s,PlugInQueryArgs args) =>
             {
                 var pg = PaginationHelper.ToValid(args.Pagination, 10);
-                var items = await s.GetTopList(args.Args[ActivityQueryPluginConstants.EntityName],pg.Offset,pg.Limit,CancellationToken.None);
+                if (!args.Args.TryGetValue(ActivityQueryPluginConstants.EntityName,out var entityName))
+                {
+                    throw new ResultException("Entity name is not provided");
+                }
+                var items = await s.GetTopList(entityName ,pg.Offset,pg.Limit,CancellationToken.None);
                 return args with { OutRecords = items };
             });
             
-            registry.QueryPostList.RegisterDynamic("*" ,async (IActivityQueryPlugin service, QueryPostListArgs args)=>
+            hookRegistry.QueryPostList.RegisterDynamic("*" ,async (IActivityQueryPlugin service, QueryPostListArgs args)=>
             {
                 var entity = args.Query.Entity;
                 await service.LoadCounts(entity, [..args.Query.Selection], args.RefRecords, CancellationToken.None);
                 return args;
             });
-            registry.QueryPostSingle.RegisterDynamic("*" ,async (IActivityQueryPlugin service, QueryPostSingleArgs args)=>
+            hookRegistry.QueryPostSingle.RegisterDynamic("*" ,async (IActivityQueryPlugin service, QueryPostSingleArgs args)=>
             {
                 var entity = args.Query.Entity;
                 await service.LoadCounts(entity, [..args.Query.Selection], [args.RefRecord], CancellationToken.None);

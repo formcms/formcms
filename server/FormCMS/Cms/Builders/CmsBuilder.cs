@@ -2,10 +2,10 @@ using System.Collections.Immutable;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using FormCMS.Activities.Services;
 using FormCMS.Cms.Graph;
 using FormCMS.Cms.Handlers;
 using FormCMS.Cms.Services;
+using FormCMS.Core.Assets;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Identities;
@@ -60,17 +60,15 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         services.AddSingleton(systemSettings);
 
         var registry = new PluginRegistry(
-            FeatureMenus:[Menus.MenuSchemaBuilder, Menus.MenuTasks],
+            FeatureMenus: [Menus.MenuSchemaBuilder, Menus.MenuTasks],
             PluginQueries: [],
-            PluginEntities:[],
-            PluginAttributes:[])
-        {
-            PluginEntities =
+            PluginEntities: new Dictionary<string, Entity>
             {
-                [PublicUserInfos.Entity.Name] = PublicUserInfos.Entity
-            }
-        };
-
+                { Assets.XEntity.Name, Assets.Entity },
+                { PublicUserInfos.Entity.Name, PublicUserInfos.Entity }
+            },
+            PluginAttributes: []);
+        
         services.AddSingleton(registry);
 
         services.AddSingleton(new DbOption(databaseProvider, connectionString));
@@ -161,7 +159,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             services.AddScoped<FilterExpr>();
             services.AddScoped<SortExpr>();
             services.AddScoped<SortExpr>();
-            services.AddScoped<AssetGraphType>();
+            // services.AddScoped<AssetGraphType>();
             services.AddScoped<JsonGraphType>();
 
             services.AddGraphQL(b =>

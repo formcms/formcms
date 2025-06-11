@@ -33,26 +33,59 @@ public static class PaginationHelper
             Limit: args.ResolveVariable(pagination.Limit, QueryConstants.VariablePrefix).ToString());
     }
 
-    public static ValidPagination ToValid(Pagination? pagination, int defaultPageSize) =>
-        ToValid(pagination, null, defaultPageSize, false, []);
-        
-    public static ValidPagination ToValid(Pagination? runtime, Pagination? fallback, int defaultPageSize, bool haveCursor, StrArgs args)
+    public static ValidPagination ToValid(Pagination? pagination, int defaultPageSize)
     {
-        runtime ??= fallback ??= new Pagination();
-        if (runtime.Offset is null)
+        if (pagination == null)
         {
-            runtime = runtime with { Offset = fallback?.Offset };
+            return new ValidPagination(0, defaultPageSize);
         }
-
-        if (runtime.Limit is null)
-        {
-            runtime = runtime with { Limit = fallback?.Limit };
-        }
-
-        runtime = runtime.ReplaceVariable(args);
+        var offset = int.TryParse(pagination.Offset, out var offsetVal) ? offsetVal : 0;
+        var limit = int.TryParse(pagination.Limit, out var limitVal) && limitVal > 0 && limitVal < defaultPageSize
+            ? limitVal
+            : defaultPageSize;
+        return new ValidPagination(offset, limit);
+    }
+    
+    public static ValidPagination MergeLimit(Pagination? variablePagination, Pagination? nodePagination,StrArgs args, int defaultPageSize)
+    {
+        variablePagination ??= new Pagination();
+        nodePagination ??= new Pagination();
         
-        var offset = !haveCursor && int.TryParse(runtime.Offset, out var offsetVal) ? offsetVal : 0;
-        var limit = int.TryParse(runtime.Limit, out var limitVal) && limitVal > 0 && limitVal < defaultPageSize
+        if (variablePagination.Limit is null)
+        {
+            variablePagination = variablePagination with { Limit = nodePagination?.Limit };
+        }
+
+        variablePagination = variablePagination.ReplaceVariable(args);
+        
+        //have cursor then ignore offset
+        var offset = 0;
+        var limit = int.TryParse(variablePagination.Limit, out var limitVal) && limitVal > 0 && limitVal < defaultPageSize
+            ? limitVal
+            : defaultPageSize;
+        return new ValidPagination(offset, limit);
+    }
+    //pagination from variable has high priority than pagination setting in node
+    public static ValidPagination MergePagination(Pagination? variablePagination, Pagination? nodePagination,StrArgs args, int defaultPageSize)
+    {
+        variablePagination ??= new Pagination();
+        nodePagination ??= new Pagination();
+        
+        if (variablePagination.Offset is null)
+        {
+            variablePagination = variablePagination with { Offset = nodePagination.Offset };
+        }
+
+        if (variablePagination.Limit is null)
+        {
+            variablePagination = variablePagination with { Limit = nodePagination?.Limit };
+        }
+
+        variablePagination = variablePagination.ReplaceVariable(args);
+        
+        //have cursor then ignore offset
+        var offset = int.TryParse(variablePagination.Offset, out var offsetVal) ? offsetVal : 0;
+        var limit = int.TryParse(variablePagination.Limit, out var limitVal) && limitVal > 0 && limitVal < defaultPageSize
             ? limitVal
             : defaultPageSize;
         return new ValidPagination(offset, limit);
@@ -63,20 +96,19 @@ public static class PaginationHelper
         return pagination with { Limit = pagination.Limit + 1 };
     }
 
-    public static Pagination? ResolvePagination(GraphNode attribute, StrArgs args)
+    public static Pagination? FromVariables(StrArgs args, string prefix, string field)
     {
-        var key = attribute.Prefix;
-        if (!string.IsNullOrWhiteSpace(attribute.Prefix))
+        var key = prefix;
+        if (!string.IsNullOrWhiteSpace(key))
         {
             key += PaginationConstants.PaginationSeparator;
         }
 
-        key += attribute.Field;
-        return ResolvePagination(key,args);
-
+        key += field;
+        return FromVariables(args,key);
     }
-    
-    public static Pagination? ResolvePagination(string key,StrArgs args)
+
+    private static Pagination? FromVariables(StrArgs args,string key)
     {
         var offsetOk = args.TryGetValue(key + PaginationConstants.OffsetSuffix, out var offset);
         var limitOk = args.TryGetValue(key + PaginationConstants.LimitSuffix, out var limit);

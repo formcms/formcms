@@ -30,7 +30,7 @@ public class AccountService<TUser, TRole,TCtx>(
         var query = SchemaHelper.ByNameAndType(SchemaType.Entity, null, null);
         var records= await queryExecutor.Many(query,ct);
         var entityName = records.Select(x => (string)x[nameof(Entity.Name).Camelize()]).ToArray();
-        return [..entityName, Assets.Entity.Name];
+        return [..entityName, Assets.XEntity.Name];
     }
     
     public async Task<string[]> GetRoles(CancellationToken ct)

@@ -22,7 +22,6 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
     public async Task<WebApplication> UseComments(WebApplication app)
     {
         var pluginRegistry = app.Services.GetRequiredService<PluginRegistry>();
-        pluginRegistry.PluginQueries.Add(CommentHelper.CommentRepliesQuery);
         pluginRegistry.PluginEntities.Add(CommentHelper.Entity.Name,CommentHelper.Entity);
         pluginRegistry.PluginAttributes.Add(CommentHelper.CommentsField, new Attribute(
             Field: CommentHelper.CommentsField,
@@ -50,30 +49,33 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
         void RegisterHooks()
         {
             var registry = app.Services.GetRequiredService<HookRegistry>();
-            registry.BuildInQueryArgs.RegisterDynamic(
-                CommentHelper.CommentRepliesQuery,
-                async (ICommentsQueryPlugin svc, BuildInQueryArgs args) =>
-                {
-                    if (!args.Args.TryGetValue(QueryConstants.RecordId, out var s)
-                        || !long.TryParse(s, out var recordId)) return args;
-
-                    var comments = await svc.GetCommentReplies(
-                        recordId, args.Pagination, args.Span, CancellationToken.None);
-                    args = args with { OutRecords = comments };
-                    return args;
-                });
-            
+           
             registry.QueryPartial.RegisterDynamic("*", async (ICommentsQueryPlugin p, QueryPartialArgs args) =>
             {
                 if (args.Node.Field != CommentHelper.CommentsField) return args;
-                var records = await p.GetComments(args.Query.Entity.Name, args.SourceId, args.Node,
-                    args.Span, CancellationToken.None);
+                var records = await p.GetByEntityRecordId(args.Entity.Name, args.SourceId, args.Pagination,
+                    args.Span, [..args.Node.ValidSorts], CancellationToken.None);
                 return args with { OutRecords = records };
             });
-
+            
+            registry.QueryPreList.RegisterDynamic("*", async (ICommentsQueryPlugin p, QueryPreListArgs args) =>
+            {
+                if (args.Query.Entity.Name == CommentHelper.Entity.Name)
+                {
+                    var records = await p.GetByFilters(
+                        [..args.Filters], [..args.Sorts],
+                        args.Pagination,
+                        args.Span,
+                        CancellationToken.None
+                    );
+                    args = args with { OutRecords = records };
+                }
+                return args;
+            });
+            
             registry.QueryPostSingle.RegisterDynamic("*", async (ICommentsQueryPlugin p, QueryPostSingleArgs args) =>
             {
-                await p.AttachComments(args.Query, args.RefRecord, CancellationToken.None);
+                await p.AttachComments(args.Query.Entity, [..args.Query.Selection],args.RefRecord, args.StrArgs, CancellationToken.None);
                 return args;
             });
         }

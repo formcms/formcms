@@ -1,11 +1,13 @@
+using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using Humanizer;
-using SqlKata;
+using Attribute = FormCMS.Core.Descriptors.Attribute;
 using Column = FormCMS.Utils.DataModels.Column;
+using Query = SqlKata.Query;
 
 namespace FormCMS.Core.Assets;
 
@@ -30,7 +32,25 @@ public static class Assets
     public const string TableName = "__assets";
     private const int DefaultPageSize = 48;
 
-    public static readonly XEntity Entity = XEntityExtensions.CreateEntity<Asset>(
+    public static readonly Entity Entity = new (
+        Name: "sysAsset",
+        DisplayName: "sysAsset",
+        TableName: TableName,
+        LabelAttributeName: nameof(Asset.Name).Camelize(),
+        PrimaryKey:nameof(Asset.Id).Camelize(),
+        Attributes:[
+            new Attribute(nameof(Asset.Id).Camelize()),
+            new Attribute(nameof(Asset.Path).Camelize()),
+            new Attribute(nameof(Asset.Url).Camelize()),
+            new Attribute(nameof(Asset.Name).Camelize()),
+            new Attribute(nameof(Asset.Title).Camelize()),
+            new Attribute(nameof(Asset.Size).Camelize(),DataType:DataType.Int,DisplayType:DisplayType.Number),
+            new Attribute(nameof(Asset.Type).Camelize()),
+            new Attribute(nameof(Asset.Metadata).Camelize(),DisplayType:DisplayType.Dictionary),
+        ]
+    );
+    
+    public static readonly XEntity XEntity = XEntityExtensions.CreateEntity<Asset>(
         nameof(Asset.Title),
         defaultPageSize: DefaultPageSize,
         attributes:
@@ -49,10 +69,10 @@ public static class Assets
         ]);
 
     public static readonly XEntity EntityWithLinkCount = 
-        Entity with
+        XEntity with
         {
             Attributes = [
-                ..Entity.Attributes,
+                ..XEntity.Attributes,
                 XAttrExtensions.CreateAttr<Asset, int>(x => x.LinkCount, isDefault:true),
             ]
         };
@@ -105,20 +125,20 @@ public static class Assets
         => new Query(TableName)
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .Where(nameof(Asset.Id).Camelize(),id)
-            .Select(Entity.Attributes.Select(x => x.Field));
+            .Select(XEntity.Attributes.Select(x => x.Field));
 
     public static Query Single(string path)
         => new Query(TableName)
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .Where(nameof(Asset.Path).Camelize(), path)
-            .Select(Entity.Attributes.Select(x => x.Field));
+            .Select(XEntity.Attributes.Select(x => x.Field));
         
     public static Query List(int?offset = null, int? limit = null)
     {
         var q = new Query(TableName)
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .Select(
-                Entity.Attributes
+                XEntity.Attributes
                     .Where(x => x.InList || x.Field == nameof(Asset.Id).Camelize())
                     .Select(x => x.Field)
             );
@@ -153,9 +173,9 @@ public static class Assets
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .WhereIn(nameof(Asset.Path).Camelize(), paths);
 
-    public static Query GetAssetsByPaths(IEnumerable<string> fields,IEnumerable<string> paths)
+    public static Query GetAssetsByPaths(IEnumerable<string> paths)
         => new Query(TableName)
-            .Select(fields)
+            .Select(Entity.Attributes.Select(x=>x.Field))
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .WhereIn(nameof(Asset.Path).Camelize(), paths);
 

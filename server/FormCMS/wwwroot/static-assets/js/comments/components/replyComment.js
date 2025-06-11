@@ -1,10 +1,12 @@
 import {replyComments} from "../../services/commentService.js";
 import {showToast} from "../../utils/toast.js";
 import {reloadDataList} from "../../utils/datalist.js";
+import {initCommentButtons} from "./initCommentButtons.js";
 
 export async function showReply(commentContainer){
     const replyList  = commentContainer.querySelector('[data-component="data-list"]');
     await reloadDataList(replyList); 
+    initCommentButtons(replyList);
 }
 
 export async function replyComment (commentContainer,id) {
