@@ -16,4 +16,5 @@ public interface IAssetService
     Task UpdateMetadata(Asset asset, CancellationToken ct);
     Task UpdateAssetsLinks(Record[]oldLinks, string[] newAssets, string entityName, long id, CancellationToken ct);
     Task Delete(long id, CancellationToken ct);
+    Task UpdateHlsProgress(Asset asset, CancellationToken ct);
 }

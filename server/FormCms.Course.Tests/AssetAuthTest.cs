@@ -1,5 +1,7 @@
 using FormCMS.Core.Assets;
+using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Utils.ResultExt;
+using Microsoft.Extensions.DependencyInjection;
 using NUlid;
 
 namespace FormCMS.Course.Tests;
@@ -16,6 +18,7 @@ public class AssetAuthTest
     public AssetAuthTest(AppFactory factory)
     {
         Factory = factory;
+        
         factory.AuthApi.Register(_email.Split('@')[0],_email, Pwd).GetAwaiter().GetResult();
         SaAssetId = AddSaAssetAndGetId().GetAwaiter().GetResult();
     }

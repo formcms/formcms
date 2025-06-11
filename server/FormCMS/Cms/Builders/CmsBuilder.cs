@@ -30,6 +30,11 @@ public enum DatabaseProvider
     Postgres,
     SqlServer,
 }
+public enum MessagingProvider
+{
+    Nats,
+    Kafka
+}
 
 public sealed record Problem(string Title, string? Detail = null);
 

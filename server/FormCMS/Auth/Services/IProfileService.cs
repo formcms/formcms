@@ -1,4 +1,5 @@
 using FormCMS.Auth.Models;
+using System.Security.Claims;
 
 namespace FormCMS.Auth.Services;
 
@@ -11,4 +12,5 @@ public interface IProfileService
     Task EnsureCurrentUserHaveEntityAccess(string entityName);
     bool HasRole(string role);
     Task UploadAvatar(IFormFile file, CancellationToken ct);
+    Task  LoadUserContext(ClaimsPrincipal user);
 }

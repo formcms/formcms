@@ -24,7 +24,8 @@ public record Asset(
     DateTime UpdatedAt = default,
     long Id = 0,
     int LinkCount = 0, //calculated field, omit from attribute and columns
-    AssetLink[]? Links = null //calculated field, omit from attribute and columns
+    AssetLink[]? Links = null, //calculated field, omit from attribute and columns
+    int Progress = 0 // video conversion progress
 );
 
 public static class Assets
@@ -66,6 +67,8 @@ public static class Assets
             XAttrExtensions.CreateAttr<Asset, string>(x => x.CreatedBy, isDefault:true),
             XAttrExtensions.CreateAttr<Asset, DateTime>(x => x.CreatedAt, isDefault:true),
             XAttrExtensions.CreateAttr<Asset, DateTime>(x => x.UpdatedAt, isDefault:true),
+            XAttrExtensions.CreateAttr<Asset, int>(x => x.Progress, isDefault:true),
+
         ]);
 
     public static readonly XEntity EntityWithLinkCount = 
@@ -89,7 +92,7 @@ public static class Assets
         ColumnHelper.CreateCamelColumn<Asset, string>(x => x.CreatedBy),
         
         ColumnHelper.CreateCamelColumn<Asset>(x => x.Metadata, ColumnType.Text),
-
+        ColumnHelper.CreateCamelColumn<Asset, int>(x => x.Progress),
         DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
@@ -115,6 +118,16 @@ public static class Assets
         var record = RecordExtensions.FormObject(
             asset,
             whiteList: [nameof(Asset.Title), nameof(Asset.Metadata)]
+        );
+        return new Query(TableName)
+            .Where(nameof(Asset.Id).Camelize(), asset.Id)
+            .AsUpdate(record);
+    }
+    public static Query UpdateHlsProgress(this Asset asset)
+    {
+        var record = RecordExtensions.FormObject(
+            asset,
+            whiteList: [nameof(Asset.Progress), nameof(Asset.Url)]
         );
         return new Query(TableName)
             .Where(nameof(Asset.Id).Camelize(), asset.Id)

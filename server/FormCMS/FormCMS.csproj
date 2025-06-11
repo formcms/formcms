@@ -51,6 +51,7 @@
         <PackageReference Include="StackExchange.Redis" Version="2.8.31" />
         <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
         <PackageReference Include="System.Runtime.Caching" Version="9.0.0" />
+        <PackageReference Include="Xabe.FFmpeg" Version="6.0.1" />
     </ItemGroup>
 
     <ItemGroup>

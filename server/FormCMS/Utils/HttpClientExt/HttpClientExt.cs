@@ -63,6 +63,18 @@ public static class HttpClientExt
         return await res.ParseResult();
     }
 
+    public static async Task<Result<T>> PutResult<T>(this HttpClient client, string url, object payload)
+    {
+        var res = await client.PutAsync(url, Content(payload, JsonSerializerOptions));
+        return await res.ParseResult<T>(JsonSerializerOptions);
+    }
+    public static async Task<Result> PutResult(this HttpClient client, string url, object payload)
+    {
+        var res = await client.PutAsync(url, Content(payload, JsonSerializerOptions));
+        return await res.ParseResult();
+    }
+
+
     public static async Task<Result> PostAndSaveCookie(this HttpClient client, string url, object payload)
     {
         var response = await client.PostAsync(url, Content(payload,JsonSerializerOptions));
