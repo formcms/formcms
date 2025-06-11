@@ -78,7 +78,7 @@ public sealed class QueryService(
         if (registry.PluginAttributes.ContainsKey(attr))
         {
             var queryPartialArgs = new QueryPartialArgs(
-                Entity: desc.TargetEntity,
+                ParentEntity: query.Entity,
                 Node: node with
                 {
                     ValidFilters = [..filters],
@@ -111,8 +111,8 @@ public sealed class QueryService(
         }
         records = span.ToPage(records, pagination.Limit);
         if (records.Length <= 0) return records;
-        
-        new[] { node }.SetSpan(records, node.ValidSorts.Select(x=>x.Field).ToArray());
+
+        SetSpan([..node.Selection],  records, node.ValidSorts.Select(x => x.Field).ToArray());
         await LoadDependency(desc.TargetEntity, [..node.Selection], records);
         return records;
     }
@@ -192,7 +192,7 @@ public sealed class QueryService(
         );
         postParam = await hook.QueryPostList.Trigger(provider, postParam);
         var records = postParam.RefRecords;
-        query.Selection.SetSpan(records, [..query.Sorts.Select(x=>x.Field).ToArray()]);
+        SetSpan([..query.Selection],records, [..query.Sorts.Select(x=>x.Field).ToArray()]);
         await LoadDependency(query.Entity, [..query.Selection], records);
         return postParam.RefRecords;
     }
@@ -234,8 +234,8 @@ public sealed class QueryService(
         var postPram = new QueryPostSingleArgs(query, item, args);
         postPram = await hook.QueryPostSingle.Trigger(provider, postPram);
         item = postPram.RefRecord;
-        
-        query.Selection.SetSpan([item], []);
+
+        SetSpan([..query.Selection],[item], []);
         await LoadDependency(query.Entity, [..query.Selection], [item]);
         return item;
     }
@@ -326,7 +326,34 @@ public sealed class QueryService(
             }
         }
     }
-    
+
+    private static void SetSpan(GraphNode[] nodes, Record[] items, string[] sortsFields)
+    {
+        if (SpanHelper.HasPrevious(items)) SpanHelper.SetCursor(items.First(), sortsFields);
+        if (SpanHelper.HasNext(items)) SpanHelper.SetCursor(items.Last(), sortsFields);
+
+        foreach (var node in nodes)
+        {
+            if (node.LoadedAttribute.DataType.IsCompound())
+            {
+                foreach (var item in items)
+                {
+                    if (item.TryGetValue(node.Field, out var v) && v is not null)
+                    {
+                        if (v is Record record)
+                        {
+                            SetSpan([..node.Selection], [record], []);
+                        }
+                        else if (v is Record[] records)
+                        {
+                            SetSpan([..node.Selection], records, node.ValidSorts.Select(x => x.Field).ToArray());
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     private async Task LoadDependency(LoadedEntity entity, GraphNode[] nodes, Record[] records)
     {
         SetRecordId(entity, nodes, records);

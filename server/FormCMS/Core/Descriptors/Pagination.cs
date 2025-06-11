@@ -91,6 +91,7 @@ public static class PaginationHelper
         return new ValidPagination(offset, limit);
     }
 
+    // retrieve one more record to see if there is next page
     public static ValidPagination PlusLimitOne(this ValidPagination pagination)
     {
         return pagination with { Limit = pagination.Limit + 1 };

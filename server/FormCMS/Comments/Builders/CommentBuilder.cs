@@ -53,7 +53,7 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
             registry.QueryPartial.RegisterDynamic("*", async (ICommentsQueryPlugin p, QueryPartialArgs args) =>
             {
                 if (args.Node.Field != CommentHelper.CommentsField) return args;
-                var records = await p.GetByEntityRecordId(args.Entity.Name, args.SourceId, args.Pagination,
+                var records = await p.GetByEntityRecordId(args.ParentEntity.Name, args.SourceId, args.Pagination,
                     args.Span, [..args.Node.ValidSorts], CancellationToken.None);
                 return args with { OutRecords = records };
             });

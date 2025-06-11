@@ -95,28 +95,4 @@ public static class GraphNodeExtensions
             }
         }
     }
-    
-
-    public static bool SetSpan(this IEnumerable<GraphNode> nodes, Record[] items, string[] sortsField)
-    {
-        if (SpanHelper.HasPrevious(items)) SpanHelper.SetCursor( items.First(), sortsField);
-        if (SpanHelper.HasNext(items)) SpanHelper.SetCursor( items.Last(), sortsField);
-
-        foreach (var node in nodes)
-        {
-            if (!node.IsNormalAttribute || !node.LoadedAttribute.DataType.IsCompound()) continue;
-            foreach (var item in items)
-            {
-                if (!item.TryGetValue(node.Field, out var v))
-                    continue;
-                _ = v switch
-                {
-                    Record rec => node.Selection.SetSpan([rec], []),
-                    Record[] { Length: > 0 } records => node.Selection.SetSpan(records, [..node.ValidSorts.Select(x=>x.Field)]),
-                    _ => true
-                };
-            }
-        }
-        return true;
-    }
 }

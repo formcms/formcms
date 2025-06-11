@@ -74,6 +74,7 @@ export function  setPaginationStatus(list) {
                     if (!lastEle) return;
                     const last = lastEle.getAttribute('cursor');
                     if (!last) return;
+                    
                     const res = await fetchPagePart(nodeId, recordId, null, last);
                     if (res.error) {
                         console.log(res);

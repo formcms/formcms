@@ -41,7 +41,7 @@ public class CommentsQueryPlugin(
                 var recordId = (long)record[entity.PrimaryKey];
                 var variablePagination = PaginationHelper.FromVariables(args, node.Prefix, node.Field);
                 var validPagination = PaginationHelper.MergePagination(variablePagination, node.Pagination,args, CommentHelper.DefaultPageSize );
-                var kateQuery = CommentHelper.List(entity.Name, recordId, sorts,null ,validPagination);
+                var kateQuery = CommentHelper.List(entity.Name, recordId, sorts,null ,validPagination.PlusLimitOne());
                 var comments = await executor.Many(kateQuery, ct);
                 comments = new Span().ToPage(comments, validPagination.Limit);
                 rec[node.Field] = comments;

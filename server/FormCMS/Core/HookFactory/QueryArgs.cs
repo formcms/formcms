@@ -32,7 +32,7 @@ public record QueryPostSingleArgs(
 ) : BaseArgs(Query.Name);
 
 public record QueryPartialArgs(
-    LoadedEntity Entity,
+    LoadedEntity ParentEntity,
     GraphNode Node,
     ValidSpan Span,
     ValidPagination Pagination,
