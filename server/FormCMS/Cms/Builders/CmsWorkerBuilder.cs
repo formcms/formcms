@@ -1,4 +1,3 @@
-using FormCMS.Activities.Workers;
 using FormCMS.Cms.Workers;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
@@ -51,8 +50,7 @@ public static class CmsWorkerBuilder
 
         services.AddSingleton(new DataPublishingWorkerOptions(taskTimingSeconds.PublishDelay));
         services.AddHostedService<DataPublishingWorker>();
-        services.AddSingleton(new FFMepgConversionDelayOptions(taskTimingSeconds.FFMpegDelay));
-        services.AddHostedService<FFMpegWorker>();
+       
         
         Console.WriteLine(
             $"""

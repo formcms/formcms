@@ -59,7 +59,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <Folder Include="Core\Messaging\" />
       <Folder Include="wwwroot\static-assets\imgs\" />
     </ItemGroup>
 

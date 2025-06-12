@@ -6,6 +6,7 @@ using FormCMS.Activities.Builders;
 using FormCMS.AuditLogging.Builders;
 using FormCMS.Auth.Models;
 using FormCMS.Comments.Builders;
+using FormCMS.Video.Builders;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Rewrite;
@@ -82,4 +83,7 @@ public static class WebApplicationExt
     public static IServiceCollection AddNatsMessageProducer(
         this IServiceCollection services,string[] entities
     ) => MessageProduceBuilder.AddNatsMessageProducer(services,entities);
+
+    public static IServiceCollection AddVideoMessageProducer(this IServiceCollection services)
+        => VideoMessageProducerBuilder.AddVideoMessageProducer(services);
 }

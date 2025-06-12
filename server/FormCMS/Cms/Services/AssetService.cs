@@ -23,8 +23,7 @@ public class AssetService(
     IRelationDbDao dao,
     IResizer resizer,
     IServiceProvider provider,
-    HookRegistry hookRegistry,
-    IStringMessageProducer producer
+    HookRegistry hookRegistry
 ) : IAssetService
 {
     public async Task EnsureTable()
@@ -97,27 +96,10 @@ public class AssetService(
         var pairs = files.Select(x => (Path.Join(dir, UniqNameOmitYearAndMonth(x.FileName)), x)).ToArray();
 
         var assets = new List<Asset>();
-        string? videoPath=null;
-        Asset? asset = null;
         foreach (var (fileName, file) in pairs)
         {
-            if (file.ContentType.Contains("video/"))
-            {
-                videoPath = "/" + fileName;
-                asset = new Asset(
-                    CreatedBy: "",
-                    Path: "/" + fileName,
-                    Url: string.Empty,
-                    Name: file.FileName,
-                    Title: file.FileName,
-                    Size: file.Length,
-                    Type: file.ContentType,
-                    Metadata: new Dictionary<string, object>()
-                );
-            }
-            else
-            {
-                asset = new Asset(
+         
+            var asset = new Asset(
                     CreatedBy: "",
                     Path: "/" + fileName,
                     Url: store.GetUrl(fileName),
@@ -127,7 +109,6 @@ public class AssetService(
                     Type: file.ContentType,
                     Metadata: new Dictionary<string, object>()
                 );
-            }
             var res =await hookRegistry.AssetPreAdd.Trigger(provider, new AssetPreAddArgs(asset));
             asset = res.RefAsset;
             assets.Add(asset);
@@ -136,11 +117,6 @@ public class AssetService(
         await store.Upload(pairs,ct);
         //track those assets to reuse later
         await executor.BatchInsert(Assets.TableName, assets.ToInsertRecords());
-        if (!string.IsNullOrEmpty(videoPath))
-        {
-            var msg = JsonSerializer.Serialize(new FFMpegMessage(asset!.Name, videoPath, "m3u8"));
-            await producer.Produce(Topics.Rdy4FfMpeg, msg);
-        }
         return assets.Select(x => x.Path).ToArray();
     }
 

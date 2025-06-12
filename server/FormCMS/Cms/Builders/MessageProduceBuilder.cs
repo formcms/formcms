@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Core.HookFactory;
+using FormCMS.Core.Messaging;
 using FormCMS.Utils.RecordExt;
 
 namespace FormCMS.Cms.Builders;

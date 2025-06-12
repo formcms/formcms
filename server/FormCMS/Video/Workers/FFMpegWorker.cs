@@ -7,13 +7,14 @@ using FormCMS.DataLink.Workers;
 using FormCMS.Infrastructure.DocumentDbDao;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
+using FormCMS.Video.Models;
 using HandlebarsDotNet.Helpers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 using Xabe.FFmpeg;
 
-namespace FormCMS.Activities.Workers;
+namespace FormCMS.Video.Workers;
 
 public record FFMepgConversionDelayOptions(int DelayMilliseconds);
 
@@ -47,8 +48,8 @@ public sealed class FFMpegWorker : BackgroundService
         _logger.LogInformation("FFmpeg Worker starting at: {time}", DateTimeOffset.Now);
 
         // Subscribe to the message topic ONCE
-        await _consumer.SubscribeTopic(
-            Topics.Rdy4FfMpeg,
+        await _consumer.Subscribe(
+            VideoTopics.Rdy4FfMpeg,
             async s =>
             {
                 try

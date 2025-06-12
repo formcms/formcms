@@ -56,6 +56,7 @@ webBuilder.Services.AddCors(options =>
     );
 });
 webBuilder.Services.AddAuthorization();
+webBuilder.Services.AddVideoMessageProducer();
 var webApp = webBuilder.Build();
 webApp.UseStaticFiles();
 webApp.UseAuthentication();

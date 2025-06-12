@@ -1,9 +1,8 @@
-namespace FormCMS.Infrastructure.EventStreaming;
+namespace FormCMS.Core.Messaging;
 
 public static class Topics
 {
     public const string CmsCrud = "CmsCrud";
-    public const string Rdy4FfMpeg = "Rdy4FfMpeg";
 }
 public static class Operations
 {
