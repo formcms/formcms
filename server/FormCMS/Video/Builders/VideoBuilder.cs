@@ -8,7 +8,7 @@ namespace FormCMS.Video.Builders;
 
 public class VideoBuilder
 {
-    public static IServiceCollection AddWorker(
+    public static IServiceCollection AddVideoWorker(
         IServiceCollection services, int ffmpegDelay )
     {
         services.AddSingleton(new FFMepgConversionDelayOptions(ffmpegDelay));

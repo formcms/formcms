@@ -13,7 +13,6 @@ public class IdentityService(
     IHttpContextAccessor contextAccessor,
     PluginRegistry registry
 ) : IIdentityService
-
 {
     public UserAccess? GetUserAccess()
     {
@@ -37,9 +36,6 @@ public class IdentityService(
                 ? [..registry.FeatureMenus]
                 : []
         );
-        
         return user.CanAccessAdmin();
     }
-
-  
 }

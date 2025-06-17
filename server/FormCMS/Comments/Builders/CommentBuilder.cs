@@ -60,16 +60,14 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
             
             registry.QueryPreList.RegisterDynamic("*", async (ICommentsQueryPlugin p, QueryPreListArgs args) =>
             {
-                if (args.Query.Entity.Name == CommentHelper.Entity.Name)
-                {
-                    var records = await p.GetByFilters(
-                        [..args.Filters], [..args.Sorts],
-                        args.Pagination,
-                        args.Span,
-                        CancellationToken.None
-                    );
-                    args = args with { OutRecords = records };
-                }
+                if (args.Query.Entity.Name != CommentHelper.Entity.Name) return args;
+                var records = await p.GetByFilters(
+                    [..args.Filters], [..args.Sorts],
+                    args.Pagination,
+                    args.Span,
+                    CancellationToken.None
+                );
+                args = args with { OutRecords = records };
                 return args;
             });
             

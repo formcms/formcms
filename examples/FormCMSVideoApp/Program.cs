@@ -44,7 +44,7 @@ webBuilder.Services.AddActivity();
 webBuilder.Services.AddComments();
 webBuilder.Services.AddNatsMessageProducer(["asset"]);
 webBuilder.AddNatsClient(AppConstants.Nats);
-webBuilder.Services.AddSingleton<IStringMessageProducer, NatsProducer>();
+webBuilder.Services.AddSingleton<IStringMessageProducer, NatsMessageBus>();
 webBuilder.Services.AddCors(options =>
 {
     options.AddPolicy(
@@ -77,7 +77,7 @@ await webApp.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
 //worker run in the background do Cron jobs
 var workerBuilder = Host.CreateApplicationBuilder(args);
 workerBuilder.AddNatsClient(AppConstants.Nats);
-workerBuilder.Services.AddSingleton<IStringMessageConsumer, NatsConsumer>();
+workerBuilder.Services.AddSingleton<IStringMessageConsumer, NatsMessageBus>();
 
 workerBuilder.Services.AddHttpClient<AuthApiClient>(
     (serviceProvider, client) =>

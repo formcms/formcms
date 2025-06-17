@@ -57,12 +57,12 @@ public class ActivityCollectService(
     {
         var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
         var ret = new Dictionary<string, StatusDto>();
-        foreach (var pair in await InternalRecord(cookieUserId,entity,entityName, recordId, settings.AutoRecordActivities.ToArray(), ct))
+        foreach (var pair in await InternalRecord(cookieUserId,entity,entityName, recordId, settings.CommandAutoRecordActivities.ToArray(), ct))
         {
             ret[pair.Key] = new StatusDto(true, pair.Value);
         }
 
-        string[] types = [..settings.ToggleActivities, ..settings.RecordActivities];
+        string[] types = [..settings.CommandToggleActivities, ..settings.CommandRecordActivities];
         var userId = identityService.GetUserAccess()?.Id;
         
         var counts = types.Select(x => 
@@ -119,8 +119,8 @@ public class ActivityCollectService(
     {
 
         if (activityTypes.Any(t =>
-                !settings.RecordActivities.Contains(t) &&
-                !settings.AutoRecordActivities.Contains(t)))
+                !settings.CommandRecordActivities.Contains(t) &&
+                !settings.CommandAutoRecordActivities.Contains(t)))
         {
             throw new ResultException("One or more activity types are not supported.");
         }
@@ -136,7 +136,7 @@ public class ActivityCollectService(
         bool isActive,
         CancellationToken ct)
     {
-        if (!settings.ToggleActivities.Contains(activityType))
+        if (!settings.CommandToggleActivities.Contains(activityType))
             throw new ResultException($"Activity type {activityType} is not supported");
 
         if (identityService.GetUserAccess() is not { Id: var userId })

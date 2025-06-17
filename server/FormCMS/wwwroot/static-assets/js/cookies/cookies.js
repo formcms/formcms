@@ -1,5 +1,3 @@
-loadBanner();
-
 function acceptCookies() {
     document.cookie = "cookies-consent=true; path=/; max-age=" + (60 * 60 * 24 * 365);
     const banner = document.getElementById('cookie-consent-banner');
@@ -12,7 +10,7 @@ function hasConsent() {
     return document.cookie.split(';').some(c => c.trim().startsWith('cookies-consent=true'));
 }
 
-function loadBanner() {
+export function loadCookieBanner() {
 
     if (!hasConsent()) {
         const banner = document.createElement('div');

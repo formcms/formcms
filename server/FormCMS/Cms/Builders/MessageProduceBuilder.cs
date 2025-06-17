@@ -14,7 +14,7 @@ public class MessageProduceBuilder(ILogger<MessageProduceBuilder> logger, Messag
     {
         services.AddSingleton(new MessageProduceBuilderOptions(Entities:entities));
         services.AddSingleton<MessageProduceBuilder>();
-        services.AddSingleton<IStringMessageProducer, NatsProducer>();
+        services.AddSingleton<IStringMessageProducer, NatsMessageBus>();
         return services;
     }
 

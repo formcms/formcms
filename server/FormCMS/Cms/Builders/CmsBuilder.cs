@@ -33,7 +33,8 @@ public enum DatabaseProvider
 public enum MessagingProvider
 {
     Nats,
-    Kafka
+    Kafka,
+    InMemory,
 }
 
 public sealed record Problem(string Title, string? Detail = null);

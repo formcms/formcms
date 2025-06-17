@@ -34,7 +34,7 @@ public class ActivityQueryPlugin(
         };
         var records = await queryService.ListWithAction(entity.BookmarkQuery, new Span(),new Pagination(),strAgs,ct);
         var dict = records.ToDictionary(x => x[entity.PrimaryKey].ToString()!);
-        string[] types = [..settings.ToggleActivities, ..settings.RecordActivities];
+        string[] types = [..settings.CommandToggleActivities, ..settings.CommandRecordActivities];
 
         for (var i = 0; i < items.Length; i++)
         {

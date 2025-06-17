@@ -18,23 +18,10 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 
     public static IServiceCollection AddActivity(IServiceCollection services, bool enableBuffering)
     {
-        services.AddSingleton(
-            new ActivitySettings(
-                EnableBuffering: enableBuffering,
-                ToggleActivities: ["like"],
-                RecordActivities: ["share"],
-                AutoRecordActivities: ["view"],
-                Weights: new Dictionary<string, long>
-                {
-                    { "view", 10 },
-                    { "like", 20 },
-                    { "share", 30 },
-                },
-                ReferenceDateTime: new DateTime(2025,1,1),
-                HourBoostWeight: 10
-            )
-        );
-        
+        services.AddSingleton(ActivitySettingsExtensions.DefaultActivitySettings with
+        {
+            EnableBuffering = enableBuffering
+        });
         services.AddSingleton<ActivityBuilder>();
         services.AddSingleton(new BufferSettings());
         services.AddSingleton<ICountBuffer,MemoryCountBuffer>();
@@ -84,9 +71,9 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
              Using Activity Services
              portal Path = {portalPath}
              enable buffering = {activitySettings.EnableBuffering}
-             recordActivities = {string.Join("," ,activitySettings.RecordActivities)}
-             toggleActivities = {string.Join("," ,activitySettings.ToggleActivities)}
-             autoRecordActivities = {string.Join("," ,activitySettings.AutoRecordActivities)}
+             recordActivities = {string.Join("," ,activitySettings.CommandRecordActivities)}
+             toggleActivities = {string.Join("," ,activitySettings.CommandToggleActivities)}
+             autoRecordActivities = {string.Join("," ,activitySettings.CommandAutoRecordActivities)}
              *********************************************************
              """);
         return app;

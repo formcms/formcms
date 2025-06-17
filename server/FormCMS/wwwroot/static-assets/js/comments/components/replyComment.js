@@ -1,15 +1,13 @@
 import {replyComments} from "../../services/commentService.js";
 import {showToast} from "../../utils/toast.js";
-import {reloadDataList} from "../../utils/datalist.js";
-import {initCommentButtons} from "./initCommentButtons.js";
+import {reloadDataList} from "../../pagination/pagination.js";
 
-export async function showReply(commentContainer){
+export async function showReply(commentContainer,render){
     const replyList  = commentContainer.querySelector('[data-component="data-list"]');
-    await reloadDataList(replyList); 
-    initCommentButtons(replyList);
+    await reloadDataList(replyList, render); 
 }
 
-export async function replyComment (commentContainer,id) {
+export async function replyComment (commentContainer,id, render) {
     if (commentContainer.querySelector('textarea')) return;
     
     const replyForm = document.createElement('form');
@@ -61,9 +59,7 @@ export async function replyComment (commentContainer,id) {
         try {
             await replyComments(id,replyText);
             removeReplyForm();
-            await showReply(commentContainer)
-            
-           
+            await showReply(commentContainer, render)
             showToast('Reply added!');
         } catch (error) {
             errorMessage.textContent = 'Failed to save reply: ' + error.message;

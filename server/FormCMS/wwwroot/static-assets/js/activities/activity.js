@@ -12,20 +12,24 @@ import {
 } from "../services/activityService.js";
 import {shareDialogHTML} from "./components/shareDiaogHtml.js";
 import {bookmarkDialogHtml} from "./components/bookmarkDialogHtml.js";
-const style = document.createElement('style');
-style.textContent = `
-    .active svg {
-        fill: currentColor;
-    }
 
-    .inactive svg {
-        fill: none;
-    }
-`;
-document.head.appendChild(style);
-document.querySelectorAll('[data-component="activity-bar"]').forEach(loadActivityBar);
-trackVisit();
+export function renderActivityBar(element) {
+    if (!document.getElementById('my-style')) {
+        const style = document.createElement('style');
+        style.id = 'my-style';
+        style.textContent = `
+        .active svg {
+            fill: currentColor;
+        }
 
+        .inactive svg {
+            fill: none;
+        }
+    `;
+        document.head.appendChild(style);
+    }
+    element.querySelectorAll('[data-component="activity-bar"]').forEach(loadActivityBar);
+}
 
 export async function loadActivityBar(activityBar) {
     const entityName = activityBar.dataset.entity;

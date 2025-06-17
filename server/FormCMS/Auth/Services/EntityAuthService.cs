@@ -12,8 +12,8 @@ namespace FormCMS.Auth.Services;
 
 public class EntityAuthService(
     IIdentityService identityService,
-    IProfileService profileService,
-    KateQueryExecutor executor
+    IUserManageService userManageService,
+    IProfileService profileService
 ) : IEntityAuthService
 {
     public ImmutableArray<ValidFilter> ApplyListPermissionFilter(string entityName, LoadedEntity entity,
@@ -60,12 +60,8 @@ public class EntityAuthService(
 
     private async Task EnsureCreatedByCurrentUser(LoadedEntity entity, object recordId)
     {
-        var query = new SqlKata.Query(entity.TableName)
-            .Where(entity.PrimaryKey, recordId)
-            .Select(Constants.CreatedBy);
-        
-        var record = await executor.Single(query, CancellationToken.None);
-        if (record is null || record.StrOrEmpty(Constants.CreatedBy) != identityService.GetUserAccess()!.Id)
+        var userId = await userManageService.GetCreatorId(entity.TableName, entity.PrimaryKey, (long)recordId,CancellationToken.None);
+        if (userId != identityService.GetUserAccess()!.Id)
         {
             throw new ResultException(
                 $"You can only access record created by you, entityName={entity.Name}, record id={recordId}");

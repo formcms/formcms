@@ -1,5 +1,7 @@
 using FormCMS.Cms.Services;
 using FormCMS.Comments.Models;
+using FormCMS.Core.Messaging;
+using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
@@ -8,6 +10,9 @@ using Humanizer;
 namespace FormCMS.Comments.Services;
 
 public class CommentsService(
+    IUserManageService userManageService,
+    IStringMessageProducer producer,
+    IEntityService entityService,
     DatabaseMigrator migrator,
     IIdentityService identityService,
     KateQueryExecutor executor
@@ -42,6 +47,11 @@ public class CommentsService(
             Mention = parentComment.Parent is null ? null :parentComment.User
         };
         var id = await executor.Exec(comment.Insert(),false, ct);
+        
+        var activityMessage = new ActivityMessage(comment.User, parentComment.User, CommentHelper.Entity.Name,
+            parentComment.Id, "comment", Operations.Create);
+        await producer.Produce(Topics.CmsActivity, activityMessage.ToJson());
+        
         return comment with{Id = id};
     }
     
@@ -54,9 +64,14 @@ public class CommentsService(
     
     public async Task<Comment> Add(Comment comment, CancellationToken ct)
     {
+        var entity = await entityService.GetEntityAndValidateRecordId(comment.EntityName,comment.RecordId, ct).Ok();
         comment = AssignUser(comment);
         var query = comment.Insert();
         var id = await executor.Exec(query, true, ct);
+        var creatorId =  await userManageService.GetCreatorId(entity.TableName,entity.PrimaryKey, comment.RecordId, ct);
+        var activityMessage = new ActivityMessage(comment.User, creatorId, comment.EntityName,
+            comment.RecordId, "comment", Operations.Create);
+        await producer.Produce(Topics.CmsActivity, activityMessage.ToJson());
         return comment with { Id = id };
     }
 

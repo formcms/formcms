@@ -48,9 +48,9 @@ public class ActivityService(
     }
     public async Task<ListResponse> List(string activityType, StrArgs args, int?offset, int?limit, CancellationToken ct = default)
     {
-        if (!settings.ToggleActivities.Contains(activityType)
-            && !settings.RecordActivities.Contains(activityType)
-            && !settings.AutoRecordActivities.Contains(activityType))
+        if (!settings.CommandToggleActivities.Contains(activityType)
+            && !settings.CommandRecordActivities.Contains(activityType)
+            && !settings.CommandAutoRecordActivities.Contains(activityType))
         {
             throw new ResultException("Unknown activity type");
         }

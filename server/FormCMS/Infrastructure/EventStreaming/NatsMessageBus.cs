@@ -2,8 +2,8 @@ using NATS.Client.Core;
 
 namespace FormCMS.Infrastructure.EventStreaming;
 
-public class NatsConsumer(ILogger<NatsConsumer> logger, INatsConnection connection)
-    : IStringMessageConsumer
+public class NatsMessageBus(ILogger<NatsMessageBus> logger, INatsConnection connection)
+    : IStringMessageConsumer,IStringMessageProducer
 {
 
     public async Task Subscribe(string topic, Func<string, Task> handler, CancellationToken ct)
@@ -21,5 +21,11 @@ public class NatsConsumer(ILogger<NatsConsumer> logger, INatsConnection connecti
                 logger.LogError("Received unexpected message");
             }
         }
+    }
+    
+    public async Task Produce(string topic, string msg)
+    {
+        await connection.PublishAsync(topic, msg);
+        logger.LogInformation("Produced to topic {topic}, message {msg}", topic, msg);
     }
 }

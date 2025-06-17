@@ -1,7 +1,10 @@
+using FormCMS.Activities.Workers;
 using FormCMS.Auth;
 using FormCMS.Auth.Builders;
 using FormCMS.Auth.Models;
+using FormCMS.Cms.Builders;
 using FormCMS.Infrastructure.Buffers;
+using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
@@ -41,7 +44,20 @@ public class WebApp(
         builder.Services.AddAuditLog();
         builder.Services.AddActivity(enableActivityBuffer);
         builder.Services.AddComments();
-
+        
+        //hosted services(worker)
+        //have to let Hosted service share Channel bus instance
+        builder.Services.AddSingleton<InMemoryChannelBus>();
+        builder.Services.AddSingleton<IStringMessageProducer>(sp => sp.GetRequiredService<InMemoryChannelBus>());
+        builder.Services.AddSingleton<IStringMessageConsumer>(sp => sp.GetRequiredService<InMemoryChannelBus>());
+        builder.Services.AddHostedService<ActivityEventHandler>();
+        
+        if (azureBlobStoreOptions != null)
+        {
+            builder.Services.AddSingleton(azureBlobStoreOptions);
+            builder.Services.AddSingleton<IFileStore, AzureBlobStore>();
+        }
+        
         var app = builder.Build();
         app.MapDefaultEndpoints();
         
@@ -56,6 +72,7 @@ public class WebApp(
         await EnsureDbCreatedAsync();
         await app.UseCmsAsync(true);
         await EnsureUserCreatedAsync();
+        
         
         return app;
 
