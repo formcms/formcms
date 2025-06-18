@@ -129,6 +129,12 @@ public sealed class PageService(
         node.SetAttributeValue(QueryConstants.RecordId, $$$"""{{{{{QueryConstants.RecordId}}}}}""");
         
         var first = node.FirstChild;
+
+        while (first is { NodeType: HtmlNodeType.Text })
+        {
+            first = first.NextSibling;
+        }
+        
         first.SetAttributeValue(QueryConstants.RecordId, $$$"""{{{{{QueryConstants.RecordId}}}}}""");
         first.SetAttributeValue(SpanConstants.Cursor, $$$"""{{{{{SpanConstants.Cursor}}}}}""");
         first.SetAttributeValue(SpanConstants.HasNextPage, $$$"""{{{{{SpanConstants.HasNextPage}}}}}""");

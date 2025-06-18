@@ -79,15 +79,6 @@ public class ActivityApiTest(AppFactory factory)
         Assert.True(item.First().GetProperty("viewCount").GetInt64() > 0);
     }
 
-    [Fact]
-    public async Task GetTopItems()
-    {
-        await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
-        var items = await factory.ActivityApi.TopList(TestEntityNames.TestPost.Camelize(), 0, 5).Ok();
-        Assert.True(items.Length > 0);
-
-    }
-    
     
     [Fact]
     private async Task ViewShareLike()

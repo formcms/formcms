@@ -22,15 +22,48 @@ public class CommentsService(
     {
         await migrator.MigrateTable(CommentHelper.Entity.TableName, CommentHelper.Columns);
     }
-
+    public async Task<Comment> Add(Comment comment, CancellationToken ct)
+    {
+        var entity = await entityService.GetEntityAndValidateRecordId(comment.EntityName,comment.RecordId, ct).Ok();
+        comment = AssignUser(comment);
+        var query = comment.Insert();
+        var id = await executor.Exec(query, true, ct);
+        var creatorId =  await userManageService.GetCreatorId(entity.TableName,entity.PrimaryKey, comment.RecordId, ct);
+        var activityMessage = new ActivityMessage(comment.User, creatorId, comment.EntityName,
+            comment.RecordId, CommentHelper.CommentActivity, Operations.Create);
+        await producer.Produce(Topics.CmsActivity, activityMessage.ToJson());
+        return comment with { Id = id };
+    }
+    
     public async Task Delete(long id, CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
         var commentRec = await executor.Single(CommentHelper.Single(id),ct);
         if (commentRec is null) throw new ResultException("Comment not found");
+        var comment = commentRec.ToObject<Comment>().Ok();
 
-        if (userId != (string)commentRec[nameof(Comment.User).Camelize()]) throw new ResultException("You don't have permission to delete this comment");
+        if (userId != comment.User) throw new ResultException("You don't have permission to delete this comment");
         await executor.Exec(CommentHelper.Delete(userId, id), false, ct);
+
+        if (comment.Parent is not null)
+        {
+            var parentRecord = await executor.Single(CommentHelper.Single(comment.Parent.Value), ct) ??
+                               throw new ResultException("Parent comment not found");
+            var parentComment = parentRecord.ToObject<Comment>().Ok();
+
+            var activityMessage = new ActivityMessage(userId, parentComment.User, CommentHelper.Entity.Name, comment.Parent.Value
+                , CommentHelper.CommentActivity, Operations.Delete);
+            await producer.Produce(Topics.CmsActivity, activityMessage.ToJson());
+        }
+        else
+        {
+            var entity = await entityService.GetEntityAndValidateRecordId(comment.EntityName,comment.RecordId, ct).Ok();
+            var creatorId =  await userManageService.GetCreatorId(entity.TableName,entity.PrimaryKey, comment.RecordId, ct);
+            
+            var activityMessage = new ActivityMessage(userId, creatorId, comment.EntityName, comment.RecordId , 
+                CommentHelper.CommentActivity, Operations.Delete);
+            await producer.Produce(Topics.CmsActivity, activityMessage.ToJson());
+        }
     }
 
     public async Task<Comment> Reply(long referencedId,Comment comment, CancellationToken ct)
@@ -49,7 +82,7 @@ public class CommentsService(
         var id = await executor.Exec(comment.Insert(),false, ct);
         
         var activityMessage = new ActivityMessage(comment.User, parentComment.User, CommentHelper.Entity.Name,
-            parentComment.Id, "comment", Operations.Create);
+            parentComment.Id, CommentHelper.CommentActivity, Operations.Create);
         await producer.Produce(Topics.CmsActivity, activityMessage.ToJson());
         
         return comment with{Id = id};
@@ -62,18 +95,7 @@ public class CommentsService(
         if (affected == 0) throw new ResultException("Failed to update comment.");
     } 
     
-    public async Task<Comment> Add(Comment comment, CancellationToken ct)
-    {
-        var entity = await entityService.GetEntityAndValidateRecordId(comment.EntityName,comment.RecordId, ct).Ok();
-        comment = AssignUser(comment);
-        var query = comment.Insert();
-        var id = await executor.Exec(query, true, ct);
-        var creatorId =  await userManageService.GetCreatorId(entity.TableName,entity.PrimaryKey, comment.RecordId, ct);
-        var activityMessage = new ActivityMessage(comment.User, creatorId, comment.EntityName,
-            comment.RecordId, "comment", Operations.Create);
-        await producer.Produce(Topics.CmsActivity, activityMessage.ToJson());
-        return comment with { Id = id };
-    }
+
 
     private Comment AssignUser(Comment comment)
     {

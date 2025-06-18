@@ -6,9 +6,9 @@ import {getUser} from "../../utils/user.js";
 export function initCommentButtons(dataList, render) {
     const user = getUser();
     const foreach = dataList.querySelector(':scope > [data-component="foreach"]');
-    const commentContainers = foreach.querySelectorAll(':scope > [data-component="comment-container"]');
+    const commentContainers = foreach?.querySelectorAll(':scope > [data-component="comment-container"]');
 
-    commentContainers.forEach(commentContainer => {
+    commentContainers?.forEach(commentContainer => {
         const id = commentContainer.getAttribute('__record_id');
         const activityBar = commentContainer.querySelector(':scope > [data-component="activity-bar"]');
         

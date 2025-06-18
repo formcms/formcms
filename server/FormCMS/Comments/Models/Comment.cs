@@ -27,8 +27,9 @@ public record Comment(
 
 public static class CommentHelper
 {
-    public  const int DefaultPageSize = 20;
+    public const int DefaultPageSize = 20;
     public const string CommentsField = "comments";
+    public const string CommentActivity = "comment";
 
     public static readonly Column[] Columns = [
         ColumnHelper.CreateCamelColumn<Comment>(x => x.Id, ColumnType.Id),
@@ -40,7 +41,7 @@ public static class CommentHelper
         ColumnHelper.CreateCamelColumn<Comment>(x => x.Mention!, ColumnType.String),
         DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
-        DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
+        DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime)
     ];
 
 
@@ -54,7 +55,7 @@ public static class CommentHelper
             new Attribute(nameof(Comment.Content).Camelize()),
             new Attribute(nameof(Comment.CreatedAt).Camelize(),DataType: DataType.Datetime,DisplayType:DisplayType.LocalDatetime),
             new Attribute(nameof(Comment.UpdatedAt).Camelize(),DataType:DataType.Datetime,DisplayType:DisplayType.LocalDatetime),
-            new Attribute(DefaultAttributeNames.PublicationStatus.Camelize()),
+            new Attribute(DefaultAttributeNames.PublicationStatus.Camelize())
         ],
         
         Name: nameof(Comment).Camelize(),
@@ -64,9 +65,7 @@ public static class CommentHelper
         PrimaryKey: nameof(Comment.Id).Camelize()
     );
     
-    public static readonly LoadedEntity LoadedEntity = Entity.ToLoadedEntity();
-    
-    private static string[] Fields =
+    private static readonly string[] Fields =
     [
         nameof(Comment.Id).Camelize(),
         nameof(Comment.EntityName).Camelize(),
@@ -76,7 +75,7 @@ public static class CommentHelper
         nameof(Comment.Parent).Camelize(),
         nameof(Comment.Mention).Camelize(),
         nameof(Comment.CreatedAt).Camelize(),
-        nameof(Comment.UpdatedAt).Camelize(),
+        nameof(Comment.UpdatedAt).Camelize()
     ];
     public static Query List(ValidFilter[] filters,Sort[] sorts, ValidSpan span, ValidPagination pg)
     {

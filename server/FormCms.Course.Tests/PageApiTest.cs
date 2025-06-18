@@ -62,9 +62,9 @@ public class PageApiTest
     {
         var html = $$$"""
                        <body>
-                       <div id="aa" data-component="data-list" offset="0" limit="4" query={{{_query}}} pagination="button">
-                       <div id="div1" data-component="foreach">
-                            --{{id}}--
+                       <div id="list" data-component="data-list" offset="0" limit="4" query={{{_query}}} pagination="button">
+                       <div id="foreach" data-component="foreach">
+                            <div id="div1">--{{id}}--</div>
                        </div>
                        </div>
                        <body>
@@ -79,9 +79,11 @@ public class PageApiTest
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
-        var divNode = doc.DocumentNode.SelectSingleNode("//div[@id='div1']");
-        var lastValue = divNode.GetAttributeValue("last", "Attribute not found");
-        html = await Factory.PageApi.GetPagePart(lastValue,true).Ok();
+        var foreachNode = doc.DocumentNode.SelectSingleNode("//div[@id='foreach']");
+        var divs = foreachNode.SelectNodes(".//div");
+        var lastNode = divs.Last();
+        var lastValue = lastNode.GetAttributeValue("cursor", "Attribute not found");
+        html = await Factory.PageApi.GetLandingPage(_query,"foreach",lastValue).Ok();
         Assert.True(html.IndexOf("--5--", StringComparison.Ordinal) > 0);
         
         
