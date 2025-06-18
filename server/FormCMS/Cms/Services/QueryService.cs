@@ -62,28 +62,28 @@ public sealed class QueryService(
             desc.TargetEntity.DefaultPageSize
         );
 
-        var filters = FilterHelper.ReplaceVariables(node.ValidFilters, args).Ok();
-        var validSorts  = await SortHelper.ReplaceVariables(node.ValidSorts, args, desc.TargetEntity, resolver,
-            PublicationStatusHelper.GetSchemaStatus(args)).Ok();
-       
-        
         //span
         var attrs = node.Selection
             .Select(x => x.LoadedAttribute)
             .Where(x => x.DataType.IsLocal())
             .ToArray();
         var validSpan = span.ToValid(attrs).Ok();
+        node = node with
+        {
+            ValidFilters = [..FilterHelper.ReplaceVariables(node.ValidFilters, args).Ok()],
+            ValidSorts =
+            [
+                .. await SortHelper.ReplaceVariables(node.ValidSorts, args, desc.TargetEntity, resolver,
+                    PublicationStatusHelper.GetSchemaStatus(args)).Ok()
+            ],
+        };
         
         
         if (registry.PluginAttributes.ContainsKey(attr))
         {
             var queryPartialArgs = new QueryPartialArgs(
                 ParentEntity: query.Entity,
-                Node: node with
-                {
-                    ValidFilters = [..filters],
-                    ValidSorts = [..validSorts],
-                },
+                Node: node,
                 Span: validSpan,
                 Pagination: pagination.PlusLimitOne(),
                 SourceId: sourceId
@@ -102,13 +102,18 @@ public sealed class QueryService(
 
             var kateQuery = desc.GetQuery(normalAttrs,
                 [new ValidValue(L: sourceId)],
-                new CollectiveQueryArgs(filters, validSorts, pagination.PlusLimitOne(), validSpan),
+                new CollectiveQueryArgs([..node.ValidFilters], [..node.ValidSorts], pagination.PlusLimitOne(), validSpan),
                 PublicationStatusHelper.GetDataStatus(args)
             );
 
             records = await executor.Many(kateQuery, ct);
             await LoadSubNodeData(normalNodes, args, records, ct);
         }
+
+        var postPartialArgs = new QueryPostPartialArgs(node, records);
+        var postRes = await hook.QueryPostPartial.Trigger(provider, postPartialArgs);
+        records = postRes.RefRecords;
+        
         records = span.ToPage(records, pagination.Limit);
         if (records.Length <= 0) return records;
 

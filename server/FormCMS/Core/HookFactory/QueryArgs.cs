@@ -20,6 +20,7 @@ public record QueryPostListArgs(
     Record[] RefRecords 
 ) : BaseArgs(Query.Name);
 
+
 public record QueryPreSingleArgs(
     LoadedQuery Query,
     Record? OutRecord = null
@@ -39,6 +40,13 @@ public record QueryPartialArgs(
     long SourceId,
     Record[]? OutRecords  = null 
 ):BaseArgs(Node.Field);
+
+public record QueryPostPartialArgs(
+    GraphNode Node,
+    Record[] RefRecords  
+):BaseArgs(Node.Field);
+
+
 
 public record PlugInQueryArgs(
     string Name,

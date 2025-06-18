@@ -127,6 +127,18 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
                 await service.LoadCounts(entity, [..args.Query.Selection], [args.RefRecord], CancellationToken.None);
                 return args;
             });
+            hookRegistry.QueryPostPartial.RegisterDynamic("*",
+                async (IActivityQueryPlugin service, QueryPostPartialArgs args) =>
+                {
+                    var attr = args.Node.LoadedAttribute;
+                    if (attr.DataType.IsCompound())
+                    {
+                        var desc = attr.GetEntityLinkDesc().Ok();
+                        await service.LoadCounts(desc.TargetEntity, [..args.Node.Selection], args.RefRecords,
+                            CancellationToken.None);
+                    }
+                    return args;
+                });
         }
     }
 }

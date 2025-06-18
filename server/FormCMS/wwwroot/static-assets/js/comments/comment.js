@@ -4,9 +4,14 @@ import {initCommentButtons} from "./components/initCommentButtons.js";
 
 
 export function renderComments(element, render) {
+
     const dataLists = element.querySelectorAll('[data-component="data-list"]');
-    dataLists.forEach(list=>initCommentForm(list, render));
+    if (element === document) {
+        dataLists.forEach(list=>initCommentForm(list, render));
+    }   
+    
     fetchUser().then(_ => {
-        dataLists.forEach(initCommentButtons);
+        initCommentButtons(element, render);
+        dataLists.forEach((dl)=>initCommentButtons(dl, render));
     });
 }

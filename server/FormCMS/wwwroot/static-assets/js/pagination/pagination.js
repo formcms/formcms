@@ -10,11 +10,12 @@ export function renderPagination(element, render) {
 export async function reloadDataList(dataList, render) {
     const each = dataList.querySelector('[data-component="foreach"]');
     const recordId = each.getAttribute('__record_id');
-    const res = await singleFlyGetPart(each.id, recordId, null, null,  render);
+    const res = await singleFlyGetPart(each.id, recordId, null, null);
     if (res.error) {
         console.log(res.error);
     }
     each.innerHTML = res;
+    render(dataList);
 }
 
 export function  setPaginationStatus(list, render) {

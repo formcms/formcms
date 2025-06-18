@@ -39,7 +39,7 @@ export const comments = {
                        <img src="{{user.avatarUrl}}" alt="User Avatar" class="w-full h-full object-cover">
                   </div>
                   <div class="flex-1">
-                       <p class="text-xs text-gray-400 mt-1">{{user.name}} · {{createdAt}}</p>
+                       <p class="text-xs text-gray-400 mt-1">{{user.name}} · <span data-component="localDateTime">{{createdAt}}</span></p>
                        <p data-component="comment-content" class="text-sm text-gray-600">{{content}}</p>
                   </div>
              </div>
@@ -60,8 +60,7 @@ export const comments = {
                         </svg>
                         View Reply
                  </button>
-        
-                 <span class="text-xs text-gray-500">(<span data-component="reply-count">{{replyCount}}</span>)</span>
+                 <span class="text-xs text-gray-500">(<span data-component="reply-count">{{commentCount}}</span>)</span>
                  <button data-component="comment-edit" class="btn btn-ghost btn-sm flex items-center gap-1">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
                         Edit
