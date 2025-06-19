@@ -17,10 +17,6 @@ public static class AssetHandler
             "/entity",
             (IAssetService s, bool? linkCount) => s.GetEntity(linkCount ?? false)
         );
-        //.RequireAuthorization(
-        //  [ new AuthorizeAttribute { AuthenticationSchemes = ApiKeyAuthenticationOptions.DefaultScheme},
-        //  new AuthorizeAttribute{AuthenticationSchemes=CookieAuthenticationDefaults.AuthenticationScheme }
-        //  ]);
 
         app.MapGet(
             "/base",
@@ -51,11 +47,6 @@ public static class AssetHandler
                     ct
                 )
         );
-        //    .RequireAuthorization(
-        //      [
-        //      new AuthorizeAttribute{AuthenticationSchemes=CookieAuthenticationDefaults.AuthenticationScheme },
-        //        new AuthorizeAttribute { AuthenticationSchemes = ApiKeyAuthenticationOptions.DefaultScheme}]
-        //);
 
         app.MapGet(
             "/path",

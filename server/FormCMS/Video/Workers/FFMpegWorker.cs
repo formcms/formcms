@@ -1,45 +1,30 @@
 using System.Text.Json;
-using Confluent.Kafka;
-using FormCMS.Auth.ApiClient;
-using FormCMS.Core.Assets;
 using FormCMS.CoreKit.ApiClient;
-using FormCMS.DataLink.Workers;
-using FormCMS.Infrastructure.DocumentDbDao;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Video.Models;
-using HandlebarsDotNet.Helpers;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
-using MongoDB.Driver;
 using Xabe.FFmpeg;
 
 namespace FormCMS.Video.Workers;
-
-public record FFMepgConversionDelayOptions(int DelayMilliseconds);
 
 public sealed class FFMpegWorker : BackgroundService
 {
     private readonly ILogger<FFMpegWorker> _logger;
     private readonly IStringMessageConsumer _consumer;
     private readonly LocalFileStoreOptions? _fileStoreOptions;
-    private readonly FFMepgConversionDelayOptions _delayOptions;
     private readonly AssetApiClient _assetApiClient;
 
     public FFMpegWorker(
         ILogger<FFMpegWorker> logger,
         IStringMessageConsumer consumer,
-        FFMepgConversionDelayOptions delayOptions,
         LocalFileStoreOptions? fileStoreOptions,
-        AssetApiClient apiClient,
-        AuthApiClient authApiClient
+        AssetApiClient apiClient
     )
     {
         ArgumentNullException.ThrowIfNull(fileStoreOptions);
         _logger = logger;
         _assetApiClient = apiClient;
         _consumer = consumer;
-        _delayOptions = delayOptions;
         _fileStoreOptions = fileStoreOptions ?? throw new Exception(nameof(fileStoreOptions));
     }
 

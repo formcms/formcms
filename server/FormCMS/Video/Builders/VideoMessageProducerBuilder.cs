@@ -16,11 +16,11 @@ public class VideoMessageProducerBuilder
     public WebApplication UseVideo(WebApplication app)
     {
         var registry = app.Services.GetRequiredService<HookRegistry>();
-        registry.AssetPreAdd.RegisterDynamic("*", async (AssetPreAddArgs args, IStringMessageProducer producer) =>
+        registry.AssetPostAdd.RegisterDynamic("*", async (AssetPostAddArgs args, IStringMessageProducer producer) =>
         {
-            if (args.RefAsset.Type.Contains("video/"))
+            if (args.Asset.Type.Contains("video/"))
             {
-                var msg = JsonSerializer.Serialize(new FFMpegMessage(args.RefAsset.Name, args.RefAsset.Path, "m3u8"));
+                var msg = JsonSerializer.Serialize(new FFMpegMessage(args.Asset.Name, args.Asset.Path, "m3u8"));
                 await producer.Produce(VideoTopics.Rdy4FfMpeg, msg);
             }
 

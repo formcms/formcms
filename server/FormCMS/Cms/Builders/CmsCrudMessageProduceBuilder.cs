@@ -6,23 +6,14 @@ using FormCMS.Utils.RecordExt;
 
 namespace FormCMS.Cms.Builders;
 
-public record MessageProduceBuilderOptions(string[] Entities);
+public record CmsCrudMessageProduceBuilderOptions(string[] Entities);
 
-public class MessageProduceBuilder(ILogger<MessageProduceBuilder> logger, MessageProduceBuilderOptions options)
+public class CmsCrudMessageProduceBuilder(ILogger<CmsCrudMessageProduceBuilder> logger, CmsCrudMessageProduceBuilderOptions options)
 {
-    public static IServiceCollection AddNatsMessageProducer(IServiceCollection services, string[] entities)
+    public static IServiceCollection AddMessageProducer(IServiceCollection services, string[] entities)
     {
-        services.AddSingleton(new MessageProduceBuilderOptions(Entities:entities));
-        services.AddSingleton<MessageProduceBuilder>();
-        services.AddSingleton<IStringMessageProducer, NatsMessageBus>();
-        return services;
-    }
-
-    public static IServiceCollection AddKafkaMessageProducer(IServiceCollection services,string[] entities)
-    {
-        services.AddSingleton(new MessageProduceBuilderOptions(Entities:entities));
-        services.AddSingleton<MessageProduceBuilder>();
-        services.AddSingleton<IStringMessageProducer, KafkaProducer>();
+        services.AddSingleton(new CmsCrudMessageProduceBuilderOptions(Entities:entities));
+        services.AddSingleton<CmsCrudMessageProduceBuilder>();
         return services;
     }
 

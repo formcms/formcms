@@ -117,6 +117,10 @@ public class AssetService(
         await store.Upload(pairs,ct);
         //track those assets to reuse later
         await executor.BatchInsert(Assets.TableName, assets.ToInsertRecords());
+        foreach (var asset in assets)
+        {
+            await hookRegistry.AssetPostAdd.Trigger(provider, new AssetPostAddArgs(asset));
+        }
         return assets.Select(x => x.Path).ToArray();
     }
 

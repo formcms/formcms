@@ -45,11 +45,8 @@ public class WebApp(
         builder.Services.AddActivity(enableActivityBuffer);
         builder.Services.AddComments();
         
-        //hosted services(worker)
-        //have to let Hosted service share Channel bus instance
-        builder.Services.AddSingleton<InMemoryChannelBus>();
-        builder.Services.AddSingleton<IStringMessageProducer>(sp => sp.GetRequiredService<InMemoryChannelBus>());
-        builder.Services.AddSingleton<IStringMessageConsumer>(sp => sp.GetRequiredService<InMemoryChannelBus>());
+        // For distributed deployments, it's recommended to run ActivityEventHandler in a separate hosted service.
+        // In this case, we register ActivityEventHandler within the web application to share the in-memory channel bus.
         builder.Services.AddHostedService<ActivityEventHandler>();
         
         if (azureBlobStoreOptions != null)

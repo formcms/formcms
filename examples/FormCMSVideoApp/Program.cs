@@ -1,22 +1,14 @@
-﻿using Confluent.Kafka;
-using FormCMS;
+﻿using FormCMS;
 using FormCMS.App;
 using FormCMS.Auth.ApiClient;
 using FormCMS.Auth.Builders;
-using FormCMS.Auth.Handlers;
 using FormCMS.Auth.Models;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Utils.ResultExt;
-using Google.Protobuf.WellKnownTypes;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.OpenApi.Models;
 using SqlVideoWebApp;
-using SqlVideoWebApp.Config;
 
 var webBuilder = WebApplication.CreateBuilder(args);
 
@@ -42,9 +34,10 @@ webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(
 webBuilder.Services.AddAuditLog();
 webBuilder.Services.AddActivity();
 webBuilder.Services.AddComments();
-webBuilder.Services.AddNatsMessageProducer(["asset"]);
-webBuilder.AddNatsClient(AppConstants.Nats);
-webBuilder.Services.AddSingleton<IStringMessageProducer, NatsMessageBus>();
+webBuilder.Services
+    .WithNats(natsConnectionString)
+    .AddSingleton<IStringMessageProducer, NatsMessageBus>()
+    .AddVideoMessageProducer();
 webBuilder.Services.AddCors(options =>
 {
     options.AddPolicy(
@@ -58,9 +51,9 @@ webBuilder.Services.AddCors(options =>
 webBuilder.Services.AddAuthorization();
 webBuilder.Services.AddVideoMessageProducer();
 var webApp = webBuilder.Build();
-webApp.UseStaticFiles();
-webApp.UseAuthentication();
-webApp.UseAuthorization();
+// webApp.UseStaticFiles();
+// webApp.UseAuthentication();
+// webApp.UseAuthorization();
 
 //ensure identity tables are created
 using var scope = webApp.Services.CreateScope();
@@ -76,29 +69,30 @@ await webApp.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
 
 //worker run in the background do Cron jobs
 var workerBuilder = Host.CreateApplicationBuilder(args);
-workerBuilder.AddNatsClient(AppConstants.Nats);
+var apiBaseUrl = webBuilder.Configuration.GetValue<string>("ApiInfo:Url") ??
+                 throw new InvalidOperationException("Missing ApiInfo:Url");
+var apiKey = webBuilder.Configuration.GetValue<string>("ApiInfo:Key") ??
+             throw new InvalidOperationException("Missing ApiInfo:Key");
+
 workerBuilder.Services.AddSingleton<IStringMessageConsumer, NatsMessageBus>();
 
 workerBuilder.Services.AddHttpClient<AuthApiClient>(
-    (serviceProvider, client) =>
+    (_, client) =>
     {
-        client.BaseAddress = new Uri("http://localhost:5049/");
+        client.BaseAddress = new Uri(apiBaseUrl);
     }
 );
 
 workerBuilder.Services.AddHttpClient<AssetApiClient>(
-    (serviceProvider, client) =>
+    (_, client) =>
     {
-        client.BaseAddress = new Uri(
-            webBuilder.Configuration.GetValue<string>("ApiInfo:Url")
-                ?? throw new InvalidOperationException("Missing ApiInfo:Url")
-        );
-        client.DefaultRequestHeaders.Add(
-            "X-Cms-Adm-Api-Key",
-            webBuilder.Configuration.GetValue<string>("ApiInfo:Key")
-        );
+        client.BaseAddress = new Uri(apiBaseUrl );
+        client.DefaultRequestHeaders.Add( "X-Cms-Adm-Api-Key", apiKey);
     }
 );
 
-workerBuilder.Services.AddSqlServerCmsWorker(connectionString).WithNats(natsConnectionString);
+workerBuilder.Services
+    .AddSqlServerCmsWorker(connectionString);
+workerBuilder.Services.WithNats(natsConnectionString);
+workerBuilder.Services.AddVideoWorker(10);
 await Task.WhenAll(webApp.RunAsync(), workerBuilder.Build().RunAsync());

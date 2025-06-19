@@ -1,12 +1,22 @@
 using FormCMS.Infrastructure.RelationDbDao;
 using Microsoft.Data.Sqlite;
+using NATS.Client.Core;
 using Npgsql;
 using Microsoft.Data.SqlClient;
-using NATS.Client.Core;
 
-namespace FormCMS.Cms.Builders;
-
-public static class Utils
+namespace FormCMS.Utils.ServiceCollectionExt;
+public enum DatabaseProvider
+{
+    Sqlite,
+    Postgres,
+    SqlServer,
+}
+public enum MessagingProvider
+{
+    Nats,
+    Kafka,
+}
+public static class ServiceCollectionExtensions
 {
     public  static IServiceCollection  AddDao(this IServiceCollection services, DatabaseProvider databaseProvider, string connectionString)
     {
@@ -40,6 +50,7 @@ public static class Utils
         }
         return services;
     }
+    
     public static IServiceCollection AddMsg(
         this IServiceCollection services,
         MessagingProvider msgProvider,
@@ -53,10 +64,9 @@ public static class Utils
         };
         IServiceCollection AddNatsMessing()
         {
-            services.AddScoped(_ => new NatsConnection(new NatsOpts() { Url = connectionString }));
-
+            services.AddSingleton<INatsConnection>(new NatsConnection(new NatsOpts { Url = connectionString }));
             return services;
         }
         return services;
-    }
+    }    
 }

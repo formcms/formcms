@@ -6,17 +6,16 @@ using FormCMS.Utils.ResultExt;
 namespace FormCMS.Cms.Builders;
 
 public record QueryCollectionLinks(string Query, string Collection);
-public class MongoQueryBuilder(ILogger<MongoQueryBuilder> logger, QueryCollectionLinks[] queryLinksArray)
+public class DocumentDbQueryBuilder(ILogger<DocumentDbQueryBuilder> logger, QueryCollectionLinks[] queryLinksArray)
 {
-    public static IServiceCollection AddMongoDbQuery(IServiceCollection services, IEnumerable<QueryCollectionLinks> queryLinksArray)
+    public static IServiceCollection AddDocumentDbQuery(IServiceCollection services, IEnumerable<QueryCollectionLinks> queryLinksArray)
     {
         services.AddSingleton(queryLinksArray.ToArray());
-        services.AddSingleton<MongoQueryBuilder>();
-        services.AddScoped<IDocumentDbQuery,MongoDbQuery>();
+        services.AddSingleton<DocumentDbQueryBuilder>();
         return services;
     }
 
-    public WebApplication UseMongoDbQuery(WebApplication app)
+    public WebApplication UseDocumentDbQuery(WebApplication app)
     {
         Print();
         RegisterHooks(app);

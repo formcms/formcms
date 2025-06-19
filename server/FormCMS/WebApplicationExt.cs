@@ -1,11 +1,11 @@
 using FormCMS.Auth.Builders;
 using FormCMS.Cms.Builders;
-using FormCMS.Core.HookFactory;
 using FluentResults;
 using FormCMS.Activities.Builders;
 using FormCMS.AuditLogging.Builders;
 using FormCMS.Auth.Models;
 using FormCMS.Comments.Builders;
+using FormCMS.Utils.ServiceCollectionExt;
 using FormCMS.Video.Builders;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -27,26 +27,24 @@ public static class WebApplicationExt
         if (useOutputCache) app.UseOutputCache();
         
         await app.Services.GetRequiredService<CmsBuilder>().UseCmsAsync(app);
-        app.Services.GetService<MongoQueryBuilder>()?.UseMongoDbQuery(app);
-        app.Services.GetService<MessageProduceBuilder>()?.UseEventProducer(app);
+        app.Services.GetService<DocumentDbQueryBuilder>()?.UseDocumentDbQuery(app);
+        app.Services.GetService<CmsCrudMessageProduceBuilder>()?.UseEventProducer(app);
         app.Services.GetService<AuditLogBuilder>()?.UseAuditLog(app);
         //have to use comments before activity, activity query plugin can add like count
         app.Services.GetService<CommentBuilder>()?.UseComments(app);
         app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
+        app.Services.GetService<VideoMessageProducerBuilder>()?.UseVideo(app);
         
         app.UseRewriter(app.Services.GetRequiredService<RewriteOptions>());
     }
-
-    public static HookRegistry GetHookRegistry(this WebApplication app) =>
-        app.Services.GetRequiredService<HookRegistry>();
 
     public static async Task<Result> EnsureCmsUser(
         this WebApplication app, string email, string password, string[] role
     ) => await app.Services.GetRequiredService<IAuthBuilder>().EnsureCmsUser(app, email, password, role);
 
-    public static IServiceCollection AddMongoDbQuery(
+    public static IServiceCollection AddDocumentDbQuery(
         this IServiceCollection services, IEnumerable<QueryCollectionLinks> queryCollectionLinks
-        )=>MongoQueryBuilder.AddMongoDbQuery(services, queryCollectionLinks);
+        )=>DocumentDbQueryBuilder.AddDocumentDbQuery(services, queryCollectionLinks);
     
     public static IServiceCollection AddPostgresCms(
         this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
@@ -76,13 +74,9 @@ public static class WebApplicationExt
     public static IServiceCollection AddComments(this IServiceCollection services, bool enableBuffering=true)
         => CommentBuilder.AddComments(services);
     
-    public static IServiceCollection AddKafkaMessageProducer(
+    public static IServiceCollection AddMessageProducer(
         this IServiceCollection services, string[] entities
-    ) => MessageProduceBuilder.AddKafkaMessageProducer(services, entities);
-
-    public static IServiceCollection AddNatsMessageProducer(
-        this IServiceCollection services,string[] entities
-    ) => MessageProduceBuilder.AddNatsMessageProducer(services,entities);
+    ) => CmsCrudMessageProduceBuilder.AddMessageProducer(services, entities);
 
     public static IServiceCollection AddVideoMessageProducer(this IServiceCollection services)
         => VideoMessageProducerBuilder.AddVideoMessageProducer(services);
