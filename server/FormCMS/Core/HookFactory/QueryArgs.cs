@@ -20,6 +20,7 @@ public record QueryPostListArgs(
     Record[] RefRecords 
 ) : BaseArgs(Query.Name);
 
+
 public record QueryPreSingleArgs(
     LoadedQuery Query,
     Record? OutRecord = null
@@ -27,21 +28,30 @@ public record QueryPreSingleArgs(
 
 public record QueryPostSingleArgs(
     LoadedQuery Query,
-    Record RefRecord
+    Record RefRecord,
+    StrArgs StrArgs
 ) : BaseArgs(Query.Name);
 
 public record QueryPartialArgs(
-    LoadedQuery Query,
-    ExtendedGraphAttribute Attribute,
-    Span Span,
+    LoadedEntity ParentEntity,
+    GraphNode Node,
+    ValidSpan Span,
+    ValidPagination Pagination,
     long SourceId,
     Record[]? OutRecords  = null 
-):BaseArgs(Query.Name);
+):BaseArgs(Node.Field);
 
-/*
- * allow plugins to add fields/entities to GraphQl
- * this hook is called in synchronizing context, 
- */
-public record ExtendingGraphQlFieldArgs(
-    ImmutableArray<Entity> entities
-) : BaseArgs("");
+public record QueryPostPartialArgs(
+    GraphNode Node,
+    Record[] RefRecords  
+):BaseArgs(Node.Field);
+
+
+
+public record PlugInQueryArgs(
+    string Name,
+    Span Span,
+    Pagination Pagination,
+    StrArgs Args,
+    Record[]? OutRecords = null
+) : BaseArgs(Name);

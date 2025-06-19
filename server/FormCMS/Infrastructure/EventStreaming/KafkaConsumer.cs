@@ -4,9 +4,9 @@ namespace FormCMS.Infrastructure.EventStreaming;
 
 public class KafkaConsumer(ILogger<KafkaConsumer> logger, IConsumer<string, string> consumer) : IStringMessageConsumer
 {
-    public async Task Subscribe(Func<string, Task> handler, CancellationToken ct)
+    public async Task Subscribe(string topic, Func<string, Task> handler, CancellationToken ct)
     {
-        consumer.Subscribe(Topics.CmsCrud);
+        consumer.Subscribe(topic);
         while (!ct.IsCancellationRequested)
         {
             var s = consumer.Consume(ct).Message.Value;
@@ -20,4 +20,5 @@ public class KafkaConsumer(ILogger<KafkaConsumer> logger, IConsumer<string, stri
             }
         }
     }
+
 }

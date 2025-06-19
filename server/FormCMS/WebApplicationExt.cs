@@ -6,6 +6,7 @@ using FormCMS.Activities.Builders;
 using FormCMS.AuditLogging.Builders;
 using FormCMS.Auth.Models;
 using FormCMS.Comments.Builders;
+using FormCMS.Video.Builders;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Rewrite;
@@ -29,8 +30,9 @@ public static class WebApplicationExt
         app.Services.GetService<MongoQueryBuilder>()?.UseMongoDbQuery(app);
         app.Services.GetService<MessageProduceBuilder>()?.UseEventProducer(app);
         app.Services.GetService<AuditLogBuilder>()?.UseAuditLog(app);
-        app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
+        //have to use comments before activity, activity query plugin can add like count
         app.Services.GetService<CommentBuilder>()?.UseComments(app);
+        app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
         
         app.UseRewriter(app.Services.GetRequiredService<RewriteOptions>());
     }
@@ -81,4 +83,7 @@ public static class WebApplicationExt
     public static IServiceCollection AddNatsMessageProducer(
         this IServiceCollection services,string[] entities
     ) => MessageProduceBuilder.AddNatsMessageProducer(services,entities);
+
+    public static IServiceCollection AddVideoMessageProducer(this IServiceCollection services)
+        => VideoMessageProducerBuilder.AddVideoMessageProducer(services);
 }

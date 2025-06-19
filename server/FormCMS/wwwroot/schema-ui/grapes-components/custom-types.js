@@ -59,21 +59,11 @@ export const customTypes = [
         openTm: true
     },
     {
-        name: 'top-list',
-        traits:[
-            {name:"offset", label:'offset'},
-            {name:"entity", label:'entity'},
-            {name:"limit", label:'limit'},
-        ],
-        openTm:true
-    },
-    {
         name: 'comment-form',
+        openTm:true,
         traits: [
             {name: "data-entity", label: 'Entity Name'},
-            {name: "data-record-id", label: 'Record Id'}
-        ],
-        openTm:true
+        ]
     },
     /*standalone activity bar, load counts and status, 
     contrary to activity-bar in 'top list' */

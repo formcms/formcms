@@ -51,6 +51,7 @@
         <PackageReference Include="StackExchange.Redis" Version="2.8.31" />
         <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
         <PackageReference Include="System.Runtime.Caching" Version="9.0.0" />
+        <PackageReference Include="Xabe.FFmpeg" Version="6.0.1" />
     </ItemGroup>
 
     <ItemGroup>
@@ -61,11 +62,16 @@
       <Folder Include="wwwroot\static-assets\imgs\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\toast\jquery.toast.min.css" />
+      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\toast\jquery.toast.min.js" />
+    </ItemGroup>
+
     <PropertyGroup>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net9.0</TargetFramework>
         <PackageId>FormCMS</PackageId>
-        <Version>0.5.2</Version>
+        <Version>0.5.3</Version>
         <Authors>Jason Chen</Authors>
         <Company>FormCms</Company>
         <Description>A headless CMS with GraphQL API and drag-and-drop page designer.</Description>

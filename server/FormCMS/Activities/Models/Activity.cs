@@ -20,7 +20,7 @@ public record Activity(
     string Url = "",
     string Image = "",
     string Subtitle = "",
-    DateTime PublishedAt = default,
+    DateTime? PublishedAt = null,
     DateTime UpdatedAt = default
 );
 
@@ -94,7 +94,6 @@ public static class Activities
         {
             activity = activity with { PublishedAt = publishTime };
         }
-
         return activity;
         
         string Trim(string? s) => s?.Length > 255 ? s[..255] : s??"";

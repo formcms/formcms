@@ -4,14 +4,14 @@ export const topList = {
     label: 'Top List',
     media: `<svg viewBox="0 0 1024 1024" class="icon" xmlns="http://www.w3.org/2000/svg"><path d="M128 128h768v768H128z" fill="#E1F0FF"/><path d="M128 128h768v128H128zM128 256h768v128H128zM128 384h768v128H128zM128 512h768v128H128zM128 640h768v128H128z" fill="#446EB1"/><path d="M128 128h128v640H128z" fill="#6D9EE8"/></svg>`,
     content: `
-<div class="py-6" data-gjs-type="top-list"  data-component="top-list" offset="0" limit="5">
+<div class="py-6" data-gjs-type="data-list"  data-component="data-list" query="topList" qs="entity=" offset="0" limit="5">
     <h3 class="sm:text-2xl text-2xl font-bold title-font mb-2 text-gray-900">Top List</h3>
     <div class="mt-4"  data-gjs-type="foreach" data-component="foreach">
         <div class="lg:border-t5-100 max-md:border-t5-100 bg-white p-3 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 mb-2">
             <div class="flex items-start">
                 <div class="font-source w-10 shrink-0 text-3xl italic text-gray-500">{{i}}</div>
                 <div class="flex-1">
-                    <a href="/page/{{id}}" data-title="true" class="block">
+                    <a href="/page/{{recordId}}" data-title="true" class="block">
                         <h3 class="text-lg font-serif font-extrabold text-gray-800 hover:text-blue-600 transition-colors duration-200">{{title}}</h3>
                     </a>
                     <div class="flex items-center gap-2 text-xs text-gray-500 mt-2" data-component="activity-bar" data-gjs-type="activity-bar">

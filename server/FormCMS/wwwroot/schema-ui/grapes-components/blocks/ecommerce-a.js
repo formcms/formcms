@@ -41,7 +41,7 @@ export const ecommerceA = {
             </div>
           </div>
         </div>
-        <div class="flex justify-center mt-2 space-x-4"  data-gjs-type="pagination" >
+        <div class="flex justify-center mt-2 space-x-4" data-component="pagination" >
           <button data-component="previous" class="px-4 py-2 text-xs font-medium text-white bg-indigo-400 border border-gray-200 rounded-lg shadow-sm transition-all duration-200 ease-in-out hover:bg-indigo-500 hover:border-gray-300 hover:shadow-md hover:-translate-y-px disabled:bg-gray-200 disabled:text-gray-400 disabled:border-gray-300 disabled:shadow-none disabled:cursor-not-allowed">Previous</button>
           <button data-component="next" class="px-4 py-2 text-xs font-medium text-white bg-indigo-400 border border-gray-200 rounded-lg shadow-sm transition-all duration-200 ease-in-out hover:bg-indigo-500 hover:border-gray-300 hover:shadow-md hover:-translate-y-px disabled:bg-gray-200 disabled:text-gray-400 disabled:border-gray-300 disabled:shadow-none disabled:cursor-not-allowed">Next</button>
         </div>

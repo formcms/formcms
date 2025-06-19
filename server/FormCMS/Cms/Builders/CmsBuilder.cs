@@ -2,13 +2,14 @@ using System.Collections.Immutable;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using FormCMS.Activities.Services;
 using FormCMS.Cms.Graph;
 using FormCMS.Cms.Handlers;
 using FormCMS.Cms.Services;
+using FormCMS.Core.Assets;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Identities;
+using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.Cache;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
@@ -29,6 +30,12 @@ public enum DatabaseProvider
     Postgres,
     SqlServer,
 }
+public enum MessagingProvider
+{
+    Nats,
+    Kafka,
+    InMemory,
+}
 
 public sealed record Problem(string Title, string? Detail = null);
 
@@ -45,6 +52,8 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         Action<SystemSettings>? optionsAction = null
     )
     {
+        services.AddSingleton<CmsBuilder>();
+        
         //only set options to FormCMS enum types.
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<DataType>);
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<DisplayType>);
@@ -56,11 +65,19 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         optionsAction?.Invoke(systemSettings);
         services.AddSingleton(systemSettings);
 
-        var systemResources = new RestrictedFeatures([Menus.MenuSchemaBuilder, Menus.MenuTasks]);
-        services.AddSingleton(systemResources);
+        var registry = new PluginRegistry(
+            FeatureMenus: [Menus.MenuSchemaBuilder, Menus.MenuTasks],
+            PluginQueries: [],
+            PluginEntities: new Dictionary<string, Entity>
+            {
+                { Assets.XEntity.Name, Assets.Entity },
+                { PublicUserInfos.Entity.Name, PublicUserInfos.Entity }
+            },
+            PluginAttributes: []);
+        
+        services.AddSingleton(registry);
 
         services.AddSingleton(new DbOption(databaseProvider, connectionString));
-        services.AddSingleton<CmsBuilder>();
         services.AddSingleton<HookRegistry>();
 
         services.AddDao(databaseProvider, connectionString);
@@ -113,7 +130,6 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             services.AddScoped<IPageService, PageService>();
 
             services.AddScoped<IIdentityService, DummyIdentityService>();
-            services.AddScoped<ITopItemService, DummyTopItemService>();
 
             services.AddHttpClient(); //needed by task service
             services.AddScoped<ITaskService, TaskService>();
@@ -149,7 +165,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             services.AddScoped<FilterExpr>();
             services.AddScoped<SortExpr>();
             services.AddScoped<SortExpr>();
-            services.AddScoped<AssetGraphType>();
+            // services.AddScoped<AssetGraphType>();
             services.AddScoped<JsonGraphType>();
 
             services.AddGraphQL(b =>

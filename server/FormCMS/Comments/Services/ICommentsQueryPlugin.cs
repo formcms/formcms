@@ -1,10 +1,19 @@
-using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 
 namespace FormCMS.Comments.Services;
 
 public interface ICommentsQueryPlugin
 {
-    Task LoadComments(LoadedQuery query, Record[] records, CancellationToken ct);
-    Task<Record[]> GetPartialQueryComments(LoadedQuery query,ExtendedGraphAttribute commentsAttr ,Span span, long recordId, CancellationToken ct);
+    Task AttachComments(
+        LoadedEntity entity,
+        GraphNode[] nodes,
+        Record record,
+        StrArgs args,
+        CancellationToken ct);
+
+    Task<Record[]> GetByFilters(ValidFilter[] filters, ValidSort[] sorts, ValidPagination pagination, ValidSpan span,
+        CancellationToken ct);
+
+    Task<Record[]> GetByEntityRecordId(string entityName, long recordId,
+        ValidPagination pg, ValidSpan sp, ValidSort[] sorts, CancellationToken ct);
 }

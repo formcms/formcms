@@ -1,66 +1,89 @@
-import {loadNavBar} from "./nav-bar.js";
-import {single} from "./repo.js";
-import {getParams} from "./searchParamUtil.js";
-import {queryKeys} from "./types.js";
+import {loadNavBar} from "./components/navbar.js";
+import {single} from "./services/services.js";
+import {getParams} from "./util/searchParamUtil.js";
+import {queryKeys} from "./models/types.js";
+import {hideOverlay, showOverlay} from "./util/loadingOverlay.js";
 
-const [navBox,headerBox, diffBox] = ["#nav-box","#header-box","#diff-box"];
-$(document).ready(function() {
-    const [oldId,newId,schemaId, type] = getParams([queryKeys.oldId,queryKeys.newId, queryKeys.schemaId, queryKeys.type]);
-    addActionButtons(schemaId, type); 
-    loadNavBar(navBox);
-    initializeEditor(oldId,newId);
-});
+const [navBox, headerBox, diffBox] = ["#nav-box", "#header-box", "#diff-box"];
 
-function addActionButtons(schemaId,type){
-    $(headerBox).html(
-    `<a href="history.html?${queryKeys.schemaId}=${schemaId}&${queryKeys.type}=${type}"  
-            class="btn btn-secondary btn-sm badge">Back</a>`
-    );
-    
+const [oldId, newId, schemaId, type] = getParams([
+    queryKeys.oldId,
+    queryKeys.newId,
+    queryKeys.schemaId,
+    queryKeys.type
+]);
+
+addActionButtons(schemaId, type);
+loadNavBar(navBox);
+initializeEditor(oldId, newId);
+
+function addActionButtons(schemaId, type) {
+    const header = document.querySelector(headerBox);
+    header.innerHTML = `
+        <a href="history.html?${queryKeys.schemaId}=${schemaId}&${queryKeys.type}=${type}"  
+           class="btn btn-secondary btn-sm badge">Back</a>
+    `;
 }
 
-function initializeEditor(oldId,newId) {
-    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+function initializeEditor(oldId, newId) {
+    require.config({
+        paths: {
+            'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs'
+        }
+    });
+
     require(["vs/editor/editor.main"], async function () {
-        const diffEditor = monaco.editor.createDiffEditor($(diffBox)[0], {
+        const diffContainer = document.querySelector(diffBox);
+
+        const diffEditor = monaco.editor.createDiffEditor(diffContainer, {
             theme: "vs-dark",
             readOnly: false,
             enableSplitViewResizing: true,
         });
-        
-        $.LoadingOverlay("show");
-        let [{data: oldSchema, error: err1},{data: newSchema, error:err2}] = await Promise.all([ single(oldId), single(newId)]);
-        $.LoadingOverlay("hide");
-        
-        if (err1|| err2){
-            const error = err1.error + err2.error;
-            $('#errorPanel').text(error).show(); 
+
+        showOverlay();
+
+        const [oldResult, newResult] = await Promise.all([
+            single(oldId),
+            single(newId)
+        ]);
+
+        hideOverlay();
+
+        if (oldResult.error || newResult.error) {
+            const errorPanel = document.getElementById('errorPanel');
+            errorPanel.textContent = (oldResult.error || '') + (newResult.error || '');
+            errorPanel.style.display = 'block';
             return;
         }
+
+        let oldSchema = oldResult.data;
+        let newSchema = newResult.data;
         const type = oldSchema.type;
 
         oldSchema = oldSchema.settings[type];
         newSchema = newSchema.settings[type];
-        
-        let lan; 
-        if(type === 'query') {
+
+        let lan;
+        let originalCode, modifiedCode;
+
+        if (type === 'query') {
             lan = "graphql";
-            oldSchema = oldSchema.source;
-            newSchema = newSchema.source;
-        }else if (type === 'page') {
+            originalCode = oldSchema.source;
+            modifiedCode = newSchema.source;
+        } else if (type === 'page') {
             lan = "json";
-            oldSchema = JSON.stringify(JSON.parse(oldSchema.components),null, 2);
-            newSchema = JSON.stringify(JSON.parse(newSchema.components),null, 2);
-        }else{
+            originalCode = JSON.stringify(JSON.parse(oldSchema.components), null, 2);
+            modifiedCode = JSON.stringify(JSON.parse(newSchema.components), null, 2);
+        } else {
             lan = "json";
-            oldSchema = JSON.stringify(oldSchema,null,2);
-            newSchema = JSON.stringify(newSchema,null,2);
+            originalCode = JSON.stringify(oldSchema, null, 2);
+            modifiedCode = JSON.stringify(newSchema, null, 2);
         }
-        
-        
+
         diffEditor.setModel({
-            original: monaco.editor.createModel(oldSchema, lan),
-            modified: monaco.editor.createModel(newSchema, lan),
+            original: monaco.editor.createModel(originalCode, lan),
+            modified: monaco.editor.createModel(modifiedCode, lan),
         });
     });
 }

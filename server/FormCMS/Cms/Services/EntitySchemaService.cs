@@ -4,6 +4,7 @@ using FluentResults;
 using FluentResults.Extensions;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
+using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
@@ -19,7 +20,8 @@ public sealed class EntitySchemaService(
     IRelationDbDao dao,
     KeyValueCache<ImmutableArray<Entity>> entityCache,
     HookRegistry hook,
-    IServiceProvider provider
+    IServiceProvider provider,
+    PluginRegistry registry
 ) : IEntitySchemaService
 {
     public ValueTask<ImmutableArray<Entity>> AllEntities(CancellationToken ct)
@@ -34,24 +36,16 @@ public sealed class EntitySchemaService(
         }, ct);
     }
 
-    public async ValueTask<ImmutableArray<Entity>> ExtendedEntities(CancellationToken ct)
+    public async Task<Schema> AddOrUpdateByName(Entity entity,bool asPublished, CancellationToken ct)
     {
-        var entities = await AllEntities(ct);
-        var res = await hook.ExtendEntity.Trigger( provider,new ExtendingGraphQlFieldArgs(entities) );
-        return res.entities;
-    }
-
-    public async Task<Schema> AddOrUpdateByName(Entity entity, CancellationToken ct)
-    {
-        var find = await schemaSvc.GetByNameDefault(entity.Name, SchemaType.Entity,null, ct);
+        var find = await schemaSvc.ByNameOrDefault(entity.Name, SchemaType.Entity,null, ct);
         var schema = ToSchema(entity,find?.SchemaId??"", find?.Id ?? 0);
-        return await SaveTableDefine(schema, ct);
+        return await SaveTableDefine(schema, asPublished,ct);
     }
 
-
-    public async Task<Schema> Save(Schema schema, CancellationToken ct)
+    public async Task<Schema> Save(Schema schema,bool asPublished, CancellationToken ct)
     {
-        var ret = await schemaSvc.SaveWithAction(schema, ct);
+        var ret = await schemaSvc.SaveWithAction(schema, asPublished,ct);
         await entityCache.Remove("", ct);
         return ret;
     }
@@ -112,12 +106,12 @@ public sealed class EntitySchemaService(
             );
     }
 
-    public async Task SaveTableDefine(Entity entity, CancellationToken token = default)
+    public async Task SaveTableDefine(Entity entity, bool asPublished, CancellationToken token = default)
     {
-        await SaveTableDefine(ToSchema(entity), token);
+        await SaveTableDefine(ToSchema(entity), asPublished,token);
     }
 
-    public async Task<Schema> SaveTableDefine(Schema schema, CancellationToken ct = default)
+    public async Task<Schema> SaveTableDefine(Schema schema, bool asPublished, CancellationToken ct = default)
     {
         schema = schema with { Name = schema.Settings.Entity!.Name };
         
@@ -134,7 +128,7 @@ public sealed class EntitySchemaService(
         
         try
         {
-            schema = await schemaSvc.Save(schema, ct);
+            schema = await schemaSvc.Save(schema, asPublished, ct);
             await CreateMainTable(schema.Settings.Entity!, cols, ct);
             await schemaSvc.EnsureEntityInTopMenuBar(schema.Settings.Entity!, ct);
             
@@ -200,7 +194,10 @@ public sealed class EntitySchemaService(
         PublicationStatus? status,
         CancellationToken ct = default)
     {
-        var loadedAttr = entity.Attributes.FirstOrDefault(x=>x.Field.Camelize()==attrName);
+        var loadedAttr = registry.PluginAttributes.TryGetValue(attrName,out var attribute)?
+            attribute.ToLoaded(""):
+            entity.Attributes.FirstOrDefault(x=>x.Field.Camelize()==attrName);
+        
         if (loadedAttr is null)
             return Result.Fail($"Load single attribute fail, cannot find [{attrName}] in [{entity.Name}]");
 
@@ -210,7 +207,12 @@ public sealed class EntitySchemaService(
 
     private async Task<Result<Entity>> GetEntity(string name, PublicationStatus?status, CancellationToken token = default)
     {
-        var item = await schemaSvc.GetByNameDefault(name, SchemaType.Entity, status, token);
+        if (registry.PluginEntities.TryGetValue(name, out var plugin))
+        {
+            return plugin;
+        }
+        
+        var item = await schemaSvc.ByNameOrDefault(name, SchemaType.Entity, status, token);
         if (item is null)
         {
             return Result.Fail($"Cannot find entity [{name}]");

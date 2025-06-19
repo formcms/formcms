@@ -1,35 +1,41 @@
-import {checkUser} from "./checkUser.js";
-import {renderSchemaTable} from "./listUtil.js";
-import {list} from "./repo.js";
-import {loadNavBar} from "./nav-bar.js";
-import {queryKeys, schemaTypes} from "./types.js";
-import {getParams} from "./searchParamUtil.js";
+import { checkUser } from "./util/checkUser.js";
+import { renderSchemaTable } from "./util/listUtil.js";
+import { list } from "./services/services.js";
+import { loadNavBar } from "./components/navbar.js";
+import { queryKeys, schemaTypes } from "./models/types.js";
+import { getParams } from "./util/searchParamUtil.js";
 
-const [navBox, headerBox,tableBox, errorBox] = ['#nav-box','#header-box','#table-box','#error-box'];
+checkUser(async () => {
+    // Get element references using querySelector
+    const navBox = document.querySelector('#nav-box');
+    const headerBox = document.querySelector('#header-box');
+    const tableBox = document.querySelector('#table-box');
+    const errorBox = document.querySelector('#error-box');
 
-$(document).ready(function() {
     const [type] = getParams([queryKeys.type]);
-    
+
     loadNavBar(navBox);
     loadHeaderBar(type);
-    checkUser(async ()=>{
-        await renderSchemaTable(
-            tableBox,
-            errorBox,
-            ()=>list(type), 
-            {showDelete:true, showViewHistory:true}
-        );
-    });
+    await renderSchemaTable(
+        tableBox,
+        errorBox,
+        () => list(type),
+        { showDelete: true, showViewHistory: true }
+    );
+    function loadHeaderBar(type) {
+        let html = '';
+        if (type === schemaTypes.entity) {
+            html = `<a id="addEntity" class="btn btn-primary" href="./edit.html?type=entity">Add Entity</a>`;
+        } else if (type === schemaTypes.page) {
+            html = `<a id="addPage" class="btn btn-primary" href="./page.html">Add Page</a>`;
+        } else if (type === schemaTypes.query) {
+            html = `<a id="addQuery" class="btn btn-primary" href="/api/schemas/graphql">Add Query</a>`;
+        }
+
+        if (headerBox) {
+            headerBox.innerHTML = html;
+        }
+    }
 });
 
-function loadHeaderBar(type) {
-    let html ;
-    if (type === schemaTypes.entity) {
-        html = `<a id="addEntity" class="btn btn-primary" href="./edit.html?type=entity">Add Entity</a>`
-    }else if (type === schemaTypes.page) {
-        html = `<a id="addPage" class="btn btn-primary" href="./page.html">Add Page</a>`
-    }else if (type === schemaTypes.query) {
-        html = `<a id="addQuery" class="btn btn-primary" href="/api/schemas/graphql">Add Query</a>`
-    }
-    $(headerBox).html(html);
-}
+

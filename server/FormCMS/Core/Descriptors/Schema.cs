@@ -70,12 +70,11 @@ public static class SchemaHelper
             .OrderByDesc(nameof(Schema.Id).Camelize())
             .Where(nameof(Schema.SchemaId).Camelize(), schemaId);
 
-    public static SqlKata.Query StartsNotEqualNameAndType(string name, SchemaType type,
+    public static SqlKata.Query StartsAndType(string name, SchemaType type,
         PublicationStatus? publicationStatus)
         => BaseQuery()
             .WithStatus(publicationStatus)
             .WhereStarts(nameof(Schema.Name).Camelize(), name)
-            .WhereNot(nameof(Schema.Name).Camelize(), name)
             .Where(nameof(Schema.Type).Camelize(), type.Camelize());
     
 
@@ -130,49 +129,33 @@ public static class SchemaHelper
             .AsUpdate([DefaultColumnNames.Deleted.Camelize()], [true]);
     }
 
-    public static SqlKata.Query[] Publish(this Schema schema)
-    {
-        return
-        [
-            new SqlKata.Query(TableName)
-                .Where(nameof(Schema.SchemaId).Camelize(), schema.SchemaId)
-                .Where(nameof(Schema.PublicationStatus).Camelize(), PublicationStatus.Published.Camelize())
-                .AsUpdate([nameof(Schema.PublicationStatus).Camelize()], [PublicationStatus.Draft.Camelize()]),
-            
-            new SqlKata.Query(TableName)
-                .Where(nameof(Schema.Id).Camelize(), schema.Id)
-                .AsUpdate([nameof(Schema.PublicationStatus).Camelize()], [PublicationStatus.Published.Camelize()]),
-        ];
-    }
+    public static SqlKata.Query Publish(this Schema schema)
+        => new SqlKata.Query(TableName)
+            .Where(nameof(Schema.Id).Camelize(), schema.Id)
+            .AsUpdate([nameof(Schema.PublicationStatus).Camelize()], [PublicationStatus.Published.Camelize()]);
 
-    public static Schema Init(this Schema schema)
-    {
-        if (string.IsNullOrEmpty(schema.SchemaId))
+    public static Schema Init(this Schema schema, bool asPublished)
+        => schema with
         {
-            schema = schema with
-            {
-                IsLatest = true,
-                SchemaId = Ulid.NewUlid().ToString(),
-                PublicationStatus = PublicationStatus.Published //the first version should be published
-            };
-        }
-        else
-        {
-            schema = schema with
-            {
-                IsLatest = true,
-                PublicationStatus = PublicationStatus.Draft
-            };
-        }
-        return schema;
-    }
+            IsLatest = true,
+            SchemaId = string.IsNullOrEmpty(schema.SchemaId) ? Ulid.NewUlid().ToString() : schema.SchemaId,
+            PublicationStatus = asPublished || string.IsNullOrEmpty(schema.SchemaId)
+                ? PublicationStatus.Published
+                : PublicationStatus.Draft
+        };
 
     public static SqlKata.Query ResetLatest(this Schema schema)
         => new SqlKata.Query(TableName)
             .Where(nameof(Schema.SchemaId).Camelize(), schema.SchemaId)
             .Where(nameof(Schema.IsLatest).Camelize(), true)
             .AsUpdate([nameof(Schema.IsLatest).Camelize()], [false]);
-    
+
+    public static SqlKata.Query ResetPublished(this Schema schema)
+        => new SqlKata.Query(TableName)
+            .Where(nameof(Schema.SchemaId).Camelize(), schema.SchemaId)
+            .Where(nameof(Schema.PublicationStatus).Camelize(), PublicationStatus.Published.Camelize())
+            .AsUpdate([nameof(Schema.PublicationStatus).Camelize()], [PublicationStatus.Draft.Camelize()]);
+
     public static SqlKata.Query Save(this Schema schema)
     {
         HashSet<string> fields =

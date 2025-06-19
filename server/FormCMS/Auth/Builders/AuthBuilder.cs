@@ -1,27 +1,33 @@
 using System.Security.Claims;
-using FormCMS.Auth.Handlers;
 using FluentResults;
+using FormCMS.Auth.Handlers;
 using FormCMS.Auth.Models;
 using FormCMS.Auth.Services;
 using FormCMS.Cms.Services;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Identities;
+using FormCMS.Core.Plugins;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace FormCMS.Auth.Builders;
 
 public record OAuthCredential(string ClientId, string ClientSecret);
-public record OAuthConfig(OAuthCredential? Github);
-public record AuthConfig(OAuthConfig? OAuthConfig = null);
 
-public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger): IAuthBuilder
+public record OAuthConfig(OAuthCredential? Github);
+
+public record AuthConfig(OAuthConfig? OAuthConfig = null, KeyAuthConfig? KeyAuthConfig = null);
+
+public record KeyAuthConfig(string Key);
+
+public sealed class AuthBuilder<TCmsUser>(ILogger<AuthBuilder<TCmsUser>> logger) : IAuthBuilder
     where TCmsUser : IdentityUser, new()
 {
     public static IServiceCollection AddCmsAuth<TUser, TRole, TContext>(
         IServiceCollection services,
-        AuthConfig authConfig 
-        )
+        AuthConfig authConfig
+    )
         where TUser : CmsUser, new()
         where TRole : IdentityRole, new()
         where TContext : IdentityDbContext<TUser>
@@ -29,20 +35,20 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
         //add the builder itself, so the Web application knows if the feature is enabled
         services.AddSingleton(authConfig);
         services.AddSingleton<IAuthBuilder, AuthBuilder<TUser>>();
-        
-        services.AddIdentity<TUser,TRole>().AddEntityFrameworkStores<TContext>(); 
-        
+
+        services.AddIdentity<TUser, TRole>().AddEntityFrameworkStores<TContext>();
+
         services.AddHttpContextAccessor();
-        
+
         if (authConfig.OAuthConfig is not null)
         {
-            var oAuthConfig  = authConfig.OAuthConfig;
-            var authenticationBuilder = services.AddAuthentication(options =>
+            var oAuthConfig = authConfig.OAuthConfig;
+            var authenticationBuilder = services
+                .AddAuthentication(options =>
                 {
                     options.DefaultScheme = IdentityConstants.ApplicationScheme;
                 })
-                
-                .AddCookie(options=>
+                .AddCookie(options =>
                 {
                     options.Cookie.Name = ".AspNetCore.Identity.Application";
                 });
@@ -55,12 +61,55 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
                     options.ClientSecret = github.ClientSecret;
                     options.Scope.Add("user:email");
 
-                    options.Events.OnCreatingTicket =
-                        context =>
-                            context.HttpContext.RequestServices.GetRequiredService<ILoginService>()
-                                .HandleGithubCallback(context);
+                    options.Events.OnCreatingTicket = context =>
+                        context
+                            .HttpContext.RequestServices.GetRequiredService<ILoginService>()
+                            .HandleGithubCallback(context);
                 });
             }
+        }
+        if (authConfig.KeyAuthConfig is not null)
+        {
+            var authenticationBuilder = services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultScheme = IdentityConstants.ApplicationScheme;
+                })
+                .AddCookie(options =>
+                {
+                    options.Cookie.Name = ".AspNetCore.Identity.Application";
+                })
+                .AddApiKey(
+                    "ApiKey",
+                    (
+                        config =>
+                        {
+                            config.ApiKeyHeaderName = "X-Cms-Adm-Api-Key";
+                        }
+                    )
+                );
+
+            services
+                .AddAuthentication(options =>
+                {
+                    options.DefaultAuthenticateScheme = "CombinedSchemes";
+                    options.DefaultChallengeScheme = "CombinedSchemes";
+                })
+                .AddPolicyScheme(
+                    "CombinedSchemes",
+                    "Cookie  or ApiKey",
+                    options =>
+                    {
+                        options.ForwardDefaultSelector = context =>
+                        {
+                            // Check for API Key in header
+                            if (context.Request.Headers.ContainsKey("X-Cms-Adm-Api-Key"))
+                                return ApiKeyAuthenticationOptions.DefaultScheme;
+
+                            return IdentityConstants.ApplicationScheme;
+                        };
+                    }
+                );
         }
 
         services.AddScoped<IUserClaimsPrincipalFactory<CmsUser>, CustomPrincipalFactory>();
@@ -69,11 +118,11 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
         services.AddScoped<IUserManageService, UserManageService<TUser>>();
         services.AddScoped<IProfileService, ProfileService<TUser>>();
         services.AddScoped<IAccountService, AccountService<TUser, TRole, TContext>>();
-        
+
         services.AddScoped<ISchemaAuthService, SchemaAuthService>();
         services.AddScoped<IEntityAuthService, EntityAuthService>();
         services.AddScoped<IAssetAuthService, AssetAuthService>();
-        
+
         return services;
     }
 
@@ -86,7 +135,8 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
             app.UseAuthentication();
         }
 
-        app.Services.GetService<RestrictedFeatures>()?.Menus.AddRange(AuthManageMenus.MenuRoles,AuthManageMenus.MenuUsers);
+        app.Services.GetService<PluginRegistry>()?.FeatureMenus.Add(AuthManageMenus.MenuRoles);
+        app.Services.GetService<PluginRegistry>()?.FeatureMenus.Add(AuthManageMenus.MenuUsers);
         
         MapEndpoints();
         RegisterHooks();
@@ -110,13 +160,18 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
         }
     }
 
-    public async Task<Result> EnsureCmsUser(WebApplication app, string email, string password, string[] role)
+    public async Task<Result> EnsureCmsUser(
+        WebApplication app,
+        string email,
+        string password,
+        string[] role
+    )
     {
         using var scope = app.Services.CreateScope();
-        return await scope.ServiceProvider.GetRequiredService<IAccountService>().EnsureUser(email, password,role);
+        return await scope
+            .ServiceProvider.GetRequiredService<IAccountService>()
+            .EnsureUser(email, password, role);
     }
-
-
 
     private void Print()
     {
@@ -125,6 +180,7 @@ public sealed class AuthBuilder<TCmsUser> (ILogger<AuthBuilder<TCmsUser>> logger
             *********************************************************
             Using CMS Auth API endpoints
             *********************************************************
-            """);
+            """
+        );
     }
 }

@@ -157,12 +157,12 @@ public static class SortHelper
             else
             {
                 if (!(await vectorResolver.ResolveVector(entity, sort.Field,schemaStatus))
-                    .Try(out var attr, out var err))
+                    .Try(out var vector, out var err))
                 {
                     return Result.Fail(err);
                 }
 
-                ret.Add(new ValidSort(attr, sort.Field, sort.Order));
+                ret.Add(new ValidSort(vector, sort.Field, sort.Order));
             }
         }
 

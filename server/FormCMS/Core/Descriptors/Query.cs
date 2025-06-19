@@ -2,7 +2,6 @@ using System.Collections.Immutable;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
 using FormCMS.Utils.DataModels;
-using GraphQLParser.AST;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -24,8 +23,7 @@ public sealed record LoadedQuery(
     string Source,
     LoadedEntity Entity,
     Pagination? Pagination,
-    ImmutableArray<GraphAttribute> Selection , 
-    ImmutableArray<ExtendedGraphAttribute> ExtendedSelection,
+    ImmutableArray<GraphNode> Selection , 
     ImmutableArray<ValidFilter> Filters, 
     ImmutableArray<ValidSort> Sorts,
     ImmutableArray<string> ReqVariables,
@@ -45,8 +43,7 @@ public static class QueryHelper
 {
     public static LoadedQuery ToLoadedQuery(this Query query,
         LoadedEntity entity,
-        IEnumerable<GraphAttribute> selection,
-        IEnumerable<ExtendedGraphAttribute> extendedSelection,
+        IEnumerable<GraphNode> selection,
         IEnumerable<ValidSort> sorts,
         IEnumerable<ValidFilter> filters
     )
@@ -58,21 +55,18 @@ public static class QueryHelper
             ReqVariables: query.ReqVariables,
             Entity: entity,
             Selection: [..selection],
-            ExtendedSelection: [..extendedSelection],
             Sorts: [..sorts],
             Filters: [..filters],
             Distinct: query.Distinct
         );
     }
 
-    public static Result VerifyVariable(this LoadedQuery query, StrArgs args)
+    public static void VerifyVariable(this LoadedQuery query, StrArgs args)
     {
         foreach (var key in query.ReqVariables.Where(key => !args.ContainsKey(key)))
         {
-            return Result.Fail($"Variable {key} doesn't exist");
+            throw new  ResultException($"Variable {key} doesn't exist");
         }
-
-        return Result.Ok();
     }
 
     public static Result<QueryArgs> ParseArguments(IArgument[] args)

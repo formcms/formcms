@@ -1,6 +1,7 @@
 using FormCMS.Activities.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
+using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.EnumExt;
@@ -56,12 +57,12 @@ public class ActivityCollectService(
     {
         var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
         var ret = new Dictionary<string, StatusDto>();
-        foreach (var pair in await InternalRecord(cookieUserId,entity,entityName, recordId, settings.AutoRecordActivities.ToArray(), ct))
+        foreach (var pair in await InternalRecord(cookieUserId,entity,entityName, recordId, settings.CommandAutoRecordActivities.ToArray(), ct))
         {
             ret[pair.Key] = new StatusDto(true, pair.Value);
         }
 
-        string[] types = [..settings.ToggleActivities, ..settings.RecordActivities];
+        string[] types = [..settings.CommandToggleActivities, ..settings.CommandRecordActivities];
         var userId = identityService.GetUserAccess()?.Id;
         
         var counts = types.Select(x => 
@@ -118,8 +119,8 @@ public class ActivityCollectService(
     {
 
         if (activityTypes.Any(t =>
-                !settings.RecordActivities.Contains(t) &&
-                !settings.AutoRecordActivities.Contains(t)))
+                !settings.CommandRecordActivities.Contains(t) &&
+                !settings.CommandAutoRecordActivities.Contains(t)))
         {
             throw new ResultException("One or more activity types are not supported.");
         }
@@ -135,7 +136,7 @@ public class ActivityCollectService(
         bool isActive,
         CancellationToken ct)
     {
-        if (!settings.ToggleActivities.Contains(activityType))
+        if (!settings.CommandToggleActivities.Contains(activityType))
             throw new ResultException($"Activity type {activityType} is not supported");
 
         if (identityService.GetUserAccess() is not { Id: var userId })
@@ -174,6 +175,7 @@ public class ActivityCollectService(
                     ct))
                 .FirstOrDefault().Value
         };
+        
         await UpdateScore(entity,[count],ct);
         return ret;
 
@@ -201,6 +203,8 @@ public class ActivityCollectService(
 
     private async Task UpdateScore(LoadedEntity entity,ActivityCount[] counts, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(entity.BookmarkQuery)) return;
+        
         foreach (var a in counts)
         {
             await UpdateOneScore(a);
@@ -304,6 +308,11 @@ public class ActivityCollectService(
     }
     private async Task<Activity[]> LoadMetaData(LoadedEntity entity, Activity[] activities, CancellationToken ct)
     {
+        if (string.IsNullOrWhiteSpace(entity.BookmarkQuery))
+        {
+            return activities;
+        }
+        
         var ids = activities
             .Where(x=>x.IsActive)
             .Select(x => x.RecordId.ToString())

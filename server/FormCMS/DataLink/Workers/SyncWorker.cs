@@ -3,6 +3,7 @@ using FormCMS.Utils.HttpClientExt;
 using FormCMS.Utils.jsonElementExt;
 using FormCMS.Utils.ResultExt;
 using FluentResults;
+using FormCMS.Core.Messaging;
 using FormCMS.DataLink.Types;
 using FormCMS.Infrastructure.DocumentDbDao;
 using FormCMS.Infrastructure.EventStreaming;
@@ -21,7 +22,7 @@ public sealed class SyncWorker(
     private readonly HttpClient _httpClient = new();
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
-        await consumer.Subscribe(async s =>
+        await consumer.Subscribe(Topics.CmsCrud,async s =>
         {
             using var scope = serviceScopeFactory.CreateScope();
             var dao = scope.ServiceProvider.GetRequiredService<IDocumentDbDao>();

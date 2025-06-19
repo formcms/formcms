@@ -1,5 +1,6 @@
 using FormCMS.Core.Assets;
 using FormCMS.Core.HookFactory;
+using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
@@ -9,6 +10,8 @@ using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
 using NUlid;
+using System.Text.Json;
+using static Confluent.Kafka.ConfigPropertyNames;
 
 namespace FormCMS.Cms.Services;
 
@@ -45,7 +48,7 @@ public class AssetService(
         {
             throw new ResultException("Access denied");
         }
-        return withLinkCount ? Assets.EntityWithLinkCount : Assets.Entity;
+        return withLinkCount ? Assets.EntityWithLinkCount : Assets.XEntity;
     }
 
     public string GetBaseUrl() => store.GetUrl("");
@@ -95,15 +98,17 @@ public class AssetService(
         var assets = new List<Asset>();
         foreach (var (fileName, file) in pairs)
         {
+         
             var asset = new Asset(
-                CreatedBy: "",
-                Path: "/" + fileName,
-                Url: store.GetUrl(fileName),
-                Name: file.FileName,
-                Title: file.FileName,
-                Size: file.Length,
-                Type: file.ContentType,
-                Metadata: new Dictionary<string, object>());
+                    CreatedBy: "",
+                    Path: "/" + fileName,
+                    Url: store.GetUrl(fileName),
+                    Name: file.FileName,
+                    Title: file.FileName,
+                    Size: file.Length,
+                    Type: file.ContentType,
+                    Metadata: new Dictionary<string, object>()
+                );
             var res =await hookRegistry.AssetPreAdd.Trigger(provider, new AssetPreAddArgs(asset));
             asset = res.RefAsset;
             assets.Add(asset);
@@ -234,5 +239,11 @@ public class AssetService(
             var id = item.StrOrEmpty(nameof(Asset.Id).Camelize());
             item[nameof(Asset.LinkCount).Camelize()] = dict.TryGetValue(id, out var val) ? val : 0;
         }
+    }
+
+    public async  Task UpdateHlsProgress(Asset asset, CancellationToken ct)
+    {
+        await hookRegistry.AssetPreUpdate.Trigger(provider, new AssetPreUpdateArgs(asset.Id));
+        await executor.Exec(asset.UpdateHlsProgress(), false, ct);
     }
 }

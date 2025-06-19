@@ -21,15 +21,15 @@ public interface ISchemaService
     Task<Schema[]> History(string schemaId, CancellationToken ct);
 
     Task<Result> NameNotTakenByOther(Schema schema, CancellationToken ct);
-    Task<Schema?> GetByNameDefault(string name, SchemaType type, PublicationStatus? status, CancellationToken ct);
-    Task<Schema?> StartsNotEqualDefault(string name, SchemaType type, PublicationStatus? status, CancellationToken ct);
+    Task<Schema?> ByNameOrDefault(string name, SchemaType type, PublicationStatus? status, CancellationToken ct);
+    Task<Schema?> ByStartsOrDefault(string name, SchemaType type, PublicationStatus? status, CancellationToken ct);
 
     Task Publish(Schema schema, CancellationToken ct);
 
-    Task<Schema> SaveWithAction(Schema schema, CancellationToken ct);
-    Task<Schema> Save(Schema schema, CancellationToken ct);
+    Task<Schema> SaveWithAction(Schema schema,bool asPublished, CancellationToken ct);
+    Task<Schema> Save(Schema schema, bool asPublished, CancellationToken ct);
 
-    Task<Schema> AddOrUpdateByNameWithAction(Schema schema, CancellationToken ct);
+    Task<Schema> AddOrUpdateByNameWithAction(Schema schema,bool asPublished, CancellationToken ct);
     Task Delete(long id, CancellationToken ct);
 
     Task EnsureTopMenuBar(CancellationToken ct);

@@ -28,7 +28,7 @@ public static class SchemaHandler
         ) =>
         {
             var schemaType = Enum.Parse<SchemaType>(type, true);
-            var schema = await svc.GetByNameDefault(name,schemaType ,null, ct) ??
+            var schema = await svc.ByNameOrDefault(name,schemaType ,null, ct) ??
                          throw new ResultException($"Cannot find menu [{name}]");
             return schema;
         });
@@ -40,25 +40,33 @@ public static class SchemaHandler
         app.MapGet("/graphql", (
             IQuerySchemaService service
         ) => Results.Redirect(service.GraphQlClientUrl()));
-        
+
         app.MapPost("/", (
-            ISchemaService schemaSvc, IEntitySchemaService entitySchemaSvc, Schema dto, CancellationToken ct
+            ISchemaService schemaSvc,
+            IEntitySchemaService entitySchemaSvc,
+            Schema dto,
+            bool? publish,
+            CancellationToken ct
         ) => dto.Type switch
         {
-            SchemaType.Entity => entitySchemaSvc.Save(dto, ct),
-            _ => schemaSvc.SaveWithAction(dto, ct)
+            SchemaType.Entity => entitySchemaSvc.Save(dto,publish??false, ct),
+            _ => schemaSvc.SaveWithAction(dto,publish??false, ct)
         });
         
         
         app.MapPost("/entity/define", (
-            IEntitySchemaService svc, Schema dto, CancellationToken ct
-        ) => svc.SaveTableDefine(dto, ct));
+            IEntitySchemaService svc, 
+            Schema dto, 
+            bool? publish,
+            CancellationToken ct
+        ) => svc.SaveTableDefine(dto,publish??false, ct));
 
         app.MapPost("/entity/add_or_update", async (
             IEntitySchemaService svc,
             Entity entity,
+            bool? publish,
             CancellationToken ct
-        ) => await svc.AddOrUpdateByName(entity, ct));
+        ) => await svc.AddOrUpdateByName(entity,publish??false, ct));
 
         app.MapPost("/publish", (
             ISchemaService svc,

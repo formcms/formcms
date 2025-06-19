@@ -21,7 +21,7 @@ public static class DocDbLinkerBuilder
              apiLinksArray = {arr}
              *********************************************************
              """);
-        services.AddSingleton<IStringMessageConsumer, NatsConsumer>();
+        services.AddSingleton<IStringMessageConsumer, NatsMessageBus>();
         services.AddScoped<IDocumentDbDao, MongoDao>();
 
 

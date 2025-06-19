@@ -147,24 +147,28 @@ public static class AttributeHelper
 
     public static void FormatForDisplay(this Attribute a, Record[] records)
     {
-        //camelize is graphQl convention
-        var graphQlField = a.Field.Camelize();
         foreach (var record in records)
         {
-            if (!record.TryGetValue(a.Field, out var value) ) continue;
-            if (a.Field != graphQlField)
-            {
-                record.Remove(a.Field);
-            }
-            
-            if (Converter.NeedFormatDisplay(a.DataType, a.DisplayType) && value is string valueStr)
-            {
-                record[graphQlField] = Converter.DbObjToDisplayObj(a.DataType, a.DisplayType, valueStr)!;
-            }
-            else
-            {
-                record[graphQlField] = value;
-            }
+            a.FormatForDisplay(record);
+        }
+    }
+    public static void FormatForDisplay(this Attribute a, Record record)
+    {
+        //camelize is graphQl convention
+        var graphQlField = a.Field.Camelize();
+        if (!record.TryGetValue(a.Field, out var value)) return;
+        if (a.Field != graphQlField)
+        {
+            record.Remove(a.Field);
+        }
+
+        if (Converter.NeedFormatDisplay(a.DataType, a.DisplayType) && value is string valueStr)
+        {
+            record[graphQlField] = Converter.DbObjToDisplayObj(a.DataType, a.DisplayType, valueStr)!;
+        }
+        else
+        {
+            record[graphQlField] = value;
         }
     }
 

@@ -1,5 +1,7 @@
 using FormCMS.Core.Assets;
+using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Utils.ResultExt;
+using Microsoft.Extensions.DependencyInjection;
 using NUlid;
 
 namespace FormCMS.Course.Tests;
@@ -16,6 +18,7 @@ public class AssetAuthTest
     public AssetAuthTest(AppFactory factory)
     {
         Factory = factory;
+        
         factory.AuthApi.Register(_email.Split('@')[0],_email, Pwd).GetAwaiter().GetResult();
         SaAssetId = AddSaAssetAndGetId().GetAwaiter().GetResult();
     }
@@ -29,7 +32,7 @@ public class AssetAuthTest
     [Fact]
     public async Task UserRestrictedRead()
     {
-        await Factory.AuthApi.SaDo(() =>  Factory.AccountApi.AssignEntityToUser(_email, restrictedRead: [Assets.Entity.Name]));
+        await Factory.AuthApi.SaDo(() =>  Factory.AccountApi.AssignEntityToUser(_email, restrictedRead: [Assets.XEntity.Name]));
         await Factory.AuthApi.Sudo(_email, Pwd, ReadOwnOk);
         await Factory.AuthApi.Sudo(_email, Pwd, WriteOwnFail);
         await Factory.AuthApi.Sudo(_email, Pwd, ReadOtherFail);
@@ -38,7 +41,7 @@ public class AssetAuthTest
     [Fact]
     public async Task RoleRestrictedRead()
     {
-        await Factory.AuthApi.SaDo(() =>  Factory.AccountApi.AssignEntityToUserByRole(_email, _role, restrictedRead: [Assets.Entity.Name]));
+        await Factory.AuthApi.SaDo(() =>  Factory.AccountApi.AssignEntityToUserByRole(_email, _role, restrictedRead: [Assets.XEntity.Name]));
         await Factory.AuthApi.Sudo(_email, Pwd, ReadOwnOk);
         await Factory.AuthApi.Sudo(_email, Pwd, WriteOwnFail);
         await Factory.AuthApi.Sudo(_email, Pwd, ReadOtherFail);
@@ -47,7 +50,7 @@ public class AssetAuthTest
     [Fact]
     public async Task UserFullRead()
     {
-        await Factory.AuthApi.SaDo( () =>  Factory.AccountApi.AssignEntityToUser(_email, fullRead: [Assets.Entity.Name]));
+        await Factory.AuthApi.SaDo( () =>  Factory.AccountApi.AssignEntityToUser(_email, fullRead: [Assets.XEntity.Name]));
         await Factory.AuthApi.Sudo(_email, Pwd, ReadOwnOk);
         await Factory.AuthApi.Sudo(_email, Pwd, WriteOwnFail);
         await Factory.AuthApi.Sudo(_email, Pwd, ReadOtherOk);
@@ -56,7 +59,7 @@ public class AssetAuthTest
     [Fact]
     public async Task RoleFullRead()
     {
-        await Factory.AuthApi.SaDo( () =>  Factory.AccountApi.AssignEntityToUserByRole(_email,_role, fullRead: [Assets.Entity.Name]));
+        await Factory.AuthApi.SaDo( () =>  Factory.AccountApi.AssignEntityToUserByRole(_email,_role, fullRead: [Assets.XEntity.Name]));
         await Factory.AuthApi.Sudo(_email, Pwd, ReadOwnOk);
         await Factory.AuthApi.Sudo(_email, Pwd, WriteOwnFail);
         await Factory.AuthApi.Sudo(_email, Pwd, ReadOtherOk);
@@ -65,7 +68,7 @@ public class AssetAuthTest
     [Fact]
     public async Task UserWithRestrictedWrite()
     {
-        await Factory.AuthApi.SaDo( () => Factory.AccountApi.AssignEntityToUser(_email, restrictedWrite: [Assets.Entity.Name]));
+        await Factory.AuthApi.SaDo( () => Factory.AccountApi.AssignEntityToUser(_email, restrictedWrite: [Assets.XEntity.Name]));
         await Factory.AuthApi.Sudo(_email, Pwd, ReadOwnOk);
         await Factory.AuthApi.Sudo(_email, Pwd, ReadOtherFail);
         await Factory.AuthApi.Sudo(_email, Pwd, WriteOwnOk);
@@ -75,7 +78,7 @@ public class AssetAuthTest
     [Fact]
     public async Task RoleWithRestrictedWrite()
     {
-        await Factory.AuthApi.SaDo( () =>  Factory.AccountApi.AssignEntityToUserByRole(_email,_role, restrictedWrite: [Assets.Entity.Name]));
+        await Factory.AuthApi.SaDo( () =>  Factory.AccountApi.AssignEntityToUserByRole(_email,_role, restrictedWrite: [Assets.XEntity.Name]));
         await Factory.AuthApi.Sudo(_email, Pwd, ReadOwnOk);
         await Factory.AuthApi.Sudo(_email, Pwd, ReadOtherFail);
         await Factory.AuthApi.Sudo(_email, Pwd, WriteOwnOk);
@@ -85,7 +88,7 @@ public class AssetAuthTest
     [Fact]
     public async Task UserFullWrite()
     {
-        await Factory.AuthApi.SaDo(() =>  Factory.AccountApi.AssignEntityToUser(_email, fullWrite: [Assets.Entity.Name]));
+        await Factory.AuthApi.SaDo(() =>  Factory.AccountApi.AssignEntityToUser(_email, fullWrite: [Assets.XEntity.Name]));
         await Factory.AuthApi.Sudo(_email, Pwd, ReadOwnOk);
         await Factory.AuthApi.Sudo(_email, Pwd, WriteOwnOk);
         await Factory.AuthApi.Sudo(_email, Pwd, WriteOtherOk);
@@ -95,7 +98,7 @@ public class AssetAuthTest
     [Fact]
     public async Task RoleFullWrite()
     {
-        await Factory.AuthApi.SaDo(() =>  Factory.AccountApi.AssignEntityToUser(_email, fullWrite: [Assets.Entity.Name]));
+        await Factory.AuthApi.SaDo(() =>  Factory.AccountApi.AssignEntityToUser(_email, fullWrite: [Assets.XEntity.Name]));
         await Factory.AuthApi.Sudo(_email, Pwd, ReadOwnOk);
         await Factory.AuthApi.Sudo(_email, Pwd, WriteOwnOk);
         await Factory.AuthApi.Sudo(_email, Pwd, WriteOtherOk);

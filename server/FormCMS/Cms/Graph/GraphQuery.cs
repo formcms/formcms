@@ -1,7 +1,11 @@
 using FormCMS.Cms.Services;
+using FormCMS.Core.Assets;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.Identities;
+using FormCMS.Core.Plugins;
+using FormCMS.Utils.DisplayModels;
 using GraphQL.Types;
+using Humanizer;
 
 namespace FormCMS.Cms.Graph;
 
@@ -9,34 +13,49 @@ public record GraphInfo(Entity Entity, ObjectGraphType SingleType, ListGraphType
 
 public sealed class GraphQuery : ObjectGraphType
 {
-    public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService)
+    public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService, PluginRegistry registry)
     {
-        Entity[] extendedEntities =
-        [
-            ..entitySchemaService.ExtendedEntities(CancellationToken.None).GetAwaiter().GetResult(),
-            PublicUserInfos.Entity
-        ];
-
+        var entities = entitySchemaService.AllEntities(CancellationToken.None).GetAwaiter().GetResult().ToList();
+        entities.AddRange(registry.PluginEntities.Values);
+        for (var i = 0; i < entities.Count; i++)
+        {
+            entities[i] = entities[i] with
+            {
+                Attributes =
+                [
+                    ..entities[i].Attributes.Select(attr =>
+                        attr switch
+                        {
+                            _ when attr.DisplayType is DisplayType.File or DisplayType.Image => attr with
+                            {
+                                DataType = DataType.Lookup, Options = Assets.Entity.Name
+                            },
+                            _ when attr.DisplayType is DisplayType.Gallery => attr with
+                            {
+                                DataType = DataType.Collection, Options = $"{Assets.Entity.Name}.{nameof(Asset.Path).Camelize()}"
+                            },
+                            _ => attr
+                        }),
+                    ..registry.PluginAttributes.Values
+                ]
+            };
+        }
+        
         var graphMap = new Dictionary<string, GraphInfo>();
 
-        foreach (var entity in extendedEntities)
+        foreach (var entity in entities)
         {
-            var t = FieldTypes.PlainType(extendedEntities.First(e => e.Name == entity.Name));
+            var t = entity.PlainType();
             graphMap[entity.Name] = new GraphInfo(entity, t, new ListGraphType(t));
         }
 
-        foreach (var entity in extendedEntities)
+        foreach (var entity in entities)
         {
             FieldTypes.SetCompoundType(entity, graphMap);
         }
 
-        var entities = entitySchemaService.AllEntities(CancellationToken.None).GetAwaiter().GetResult();
-        foreach (var entity in extendedEntities)
+        foreach (var entity in entities)
         {
-            //only field in original entity can be filtered, sort
-            var original = entities.FirstOrDefault(e => e.Name == entity.Name);
-            if (original is null) continue;
-
             var graphInfo = graphMap[entity.Name];
             AddField(new FieldType
             {
@@ -44,7 +63,7 @@ public sealed class GraphQuery : ObjectGraphType
                 ResolvedType = graphInfo.SingleType,
                 Resolver = Resolvers.GetSingleResolver(queryService, entity.Name),
                 Arguments = new QueryArguments([
-                    ..Args.FilterArgs(original, graphMap),
+                    ..Args.FilterArgs(entity, graphMap),
                     Args.FilterExprArg
                 ])
             });
@@ -58,8 +77,8 @@ public sealed class GraphQuery : ObjectGraphType
                     Args.DistinctArg,
                     Args.OffsetArg,
                     Args.LimitArg,
-                    Args.SortArg(original),
-                    ..Args.FilterArgs(original, graphMap),
+                    Args.SortArg(entity),
+                    ..Args.FilterArgs(entity, graphMap),
                     Args.SortExprArg,
                     Args.FilterExprArg
                 ])
