@@ -11,7 +11,7 @@ export const topList = {
             <div class="flex items-start">
                 <div class="font-source w-10 shrink-0 text-3xl italic text-gray-500">{{i}}</div>
                 <div class="flex-1">
-                    <a href="/page/{{id}}" data-title="true" class="block">
+                    <a href="/page/{{recordId}}" data-title="true" class="block">
                         <h3 class="text-lg font-serif font-extrabold text-gray-800 hover:text-blue-600 transition-colors duration-200">{{title}}</h3>
                     </a>
                     <div class="flex items-center gap-2 text-xs text-gray-500 mt-2" data-component="activity-bar" data-gjs-type="activity-bar">

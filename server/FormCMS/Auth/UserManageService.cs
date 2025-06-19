@@ -40,6 +40,6 @@ public class UserManageService<TUser>(
         {
             return s;
         }
-        throw new ResultException("Can't find record's creator");
+        return "";
     }
 }

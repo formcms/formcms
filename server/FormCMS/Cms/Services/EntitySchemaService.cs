@@ -38,7 +38,7 @@ public sealed class EntitySchemaService(
 
     public async Task<Schema> AddOrUpdateByName(Entity entity,bool asPublished, CancellationToken ct)
     {
-        var find = await schemaSvc.GetByNameDefault(entity.Name, SchemaType.Entity,null, ct);
+        var find = await schemaSvc.ByNameOrDefault(entity.Name, SchemaType.Entity,null, ct);
         var schema = ToSchema(entity,find?.SchemaId??"", find?.Id ?? 0);
         return await SaveTableDefine(schema, asPublished,ct);
     }
@@ -212,7 +212,7 @@ public sealed class EntitySchemaService(
             return plugin;
         }
         
-        var item = await schemaSvc.GetByNameDefault(name, SchemaType.Entity, status, token);
+        var item = await schemaSvc.ByNameOrDefault(name, SchemaType.Entity, status, token);
         if (item is null)
         {
             return Result.Fail($"Cannot find entity [{name}]");

@@ -70,12 +70,11 @@ public static class SchemaHelper
             .OrderByDesc(nameof(Schema.Id).Camelize())
             .Where(nameof(Schema.SchemaId).Camelize(), schemaId);
 
-    public static SqlKata.Query StartsNotEqualNameAndType(string name, SchemaType type,
+    public static SqlKata.Query StartsAndType(string name, SchemaType type,
         PublicationStatus? publicationStatus)
         => BaseQuery()
             .WithStatus(publicationStatus)
             .WhereStarts(nameof(Schema.Name).Camelize(), name)
-            .WhereNot(nameof(Schema.Name).Camelize(), name)
             .Where(nameof(Schema.Type).Camelize(), type.Camelize());
     
 

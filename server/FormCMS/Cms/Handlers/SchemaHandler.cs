@@ -28,7 +28,7 @@ public static class SchemaHandler
         ) =>
         {
             var schemaType = Enum.Parse<SchemaType>(type, true);
-            var schema = await svc.GetByNameDefault(name,schemaType ,null, ct) ??
+            var schema = await svc.ByNameOrDefault(name,schemaType ,null, ct) ??
                          throw new ResultException($"Cannot find menu [{name}]");
             return schema;
         });

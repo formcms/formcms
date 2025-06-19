@@ -63,7 +63,7 @@ public sealed class SchemaService(
         return res.IsSuccess ? res.Value : null;
     }
 
-    public async Task<Schema?> GetByNameDefault(string name, SchemaType type, PublicationStatus?status, CancellationToken ct = default)
+    public async Task<Schema?> ByNameOrDefault(string name, SchemaType type, PublicationStatus?status, CancellationToken ct = default)
     {
         var query = SchemaHelper.ByNameAndType(type, [name],status);
         var item = await queryExecutor.Single(query, ct);
@@ -71,10 +71,10 @@ public sealed class SchemaService(
         return res.IsSuccess ? res.Value : null;
     }
 
-    public async Task<Schema?> StartsNotEqualDefault(string name, SchemaType type, PublicationStatus?status,
+    public async Task<Schema?> ByStartsOrDefault(string name, SchemaType type, PublicationStatus?status,
         CancellationToken ct = default)
     {
-        var item = await queryExecutor.Single(SchemaHelper.StartsNotEqualNameAndType(name,type,status), ct);
+        var item = await queryExecutor.Single(SchemaHelper.StartsAndType(name,type,status), ct);
 
         var res = SchemaHelper.RecordToSchema(item);
 
@@ -130,7 +130,7 @@ public sealed class SchemaService(
 
     public async Task<Schema> AddOrUpdateByNameWithAction(Schema schema,bool asPublished, CancellationToken ct)
     {
-        var find = await GetByNameDefault(schema.Name, schema.Type, null, ct);
+        var find = await ByNameOrDefault(schema.Name, schema.Type, null, ct);
         if (find is not null)
         {
             schema = schema with { SchemaId = find.SchemaId};
@@ -177,7 +177,7 @@ public sealed class SchemaService(
 
     public async Task RemoveEntityInTopMenuBar(Entity entity, CancellationToken ct)
     {
-        var menuBarSchema = await GetByNameDefault(SchemaName.TopMenuBar, SchemaType.Menu, null,ct) ??
+        var menuBarSchema = await ByNameOrDefault(SchemaName.TopMenuBar, SchemaType.Menu, null,ct) ??
                             throw new ResultException("Cannot find top menu bar");
         var menuBar = menuBarSchema.Settings.Menu;
         if (menuBar is null)
@@ -195,7 +195,7 @@ public sealed class SchemaService(
 
     public async Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken ct)
     {
-        var menuBarSchema = await GetByNameDefault(SchemaName.TopMenuBar, SchemaType.Menu,null, ct) ??
+        var menuBarSchema = await ByNameOrDefault(SchemaName.TopMenuBar, SchemaType.Menu,null, ct) ??
                             throw new ResultException("cannot find top menu bar");
         var menuBar = menuBarSchema.Settings.Menu;
         if (menuBar is not null)

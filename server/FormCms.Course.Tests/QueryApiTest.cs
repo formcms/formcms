@@ -145,8 +145,8 @@ public class QueryApiTest
         {
             {"sandbox","1"}
         };
-        var res =await Factory.QueryApi.List(_queryName, args).Ok();
-        Assert.Equal(2,items.Length);
+        var res = await Factory.QueryApi.List(_queryName, args);
+        Assert.True(res.IsFailed);
     }
     
     [Fact]

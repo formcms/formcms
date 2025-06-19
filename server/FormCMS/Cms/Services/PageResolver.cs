@@ -28,10 +28,13 @@ public class PageResolver(
     }
 
     public  Task<Schema> GetPage(string name, bool matchPrefix, PublicationStatus? status, CancellationToken ct)
-        => status == PublicationStatus.Published
-            ?  GetCachePage(name, matchPrefix, ct)
-            :  GetDbPage(name, matchPrefix, status, ct);
- 
+    {
+        if (matchPrefix) name += "/{";
+        return status == PublicationStatus.Published
+            ? GetCachePage(name, matchPrefix, ct)
+            : GetDbPage(name, matchPrefix, status, ct);
+    }
+
     private async Task<Schema> GetCachePage(string name, bool matchPrefix, CancellationToken token) =>
         await pageCache.GetOrSet(name + ":" + matchPrefix,
             async ct => await GetDbPage(name, matchPrefix, PublicationStatus.Published, ct), token);
@@ -43,8 +46,8 @@ public class PageResolver(
         CancellationToken token)
     {
         var schema = matchPrefix
-            ? await schemaSvc.StartsNotEqualDefault(name, SchemaType.Page, publicationStatus, token)
-            : await schemaSvc.GetByNameDefault(name, SchemaType.Page, publicationStatus, token);
+            ? await schemaSvc.ByStartsOrDefault(name, SchemaType.Page, publicationStatus, token)
+            : await schemaSvc.ByNameOrDefault(name, SchemaType.Page, publicationStatus, token);
         if (schema is not { Type: SchemaType.Page })throw new ResultException($"cannot find page {name}");
         return schema;
     }

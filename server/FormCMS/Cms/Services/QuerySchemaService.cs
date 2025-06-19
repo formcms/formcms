@@ -25,7 +25,7 @@ public sealed class QuerySchemaService(
             return await ToLoadedQuery(query, fields, null);
         }
 
-        var schema = await schemaSvc.GetByNameDefault(query.Name, SchemaType.Query, null, CancellationToken.None);
+        var schema = await schemaSvc.ByNameOrDefault(query.Name, SchemaType.Query, null, CancellationToken.None);
         if (schema == null || schema.Settings.Query != null && schema.Settings.Query.Source != query.Source)
         {
             await SaveQuery(query, null);
@@ -46,7 +46,7 @@ public sealed class QuerySchemaService(
 
         async ValueTask<LoadedQuery> GetQuery(CancellationToken token)
         {
-            var schema = await schemaSvc.GetByNameDefault(name, SchemaType.Query, status, token) ??
+            var schema = await schemaSvc.ByNameOrDefault(name, SchemaType.Query, status, token) ??
                          throw new ResultException($"Cannot find query by name [{name}]");
             var settingsQuery = schema.Settings.Query ??
                                 throw new ResultException($"Query [{name}] has invalid query format");
