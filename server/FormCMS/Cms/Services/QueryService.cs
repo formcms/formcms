@@ -388,7 +388,7 @@ public sealed class QueryService(
                             {
                                 record[node.Field] = val is string str && assets.TryGetValue(str, out var asset)
                                     ? asset
-                                    : null;
+                                    : null!;
                             }
 
                             break;
@@ -476,7 +476,7 @@ public sealed class QueryService(
                 && value is string s
                 )
             {
-                record[node.Field] = dict.TryGetValue(s, out var user) ? user : null;
+                record[node.Field] = dict.TryGetValue(s, out var user) ? user : null!;
             }
         });
     }

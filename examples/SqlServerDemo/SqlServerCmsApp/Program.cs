@@ -1,7 +1,9 @@
 using CmsApp;
 using FormCMS;
+using FormCMS.Activities.Workers;
 using FormCMS.Auth.Builders;
 using FormCMS.Auth.Models;
+using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -19,7 +21,12 @@ webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, AppDbContext>(new AuthConf
 webBuilder.Services.AddAuditLog();
 webBuilder.Services.AddActivity();
 webBuilder.Services.AddComments();
-
+//hosted services(worker)
+//have to let Hosted service share Channel bus instance
+webBuilder.Services.AddSingleton<InMemoryChannelBus>();
+webBuilder.Services.AddSingleton<IStringMessageProducer>(sp => sp.GetRequiredService<InMemoryChannelBus>());
+webBuilder.Services.AddSingleton<IStringMessageConsumer>(sp => sp.GetRequiredService<InMemoryChannelBus>());
+webBuilder.Services.AddHostedService<ActivityEventHandler>();
 var webApp = webBuilder.Build();
 
 //ensure identity tables are created

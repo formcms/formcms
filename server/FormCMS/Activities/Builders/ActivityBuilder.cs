@@ -107,12 +107,13 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
             hookRegistry.PlugInQueryArgs.RegisterDynamic(ActivityQueryPluginConstants.TopList, async (IActivityQueryPlugin s,PlugInQueryArgs args) =>
             {
                 var pg = PaginationHelper.ToValid(args.Pagination, 10);
-                if (!args.Args.TryGetValue(ActivityQueryPluginConstants.EntityName,out var entityName))
+                if (args.Args.TryGetValue(ActivityQueryPluginConstants.EntityName,out var entityName))
                 {
-                    throw new ResultException("Entity name is not provided");
+                    var items = await s.GetTopList(entityName.ToString() ,pg.Offset,pg.Limit,CancellationToken.None);
+                    args = args with { OutRecords = items };
                 }
-                var items = await s.GetTopList(entityName ,pg.Offset,pg.Limit,CancellationToken.None);
-                return args with { OutRecords = items };
+
+                return args;
             });
             
             hookRegistry.QueryPostList.RegisterDynamic("*" ,async (IActivityQueryPlugin service, QueryPostListArgs args)=>
