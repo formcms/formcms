@@ -16,6 +16,7 @@ import {activityBar}from "./blocks/activity-bar.js"
 import {topList} from "./blocks/top-list.js";
 import {featuredList} from "./blocks/featured-list.js";
 import {comments} from "./blocks/comments.js";
+import {video} from "./blocks/video.js";
 
 export function addCustomBlocks(editor){
     for (const {name, label, media, content, category} of customBlocks){
@@ -40,5 +41,6 @@ export const customBlocks = [
     activityBar,
     featuredList,
     topList,
-    comments
+    comments,
+    video
 ]

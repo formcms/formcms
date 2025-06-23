@@ -22,6 +22,7 @@ using FormCMS.Utils.ServiceCollectionExt;
 using GraphQL;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Rewrite;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Schema = FormCMS.Cms.Graph.Schema;
 
@@ -234,7 +235,19 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         await InitTables();
         if (options.EnableClient)
         {
-            app.UseStaticFiles();
+            app.UseStaticFiles(
+                new StaticFileOptions
+                {
+                    ContentTypeProvider = new FileExtensionContentTypeProvider
+                    {
+                        Mappings =
+                        {
+                            [".m3u8"] = "application/vnd.apple.mpegurl",
+                            [".ts"] = "video/mp2t" 
+                        }
+                    }
+                }
+                );
             UseAdminPanel();
             UserRedirects();
         }
