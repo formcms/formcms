@@ -247,7 +247,6 @@ public class AssetService(
 
     public async  Task UpdateHlsProgress(Asset asset, CancellationToken ct)
     {
-        await hookRegistry.AssetPreUpdate.Trigger(provider, new AssetPreUpdateArgs(asset.Id));
         await executor.Exec(asset.UpdateHlsProgress(), false, ct);
     }
 }

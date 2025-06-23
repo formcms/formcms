@@ -3,10 +3,12 @@ using FormCMS.Auth;
 using FormCMS.Auth.Builders;
 using FormCMS.Auth.Models;
 using FormCMS.Cms.Builders;
+using FormCMS.Core.Auth;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Utils.ResultExt;
+using FormCMS.Video.Workers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
@@ -36,25 +38,39 @@ public class WebApp(
         {
             builder.Services.AddOpenApi();
             AddCorsPolicy();
-        } 
+        }
+
         
-        //add formCms
+        var apiKey = builder.Configuration.GetValue<string>("Authentication:ApiKey");
+        var apiBaseUrl = builder.Configuration.GetValue<string>("ApiInfo:Url"); 
+
         AddCms();
-        builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(GetAuthConfig());
+        builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(GetAuthConfig(apiKey));
         builder.Services.AddAuditLog();
         builder.Services.AddActivity(enableActivityBuffer);
         builder.Services.AddComments();
         
-        // For distributed deployments, it's recommended to run ActivityEventHandler in a separate hosted service.
-        // In this case, we register ActivityEventHandler within the web application to share the in-memory channel bus.
-        builder.Services.AddHostedService<ActivityEventHandler>();
-        
+       
         if (azureBlobStoreOptions != null)
         {
             builder.Services.AddSingleton(azureBlobStoreOptions);
             builder.Services.AddSingleton<IFileStore, AzureBlobStore>();
         }
         
+        // For distributed deployments, it's recommended to runEvent Handling services in a separate hosted App.
+        // In this case, we register them within the web application to share the in-memory channel bus.
+        builder.Services.AddHostedService<ActivityEventHandler>();
+
+
+        if (apiBaseUrl is not null && apiKey is not null)
+        {
+            builder.Services.AddVideoMessageProducer();
+            builder.Services.AddSingleton(new CmsRestClientSettings(apiBaseUrl, apiKey));
+            // For distributed deployments, it's recommended to runEvent Handling services in a separate hosted App.
+            // In this case, we register them within the web application to share the in-memory channel bus.
+            builder.Services.AddHostedService<FFMpegWorker>();
+        }
+
         var app = builder.Build();
         app.MapDefaultEndpoints();
         
@@ -122,17 +138,17 @@ public class WebApp(
         builder.Services.AddSingleton<IFileStore, AzureBlobStore>();
     }
 
-    private AuthConfig GetAuthConfig()
+    private AuthConfig GetAuthConfig(string? apiKey)
     {
         var clientId = builder.Configuration.GetValue<string>("Authentication:GitHub:ClientId");
         var clientSecrets = builder.Configuration.GetValue<string>("Authentication:GitHub:ClientSecret");
-        var ApiKey = builder.Configuration.GetValue<string>("Authentication:ApiKey");
 
-        if (clientId is null || clientSecrets is null) return new AuthConfig();
-        if(ApiKey is not null) return new AuthConfig(KeyAuthConfig:new KeyAuthConfig(ApiKey));
-
-        var oAuthConfig = new OAuthConfig(new OAuthCredential(clientId, clientSecrets));
-        return new AuthConfig(oAuthConfig);
+        var gitHubOAuthConfig = clientId is not null && clientSecrets is not null
+            ? new OAuthCredential(clientId, clientSecrets)
+            : null;
+        
+        var keyConfig = apiKey is not null ? new KeyAuthConfig(apiKey) : null;
+        return new AuthConfig(gitHubOAuthConfig,keyConfig);
     }
 
     private void TryUserRedis()

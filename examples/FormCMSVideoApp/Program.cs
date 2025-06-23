@@ -94,5 +94,4 @@ workerBuilder.Services.AddHttpClient<AssetApiClient>(
 workerBuilder.Services
     .AddSqlServerCmsWorker(connectionString);
 workerBuilder.Services.WithNats(natsConnectionString);
-workerBuilder.Services.AddVideoWorker(10);
 await Task.WhenAll(webApp.RunAsync(), workerBuilder.Build().RunAsync());

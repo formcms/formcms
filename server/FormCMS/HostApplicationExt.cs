@@ -29,7 +29,4 @@ public static class HostApplicationExt
     public static IServiceCollection WithNats(this IServiceCollection services, string natsConnectionString
         ) => services.AddMsg( MessagingProvider.Nats, natsConnectionString);
 
-    public static IServiceCollection AddVideoWorker(this IServiceCollection services, int ffmpegDelay)
-        => services.AddHostedService<FFMpegWorker>();
-
 }
