@@ -67,10 +67,50 @@ public class LocalFileStore(
         return Task.CompletedTask;
     }
 
+    public async Task DownloadFileWithRelated(string path, string localPath, CancellationToken ct)
+    {
+        var sourceRoot = options.PathPrefix.TrimEnd('/');
+        var fullFilePath = Path.Join(sourceRoot, path);
+        await Download(path, localPath, ct);
+        
+
+        var parentDir = Path.GetDirectoryName(fullFilePath) ?? sourceRoot;
+        var filePrefix = Path.GetFileName(path);
+        var matchingDirs = Directory.EnumerateDirectories(parentDir, $"{filePrefix}*", SearchOption.TopDirectoryOnly);
+
+        foreach (var matchingDir in matchingDirs)
+        {
+            var files = Directory.GetFiles(matchingDir, "*", SearchOption.AllDirectories);
+
+            foreach (var sourceFile in files)
+            {
+                ct.ThrowIfCancellationRequested();
+
+                var relativePath = Path.GetRelativePath(fullFilePath, sourceFile);
+                var destPath = Path.Combine(localPath, relativePath);
+                CreateDirAndCopy(sourceFile, destPath);
+            }
+        }
+
+    }
+
+
     public Task Del(string file, CancellationToken ct)
     {
         file = Path.Join(options.PathPrefix, file);
         File.Delete(file);
+        return Task.CompletedTask;
+    }
+    
+    public Task DelByPrefix(string prefix, CancellationToken ct)
+    {
+        var fullPrefixPath = Path.Combine(options.PathPrefix, prefix);
+
+        if (Directory.Exists(fullPrefixPath))
+        {
+            Directory.Delete(fullPrefixPath, recursive: true);
+        }
+
         return Task.CompletedTask;
     }
 
@@ -82,12 +122,7 @@ public class LocalFileStore(
 
     private void CreateDirAndCopy(string source, string dest)
     {
-        string? destinationDir = Path.GetDirectoryName(dest);
-        if (!string.IsNullOrEmpty(destinationDir) && !Directory.Exists(destinationDir))
-        {
-            Directory.CreateDirectory(destinationDir);
-        }
-
+        FileUtils.EnsureParentFolder(dest);
         File.Copy(source, dest, true);
     }
 }

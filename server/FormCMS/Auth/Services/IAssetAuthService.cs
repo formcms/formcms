@@ -8,6 +8,6 @@ public interface IAssetAuthService
 {
     Asset PreAdd(Asset asset);
     Task PreGetSingle(long id);
-    Task PreUpdate(long id);
+    Task PreUpdateOrDelete(long id);
     ImmutableArray<Filter> PreList(ImmutableArray<Filter> filters);
 }

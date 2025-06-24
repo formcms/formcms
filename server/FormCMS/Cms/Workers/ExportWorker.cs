@@ -28,7 +28,10 @@ public class ExportWorker(
         var destConnection = task.GetPaths().CreateConnection();
         var destDao = new SqliteDao(destConnection, new Logger<SqliteDao>(logFactory));
 
-        var (destExecutor, destMigrator) = (new KateQueryExecutor(destDao, new KateQueryExecutorOption(300)), new DatabaseMigrator(destDao));
+        var (destExecutor, destMigrator) = (
+            new KateQueryExecutor(destDao, new KateQueryExecutorOption(300)),
+            new DatabaseMigrator(destDao)
+        );
         var (schemaRecords, entities,entityDict) = await LoadData();
         await ExportSchema();
         await ExportEntities();
@@ -54,7 +57,7 @@ public class ExportWorker(
                 {
                     foreach (string path in records.Select(x => x[nameof(Asset.Path).Camelize()]))
                     {
-                        await fileStore.Download(path, Path.Join(task.GetPaths().Folder, path),ct);
+                        await fileStore.DownloadFileWithRelated(path, Path.Join(task.GetPaths().Folder, path),ct);
                     }
                 },
                 ct

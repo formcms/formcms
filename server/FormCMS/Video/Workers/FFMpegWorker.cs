@@ -28,16 +28,19 @@ public sealed class FFMpegWorker(
             {
                 try
                 {
-                    var task = ParseHlsConvertingTask(s);
-                    if (task is null) return;
-                    
-                    await fileStore.Download(task.StoragePath, task.TempPath, CancellationToken.None);
-                    await RunConversion(task);
-                    await fileStore.UploadFolder(task.TempFolder, task.StorageFolder,CancellationToken.None);
-                    File.Delete(task.TempPath);
-                    Directory.Delete(task.TempFolder, recursive: true);
-                    await UpdateStatus(task);
-                    logger.LogInformation( "Processed message. Task={task}", task);
+                    var msg = ParseMessage(s);
+                    if (msg is null) return;
+
+                    var task = HlsConvertingTaskHelper.CreatTask(msg.Path);
+ 
+                    if (msg.IsDelete)
+                    {
+                        await fileStore.DelByPrefix(task.StorageFolder, ct);
+                    }
+                    else
+                    {
+                        await DoConvert(task); 
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -48,7 +51,18 @@ public sealed class FFMpegWorker(
         );
     }
 
-    private HlsConvertingTask? ParseHlsConvertingTask(string s)
+    private async Task DoConvert(HlsConvertingTask task)
+    {
+        await fileStore.Download(task.StoragePath, task.TempPath, CancellationToken.None);
+        await RunConversion(task);
+        await fileStore.UploadFolder(task.TempFolder, task.StorageFolder,CancellationToken.None);
+        File.Delete(task.TempPath);
+        Directory.Delete(task.TempFolder, recursive: true);
+        await UpdateStatus(task);
+        logger.LogInformation( "Processed message. Task={task}", task);       
+    }
+
+    private FFMpegMessage? ParseMessage(string s)
     {
         var message = JsonSerializer.Deserialize<FFMpegMessage>(s);
         if (message is null)
@@ -69,8 +83,8 @@ public sealed class FFMpegWorker(
             );
             return null;
         }
+        return message;
 
-        return HlsConvertingTaskHelper.CreatTask(message.Path); 
     }
     
     private async Task RunConversion(HlsConvertingTask task)

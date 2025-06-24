@@ -156,13 +156,14 @@ public class AssetService(
     //foreign key will ensure only orphan assets can be deleted
     public async Task Delete(long id, CancellationToken ct)
     {
-        await hookRegistry.AssetPreUpdate.Trigger(provider,new AssetPreUpdateArgs(id));
         var asset = await Single(id, false, ct);
+        await hookRegistry.AssetPreDelete.Trigger(provider,new AssetPreDeleteArgs(asset));
         using var trans = await dao.BeginTransaction();
         try
         {
             await executor.Exec(Assets.Deleted(id), false, ct);
             await store.Del(asset.Path,ct);
+            await hookRegistry.AssetPostDelete.Trigger(provider,new AssetPostDeleteArgs(asset));
             trans.Commit();
         }
         catch (Exception e)
