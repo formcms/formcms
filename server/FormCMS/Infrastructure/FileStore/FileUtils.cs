@@ -2,7 +2,7 @@ namespace FormCMS.Infrastructure.FileStore;
 
 public static class FileUtils
 {
-    public static void EnsureFolder(string destDir)
+    private static void EnsureFolder(string? destDir)
     {
         if (!string.IsNullOrEmpty(destDir) && !Directory.Exists(destDir))
         {

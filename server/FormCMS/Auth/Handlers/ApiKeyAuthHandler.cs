@@ -22,23 +22,23 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationS
         ArgumentException.ThrowIfNullOrWhiteSpace(nameof(_authConfig.KeyAuthConfig));
     }
 
-    protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
+    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
         if (!Request.Headers.TryGetValue(KeyAuthConstants.ApiKeyHeaderName, out var apiKeyHeaderValues))
         {
-            return AuthenticateResult.Fail("Missing API Key");
+            return Task.FromResult(AuthenticateResult.Fail("Missing API Key"));
         }
 
         var providedApiKey = apiKeyHeaderValues.FirstOrDefault();
         if (string.IsNullOrEmpty(providedApiKey))
         {
-            return AuthenticateResult.Fail("Invalid API Key");
+            return Task.FromResult(AuthenticateResult.Fail("Invalid API Key"));
         }
 
 
         if (providedApiKey != _authConfig.KeyAuthConfig!.Key)
         {
-            return AuthenticateResult.Fail("Unauthorized client");
+            return Task.FromResult(AuthenticateResult.Fail("Unauthorized client"));
         }
 
         var claims = new[]
@@ -50,6 +50,6 @@ public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationS
         var identity = new ClaimsIdentity(claims, Scheme.Name);
         var principal = new ClaimsPrincipal(identity);
         var ticket = new AuthenticationTicket(principal, Scheme.Name);
-        return AuthenticateResult.Success(ticket);
+        return Task.FromResult(AuthenticateResult.Success(ticket));
     }
 }
