@@ -50,23 +50,4 @@ public static class ServiceCollectionExtensions
         }
         return services;
     }
-    
-    public static IServiceCollection AddMsg(
-        this IServiceCollection services,
-        MessagingProvider msgProvider,
-        string connectionString
-    )
-    {
-        _ = msgProvider switch
-        {
-            MessagingProvider.Nats => AddNatsMessing(),
-            _ => throw new Exception("unsupported Messing Provider"),
-        };
-        IServiceCollection AddNatsMessing()
-        {
-            services.AddSingleton<INatsConnection>(new NatsConnection(new NatsOpts { Url = connectionString }));
-            return services;
-        }
-        return services;
-    }    
 }
