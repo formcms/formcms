@@ -117,6 +117,10 @@ public class AssetService(
         await store.Upload(pairs,ct);
         //track those assets to reuse later
         await executor.BatchInsert(Assets.TableName, assets.ToInsertRecords());
+        foreach (var asset in assets)
+        {
+            await hookRegistry.AssetPostAdd.Trigger(provider, new AssetPostAddArgs(asset));
+        }
         return assets.Select(x => x.Path).ToArray();
     }
 
@@ -152,13 +156,14 @@ public class AssetService(
     //foreign key will ensure only orphan assets can be deleted
     public async Task Delete(long id, CancellationToken ct)
     {
-        await hookRegistry.AssetPreUpdate.Trigger(provider,new AssetPreUpdateArgs(id));
         var asset = await Single(id, false, ct);
+        await hookRegistry.AssetPreDelete.Trigger(provider,new AssetPreDeleteArgs(asset));
         using var trans = await dao.BeginTransaction();
         try
         {
             await executor.Exec(Assets.Deleted(id), false, ct);
             await store.Del(asset.Path,ct);
+            await hookRegistry.AssetPostDelete.Trigger(provider,new AssetPostDeleteArgs(asset));
             trans.Commit();
         }
         catch (Exception e)
@@ -243,7 +248,6 @@ public class AssetService(
 
     public async  Task UpdateHlsProgress(Asset asset, CancellationToken ct)
     {
-        await hookRegistry.AssetPreUpdate.Trigger(provider, new AssetPreUpdateArgs(asset.Id));
         await executor.Exec(asset.UpdateHlsProgress(), false, ct);
     }
 }

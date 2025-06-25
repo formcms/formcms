@@ -1,6 +1,4 @@
-﻿using FormCMS.Auth.Builders;
-using FormCMS.Auth.Models;
-using FormCMS.Auth.Services;
+﻿using FormCMS.Auth.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.Extensions.Options;
 using System.Security.Claims;
@@ -8,57 +6,50 @@ using System.Text.Encodings.Web;
 
 namespace FormCMS.Auth.Handlers;
 
-public class ApiKeyAuthenticationHandler : AuthenticationHandler<ApiKeyAuthenticationOptions>
+public class ApiKeyAuthenticationHandler : AuthenticationHandler<AuthenticationSchemeOptions>
 {
-    private readonly ApiKeyAuthenticationOptions _options;
     private readonly AuthConfig _authConfig;
+
     public ApiKeyAuthenticationHandler(
-        IOptionsMonitor<ApiKeyAuthenticationOptions> options,
+        IOptionsMonitor<AuthenticationSchemeOptions> options,
         ILoggerFactory logger,
         UrlEncoder encoder,
-        ISystemClock clock,AuthConfig authConfig)
-        : base(options, logger, encoder, clock)
+        AuthConfig authConfig
+    )
+        : base(options, logger, encoder)
     {
-        _options = options.CurrentValue;
-        _authConfig = authConfig??throw new InvalidOperationException("Missing AuthConfig ");
-        ArgumentNullException.ThrowIfNullOrWhiteSpace(nameof(_authConfig.KeyAuthConfig));
+        _authConfig = authConfig;
+        ArgumentException.ThrowIfNullOrWhiteSpace(nameof(_authConfig.KeyAuthConfig));
     }
 
-    protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
+    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        if (!Request.Headers.TryGetValue(Options.ApiKeyHeaderName, out var apiKeyHeaderValues))
+        if (!Request.Headers.TryGetValue(KeyAuthConstants.ApiKeyHeaderName, out var apiKeyHeaderValues))
         {
-            return AuthenticateResult.Fail("Missing API Key");
+            return Task.FromResult(AuthenticateResult.Fail("Missing API Key"));
         }
 
         var providedApiKey = apiKeyHeaderValues.FirstOrDefault();
         if (string.IsNullOrEmpty(providedApiKey))
         {
-            return AuthenticateResult.Fail("Invalid API Key");
+            return Task.FromResult(AuthenticateResult.Fail("Invalid API Key"));
         }
 
-      
-        if (providedApiKey !=_authConfig.KeyAuthConfig!.Key)
+
+        if (providedApiKey != _authConfig.KeyAuthConfig!.Key)
         {
-            return AuthenticateResult.Fail("Unauthorized client");
+            return Task.FromResult(AuthenticateResult.Fail("Unauthorized client"));
         }
 
-        // Invoke event
-        var context = new ApiKeyValidatedContext(Context, Scheme, Options, providedApiKey);
-        await Options.OnApiKeyValidated(context);
-
-        if (context.Result != null)
+        var claims = new[]
         {
-            return context.Result;
-        }
+            new Claim(ClaimTypes.Name, KeyAuthConstants.ApiKeyUser),
+            new Claim(ClaimTypes.Role, Roles.Sa)
+        };
 
-        var claims = new[] { new Claim(ClaimTypes.Name, "sadmin@cms.com"),new Claim(ClaimTypes.Role,Roles.Sa) };
         var identity = new ClaimsIdentity(claims, Scheme.Name);
         var principal = new ClaimsPrincipal(identity);
         var ticket = new AuthenticationTicket(principal, Scheme.Name);
-        return AuthenticateResult.Success(ticket);
+        return Task.FromResult(AuthenticateResult.Success(ticket));
     }
-
 }
-
-

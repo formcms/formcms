@@ -1,25 +1,16 @@
-using System.Security.Claims;
 using FluentResults;
 using FormCMS.Auth.Handlers;
 using FormCMS.Auth.Models;
 using FormCMS.Auth.Services;
 using FormCMS.Cms.Services;
+using FormCMS.Core.Auth;
 using FormCMS.Core.HookFactory;
-using FormCMS.Core.Identities;
 using FormCMS.Core.Plugins;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
 namespace FormCMS.Auth.Builders;
-
-public record OAuthCredential(string ClientId, string ClientSecret);
-
-public record OAuthConfig(OAuthCredential? Github);
-
-public record AuthConfig(OAuthConfig? OAuthConfig = null, KeyAuthConfig? KeyAuthConfig = null);
-
-public record KeyAuthConfig(string Key);
 
 public sealed class AuthBuilder<TCmsUser>(ILogger<AuthBuilder<TCmsUser>> logger) : IAuthBuilder
     where TCmsUser : IdentityUser, new()
@@ -40,77 +31,38 @@ public sealed class AuthBuilder<TCmsUser>(ILogger<AuthBuilder<TCmsUser>> logger)
 
         services.AddHttpContextAccessor();
 
-        if (authConfig.OAuthConfig is not null)
-        {
-            var oAuthConfig = authConfig.OAuthConfig;
-            var authenticationBuilder = services
-                .AddAuthentication(options =>
-                {
-                    options.DefaultScheme = IdentityConstants.ApplicationScheme;
-                })
-                .AddCookie(options =>
-                {
-                    options.Cookie.Name = ".AspNetCore.Identity.Application";
-                });
-            if (oAuthConfig.Github is not null)
+        var authenticationBuilder = services
+            .AddAuthentication(options =>
             {
-                var github = oAuthConfig.Github;
-                authenticationBuilder.AddGitHub(options =>
-                {
-                    options.ClientId = github.ClientId;
-                    options.ClientSecret = github.ClientSecret;
-                    options.Scope.Add("user:email");
+                options.DefaultScheme = IdentityConstants.ApplicationScheme;
+            })
+            .AddCookie(options =>
+            {
+                options.Cookie.Name = ".AspNetCore.Identity.Application";
+            });
 
-                    options.Events.OnCreatingTicket = context =>
-                        context
-                            .HttpContext.RequestServices.GetRequiredService<ILoginService>()
-                            .HandleGithubCallback(context);
-                });
-            }
+        if (authConfig.GithubOAuthCredential is not null)
+        {
+            var github = authConfig.GithubOAuthCredential;
+            authenticationBuilder.AddGitHub(options =>
+            {
+                options.ClientId = github.ClientId;
+                options.ClientSecret = github.ClientSecret;
+                options.Scope.Add("user:email");
+
+                options.Events.OnCreatingTicket = context =>
+                    context
+                        .HttpContext.RequestServices.GetRequiredService<ILoginService>()
+                        .HandleGithubCallback(context);
+            });
         }
+
         if (authConfig.KeyAuthConfig is not null)
         {
-            var authenticationBuilder = services
-                .AddAuthentication(options =>
-                {
-                    options.DefaultScheme = IdentityConstants.ApplicationScheme;
-                })
-                .AddCookie(options =>
-                {
-                    options.Cookie.Name = ".AspNetCore.Identity.Application";
-                })
-                .AddApiKey(
-                    "ApiKey",
-                    (
-                        config =>
-                        {
-                            config.ApiKeyHeaderName = "X-Cms-Adm-Api-Key";
-                        }
-                    )
-                );
-
-            services
-                .AddAuthentication(options =>
-                {
-                    options.DefaultAuthenticateScheme = "CombinedSchemes";
-                    options.DefaultChallengeScheme = "CombinedSchemes";
-                })
-                .AddPolicyScheme(
-                    "CombinedSchemes",
-                    "Cookie  or ApiKey",
-                    options =>
-                    {
-                        options.ForwardDefaultSelector = context =>
-                        {
-                            // Check for API Key in header
-                            if (context.Request.Headers.ContainsKey("X-Cms-Adm-Api-Key"))
-                                return ApiKeyAuthenticationOptions.DefaultScheme;
-
-                            return IdentityConstants.ApplicationScheme;
-                        };
-                    }
-                );
+            authenticationBuilder.AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(CmsAuthSchemas.ApiKeyAuth, null);
         }
+
+        services.AddAuthorization();
 
         services.AddScoped<IUserClaimsPrincipalFactory<CmsUser>, CustomPrincipalFactory>();
         services.AddScoped<ILoginService, LoginService<TUser>>();
@@ -129,12 +81,9 @@ public sealed class AuthBuilder<TCmsUser>(ILogger<AuthBuilder<TCmsUser>> logger)
     public WebApplication UseCmsAuth(WebApplication app)
     {
         Print();
-        var authConfig = app.Services.GetRequiredService<AuthConfig>();
-        if (authConfig.OAuthConfig is not null)
-        {
-            app.UseAuthentication();
-        }
-
+        app.UseAuthentication();
+        app.UseAuthorization();
+        
         app.Services.GetService<PluginRegistry>()?.FeatureMenus.Add(AuthManageMenus.MenuRoles);
         app.Services.GetService<PluginRegistry>()?.FeatureMenus.Add(AuthManageMenus.MenuUsers);
         

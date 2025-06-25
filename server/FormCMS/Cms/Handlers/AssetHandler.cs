@@ -1,10 +1,7 @@
-using FormCMS.Auth;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Assets;
-using FormCMS.CoreKit.ApiClient;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using FormCMS.Core.Auth;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace FormCMS.Cms.Handlers;
@@ -17,10 +14,6 @@ public static class AssetHandler
             "/entity",
             (IAssetService s, bool? linkCount) => s.GetEntity(linkCount ?? false)
         );
-        //.RequireAuthorization(
-        //  [ new AuthorizeAttribute { AuthenticationSchemes = ApiKeyAuthenticationOptions.DefaultScheme},
-        //  new AuthorizeAttribute{AuthenticationSchemes=CookieAuthenticationDefaults.AuthenticationScheme }
-        //  ]);
 
         app.MapGet(
             "/base",
@@ -36,13 +29,13 @@ public static class AssetHandler
         app.MapGet(
             "/",
             (
-                IAssetService s,
-                HttpContext context,
-                int? offset,
-                int? limit,
-                bool? linkCount,
-                CancellationToken ct
-            ) =>
+                    IAssetService s,
+                    HttpContext context,
+                    int? offset,
+                    int? limit,
+                    bool? linkCount,
+                    CancellationToken ct
+                ) =>
                 s.List(
                     QueryHelpers.ParseQuery(context.Request.QueryString.Value),
                     offset,
@@ -51,11 +44,6 @@ public static class AssetHandler
                     ct
                 )
         );
-        //    .RequireAuthorization(
-        //      [
-        //      new AuthorizeAttribute{AuthenticationSchemes=CookieAuthenticationDefaults.AuthenticationScheme },
-        //        new AuthorizeAttribute { AuthenticationSchemes = ApiKeyAuthenticationOptions.DefaultScheme}]
-        //);
 
         app.MapGet(
             "/path",
@@ -66,11 +54,6 @@ public static class AssetHandler
             "/{id:long}",
             (IAssetService svc, long id, CancellationToken ct) => svc.Single(id, true, ct)
         );
-        //   .RequireAuthorization(
-        //      [
-        //      new AuthorizeAttribute{AuthenticationSchemes=CookieAuthenticationDefaults.AuthenticationScheme },
-        //        new AuthorizeAttribute { AuthenticationSchemes = ApiKeyAuthenticationOptions.DefaultScheme}]
-        //);
 
         app.MapPost(
             "/",
@@ -93,20 +76,6 @@ public static class AssetHandler
             "/delete/{id:long}",
             (IAssetService svc, long id, CancellationToken ct) => svc.Delete(id, ct)
         );
-        app.MapGet(
-            "/auth-test",
-            (HttpContext ctx) =>
-            {
-                return Results.Ok(
-                    new
-                    {
-                        Authenticated = ctx.User.Identity?.IsAuthenticated,
-                        Name = ctx.User.Identity?.Name,
-                        Claims = ctx.User.Claims.Select(c => new { c.Type, c.Value }),
-                    }
-                );
-            }
-        );
 
         app.MapPut(
                 "/hls/progress",
@@ -118,7 +87,7 @@ public static class AssetHandler
             .RequireAuthorization(
                 new AuthorizeAttribute
                 {
-                    AuthenticationSchemes = ApiKeyAuthenticationOptions.DefaultScheme,
+                    AuthenticationSchemes = CmsAuthSchemas.ApiKeyAuth
                 }
             );
     }

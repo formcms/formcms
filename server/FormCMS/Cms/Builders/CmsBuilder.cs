@@ -11,31 +11,24 @@ using FormCMS.Core.HookFactory;
 using FormCMS.Core.Identities;
 using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.Cache;
+using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.PageRender;
 using FormCMS.Utils.ResultExt;
+using FormCMS.Utils.ServiceCollectionExt;
 using GraphQL;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Rewrite;
+using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Schema = FormCMS.Cms.Graph.Schema;
 
 namespace FormCMS.Cms.Builders;
 
-public enum DatabaseProvider
-{
-    Sqlite,
-    Postgres,
-    SqlServer,
-}
-public enum MessagingProvider
-{
-    Nats,
-    Kafka,
-    InMemory,
-}
+
 
 public sealed record Problem(string Title, string? Detail = null);
 
@@ -86,6 +79,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         services.AddScoped<DatabaseMigrator>();
 
         services.AddSingleton(new RewriteOptions());
+        AddChannelMessageBus();
         AddCacheServices();
         AddGraphqlServices();
         AddPageTemplateServices();
@@ -151,6 +145,15 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             });
         }
 
+        void AddChannelMessageBus()
+        {
+            //if no external stream service(kafka, nats), add channel bus to enable messaging between different add-ons
+            //have to let Hosted service share Channel bus instance
+            services.AddSingleton<InMemoryChannelBus>();
+            services.TryAddSingleton<IStringMessageProducer>(sp => sp.GetRequiredService<InMemoryChannelBus>());
+            services.TryAddSingleton<IStringMessageConsumer>(sp => sp.GetRequiredService<InMemoryChannelBus>());
+        }
+        
         void AddGraphqlServices()
         {
             // init for each request, make sure get the latest entity definition
@@ -232,7 +235,19 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         await InitTables();
         if (options.EnableClient)
         {
-            app.UseStaticFiles();
+            app.UseStaticFiles(
+                new StaticFileOptions
+                {
+                    ContentTypeProvider = new FileExtensionContentTypeProvider
+                    {
+                        Mappings =
+                        {
+                            [".m3u8"] = "application/vnd.apple.mpegurl",
+                            [".ts"] = "video/mp2t" 
+                        }
+                    }
+                }
+                );
             UseAdminPanel();
             UserRedirects();
         }

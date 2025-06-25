@@ -67,8 +67,11 @@ public class ImportWorker(
                         if (string.IsNullOrEmpty(path)) continue;
                         
                         var local = Path.Join(task.GetPaths().Folder, path);
-                        await fileStore.Upload(local, path,ct);
-                        rec[nameof(Asset.Url).Camelize()] = fileStore.GetUrl(path);
+                        await fileStore.UploadFileAndRelated(local, path, ct);
+                        
+                        var url = rec.StrOrEmpty(nameof(Asset.Url).Camelize());
+                        var relativeUrl = url[url.IndexOf(path, StringComparison.Ordinal)..];
+                        rec[nameof(Asset.Url).Camelize()] = fileStore.GetUrl(relativeUrl);
                     } 
                 },
                 ct

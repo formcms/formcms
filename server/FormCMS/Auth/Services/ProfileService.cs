@@ -140,10 +140,4 @@ public class ProfileService<TUser>(
 
         return userClaims.Claims.FirstOrDefault(x => x.Value == value && x.Type == claimType) != null;
     }
-
-    public Task LoadUserContext(ClaimsPrincipal user)
-    {
-        contextAccessor.HttpContext.User = user;
-        return Task.CompletedTask;
-    }
 }

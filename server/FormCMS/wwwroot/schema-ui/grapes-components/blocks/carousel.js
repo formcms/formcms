@@ -14,7 +14,7 @@ export const carousel = {
 <div data-gjs-type="data-list"  data-component="data-list"  class="py-1">
     <div data-gjs-type="foreach" data-component="foreach" class="carousel w-full">
       <div id="{{@index}}" class="carousel-item w-full">
-        <img alt="" src="/{{url}}" class="w-full" />
+        <img alt="" src="{{url}}" class="w-full min-h-[100px]" />
       </div>
     </div>
     <div data-gjs-type="foreach" data-component="foreach" class="flex w-full justify-center gap-2 py-2">

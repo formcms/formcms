@@ -27,5 +27,10 @@ public class HookRegistry
         public HookList<AssetPreSingleArgs> AssetPreSingle { get; } = new();
         public HookList<AssetPreUpdateArgs> AssetPreUpdate { get; } = new();
         
+        
+        public HookList<AssetPreDeleteArgs> AssetPreDelete { get; } = new();
+        public HookList<AssetPostDeleteArgs> AssetPostDelete { get; } = new();
+        
         public HookList<AssetPreAddArgs> AssetPreAdd { get; } = new();
+        public HookList<AssetPostAddArgs> AssetPostAdd { get; } = new();
 }

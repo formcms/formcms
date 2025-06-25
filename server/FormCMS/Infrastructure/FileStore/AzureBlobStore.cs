@@ -59,25 +59,48 @@ public class AzureBlobStore(AzureBlobStoreOptions options) : IFileStore
         return Path.Join(options.UrlPrefix, file);
     }
 
-    public async Task Download(string path, string localPath, CancellationToken ct)
+    public Task Download(string path, string localPath, CancellationToken ct)
     {
         var blobClient = _containerClient.GetBlobClient(path);
-        var downloadInfo = await blobClient.DownloadAsync(ct);
+        return DownloadBlob(blobClient, localPath, ct);
+    }
 
+    private static async Task DownloadBlob(BlobClient blobClient, string localPath, CancellationToken ct)
+    {
         var destinationDir = Path.GetDirectoryName(localPath);
         if (!string.IsNullOrEmpty(destinationDir) && !Directory.Exists(destinationDir))
         {
             Directory.CreateDirectory(destinationDir);
         }
+        await blobClient.DownloadToAsync(localPath, ct);
+    }
+    
+    public async Task DownloadFileWithRelated(string path, string localPath, CancellationToken ct)
+    {
+        await foreach (var blob in _containerClient.GetBlobsAsync(prefix: path, cancellationToken: ct))
+        {
+            var blobClient = _containerClient.GetBlobClient(blob.Name);
 
-        await using var fileStream = File.OpenWrite(localPath);
-        await downloadInfo.Value.Content.CopyToAsync(fileStream, ct);
+            var relativePath = blob.Name[path.Length..].TrimStart('/');
+            var destinationPath = Path.Combine(localPath, relativePath.Replace('/', Path.DirectorySeparatorChar));
+
+            await DownloadBlob(blobClient, destinationPath, ct);
+        }
     }
 
     public async Task Del(string file, CancellationToken ct)
     {
         var blobClient = _containerClient.GetBlobClient(file);
         await blobClient.DeleteIfExistsAsync(cancellationToken: ct);
+    }
+    
+    public async Task DelByPrefix(string prefix, CancellationToken ct)
+    {
+        await foreach (var blob in _containerClient.GetBlobsAsync(prefix: prefix, cancellationToken: ct))
+        {
+            var blobClient = _containerClient.GetBlobClient(blob.Name);
+            await blobClient.DeleteIfExistsAsync(cancellationToken: ct);
+        }
     }
 
 

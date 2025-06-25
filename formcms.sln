@@ -33,8 +33,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostgresAppHost", "examples
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostgresWebApp", "examples\PostgresDemo\PostgresWebApp\PostgresWebApp.csproj", "{C8BB873C-C0D9-467C-92A2-5353EED97BF5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlVideoWebApp", "examples\FormCMSVideoApp\SqlVideoWebApp.csproj", "{BBF31AC1-ABA4-4D2C-A566-6252490E9617}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -101,10 +99,6 @@ Global
 		{C8BB873C-C0D9-467C-92A2-5353EED97BF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C8BB873C-C0D9-467C-92A2-5353EED97BF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C8BB873C-C0D9-467C-92A2-5353EED97BF5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{BBF31AC1-ABA4-4D2C-A566-6252490E9617}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{BBF31AC1-ABA4-4D2C-A566-6252490E9617}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{BBF31AC1-ABA4-4D2C-A566-6252490E9617}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{BBF31AC1-ABA4-4D2C-A566-6252490E9617}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

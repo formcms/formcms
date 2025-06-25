@@ -1,32 +1,36 @@
 using CmsApp;
 using FormCMS;
+using FormCMS.Activities.Models;
 using FormCMS.Activities.Workers;
-using FormCMS.Auth.Builders;
 using FormCMS.Auth.Models;
+using FormCMS.Core.Auth;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Utils.ResultExt;
+using FormCMS.Video.Workers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
+const string apiKey = "12345";
 var webBuilder = WebApplication.CreateBuilder(args);
+var dbConn = webBuilder.Configuration.GetConnectionString("sqlserver")!;
 
-var connectionString = webBuilder.Configuration.GetConnectionString("sqlserver")!;
+// communication between web app and worker app
+webBuilder.AddNatsClient(connectionName:"nats");
+webBuilder.Services.AddSingleton<IStringMessageProducer, NatsMessageBus>();
+
 webBuilder.Services.AddOutputCache();
+webBuilder.Services.AddSqlServerCms(dbConn);
+//auth
+webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(dbConn));
+webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, AppDbContext>(new AuthConfig(KeyAuthConfig:new KeyAuthConfig(apiKey)));
 
-webBuilder.Services.AddSqlServerCms(connectionString);
-
-//add permission control service 
-webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(connectionString));
-webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, AppDbContext>(new AuthConfig());
+// Add built-in CMS features: audit log, activity tracking, comment system
 webBuilder.Services.AddAuditLog();
 webBuilder.Services.AddActivity();
 webBuilder.Services.AddComments();
-//hosted services(worker)
-//have to let Hosted service share Channel bus instance
-webBuilder.Services.AddSingleton<InMemoryChannelBus>();
-webBuilder.Services.AddSingleton<IStringMessageProducer>(sp => sp.GetRequiredService<InMemoryChannelBus>());
-webBuilder.Services.AddSingleton<IStringMessageConsumer>(sp => sp.GetRequiredService<InMemoryChannelBus>());
-webBuilder.Services.AddHostedService<ActivityEventHandler>();
+webBuilder.Services.AddVideoMessageProducer();
+
+
 var webApp = webBuilder.Build();
 
 //ensure identity tables are created
@@ -37,14 +41,33 @@ await  ctx.Database.EnsureCreatedAsync();
 //use cms' CRUD 
 await webApp.UseCmsAsync();
 
-//add two default admin users
+// Ensure the identity and related database tables are created
 await webApp.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]).Ok();
 await webApp.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
 
-//worker run in the background do Cron jobs
-var workerBuilder = Host.CreateApplicationBuilder(args);
-workerBuilder.Services.AddSqlServerCmsWorker(connectionString);
+// =====================
+// Worker Service Setup
+// =====================
 
+// For distributed deployment, background processing (e.g., activity tracking)
+// can be moved to a separate worker service. This section runs in the same process
+// for convenience but can be split into its own deployment.
+var workerBuilder = Host.CreateApplicationBuilder(args);
+
+// communication between web app and worker app
+// web app-> worker app
+workerBuilder.AddNatsClient(connectionName:"nats");
+workerBuilder.Services.AddSingleton<IStringMessageConsumer, NatsMessageBus>();
+// worker app call web app
+workerBuilder.Services.AddSingleton(new CmsRestClientSettings( "http://localhost:5170", apiKey));
+
+workerBuilder.Services.AddSqlServerCmsWorker(dbConn);
+
+workerBuilder.Services.AddSingleton(ActivitySettingsExtensions.DefaultActivitySettings);
+workerBuilder.Services.AddHostedService<ActivityEventHandler>();
+workerBuilder.Services.AddHostedService<FFMpegWorker>();
+
+// Run both the web application and the background worker concurrently
 await Task.WhenAll(
     webApp.RunAsync(),
     workerBuilder.Build().RunAsync()

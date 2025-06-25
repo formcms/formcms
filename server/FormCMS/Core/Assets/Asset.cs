@@ -14,12 +14,12 @@ namespace FormCMS.Core.Assets;
 public record Asset(
     string Path, // unique name, yyyy-MM date + ulid
     string Url,
-    string Name, // original name, for search
-    string Title, // default as name, for link title, picture caption
-    long Size,
-    string Type,
-    Record Metadata,
-    string CreatedBy,
+    string Name ="", // original name, for search
+    string Title ="", // default as name, for link title, picture caption
+    long Size =0,
+    string Type="",
+    Record Metadata=null!,
+    string CreatedBy ="",
     DateTime CreatedAt = default,
     DateTime UpdatedAt = default,
     long Id = 0,
@@ -130,7 +130,7 @@ public static class Assets
             whiteList: [nameof(Asset.Progress), nameof(Asset.Url)]
         );
         return new Query(TableName)
-            .Where(nameof(Asset.Id).Camelize(), asset.Id)
+            .Where(nameof(Asset.Path).Camelize(), asset.Path)
             .AsUpdate(record);
     }
 

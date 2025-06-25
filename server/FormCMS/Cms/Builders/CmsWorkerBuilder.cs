@@ -2,6 +2,7 @@ using FormCMS.Cms.Workers;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Utils.ServiceCollectionExt;
 
 namespace FormCMS.Cms.Builders;
 
@@ -9,8 +10,7 @@ public record TaskTimingSeconds(
     int QueryTimeout,
     int ExportDelay,
     int ImportDelay,
-    int PublishDelay,
-    int FFMpegDelay
+    int PublishDelay
 );
 
 public static class CmsWorkerBuilder
@@ -22,7 +22,7 @@ public static class CmsWorkerBuilder
         TaskTimingSeconds? taskTimingSeconds
     )
     {
-        taskTimingSeconds ??= new TaskTimingSeconds(60, 30, 30, 30,30);
+        taskTimingSeconds ??= new TaskTimingSeconds(60, 30, 30, 30);
         var parts = connectionString.Split(";").Where(x => !x.StartsWith("Password"));
 
         services.AddSingleton(new ResizeOptions(1200, 90));
@@ -64,9 +64,4 @@ public static class CmsWorkerBuilder
 
         return services;
     }
-    public static IServiceCollection AddMessaging(this IServiceCollection services,
-        MessagingProvider messagingProvider,
-        string connectionString
-        ) => services.AddMsg(messagingProvider, connectionString);
-
 }

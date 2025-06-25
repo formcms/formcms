@@ -31,7 +31,7 @@ public class AssetAuthService(
         }
     }
 
-    public async Task PreUpdate(long id)
+    public async Task PreUpdateOrDelete(long id)
     {
         var level = profileService.MustGetReadWriteLevel(Assets.XEntity.Name);
         if (level == AccessLevel.Restricted)

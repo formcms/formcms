@@ -22,7 +22,14 @@ public static class AssetAuthUtil
         registry.AssetPreUpdate.RegisterDynamic("*", async (IAssetAuthService service, AssetPreUpdateArgs args)
             =>
         {
-            await service.PreUpdate(args.Id);
+            await service.PreUpdateOrDelete(args.Id);
+            return args;
+        });
+        
+        registry.AssetPreDelete.RegisterDynamic("*", async (IAssetAuthService service, AssetPreDeleteArgs args)
+            =>
+        {
+            await service.PreUpdateOrDelete(args.Asset.Id);
             return args;
         });
     }
