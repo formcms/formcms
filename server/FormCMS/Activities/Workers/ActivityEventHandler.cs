@@ -17,6 +17,7 @@ public class ActivityEventHandler(
     {
         await consumer.Subscribe(
             Topics.CmsActivity,
+            "ActivityEventHandler",
             async s =>
             {
                 var message = ActivityMessageExtensions.ParseJson(s);
@@ -39,7 +40,7 @@ public class ActivityEventHandler(
         );
     }
 
-    private async Task HandleMessage(ActivityMessage message, IRelationDbDao dao, CancellationToken ct)
+    private static async Task HandleMessage(ActivityMessage message, IRelationDbDao dao, CancellationToken ct)
     {
         if (message.Operation != Operations.Create && message.Operation != Operations.Delete) return;
 

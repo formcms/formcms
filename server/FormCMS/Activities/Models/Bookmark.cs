@@ -20,7 +20,7 @@ public record Bookmark(
     string Url = "",
     string Image = "",
     string Subtitle = "",
-    DateTime PublishedAt = default,
+    DateTime? PublishedAt = null,
     DateTime UpdatedAt = default
 );
 
@@ -46,36 +46,8 @@ public static class Bookmarks
         DefaultAttributeNames.PublishedAt.CreateCamelColumn(ColumnType.Datetime),
         DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
-        DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
+        DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime)
     ];
-
-    public static Bookmark LoadMetaData(this Bookmark bookmark, Entity entity, Record record)
-    {
-        bookmark = bookmark with { Url = entity.PageUrl + bookmark.RecordId };
-        if (record.ByJsonPath<string>(entity.BookmarkTitleField, out var title))
-        {
-            bookmark = bookmark with { Title = Trim(title) };
-        }
-
-        if (record.ByJsonPath<Asset>(entity.BookmarkImageField, out var asset))
-        {
-            bookmark = bookmark with { Image = Trim(asset?.Url) };
-        }
-
-        if (record.ByJsonPath<string>(entity.BookmarkSubtitleField, out var subtitle))
-        {
-            bookmark = bookmark with { Subtitle = Trim(subtitle) };
-        }
-
-        if (record.ByJsonPath<DateTime>(entity.BookmarkPublishTimeField, out var publishTime))
-        {
-            bookmark = bookmark with { PublishedAt = publishTime };
-        }
-
-        return bookmark;
-
-        string Trim(string? s) => s?.Length > 255 ? s[..255] : s ?? "";
-    }
 
     public static Record ToInsertRecord(
         this Bookmark bookmark

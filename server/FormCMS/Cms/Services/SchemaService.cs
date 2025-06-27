@@ -47,11 +47,6 @@ public sealed class SchemaService(
     {
         var query = SchemaHelper.BySchemaId(schemaId);
         var items = await queryExecutor.Many(query, ct);
-        Console.WriteLine($"items.count = ${items.Length}");
-        foreach (var item in items)
-        {
-            Console.WriteLine(item[nameof(Schema.Settings).Camelize()]);
-        }
         return items.Select(x => SchemaHelper.RecordToSchema(x).Ok()).ToArray();
     }
 

@@ -23,7 +23,8 @@ public class InMemoryChannelBus : IStringMessageProducer, IStringMessageConsumer
         return channel.Writer.WriteAsync(msg).AsTask();
     }
 
-    public Task Subscribe(string topic, Func<string, Task> handler, CancellationToken ct)
+    //In memory channel won't work for distributed deployment, just ignore group
+    public Task Subscribe(string topic, string group, Func<string, Task> handler, CancellationToken ct)
     {
         var channel = GetOrCreateChannel(topic);
 

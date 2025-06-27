@@ -22,7 +22,9 @@ public sealed class SyncWorker(
     private readonly HttpClient _httpClient = new();
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
-        await consumer.Subscribe(Topics.CmsCrud,async s =>
+        await consumer.Subscribe(Topics.CmsCrud,
+            "SyncWorker"
+            ,async s =>
         {
             using var scope = serviceScopeFactory.CreateScope();
             var dao = scope.ServiceProvider.GetRequiredService<IDocumentDbDao>();

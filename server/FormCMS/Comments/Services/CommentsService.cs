@@ -1,5 +1,6 @@
 using FormCMS.Cms.Services;
 using FormCMS.Comments.Models;
+using FormCMS.Core.Descriptors;
 using FormCMS.Core.Messaging;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.RelationDbDao;
@@ -13,6 +14,7 @@ public class CommentsService(
     IUserManageService userManageService,
     IStringMessageProducer producer,
     IEntityService entityService,
+    IEntityLinkService entityLinkService,
     DatabaseMigrator migrator,
     IIdentityService identityService,
     KateQueryExecutor executor
@@ -22,17 +24,30 @@ public class CommentsService(
     {
         await migrator.MigrateTable(CommentHelper.Entity.TableName, CommentHelper.Columns);
     }
+
     public async Task<Comment> Add(Comment comment, CancellationToken ct)
     {
-        var entity = await entityService.GetEntityAndValidateRecordId(comment.EntityName,comment.RecordId, ct).Ok();
+        var entity = await entityService.GetEntityAndValidateRecordId(comment.EntityName, comment.RecordId, ct).Ok();
         comment = AssignUser(comment);
         var query = comment.Insert();
         var id = await executor.Exec(query, true, ct);
-        var creatorId =  await userManageService.GetCreatorId(entity.TableName,entity.PrimaryKey, comment.RecordId, ct);
+        var creatorId = await userManageService.GetCreatorId(entity.TableName, entity.PrimaryKey, comment.RecordId, ct);
         var activityMessage = new ActivityMessage(comment.User, creatorId, comment.EntityName,
-            comment.RecordId, CommentHelper.CommentActivity, Operations.Create);
+            comment.RecordId, CommentHelper.CommentActivity, Operations.Create, comment.Content);
+        activityMessage = await SetLinkUrl(activityMessage,entity,comment.RecordId,ct);
         await producer.Produce(Topics.CmsActivity, activityMessage.ToJson());
+
         return comment with { Id = id };
+    }
+
+    private async Task<ActivityMessage> SetLinkUrl(ActivityMessage activityMessage,LoadedEntity entity, long recordId, CancellationToken ct)
+    {
+        var links =await entityLinkService.GetLinks(entity,[recordId.ToString()],ct);
+        if (links.Length == 1)
+        {
+            activityMessage = activityMessage with{Url =links[0].Url};
+        }
+        return activityMessage;
     }
     
     public async Task Delete(long id, CancellationToken ct)
@@ -52,7 +67,8 @@ public class CommentsService(
             var parentComment = parentRecord.ToObject<Comment>().Ok();
 
             var activityMessage = new ActivityMessage(userId, parentComment.User, CommentHelper.Entity.Name, comment.Parent.Value
-                , CommentHelper.CommentActivity, Operations.Delete);
+                , CommentHelper.CommentActivity, Operations.Delete,comment.Content);
+
             await producer.Produce(Topics.CmsActivity, activityMessage.ToJson());
         }
         else
@@ -61,7 +77,7 @@ public class CommentsService(
             var creatorId =  await userManageService.GetCreatorId(entity.TableName,entity.PrimaryKey, comment.RecordId, ct);
             
             var activityMessage = new ActivityMessage(userId, creatorId, comment.EntityName, comment.RecordId , 
-                CommentHelper.CommentActivity, Operations.Delete);
+                CommentHelper.CommentActivity, Operations.Delete,comment.Content);
             await producer.Produce(Topics.CmsActivity, activityMessage.ToJson());
         }
     }
@@ -72,6 +88,8 @@ public class CommentsService(
         var parentRecord = await executor.Single(CommentHelper.Single(referencedId), ct) ??
                            throw new ResultException("Parent comment not found");
         var parentComment = parentRecord.ToObject<Comment>().Ok();
+        var entity = await entityService
+            .GetEntityAndValidateRecordId(parentComment.EntityName, parentComment.RecordId, ct).Ok();
         comment = comment with
         {
             EntityName = parentComment.EntityName,
@@ -82,9 +100,9 @@ public class CommentsService(
         var id = await executor.Exec(comment.Insert(),false, ct);
         
         var activityMessage = new ActivityMessage(comment.User, parentComment.User, CommentHelper.Entity.Name,
-            parentComment.Id, CommentHelper.CommentActivity, Operations.Create);
+            parentComment.Id, CommentHelper.CommentActivity, Operations.Create,comment.Content);
+        activityMessage =await SetLinkUrl(activityMessage,entity,comment.RecordId,ct);
         await producer.Produce(Topics.CmsActivity, activityMessage.ToJson());
-        
         return comment with{Id = id};
     }
     

@@ -17,6 +17,7 @@ import {topList} from "./blocks/top-list.js";
 import {featuredList} from "./blocks/featured-list.js";
 import {comments} from "./blocks/comments.js";
 import {video} from "./blocks/video.js";
+import {notificationBell} from "./blocks/notification-bell.js";
 
 export function addCustomBlocks(editor){
     for (const {name, label, media, content, category} of customBlocks){
@@ -42,5 +43,6 @@ export const customBlocks = [
     featuredList,
     topList,
     comments,
-    video
+    video,
+    notificationBell
 ]

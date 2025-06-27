@@ -1,7 +1,6 @@
 using FormCMS.Activities.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
-using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.EnumExt;
@@ -19,7 +18,7 @@ public class ActivityCollectService(
     IEntityService entityService,
     IQueryService queryService,
     IPageResolver pageResolver,
-    
+    IEntityLinkService entityLinkService,
     KateQueryExecutor executor,
     IRelationDbDao dao,
     DatabaseMigrator migrator
@@ -318,24 +317,26 @@ public class ActivityCollectService(
             .Select(x => x.RecordId.ToString())
             .ToArray();
         if (ids.Length == 0) return activities;
-        
-        var strAgs = new StrArgs
-        {
-            [entity.BookmarkQueryParamName] = ids
-        };
-        var records = await queryService.ListWithAction(entity.BookmarkQuery, new Span(),new Pagination(),strAgs,ct);
-        var dict = records.ToDictionary(x => x[entity.PrimaryKey].ToString()!);
 
-        var list = new List<Activity>();
-        foreach (var ac in activities)
+        var links = await entityLinkService.GetLinks( entity, ids, ct);
+        
+        var dict = links.ToDictionary(x => x.RecordId);
+        return activities.Select(activity=>
         {
-            if (!ac.IsActive) list.Add(ac);
-            if (dict.TryGetValue(ac.RecordId.ToString(), out var record))
+            if (dict.TryGetValue(activity.RecordId.ToString(), out var link))
             {
-                list.Add(ac.LoadMetaData(entity, record));
-            } 
-        }
-        return list.ToArray();
+                return activity with
+                {
+                    Title = link.Title,
+                    Url = link.Url,
+                    Image = link.Image,
+                    Subtitle = link.Subtitle,
+                    PublishedAt = link.PublishedAt,
+                };
+            }
+            return activity;
+
+        }).ToArray();
     }
 
     private async Task UpsertActivities(Activity[] activities,CancellationToken ct)

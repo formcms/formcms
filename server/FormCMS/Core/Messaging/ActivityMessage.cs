@@ -19,7 +19,9 @@ public record ActivityMessage(
     string EntityName, 
     long RecordId, 
     string Activity,  
-    string Operation
+    string Operation,
+    string Message,
+    string Url = ""
 );
 
 public static class ActivityMessageExtensions

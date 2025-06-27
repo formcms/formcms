@@ -10,7 +10,7 @@ public record CmsCrudMessageProduceBuilderOptions(string[] Entities);
 
 public class CmsCrudMessageProduceBuilder(ILogger<CmsCrudMessageProduceBuilder> logger, CmsCrudMessageProduceBuilderOptions options)
 {
-    public static IServiceCollection AddMessageProducer(IServiceCollection services, string[] entities)
+    public static IServiceCollection AddCrudMessageProducer(IServiceCollection services, string[] entities)
     {
         services.AddSingleton(new CmsCrudMessageProduceBuilderOptions(Entities:entities));
         services.AddSingleton<CmsCrudMessageProduceBuilder>();

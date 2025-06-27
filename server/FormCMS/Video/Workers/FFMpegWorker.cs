@@ -24,6 +24,7 @@ public sealed class FFMpegWorker(
         // Subscribe to the message topic ONCE
         await consumer.Subscribe(
             VideoTopics.Rdy4FfMpeg,
+            "FFMpegWorker",
             async s =>
             {
                 try
