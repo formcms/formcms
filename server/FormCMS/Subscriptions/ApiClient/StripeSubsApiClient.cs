@@ -8,9 +8,9 @@ namespace FormCMS.Subscriptions.ApiClient;
 public class StripeSubsApiClient(HttpClient client)
 {
     public Task<Result<StripeSubscription>> CreateSubscription(StripeSubscription subsctiption) =>
-        client.PostResult<StripeSubscription>("".Url(), subsctiption);
+      client.PostResult<StripeSubscription>("".Url(), subsctiption);
 
-    public Task<Result<StripeCustomer>> CreateCustomer(StripeCustomer customer) =>
+    public  Task<Result<StripeCustomer>> CreateCustomer(StripeCustomer customer) =>
         client.PostResult<StripeCustomer>("customer".Url(), customer);
 
     public Task<Result<StripeCustomer>> GetCustomer(string id) =>

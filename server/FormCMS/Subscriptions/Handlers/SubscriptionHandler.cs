@@ -38,7 +38,7 @@ namespace FormCMS.Subscriptions.Handlers
 
             builder.MapGet(
                 "/products",
-                (ISubscriptionService s, CancellationToken ct) => s.GetProducts(ct)
+                (IProductService s, CancellationToken ct) => s.List(ct)
             );
 
             builder.MapGet(

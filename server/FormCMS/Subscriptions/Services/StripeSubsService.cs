@@ -7,7 +7,7 @@ using static FormCMS.SystemSettings;
 
 namespace FormCMS.Subscriptions.Services;
 
-public class StripeSubscriptionService(
+public class StripeSubsService(
     CustomerService customerService,
     SubscriptionService subscriptionService,
     ProductService productService,
@@ -85,7 +85,7 @@ public class StripeSubscriptionService(
         };
     }
 
-    public async Task<string> CreateSubscription(
+    public async Task<StripeSubscription> CreateSubscription(
         string customerId,
         string priceId,
         CancellationToken ct
@@ -106,7 +106,8 @@ public class StripeSubscriptionService(
             reqOption,
             cancellationToken: ct
         );
-        return result.Id;
+        
+        return new StripeSubscription("Subscription",result.Id,customerId,null,result.Created,null,result.Status,null);
     }
 
    
