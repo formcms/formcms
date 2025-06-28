@@ -56,7 +56,7 @@
           },
           "label": {
             "title": "Label",
-            "description": "Manu Label",
+            "description": "Menu Label",
             "minLength": 1,
             "type": "string"
           },
