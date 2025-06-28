@@ -1,4 +1,4 @@
-# FormCMS, powered by Asp.net Core(c#) and React, featuring Rest APIs, GraphQL and Grapes.js Page designer.
+# FormCMS, powered by ASP.NET Core (C#) and React, featuring REST APIs, GraphQL, and Grapes.js page designer.
 
 Welcome to [FormCMS](https://github.com/FormCMS/FormCMS)! 🚀  
 [![GitHub stars](https://img.shields.io/github/stars/FormCMS/FormCMS.svg?style=social&label=Star)](https://github.com/FormCMS/FormCMS/stargazers)
@@ -7,7 +7,6 @@ Our mission is to make **data modeling**, **backend development**, and **fronten
 We’d love for you to contribute to FormCMS! Check out our [CONTRIBUTING guide](https://github.com/formcms/formcms/blob/main/CONTRIBUTING.md) to get started.  
 Love FormCMS? Show your support by giving us a ⭐ on GitHub and help us grow! 🌟  
 Have suggestions? Connect with us on Reddit! https://www.reddit.com/r/FormCMS/
-
 
 ---
 ## What is FormCMS?
@@ -25,9 +24,8 @@ Have suggestions? Connect with us on Reddit! https://www.reddit.com/r/FormCMS/
 3. **User Social Activity**  
    FormCMS now includes user engagement features, allowing users to like, share, and save content, with the system tracking view counts. Users can access their interaction history, liked posts, and saved posts through a dedicated user portal, enhancing interactivity and personalization.
 
-
-
 ---
+
 ## New CMS? — Data Modeling
 
 ### Data Modeling in Current CMS Solutions
@@ -39,6 +37,7 @@ Most CMS solutions support entity customization and adding custom properties, bu
 3. **Manually Created C# Classes**: Writing code adds custom properties to create classes that the system uses with Entity Framework.
 
 #### The Pros and Cons:
+
 - **Key-Value Storage**: This approach offers flexibility but suffers from performance inefficiencies and lacks relational integrity.
 - **Document Database**: Storing data as documents lacks a structured format and makes data integrity harder to enforce.
 - **C# Classes**: While my preferred method, it lacks flexibility. Any minor changes require rebuilding and redeploying the system.
@@ -91,32 +90,37 @@ becomes `GET /api/queries/TeacherQuery`.
 By transforming GraphQL into optimized REST-like queries, FormCMS ensures a secure, efficient, and scalable API experience.
 
 ---
+
 ## Online Course System Demo
 
 ### Live Demo
+
 - **Public Site:** [fluent-cms-admin.azurewebsites.net](https://fluent-cms-admin.azurewebsites.net/)
 - **Admin Panel:** [fluent-cms-admin.azurewebsites.net/admin](https://fluent-cms-admin.azurewebsites.net/admin)
   - **Email:** `admin@cms.com`
   - **Password:** `Admin1!`
 
 ### Additional Resources
+
 - **GraphQL Playground:** [fluent-cms-admin.azurewebsites.net/graph](https://fluent-cms-admin.azurewebsites.net/graph)
 - **Documentation:** [fluent-cms-admin.azurewebsites.net/doc/index.html](https://fluent-cms-admin.azurewebsites.net/doc/index.html)  
 
 ### Examples Source Code
-example code can be found at /formCMS/examples
 
-- for Sqlite: run the SqliteDemo project
-- for SqlServer: run the SqlServerDemo/SqlServerAppHost project
-- for PostgreSQL : run the PostgresDemo/PostgresAppHost project
+Example code can be found at /formCMS/examples
 
-Defult login:  
-  - Eamil : `samdmin@cms.com`  
+- For Sqlite: run the SqliteDemo project
+- For SqlServer: run the SqlServerDemo/SqlServerAppHost project
+- For PostgreSQL: run the PostgresDemo/PostgresAppHost project
+
+Default login:  
+  - Email: `sadmin@cms.com`  
   - Password: `Admin1!`  
 
-After login to `Admin Panel`, you can go to `Tasks`, click `Import Demo Data`, to import demo data.
+After logging in to the `Admin Panel`, you can go to `Tasks`, click `Import Demo Data`, to import demo data.
 
 ---
+
 ## Online Course System Backend
 
 <details> 
@@ -127,6 +131,7 @@ This section provides detailed guidance on developing a foundational online cour
 ### Database Schema
 
 #### 1. **Teachers Table**
+
 The `Teachers` table maintains information about instructors, including their personal and professional details.
 
 | **Field**        | **Header**       | **Data Type** |
@@ -140,6 +145,7 @@ The `Teachers` table maintains information about instructors, including their pe
 | `bio`            | Bio              | Text          |
 
 #### 2. **Courses Table**
+
 The `Courses` table captures the details of educational offerings, including their scope, duration, and prerequisites.
 
 | **Field**        | **Header**       | **Data Type** |
@@ -155,6 +161,7 @@ The `Courses` table captures the details of educational offerings, including the
 | `start_date`     | Start Date       | Datetime      |
 
 #### 3. **Lessons Table**
+
 The `Lessons` table contains detailed information about the lessons within a course, including their title, content, and associated teacher.
 
 | **Field**        | **Header**        | **Data Type** |
@@ -162,13 +169,14 @@ The `Lessons` table contains detailed information about the lessons within a cou
 | `id`             | ID                | Int           |
 | `name`           | Lesson Name       | String        |
 | `description`    | Description       | Text          |
-| `teacher`     | Teacher           | Int (Foreign Key) |
-| `course`      | Course            | Int (Foreign Key) |
+| `teacher`        | Teacher           | Int (Foreign Key) |
+| `course`         | Course            | Int (Foreign Key) |
 | `created_at`     | Created At        | Datetime      |
 | `updated_at`     | Updated At        | Datetime      | 
 
 
 #### 4. **Skills Table**
+
 The `Skills` table records competencies attributed to teachers.
 
 | **Field**        | **Header**       | **Data Type** |
@@ -181,6 +189,7 @@ The `Skills` table records competencies attributed to teachers.
 | `updated_at`     | Updated At       | Datetime      |
 
 #### 5. **Materials Table**
+
 The `Materials` table inventories resources linked to courses.
 
 | **Field**        | **Header**  | **Data Type** |
@@ -195,7 +204,8 @@ The `Materials` table inventories resources linked to courses.
 ---
 
 ### Relationships
-- **Courses to Teachers**: Man-to-One(Each teacher can teach multiple courses; each course is assigned to one teacher. A teacher can exist independently of a course).
+
+- **Courses to Teachers**: Many-to-One (Each teacher can teach multiple courses; each course is assigned to one teacher. A teacher can exist independently of a course).
 - **Teachers to Skills**: Many-to-Many (Multiple teachers can share skills, and one teacher may have multiple skills).
 - **Courses to Materials**: Many-to-Many (A course may include multiple materials, and the same material can be used in different courses).
 - **Courses to Lessons**: One-to-Many (Each course can have multiple lessons, but each lesson belongs to one course. A lesson cannot exist without a course, as it has no meaning on its own).
@@ -205,18 +215,24 @@ The `Materials` table inventories resources linked to courses.
 ### Schema Creation via FormCMS Schema Builder
 
 #### Accessing Schema Builder
+
 After launching the web application, locate the **Schema Builder** menu on the homepage to start defining your schema.
 
 #### Adding Entities
+
 [Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/list.html?schema=entity)  
 1. Navigate to the **Entities** section of the Schema Builder.
 2. Create entities such as "Teacher" and "Course."
 3. For the `Course` entity, add attributes such as `name`, `status`, `level`, and `description`.
+
 ---
+
 ### Defining Relationships
+
 [Example Configuration](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&id=27)  
 
 #### 1. **Course and Teacher (Many-to-One Relationship)**
+
 To establish a many-to-one relationship between the `Course` and `Teacher` entities, you can include a `Lookup` attribute in the `Course` entity. This allows selecting a single `Teacher` record when adding or updating a `Course`.
 
 | **Attribute**   | **Value**    |
@@ -228,7 +244,8 @@ To establish a many-to-one relationship between the `Course` and `Teacher` entit
 
 **Description:** When a course is created or modified, a teacher record can be looked up and linked to the course.
 
-#### 2 **Course and Lesson(One-to-Many Relationship)**
+#### 2 **Course and Lesson (One-to-Many Relationship)**
+
 To establish a one-to-many relationship between the `Course` and `Lesson` entities, use a `Collection` attribute in the `Course` entity. This enables associating multiple lessons with a single course.
 
 | **Attribute**   | **Value**  |
@@ -238,9 +255,10 @@ To establish a one-to-many relationship between the `Course` and `Lesson` entiti
 | **DisplayType** | EditTable  |
 | **Options**     | Lesson     |
 
-**Description:** When managing a course , you can manage lessons of this course.
+**Description:** When managing a course, you can manage lessons of this course.
 
 #### 3. **Course and Materials (Many-to-Many Relationship)**
+
 To establish a many-to-many relationship between the `Course` and `Material` entities, use a `Junction` attribute in the `Course` entity. This enables associating multiple materials with a single course.
 
 | **Attribute** | **Value**   |
@@ -252,20 +270,19 @@ To establish a many-to-many relationship between the `Course` and `Material` ent
 
 **Description:** When managing a course, you can select multiple material records from the `Material` table to associate with the course.
 
-
-</details>
-
-
+</details>  
 
 ---
 
 ## **Admin Panel**
+
 <details>  
 <summary>  
-The last chapter introduced how to model entities, this chapter introduction how to use Admin-Panel to manage data of those entities.
+The last chapter introduced how to model entities, this chapter introduces how to use Admin-Panel to manage data of those entities.
 </summary>  
 
 ### **Display Types**
+
 The Admin Panel supports various UI controls to display attributes:
 
 - `"text"`: Single-line text input.
@@ -286,16 +303,18 @@ The Admin Panel supports various UI controls to display attributes:
 - `"multiselect"`: Select multiple items from a predefined list.
 
 - `"lookup"`: Select an item from another entity with a many-to-one relationship (requires `Lookup` data type).
-- `"treeSelect"`: Select an item from another entity with a many-to-one relationship (requires `Lookup` data type), items are organized as tree.
+- `"treeSelect"`: Select an item from another entity with a many-to-one relationship (requires `Lookup` data type), items are organized as a tree.
 
 - `"picklist"`: Select multiple items from another entity with a many-to-many relationship (requires `Junction` data type).
 - `"tree"`: Select multiple items from another entity with a many-to-many relationship (requires `Junction` data type), items are organized as a tree.
-- `"edittable"`: Manage items of a one-to-many sub-entity (requires `Collection` data type).  
-
+- `"editTable"`: Manage items of a one-to-many sub-entity (requires `Collection` data type).  
 
 ---
-[See this example how to configure entity `category`, so it's item can be organized as tree.](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&id=103)
+
+[See this example how to configure entity `category`, so its items can be organized as a tree.](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&id=103)
+
 ### **DataType to DisplayType Mapping Table**
+
 Below is a mapping of valid `DataType` and `DisplayType` combinations:
 
 | **DataType**  | **DisplayType** | **Description**                               |
@@ -328,51 +347,56 @@ Below is a mapping of valid `DataType` and `DisplayType` combinations:
 ---
 
 ### **List Page**
+
 [Example Course List Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20)
 
-The **List Page** displays entities in a tabular format, supporting sorting, searching, and pagination for efficient browsing or locating of specific records.
+The **List Page** displays entities in a tabular format, supporting sorting, searching, and pagination for efficient browsing or locating specific records.
 
 
 #### **Sorting**
+
 Sort records by clicking the `↑` or `↓` icon in the table header.
 - [Order by Created At Example](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&sort[created_at]=-1)
 - [Order by Name Example](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&sort[name]=1)
 
 #### **Filtering**
+
 Apply filters by clicking the Funnel icon in the table header.
 
 - [Filter by Created At (2024-09-07)](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&created_at[dateIs]=2024-09-07&sort[created_at]=1)
 - [Filter by Course Name (Starts with A or C)](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course?offset=0&limit=20&name[operator]=or&name[startsWith]=A&name[startsWith]=C&sort[created_at]=1)
 
 #### **Duplicate**
+
 Clicking the duplicate button opens the "Add New Data" page with prefilled values from the selected record for quick entry.
  
 ---
 
 ### **Detail Page**  
-Detail page provides an interface to manage single record.  
 
-#### Example of display types `date`,`image`, `gallery`, `muliselect`, `dropdown`,
+The Detail page provides an interface to manage a single record.  
+
+#### Example of display types `date`, `image`, `gallery`, `multiselect`, `dropdown`
+
 [Lesson Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/lesson/6?ref=https%3A%2F%2Ffluent-cms-admin.azurewebsites.net%2F_content%FormCMS%2Fadmin%2Fentities%2Fcourse%2F27%3Fref%3Dhttps%253A%252F%252Ffluent-cms-admin.azurewebsites.net%252F_content%FormCMS%252Fadmin%252Fentities%252Fcourse%253Foffset%253D0%2526limit%253D20).
 
-#### Example of `lookup`,`picklist`,`edittable`
+#### Example of `lookup`, `picklist`, `editTable`
+
 [Course Detail Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course/22)
 
 </details>  
 
-
-
-
-
 ---
 
 ## Publish / Preview Content
+
 <details>
 <summary>
 This feature allows content creators to plan and organize their work, saving drafts for later completion.
 </summary>
 
 ### Content Publication Status
+
 Content can have one of the following publication statuses:
 - **`draft`**
 - **`scheduled`**
@@ -384,17 +408,20 @@ Only content with the status **`published`** can be retrieved through GraphQL qu
 ---
 
 ### Setting Default Publication Status in the Schema Builder
+
 When defining an entity in the Schema Builder, you can configure its default publication status as either **`draft`** or **`published`**.
 
 ---
 
 ### Managing Publication Status in the Admin Panel
+
 On the content edit page, you can:
 - **Publish**: Make content immediately available.
 - **Unpublish**: Remove content from public view.
 - **Schedule**: Set a specific date and time for the content to be published.
 
 ---
+
 ### Preview Draft/Scheduled/Unpublished Content
 
 By default, only published content appears in query results. 
@@ -404,53 +431,54 @@ For a more convenient approach, you can set the **Preview URL** in the **Entity 
 [Example Entity Settings Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/edit.html?schema=entity&id=27)
 
 Once set, you can navigate to the **Entity Management** page and simply click the **Preview** button to view the content in preview mode.
-[Example Content Manage Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course/3?ref=https%3A%2F%2Ffluent-cms-admin.azurewebsites.net%2F_content%2FFormCMS%2Fadmin%2Fentities%2Fcourse%3Foffset%3D0%26limit%3D20#)
+[Example Content Manage Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/admin/entities/course/3?ref=https%3A%2F%2Ffluent-cms-admin.azurewebsites.net/_content%2FFormCMS%2Fadmin%2Fentities%2Fcourse%3Foffset%3D0%26limit%3D20#)
 ---
 
 ### Publication Worker
+
 The **Publication Worker** automates the process of updating scheduled items in batches, transitioning them to the **`published`** status at the appropriate time.
 
 </details>  
 
-
-
-
 ---
+
 ## Concurrent Update Protection
+
 <details>
 <summary>
-Protect user from dirty write(concurrent update)
+Protect users from dirty write (concurrent update).
 </summary>
 
 ###  How does it work?
 
-Return the updated_at timestamp when fetching the item. When updating, compare the stored updated_at with the one in the request. If they differ, reject the update
+Return the updated_at timestamp when fetching the item. When updating, compare the stored updated_at with the one in the request. If they differ, reject the update.
 
 ### When Is updatedAt Checked
+
 - During updates
-- During Deletions
+- During deletions
 
 If a concurrent modification is detected, the system will throw the following exception:  
 "Error: Concurrent Write Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again."
 
 </details>  
 
-
-
-
 ---
+
 ## Audit Logging
+
 <details>
 <summary>
 Audit logging in FormCMS helps maintain accountability and provides a historical record of modifications made to entities within the system. 
 </summary>
 
 ###  Audit Log Entity
+
 An audit log entry captures essential information about each modification. The entity structure includes the following fields:
 
 - **UserId** (*string*): The unique identifier of the user performing the action.
 - **UserName** (*string*): The name of the user.
-- **Action** (*ActionType*): The type of action (Create, update, Delete) performed. 
+- **Action** (*ActionType*): The type of action (Create, Update, Delete) performed. 
 - **EntityName** (*string*): The name of the entity affected.
 - **RecordId** (*string*): The unique identifier of the record modified.
 - **RecordLabel** (*string*): A human-readable label for the record.
@@ -458,12 +486,15 @@ An audit log entry captures essential information about each modification. The e
 - **CreatedAt** (*DateTime*): The timestamp when the action occurred.
 
 ### When Is Audit Log Added
+
 An audit log entry is created when a user performs any of the following actions:
 
 - **Creating** a new record.
 - **Updating** an existing record.
 - **Deleting** a record.
+
 ### How to view Audit Log
+
 Audit logs can be accessed and searched by users with appropriate permissions. The following roles have access:
 
 - **Admin**
@@ -475,19 +506,18 @@ These users can:
 - Filter logs by date range.
 
 ### Benefits of Audit Logging
+
 - Ensures transparency and accountability.
 - Helps with troubleshooting and debugging.
 - Provides insights into system usage and modifications.
 - Supports compliance with regulatory requirements.
 
 By maintaining a detailed audit trail, the System enhances security and operational efficiency, ensuring that all modifications are tracked and can be reviewed when necessary.
-</details>  
-
-
 
 ---
 
 ## Asset Library
+
 <details>
 <summary>
 The Asset Library centralizes the management of uploaded assets (e.g., images, files), supporting both local and cloud storage. It enables reuse, optimizes storage, and provides robust permissions and extensibility for various cloud providers.
@@ -501,6 +531,7 @@ Assets are stored in a repository, each identified by a unique `Path` (e.g., `20
 ### Core Features
 
 #### Adding Assets to Data
+
 In forms with `image`, `file`, or `gallery` fields, users can:   
 - **Upload**: Upload a new file via `IFileStore.Upload`. The system generates a unique `Path` (e.g., `2025-03/abc123`), sets a `Url` (local or cloud-based), and records metadata (`Name`, `Size`, `Type`, `CreatedBy`, `CreatedAt`). Images are resized (max width: 1200px, quality: 75) before saving to the chosen storage provider in the `2025-03` folder. A default `Title` is derived from `Name`.  
   - **Choose**: Select an existing asset from a dialog with:      
@@ -510,10 +541,12 @@ In forms with `image`, `file`, or `gallery` fields, users can:
 - **Delete**: Remove the asset reference from the entity, reducing `LinkCount`.    
 - **Edit**: Update `Title` or metadata.    
 
-#### Managing Orphan Assets   
+#### Managing Orphan Assets
+
 The **Asset List Page** lists assets with `Name`, `Title`, `Size`, `Type`, `CreatedAt`, and `LinkCount`. Assets with `LinkCount` of 0 (orphans) can be deleted via `IFileStore.Del`, removing them from storage (e.g., the `2025-03` folder) and the system.   
 
-#### Replacing Files   
+#### Replacing Files
+
 On the **Asset Detail Page**, users can replace content:   
 - Upload a new file via `IFileStore.Upload` to the same `Path` (e.g., `2025-03/abc123`), updating `Size`, `Type`, and `UpdatedAt`.   
 - Images are resized per settings (max width: 1200px, quality: 75).   
@@ -526,11 +559,12 @@ On the **Asset Detail Page**, users can modify:
 
 ---
 
-### Cloud Storage Integration   
+### Cloud Storage Integration
 
 The Asset Library supports cloud storage through the `IFileStore` interface, with Azure Cloud Storage as an example. Other providers (e.g., Google Cloud Storage, AWS S3) can be integrated by implementing this interface and registering it in the dependency injection container.   
 
-#### `IFileStore` Interface   
+#### `IFileStore` Interface
+
 ```csharp   
 namespace FormCMS.Infrastructure.FileStore;   
 
@@ -547,26 +581,29 @@ public interface IFileStore
 }
 ```
 
-#### Functionality   
+#### Functionality
+
 - **Upload**: Stores files in the provider, using the folder structure (e.g., `2025-03/abc123`).   
 - **GetMetadata**: Retrieves `Size` and `ContentType`.   
 - **GetUrl**: Returns the asset’s URL (e.g., `https://<account>.blob.core.windows.net/<container>/2025-03/abc123` for Azure).   
 - **Download**: Retrieves the file to a local path.   
 - **Del**: Deletes the file from its folder.   
 
-#### Extending to Other Providers   
+#### Extending to Other Providers
+
 To use Google Cloud Storage, AWS S3, or others:   
 1. Implement `IFileStore` with provider-specific logic (e.g., S3’s `PutObject` for uploads to `2025-03/abc123`).   
 2. Register it in dependency injection (e.g., `services.AddScoped<IFileStore, AwsS3FileStore>()`).   
 
-#### Example: Azure Cloud Storage   
+#### Example: Azure Cloud Storage
+
 - Uploads files to Azure Blob Storage under the `2025-03` folder (e.g., `2025-03/abc123`).   
 - Generates URLs like `https://<account>.blob.core.windows.net/<container>/2025-03/abc123`.   
 - Supports metadata retrieval and deletion via Azure APIs.   
 
 ---
 
-### Permissions   
+### Permissions
 
 A role-based system controls asset access:   
 - **Super Admin**: Full control over all assets, including those in cloud folders (e.g., `2025-03`).   
@@ -580,7 +617,7 @@ Permissions filter the library dialog and validate actions against ownership and
 
 ---
 
-### Configuration   
+### Configuration
 
 - **Image Compression** (`ImageCompressionOptions`):   
   - `MaxWidth`: Default 1200px.   
@@ -590,7 +627,7 @@ Permissions filter the library dialog and validate actions against ownership and
 
 ---
 
-### Benefits   
+### Benefits
 
 - **Reuse**: Assets are shared across entities, reducing redundancy.   
 - **Storage**: Orphan deletion, image resizing, and folder-based organization (e.g., `2025-03`) optimize usage; cloud storage scales capacity.   
@@ -601,38 +638,41 @@ Permissions filter the library dialog and validate actions against ownership and
 - **Scalability**: Cloud integration (e.g., Azure) and `IFileStore` support growing storage demands.   
 </details>
 
-
-
 ---
+
 ## Date and Time
+
 <details>
 <summary>
 The Date and Time system in FormCMS manages how dates and times are displayed and stored, supporting three distinct formats: `localDatetime`, `datetime`, and `date`. It ensures accurate representation across time zones and consistent storage in the database.
 </summary>
-### Overview   
+### Overview
 
 FormCMS provides three display formats for handling date and time data, each serving a specific purpose:    
     `localDatetime`: Displays dates and times adjusted to the user's browser time zone (e.g., a start time that varies by location).    
     `datetime`: Zone-agnostic, showing the same date and time universally (e.g., a fixed event time).    
     `date`: Zone-agnostic, displaying only the date without time (e.g., a birthday).    
-
+</details>
 ---
 
 ### Display Formats
 
 #### `localDatetime`
+
 - **Purpose**: Represents a date and time that adjusts to the user's local time zone, ideal for events like start times where the local context matters.
 - **Behavior**: The system converts the stored UTC `datetime` to the browser's time zone for display. For example, an event starting at `2025-03-19 14:00 UTC` would appear as `2025-03-19 09:00 EST` for a user in New York (UTC-5) or `2025-03-19 23:00 JST` for a user in Tokyo (UTC+9).
 - **Storage**: When entered, the system converts the user’s local input to UTC before saving. For instance, `2025-03-19 09:00 EST` is stored as `2025-03-19 14:00 UTC`.
 - **Use Case**: Event schedules, deadlines, or anything requiring local time awareness.
 
 #### `datetime`
+
 - **Purpose**: Displays a fixed date and time that remains consistent regardless of the user’s time zone, suitable for universal reference points.
 - **Behavior**: No conversion occurs; the stored value is shown as-is. For example, `2025-03-19 14:00` is displayed as `2025-03-19 14:00` everywhere.
 - **Storage**: Saved exactly as input, without time zone adjustments, assuming it’s a universal time.
 - **Use Case**: Logs, publication timestamps, or system events where a single point in time applies globally.
 
 #### `date`
+
 - **Purpose**: Represents only a date without time, zone-agnostic, and consistent across all users.
 - **Behavior**: Displayed as a date only (e.g., `2025-03-19`), with no time component or zone consideration.
 - **Storage**: Stored as a `datetime` with the time set to `00:00:00` (midnight), typically in UTC for consistency, but the time portion is ignored in display.
@@ -676,16 +716,12 @@ FormCMS provides three display formats for handling date and time data, each ser
 - **Simplicity**: Clear separation of use cases reduces confusion in data entry and display.
 - **Scalability**: Standardized UTC storage supports global applications without time zone conflicts.
 
-</details>
-
-
-
 ---
 
 ## Export and Import Data
 <details>
 <summary>
-This feature allows you to export or import data
+This feature allows you to export or import data.
 </summary>
 
 This feature is helpful for the following scenarios:  
@@ -736,27 +772,36 @@ The FormCms Admin Panel is built with React and split into two projects:
 A **Git submodule** embeds an external repository (e.g., [FormCmsAdminSdk](https://github.com/FormCms/FormCmsAdminSdk)) as a subdirectory in your project. Unlike NPM packages, which deliver bundled code, submodules provide the full, readable source, pinned to a specific commit. This offers flexibility for customization, debugging, or upgrading the SDK directly in your repository.
 
 To update a submodule:
+
 ```
 git submodule update --remote
-```  
+```   
+
 Then commit the updated reference in your parent repository.
 
 ### Setting Up Your Custom AdminPanelApp
 
 To create a custom AdminPanelApp with submodules, start with the example repo [FormCmsAdminApp](https://github.com/FormCms/FormCmsAdminApp):
+
 ```
 git clone --recurse-submodules https://github.com/FormCms/FormCmsAdminApp.git
-```  
+```
+
 The `--recurse-submodules` flag ensures the SDK submodule is cloned alongside the main repo.
+
 ```
 cd FormCmsAdminApp
 pnpm install
-```  
+```
+
 Start the formCms backend, you might need to modify .env.development, change the Api url to your backend.
+
 ```
 VITE_REACT_APP_API_URL='http://127.0.0.1:5000/api'
-```  
+```
+
 Start the React App
+
 ```
 pnpm dev
 ```
@@ -764,9 +809,11 @@ pnpm dev
 ### Deploying Your Customized Admin Panel
 
 After customizing, build your app:
+
 ```
 pnpm build
-```  
+```
+
 Copy the contents of the `dist` folder to `<your backend project>\wwwroot\admin` to replace the default Admin Panel.
 
 ### Customizing Layout and Logo
@@ -800,43 +847,47 @@ FormCMS simplifies frontend development by offering robust GraphQL support.
 </summary>
 
 ### Getting Started
+
 #### Accessing the GraphQL IDE
 To get started, launch the web application and navigate to `/graph`. You can also try our [online demo](https://fluent-cms-admin.azurewebsites.net/graph).
 
 ---
+
 #### Singular vs. List Response
+
 For each entity in FormCMS, two GraphQL fields are automatically generated:  
 - `<entityName>`: Returns a record.
 - `<entityNameList>`: Returns a list of records.  
 
-**Single Course **
 ```graphql
-{
+**Single Course **{
   course {
     id
     name
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20course%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
-**List of Courses **
 ```graphql
-{
+**List of Courses **{
   courseList {
     id
     name
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
 ---
 #### Field Selection
+
 You can query specific fields for both the current entity and its related entities.
-**Example Query:**
+
 ```graphql
-{
+**Example Query:**{
   courseList{
     id
     name
@@ -856,6 +907,7 @@ You can query specific fields for both the current entity and its related entiti
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20firstname%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%20%20skills%7B%0A%20%20%20%20%20%20%20%20id%0A%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%20%20materials%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D%0A)
 
 ---
@@ -863,26 +915,26 @@ You can query specific fields for both the current entity and its related entiti
 
 FormCMS provides flexible filtering capabilities using the `idSet` field (or any other field), enabling precise data queries by matching either a single value or a list of values.
 
-**Filter by a Single Value Example:**
 ```graphql
-{
+**Filter by a Single Value Example:**{
   courseList(idSet: 5) {
     id
     name
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(idSet%3A5)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
-**Filter by Multiple Values Example:**
 ```graphql
-{
+**Filter by Multiple Values Example:**{
   courseList(idSet: [5, 7]) {
     id
     name
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(idSet%3A%5B5%2C7%5D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
 ---
@@ -891,6 +943,7 @@ FormCMS provides flexible filtering capabilities using the `idSet` field (or any
 FormCMS supports advanced filtering options with `Operator Match`, allowing users to combine various conditions for precise queries.
 
 ##### `matchAll` Example:
+
 Filters where all specified conditions must be true.  
 In this example: `id > 5 and id < 15`.
 
@@ -902,9 +955,11 @@ In this example: `id > 5 and id < 15`.
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(id%3A%7BmatchType%3AmatchAll%2Cgt%3A5%2Clt%3A15%7D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
 ##### `matchAny` Example:
+
 Filters where at least one of the conditions must be true.  
 In this example: `name starts with "A"` or `name starts with "I"`.
 
@@ -916,8 +971,8 @@ In this example: `name starts with "A"` or `name starts with "I"`.
   }
 }
 ```
-[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(name%3A%5B%7BmatchType%3AmatchAny%7D%2C%20%7BstartsWith%3A%22A%22%7D%2C%7BstartsWith%3A%22I%22%7D%5D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(name%3A%5B%7BmatchType%3AmatchAny%7D%2C%20%7BstartsWith%3A%22A%22%7D%2C%7BstartsWith%3A%22I%22%7D%5D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
 ---
 
@@ -926,6 +981,7 @@ In this example: `name starts with "A"` or `name starts with "I"`.
 Filter Expressions allow precise filtering by specifying a field, including nested fields using JSON path syntax. This enables filtering on subfields for complex data structures.
 
 ***Example: Filter by Teacher's Last Name***
+
 This query returns courses taught by a teacher whose last name is "Circuit."
 
 ```graphql
@@ -940,25 +996,26 @@ This query returns courses taught by a teacher whose last name is "Circuit."
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(filterExpr%3A%20%7Bfield%3A%20%22teacher.lastname%22%2C%20clause%3A%20%7Bequals%3A%20%22Circuit%22%7D%7D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D)
 
 ---
 
-#### Sorting  
-Sorting by a single field
+#### Sorting
+
 ```graphql
-{
+Sorting by a single field{
   courseList(sort:nameDesc){
     id,
     name
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(sort%3AnameDesc)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
-Sorting by multiple fields
 ```graphql
-{
+Sorting by multiple fields{
   courseList(sort:[level,id]){
     id,
     level
@@ -966,18 +1023,17 @@ Sorting by multiple fields
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(sort%3A%5Blevel%2Cid%5D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20level%0A%20%20%20%20name%0A%20%20%7D%0A%7D%0A)
 
 ---
 
 #### Sort Expressions in FormCMS
 
-
 Sort Expressions allow sorting by nested fields using JSON path syntax. 
 
-***Example: Sort by Teacher's Last Name***
-
 ```graphql
+***Example: Sort by Teacher's Last Name***
 {
   courseList(sortExpr:{field:"teacher.lastname", order:Desc}) {
     id
@@ -989,24 +1045,26 @@ Sort Expressions allow sorting by nested fields using JSON path syntax.
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%7B%0A%20%20courseList(sortExpr%3A%7Bfield%3A%22teacher.lastname%22%2C%20order%3ADesc%7D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20name%0A%20%20%20%20teacher%20%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20lastname%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D)
 
 ---
 
 #### Pagination
-Pagination on root field
+
 ```graphql
-{
+Pagination on root field{
   courseList(offset:2, limit:3){
     id,
     name
   }
 }
 ```
-[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%20%20%7B%0A%20%20%20%20courseList(offset%3A2%2C%20limit%3A3)%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%7D%0A%20%20%7D%0A)   
-Pagination on sub field
+
+[Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%20%20%7B%0A%20%20%20%20courseList(offset%3A2%2C%20limit%3A3)%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%7D%0A%20%20%7D%0A)
+
 ```graphql
-{
+Pagination on sub field{
   courseList{
     id,
     name
@@ -1017,17 +1075,17 @@ Pagination on sub field
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=%20%20%7B%0A%20%20%20%20courseList%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20materials(limit%3A2)%7B%0A%20%20%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20%20%20name%0A%20%20%20%20%20%20%7D%0A%20%20%20%20%7D%0A%20%20%7D%0A)
 
 ---
-
-
 
 #### Variable
 
 Variables are used to make queries more dynamic, reusable, and secure.
 ##### Variable in `Value filter`
-```
+
+```graphql
 query ($id: Int!) {
   teacher(idSet: [$id]) {
     id
@@ -1036,10 +1094,12 @@ query ($id: Int!) {
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24id%3A%20Int!)%20%7B%0A%20%20teacher(idSet%3A%20%5B%24id%5D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D&variables=%7B%0A%20%20%22id%22%3A3%0A%7D)
 
 ##### Variable in `Operator Match` filter
-```
+
+```graphql
 query ($id: Int!) {
   teacherList(id:{equals:$id}){
     id
@@ -1048,10 +1108,12 @@ query ($id: Int!) {
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24id%3A%20Int!)%20%7B%0A%20%20teacherList(id%3A%7Bequals%3A%24id%7D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D&variables=%7B%0A%20%20%22id%22%3A%203%0A%7D)
 
 ##### Variable in `Filter Expression`
-```
+
+```graphql
 query ($years: String) {
   teacherList(filterExpr:{field:"skills.years",clause:{gt:$years}}){
     id
@@ -1065,10 +1127,12 @@ query ($years: String) {
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24years%3A%20String)%20%7B%0A%20%20teacherList(filterExpr%3A%7Bfield%3A%22skills.years%22%2Cclause%3A%7Bgt%3A%24years%7D%7D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%20%20skills%7B%0A%20%20%20%20%20%20id%0A%20%20%20%20%20%20name%0A%20%20%20%20%20%20years%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D&variables=%7B%0A%20%20%22years%22%3A%20%229%22%0A%7D)
 
 ##### Variable in Sort 
-```
+
+```graphql
 query ($sort_field:TeacherSortEnum) {
   teacherList(sort:[$sort_field]) {
     id
@@ -1077,9 +1141,12 @@ query ($sort_field:TeacherSortEnum) {
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24sort_field%3ATeacherSortEnum)%20%7B%0A%20%20teacherList(sort%3A%5B%24sort_field%5D)%20%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D&variables=%7B%22sort_field%22%3A%20%22idDesc%22%7D)
+
 ##### Variable in Sort Expression
-```
+
+```graphql
 query ($sort_order:  SortOrderEnum) {
   courseList(sortExpr:{field:"teacher.id", order:$sort_order}){
     id,
@@ -1091,10 +1158,12 @@ query ($sort_order:  SortOrderEnum) {
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24sort_order%3A%20%20SortOrderEnum)%20%7B%0A%20%20courseList(sortExpr%3A%7Bfield%3A%22teacher.id%22%2C%20order%3A%24sort_order%7D)%7B%0A%20%20%20%20id%2C%0A%20%20%20%20name%2C%0A%20%20%20%20teacher%7B%0A%20%20%20%20%20%20id%2C%0A%20%20%20%20%20%20firstname%0A%20%20%20%20%7D%0A%20%20%7D%0A%7D&variables=%7B%0A%20%20%22sort_order%22%3A%20%22Asc%22%0A%7D)
 
 ##### Variable in Pagination
-```
+
+```graphql
 query ($offset:Int) {
   teacherList(limit:2, offset:$offset) {
     id
@@ -1103,13 +1172,15 @@ query ($offset:Int) {
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24offset%3AInt)%20%7B%0A%20%20teacherList(limit%3A2%2C%20offset%3A%24offset)%20%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D&variables=%7B%0A%09%22offset%22%3A%202%0A%7D)
 
 ---
 
 #### Required vs Optional
 If you want a variable to be mandatory, you can add a  `!` to the end of the type
-```
+
+```graphql
 query ($id: Int!) {
   teacherList(id:{equals:$id}){
     id
@@ -1118,6 +1189,7 @@ query ($id: Int!) {
   }
 }
 ```
+
 [Try it here](https://fluent-cms-admin.azurewebsites.net/graph?query=query%20(%24id%3A%20Int!)%20%7B%0A%20%20teacherList(id%3A%7Bequals%3A%24id%7D)%7B%0A%20%20%20%20id%0A%20%20%20%20firstname%0A%20%20%20%20lastname%0A%20%20%7D%0A%7D)
 
 Explore the power of FormCMS GraphQL and streamline your development workflow!
@@ -1200,11 +1272,10 @@ For large datasets, `offset` pagination can strain the database. For example, qu
 
 To address this, `Saved Query` supports **cursor-based pagination**, which reduces database overhead.  
 Example response for [https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3](https://fluent-cms-admin.azurewebsites.net/api/queries/TeacherQuery?limit=3):
-
-```json
 [
   {
     "hasPreviousPage": false,
+    "cursor": "eyJpZCI6M30
     "cursor": "eyJpZCI6M30"
   },
   {
@@ -1379,9 +1450,10 @@ To address this limitation, split the entity’s queries into two parts:
 }
 ```
 
-
 #### Example with GraphQL
+
 List query to avoid duplicates:
+
 ```
 {
   postList {
@@ -1394,7 +1466,9 @@ List query to avoid duplicates:
   }
 }
 ```
+
 Detail query for a specific post:
+
 ```graphql
 {
   post(idSet: 1) {
@@ -1410,29 +1484,32 @@ Detail query for a specific post:
 ```
 
 #### Benefits
+
 - **Efficiency**: The list query remains lightweight and deduplicated.
 - **Compatibility**: Avoids database-specific limitations on `DISTINCT`.
 - **Flexibility**: Developers can fetch detailed data only when needed.
 
 ---
-</details>
 
----
 ## Drag and Drop Page Designer
+
 <details> 
 <summary> 
 The page designer utilizes the open-source GrapesJS and Handlebars, enabling seamless binding of `GrapesJS Components` with `FormCMS Queries` for dynamic content rendering. 
 </summary>
 
 ---
+
 ### Page Types: Landing Page, Detail Page, and Home Page
 
 #### **Landing Page**
+
 A landing page is typically the first page a visitor sees.  
 - **URL format**: `/page/<pagename>`  
 - **Structure**: Comprised of multiple sections, each section retrieves data via a `query`.  
 
-**Example**:    
+**Example**:
+
 [Landing Page](https://fluent-cms-admin.azurewebsites.net/)    
 This page fetches data from:  
 - [https://fluent-cms-admin.azurewebsites.net/api/queries/course/?status=featured](https://fluent-cms-admin.azurewebsites.net/api/queries/course/?status=featured)  
@@ -1441,11 +1518,13 @@ This page fetches data from:
 ---
 
 #### **Detail Page**
+
 A detail page provides specific information about an item.  
 - **URL format**: `/page/<pagename>/<router parameter>`  
 - **Data Retrieval**: FormCMS fetches data by passing the router parameter to a `query`.  
 
 **Example**:  
+
 [Course Detail Page](https://fluent-cms-admin.azurewebsites.net/pages/course/22)  
 This page fetches data from:  
 [https://fluent-cms-admin.azurewebsites.net/api/queries/course/one?course_id=22](https://fluent-cms-admin.azurewebsites.net/api/queries/course/one?course_id=22)
@@ -1453,6 +1532,7 @@ This page fetches data from:
 ---
 
 #### **Home Page**
+
 The homepage is a special type of landing page named `home`.  
 - **URL format**: `/pages/home`   
 - **Special Behavior**: If no other route matches the path `/`, FormCMS renders `/pages/home` by default.  
@@ -1461,6 +1541,7 @@ The homepage is a special type of landing page named `home`.
 The URL `/` will be resolved to `/pages/home` unless explicitly overridden.  
 
 ---
+
 ### Introduction to GrapesJS Panels
 
 Understanding the panels in GrapesJS is crucial for leveraging FormCMS's customization capabilities in the Page Designer UI. This section explains the purpose of each panel and highlights how FormCMS enhances specific areas to streamline content management and page design. 
@@ -1486,6 +1567,7 @@ Understanding the panels in GrapesJS is crucial for leveraging FormCMS's customi
 By familiarizing users with these panels and their integration points, this chapter ensures a smoother workflow and better utilization of FormCMS's advanced page-building tools.
 
 ---
+
 ### Data Binding: Singleton or List
 
 FormCMS leverages [Handlebars expressions](https://github.com/Handlebars-Net/Handlebars.Net) for dynamic data binding in pages and components.
@@ -1544,7 +1626,9 @@ To bind a `Data List` to a component, follow these steps:
 </details>
 
 ---
+
 ## Online Course System Frontend
+
 <details> 
 <summary> 
 Having established our understanding of FormCMS essentials like Entity, Query, and Page, we're ready to build a frontend for an online course website.
@@ -1556,7 +1640,6 @@ Having established our understanding of FormCMS essentials like Entity, Query, a
 - **Home Page (`home`)**: The main entry point, featuring sections like *Featured Courses* and *Advanced Courses*. Each course links to its respective **Course Details** page.
 - **Course Details (`course/{course_id}`)**: Offers detailed information about a specific course and includes links to the **Teacher Details** page.
 - **Teacher Details (`teacher/{teacher_id}`)**: Highlights the instructor’s profile and includes a section displaying their latest courses, which link back to the **Course Details** page.
-
 
 ```plaintext
              Home Page
@@ -1607,11 +1690,10 @@ Course Details <-------> Teacher Details
 When rendering the page, the `PageService` automatically passes the `teacher_id` (e.g., `{teacher_id: 3}`) to the query.
 </details>  
 
-
-
 ---
 
-## Navigation by Category  
+## Navigation by Category
+
 <details>  
 <summary>Category trees and breadcrumbs provide structure, context, and clarity, enabling users to find and navigate data more efficiently.</summary>  
 
@@ -1650,46 +1732,49 @@ To create a category entity in the Schema Builder, include `parent` and `childre
   Use the `Breadcrumbs` component to display navigation paths.  
   [Edit Example](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/page.html?schema=page&id=33)
 
-</details>  
-
-
+</details>
 
 ---
 
 ## Schema Version Control
+
 <details>  
 <summary>  
 FormCMS saves each version of schemas, allowing users to roll back to earlier versions. Admins can freely test draft versions, while only published versions take effect.  
 </summary>  
 
 ### Requirements
+
 To illustrate this feature, let's take a `Page` as an example. Once a page is published, it becomes publicly accessible. You may need version control for two main reasons:
 
 - You want to make changes but ensure they do not take effect until thoroughly tested.
 - If issues arise in the latest version, you need the ability to roll back to a previous version.
 
 ### Choosing a Version
+
 After making changes, the latest version's status changes to `draft` in the [Page List Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/list.html?type=page).  
 To manage versions, click the `View History` button to navigate to the [History Version List Page](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/history.html?schemaId=01JKKB85KWA651945N5W0T6PJR).  
 Here, you can select any version and set it to `published` status.
 
 ### Testing a `Draft` Version
+
 To preview a draft version, append `sandbox=1` as a query parameter in the URL: [Preview Draft Version Page](https://fluent-cms-admin.azurewebsites.net/story/?sandbox=1).  
 Alternatively, click the `View Page` button on the `Page Design` page.
 
 ### Compare schema Changes
+
 You can compare the difference between different versions, use the [Schema Diff Tool](https://fluent-cms-admin.azurewebsites.net/_content/FormCMS/schema-ui/diff.html?schemaId=01JKKA93AJG2HNY648H9PC16PN&type=query&oldId=126&newId=138).
 
 ### Duplicate
+
 You can duplicate any schema version and save it as a new schema.
 
 </details>  
 
-
-
 ---
 
 ## Social Activity
+
 <details>  
 <summary>  
 The Social Activity feature enhances user engagement by enabling views, likes, saves, and shares. It also provides detailed analytics to help understand content performance.
@@ -1706,6 +1791,7 @@ The Social Activity feature enhances user engagement by enabling views, likes, s
   Toggles the activity (like or save) on or off based on the `active` flag.
 
 ### Challenges
+
 The system cannot leverage traditional output caching due to dynamic nature of the content, which may lead to high database load under heavy traffic.
 
 To address this, buffered writes are introduced. Activity events are first stored in a buffer (in-memory or Redis), and then periodically flushed to the database, balancing performance and accuracy.
@@ -1790,7 +1876,6 @@ Choose the approach based on your system’s scalability requirements and infras
 
 </details>
 
-
 ---
 
 ## User Portal
@@ -1803,24 +1888,30 @@ Users can access their view history, liked posts, bookmarked posts, and manage a
 The **User Portal** in FormCMS provides a centralized interface for users to manage their social activity, including viewing their interaction history, liked posts, bookmarked content, and authenticating seamlessly via GitHub OAuth. This enhances user engagement by offering a tailored experience to revisit, organize content, and simplify account creation.
 
 ### History
+
 Users can view a list of all items they have previously accessed, such as pages, posts, or other content. Each item in the history is displayed with a clickable link, allowing users to easily revisit the content.
 
 ### Liked Items
+
 The Liked Items section displays all posts or content that the user has liked. Users can browse their liked items, with options to unlike content or click through to view the full item, fostering seamless interaction with preferred content.
 
 ### Bookmarked Items
+
 Users can organize and view their saved content in the Bookmarked Items section. Bookmarks can be grouped into custom folders for easy categorization, enabling users to efficiently manage and access their saved items by folder or as a complete list.
 
 ### GitHub OAuth Login
+
 The User Portal supports **GitHub OAuth** for user authentication, streamlining the login and registration process. By integrating with GitHub's OAuth system, users can log in or register using their existing GitHub credentials, eliminating the need to create and manage a separate username and password for FormCMS.
 
 #### How It Works
+
 - **Login/Registration**: Users are redirected to GitHub's authentication page, where they grant FormCMS permission to access their GitHub profile (e.g., username and email).
 - **Account Creation**: If the user is new, FormCMS automatically creates an account using their GitHub profile information, bypassing the need for manual registration or password setup.
 - **Security**: The integration uses OAuth 2.0, ensuring secure token-based authentication without storing sensitive user credentials.
 - **User Experience**: Returning users can log in with a single click, leveraging their GitHub session for quick access to the portal.
 
 #### Benefits
+
 - **Convenience**: Users avoid the hassle of remembering a new password.
 - **Speed**: Instant account creation and login enhance the onboarding experience.
 - **Security**: Leverages GitHub's robust authentication system, reducing the risk of password-related vulnerabilities.
@@ -1828,6 +1919,7 @@ The User Portal supports **GitHub OAuth** for user authentication, streamlining 
 Administrators can enable or configure GitHub OAuth in the **Authentication Settings** section, where they provide the GitHub OAuth client ID and secret, and define redirect URIs for seamless integration.
 
 ### Configuration
+
 The User Portal displays items with the following metadata:
 - **Image**: A thumbnail or visual representation of the item.
 - **Title**: The primary name or heading of the item.
@@ -1849,11 +1941,10 @@ These settings allow for flexible customization, ensuring the User Portal displa
 
 </details>
 
-
 ---
 
-
 ## Popular Score
+
 <details>  
 <summary>  
 The Popular Score is a dynamic metric that measures the engagement level of content record
@@ -1864,6 +1955,7 @@ The **Popular Score** is a simple way to measure how engaging content (like post
 ---
 
 ### Calculation of the Popular Score
+
 The Popular Score combines views, likes, shares, and time since posting, with each part weighted to reflect its importance. Newer content gets a boost, while older content loses a bit of its score.
 
 Scores are updated frequently (e.g., every minute) and stored in a fast system like Redis to keep things running smoothly.
@@ -1871,6 +1963,7 @@ To favor fresh content, the score is slightly reduced for older posts. The older
 ---
 
 ### How It’s Used
+
 The Popular Score powers key features:    
 1. **Ranking Content**: Shows the most engaging posts on homepages or trending pages.    
 2. **Personalized Feeds**: Combines scores with user interests to suggest content.    
@@ -1880,6 +1973,7 @@ The Popular Score powers key features:
 ---
 
 ### Making It Work Smoothly
+
 To handle lots of interactions without slowing down:
 - **Batching**: Group interaction counts (views, likes, shares) to reduce database work.
 - **Quick Updates**: Only update scores for new interactions to save time.
@@ -1911,6 +2005,7 @@ FormCMS automatically invalidates schema caches whenever schema changes are made
 By default, schema caching is implemented using `IMemoryCache`. However, you can override this by providing a `HybridCache`. Below is a comparison of the two options:
 
 #### **IMemoryCache**
+
 - **Advantages**:
     - Simple to debug and deploy.
     - Ideal for single-node web applications.
@@ -1918,6 +2013,7 @@ By default, schema caching is implemented using `IMemoryCache`. However, you can
     - Not suitable for distributed environments. Cache invalidation on one node (e.g., Node A) does not propagate to other nodes (e.g., Node B).
 
 #### **HybridCache**
+
 - **Key Features**:
     - **Scalability**: Combines the speed of local memory caching with the consistency of distributed caching.
     - **Stampede Resolution**: Effectively handles cache stampede scenarios, as verified by its developers.
@@ -1961,19 +2057,17 @@ app.UseOutputCache();
 
 </details>
 
-
 ---
 ## Aspire Integration
+
 <details> 
 <summary> 
 FormCMS leverages Aspire to simplify deployment.
 </summary>
 
-
 ### Architecture Overview
 
 A scalable deployment of  FormCMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.
-
 
 ```
                  +------------------+
@@ -2023,6 +2117,7 @@ builder.Build().Run();
 ```
 
 ### Benefits:
+
 1. **Simplified Configuration**:  
    No need to manually specify endpoints for the database or Redis servers. Configuration values can be retrieved using:
    ```csharp
@@ -2036,13 +2131,16 @@ By adopting these caching and deployment strategies,  FormCMS ensures improved p
 </details>
 
 ---
+
 ## Query with Document DB
+
 <details>
 <summary>
 Optimizing query performance by syncing relational data to a document database, such as MongoDB, significantly improves speed and scalability for high-demand applications.
 </summary>
 
 ### Limitations of ASP.NET Core Output Caching
+
 ASP.NET Core's output caching reduces database access when repeated queries are performed. However, its effectiveness is limited when dealing with numerous distinct queries:
 
 1. The application server consumes excessive memory to cache data. The same list might be cached multiple times in different orders.
@@ -2072,6 +2170,7 @@ By saving each post along with its related data as a single document in a docume
 - Reduced application server processing, as merging data is no longer necessary.
 
 ### Performance Testing
+
 Using K6 scripts with 1,000 virtual users concurrently accessing the query API, the performance difference between PostgreSQL and MongoDB was tested, showing MongoDB to be significantly faster:
 ```javascript
 export default function () {
@@ -2100,9 +2199,11 @@ PostgreSQL:
 ### Synchronizing Query Data to Document DB
 
 #### Architecture Overview
+
 ![Architecture Overview](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/mongo-sync.png)
 
 #### Enabling Message Publishing in WebApp
+
 To enable publishing messages to the Message Broker, use Aspire to add a NATS resource. Detailed documentation is available in [Microsoft Docs](https://learn.microsoft.com/en-us/dotnet/aspire/messaging/nats-integration?tabs=dotnet-cli).
 
 Add the following line to the Aspire HostApp project:
@@ -2152,11 +2253,13 @@ Define the `ApiLinksArray` in `appsettings.json` to specify entity changes and t
 When changes occur to the `post` entity, the Worker Service calls the query API to retrieve aggregated data and saves it as a document.
 
 #### Migrating Query Data to Document DB
+
 After adding a new entry to `ApiLinksArray`, the Worker App will perform a migration from the start to populate the Document DB.
 
 ### Replacing Queries with Document DB
 
 #### Architecture Overview
+
 ![Architecture Overview](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/mongo-query.png)   
 
 To enable MongoDB queries in your WebApp, use the Aspire MongoDB integration. Details are available in [Microsoft Docs](https://learn.microsoft.com/en-us/dotnet/aspire/database/mongodb-integration?tabs=dotnet-cli).
@@ -2181,9 +2284,8 @@ The WebApp will now query MongoDB directly for the specified collections.
 
 </details>
 
-
-
 ---
+
 ## Integrating it into Your Project
 
 <details>
@@ -2219,6 +2321,7 @@ You can reference the code from https://github.com/FormCMS/FormCMS/tree/main/exa
 </details>
 
 ---
+
 ## Adding Business Logic
 
 <details>
@@ -2292,9 +2395,6 @@ With this setup, events are produced to Kafka, allowing consumers to process bus
 
 </details>
 
-
-
-
 ---
 
 ## Development Guide
@@ -2305,6 +2405,7 @@ The backend is written in ASP.NET Core, the Admin Panel uses React, and the Sche
 </summary>
 
 ### Overview  
+
 The system comprises three main components:  
 1. **Backend** - Developed in ASP.NET Core.  
 2. **Admin Panel** - Built using React.  
@@ -2322,11 +2423,13 @@ The system comprises three main components:
 ---
 
 ### Backend Server
+
 #### Tools
 - **ASP.NET Core**
 - **SqlKata** ([SqlKata Documentation](https://sqlkata.com/))
 
 #### Architecture
+
 The backend is influenced by Domain-Driven Design (DDD).  
 ![DDD Architecture](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/ddd-architecture.png)
 
@@ -2334,6 +2437,7 @@ Code organization follows this diagram:
 ![Backend Code Structure](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/C4_Elements-Backend.png)
 
 ##### Core (Domain Layer)
+
 The **Core layer** encapsulates:
 - **Descriptors**: Includes `Entity`, `Filter`, `Sort`, and similar components for building queries.
 - **HookFactory**: Maintains a global `Hook Registry`, enabling developers to integrate custom plugins.
@@ -2341,6 +2445,7 @@ The **Core layer** encapsulates:
 > **Note**: The Core layer is independent of both the Application and Infrastructure layers.
 
 ##### Application Layer
+
 The **Application layer** provides the following functionalities:
 1. **CMS**: Entity CRUD, GraphQL Queries, and Page Designer.
 2. **Auth**: Manages permissions and roles.
@@ -2349,35 +2454,44 @@ The **Application layer** provides the following functionalities:
 > Includes `Builders` to configure Dependency Injection and manage Infrastructure components.
 
 ##### Infrastructure Layer
+
 The **Infrastructure layer** defines reusable system infrastructural components.
 - Application services depend on interfaces instead of implementations.
 - Components are designed for portability and can be reused across other projects.
 
 ##### Util Layer
+
 A separate **Util component** contains static classes with pure functions.
 - Accessible across all layers.
 
 ---
 
 ### Admin Panel UI
+
 #### Tools
+
 - **React**
 - **PrimeReact** ([PrimeReact UI Library](https://primereact.org/))
 - **SWR** ([Data Fetching/State Management](https://swr.vercel.app/))
 
 #### Admin Panel Sequence
+
 ![Admin Panel Sequence](https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/admin-panel-sequence.png)
 
 ---
 
 ### Schema Builder UI
+
 #### Tools
+
 - **jsoneditor** ([JSON Editor Documentation](https://github.com/json-editor/json-editor))
 
 </details>  
 
 ---
+
 ## Testing Strategy
+
 <details>
 <summary>
 This chapter describes the systems' automated testing strategy
@@ -2394,9 +2508,11 @@ Writing unit tests for each function and mocking its upstream and downstream ser
 Instead, FormCMS focuses on checking the input and output of RESTful API endpoints in its integration tests.
 
 ### Integration Testing for FormCMS.Course `/formcms/server/FormCMS.Course.Tests`
+
 This project focuses on verifying the functionalities of the FormCMS.Course example project.
 
 ### New Feature Testing `/formcms/server/FormCMS.App.Tests`
+
 This project is dedicated to testing experimental functionalities, like MongoDB and Kafka plugins.
 
 </details>
