@@ -15,7 +15,7 @@ public class BookmarkService(
     IQueryService queryService,
     IEntitySchemaService schemaService,
     KeyValueCache<long> maxRecordIdCache,
-    IEntityLinkService entityLinkService,
+    IContentTagService contentTagService,
 
     DatabaseMigrator migrator,
     IRelationDbDao dao,
@@ -147,7 +147,7 @@ public class BookmarkService(
             .ToArray();
         if (ids.Length == 0) return bookmarks;
 
-        var links = await entityLinkService.GetLinks(entity.ToLoadedEntity() , ids, ct);
+        var links = await contentTagService.GetContentTags(entity.ToLoadedEntity() , ids, ct);
         
         var dict = links.ToDictionary(x => x.RecordId);
         return bookmarks.Select(activity=>

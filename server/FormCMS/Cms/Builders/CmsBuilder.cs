@@ -117,7 +117,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             services.AddScoped<ISchemaService, SchemaService>();
             services.AddScoped<IEntitySchemaService, EntitySchemaService>();
             services.AddScoped<IQuerySchemaService, QuerySchemaService>();
-            services.AddScoped<IEntityLinkService, EntityLinkService>();
+            services.AddScoped<IContentTagService, ContentTagService>();
 
             services.AddScoped<IEntityService, EntityService>();
             services.AddScoped<IQueryService, QueryService>();

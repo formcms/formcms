@@ -17,7 +17,7 @@ public class NotificationEventHandler(
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
         await consumer.Subscribe(
-            Topics.CmsActivity,
+            CmsTopics.CmsActivity,
             "NotificationEventHandler",
             async s =>
             {
@@ -31,8 +31,8 @@ public class NotificationEventHandler(
                             UserId: message.TargetUserId,
                             SenderId: message.UserId,
                             NotificationType: message.Activity,
-                            Message: message.Message,
-                            Url:message.Url
+                            Message: message.Message
+                            // Url:message.Url
                         );
 
                         using var scope = scopeFactory.CreateScope();

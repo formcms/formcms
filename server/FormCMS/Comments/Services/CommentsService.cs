@@ -14,7 +14,7 @@ public class CommentsService(
     IUserManageService userManageService,
     IStringMessageProducer producer,
     IEntityService entityService,
-    IEntityLinkService entityLinkService,
+    IContentTagService contentTagService,
     DatabaseMigrator migrator,
     IIdentityService identityService,
     KateQueryExecutor executor
@@ -32,23 +32,15 @@ public class CommentsService(
         var query = comment.Insert();
         var id = await executor.Exec(query, true, ct);
         var creatorId = await userManageService.GetCreatorId(entity.TableName, entity.PrimaryKey, comment.RecordId, ct);
-        var activityMessage = new ActivityMessage(comment.User, creatorId, comment.EntityName,
-            comment.RecordId, CommentHelper.CommentActivity, Operations.Create, comment.Content);
+        var activityMessage = new ActivityMessage(comment.CreatedBy, creatorId, comment.EntityName,
+            comment.RecordId, CommentHelper.CommentActivity, CmsOperations.Create, comment.Content);
         activityMessage = await SetLinkUrl(activityMessage,entity,comment.RecordId,ct);
-        await producer.Produce(Topics.CmsActivity, activityMessage.ToJson());
+        await producer.Produce(CmsTopics.CmsActivity, activityMessage.ToJson());
 
         return comment with { Id = id };
     }
 
-    private async Task<ActivityMessage> SetLinkUrl(ActivityMessage activityMessage,LoadedEntity entity, long recordId, CancellationToken ct)
-    {
-        var links =await entityLinkService.GetLinks(entity,[recordId.ToString()],ct);
-        if (links.Length == 1)
-        {
-            activityMessage = activityMessage with{Url =links[0].Url};
-        }
-        return activityMessage;
-    }
+
     
     public async Task Delete(long id, CancellationToken ct)
     {
@@ -57,7 +49,7 @@ public class CommentsService(
         if (commentRec is null) throw new ResultException("Comment not found");
         var comment = commentRec.ToObject<Comment>().Ok();
 
-        if (userId != comment.User) throw new ResultException("You don't have permission to delete this comment");
+        if (userId != comment.CreatedBy) throw new ResultException("You don't have permission to delete this comment");
         await executor.Exec(CommentHelper.Delete(userId, id), false, ct);
 
         if (comment.Parent is not null)
@@ -66,10 +58,10 @@ public class CommentsService(
                                throw new ResultException("Parent comment not found");
             var parentComment = parentRecord.ToObject<Comment>().Ok();
 
-            var activityMessage = new ActivityMessage(userId, parentComment.User, CommentHelper.Entity.Name, comment.Parent.Value
-                , CommentHelper.CommentActivity, Operations.Delete,comment.Content);
+            var activityMessage = new ActivityMessage(userId, parentComment.CreatedBy, CommentHelper.Entity.Name, comment.Parent.Value
+                , CommentHelper.CommentActivity, CmsOperations.Delete,comment.Content);
 
-            await producer.Produce(Topics.CmsActivity, activityMessage.ToJson());
+            await producer.Produce(CmsTopics.CmsActivity, activityMessage.ToJson());
         }
         else
         {
@@ -77,8 +69,8 @@ public class CommentsService(
             var creatorId =  await userManageService.GetCreatorId(entity.TableName,entity.PrimaryKey, comment.RecordId, ct);
             
             var activityMessage = new ActivityMessage(userId, creatorId, comment.EntityName, comment.RecordId , 
-                CommentHelper.CommentActivity, Operations.Delete,comment.Content);
-            await producer.Produce(Topics.CmsActivity, activityMessage.ToJson());
+                CommentHelper.CommentActivity, CmsOperations.Delete,comment.Content);
+            await producer.Produce(CmsTopics.CmsActivity, activityMessage.ToJson());
         }
     }
 
@@ -95,14 +87,14 @@ public class CommentsService(
             EntityName = parentComment.EntityName,
             RecordId = parentComment.RecordId,
             Parent = parentComment.Parent ?? parentComment.Id,
-            Mention = parentComment.Parent is null ? null :parentComment.User
+            Mention = parentComment.Parent is null ? null :parentComment.CreatedBy
         };
         var id = await executor.Exec(comment.Insert(),false, ct);
         
-        var activityMessage = new ActivityMessage(comment.User, parentComment.User, CommentHelper.Entity.Name,
-            parentComment.Id, CommentHelper.CommentActivity, Operations.Create,comment.Content);
+        var activityMessage = new ActivityMessage(comment.CreatedBy, parentComment.CreatedBy, CommentHelper.Entity.Name,
+            parentComment.Id, CommentHelper.CommentActivity, CmsOperations.Create,comment.Content);
         activityMessage =await SetLinkUrl(activityMessage,entity,comment.RecordId,ct);
-        await producer.Produce(Topics.CmsActivity, activityMessage.ToJson());
+        await producer.Produce(CmsTopics.CmsActivity, activityMessage.ToJson());
         return comment with{Id = id};
     }
     
@@ -118,7 +110,16 @@ public class CommentsService(
     private Comment AssignUser(Comment comment)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
-        comment = comment with { User = userId};
+        comment = comment with { CreatedBy = userId};
         return comment;
+    }
+    private async Task<ActivityMessage> SetLinkUrl(ActivityMessage activityMessage,LoadedEntity entity, long recordId, CancellationToken ct)
+    {
+        var links =await contentTagService.GetContentTags(entity,[recordId.ToString()],ct);
+        if (links.Length == 1)
+        {
+            activityMessage = activityMessage with{Url =links[0].Url};
+        }
+        return activityMessage;
     }
 }

@@ -16,7 +16,7 @@ public class ActivityEventHandler(
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
         await consumer.Subscribe(
-            Topics.CmsActivity,
+            CmsTopics.CmsActivity,
             "ActivityEventHandler",
             async s =>
             {
@@ -42,10 +42,10 @@ public class ActivityEventHandler(
 
     private static async Task HandleMessage(ActivityMessage message, IRelationDbDao dao, CancellationToken ct)
     {
-        if (message.Operation != Operations.Create && message.Operation != Operations.Delete) return;
+        if (message.Operation != CmsOperations.Create && message.Operation != CmsOperations.Delete) return;
 
         var count = new ActivityCount(message.EntityName, message.RecordId, message.Activity);
-        var delta = message.Operation == Operations.Create ? 1 : -1;
+        var delta = message.Operation == CmsOperations.Create ? 1 : -1;
         await dao.Increase(
             ActivityCounts.TableName,
             count.Condition(true),

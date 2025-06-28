@@ -3,11 +3,11 @@ using FormCMS.Utils.RecordExt;
 
 namespace FormCMS.Cms.Services;
 
-public class EntityLinkService(
+public class ContentTagService(
     IQueryService queryService
-    ):IEntityLinkService
+    ):IContentTagService
 {
-    public async Task<Link[]> GetLinks( LoadedEntity entity, string[] ids, CancellationToken ct)
+    public async Task<ContentTag[]> GetContentTags(LoadedEntity entity, string[] ids, CancellationToken ct)
     {
         var strAgs = new StrArgs
         {
@@ -16,10 +16,15 @@ public class EntityLinkService(
         var records = await queryService.ListWithAction(entity.BookmarkQuery, new Span(), new Pagination(), strAgs, ct);
         return records.Select(GetLink).ToArray();
 
-        Link GetLink(Record record)
+        ContentTag GetLink(Record record)
         {
+            if (record.TryGetValue(EntityConstants.ContentTagField, out var value))
+            {
+                return (ContentTag)value;
+            }
+            
             var id = record.StrOrEmpty(entity.PrimaryKey);
-            return new Link(
+            return new ContentTag(
                 RecordId: id,
                 Url: entity.PageUrl + id,
                 Title: record.ByJsonPath<string>(entity.BookmarkTitleField, out var title) ? Trim(title!) : "",

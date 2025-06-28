@@ -1,5 +1,4 @@
-using FormCMS.Core.Assets;
-using FormCMS.Core.Descriptors;
+using FormCMS.Core.Identities;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.RecordExt;
@@ -13,16 +12,18 @@ public record Notification(
     string UserId,
     string SenderId,
     string NotificationType,
+    DateTime CreatedAt = default,
     string Message = "",
     string Url = "",
     bool IsRead = false,
-    long Id = 0
-    );
+    long Id = 0,
+    PublicUserInfo? Sender = null
+);
 
 public static class Notifications
 {
     internal const string TableName = "__notifications";
-    internal const int DefaultPageSize = 10;
+    private const int DefaultPageSize = 10;
 
     public static readonly Column[] Columns =
     [
@@ -57,9 +58,10 @@ public static class Notifications
         var query = new Query(TableName)
             .Select(
                 nameof(Notification.Id).Camelize(),
-                nameof(DefaultColumnNames.UpdatedAt).Camelize(),
+                nameof(Notification.SenderId).Camelize(),
+                nameof(Notification.NotificationType).Camelize(),
                 nameof(Notification.Message).Camelize(),
-                nameof(DefaultColumnNames.CreatedAt).Camelize(),
+                nameof(Notification.CreatedAt).Camelize(),
                 nameof(Notification.Url).Camelize()
             )
             .Where(nameof(Notification.UserId).Camelize(), userId)

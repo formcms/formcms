@@ -1,6 +1,6 @@
 namespace FormCMS.Core.Descriptors;
 
-public record Link(
+public record ContentTag(
     string RecordId,
     string Title = "",
     string Url = "",

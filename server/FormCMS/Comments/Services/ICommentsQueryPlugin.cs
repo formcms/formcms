@@ -4,6 +4,7 @@ namespace FormCMS.Comments.Services;
 
 public interface ICommentsQueryPlugin
 {
+    Task<Record[]> GetTags(long[] commentIds);
     Task AttachComments(
         LoadedEntity entity,
         GraphNode[] nodes,

@@ -15,7 +15,8 @@ public class NotificationBuilder(ILogger<NotificationBuilder> logger)
     public async Task<WebApplication> UseNotification(WebApplication app)
     {
         using var scope = app.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<INotificationService>().EnsureNotificationTables();
+        await scope.ServiceProvider.GetRequiredService<INotificationService>()
+            .EnsureNotificationTables();
         
  
         var systemSettings = app.Services.GetRequiredService<SystemSettings>();

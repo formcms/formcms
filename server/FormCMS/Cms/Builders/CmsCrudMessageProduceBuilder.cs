@@ -45,24 +45,24 @@ public class CmsCrudMessageProduceBuilder(ILogger<CmsCrudMessageProduceBuilder> 
             registry.EntityPostAdd.RegisterAsync(entity, async parameter =>
             {
                 await messageProducer.Produce(
-                    Topics.CmsCrud,
-                    EncodeMessage(Operations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record));
+                    CmsTopics.CmsCrud,
+                    EncodeMessage(CmsOperations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record));
                 return parameter;
             });
 
             registry.EntityPostUpdate.RegisterAsync(entity, async parameter =>
             {
                 await messageProducer.Produce(
-                    Topics.CmsCrud,
-                    EncodeMessage(Operations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record)
+                    CmsTopics.CmsCrud,
+                    EncodeMessage(CmsOperations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record)
                 );
                 return parameter;
             });
             registry.EntityPostDel.RegisterAsync(entity, async parameter =>
             {
                 await messageProducer.Produce(
-                    Topics.CmsCrud,
-                    EncodeMessage(Operations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record));
+                    CmsTopics.CmsCrud,
+                    EncodeMessage(CmsOperations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record));
                 return parameter;
             });
         }
