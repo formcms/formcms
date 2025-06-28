@@ -12,18 +12,18 @@ public static class PageHandler
             IPageService pageService,
             HttpContext context,
             string? node,
-            long ? source,
+            long? source,
             string? first,
             string? last,
             CancellationToken ct
         ) =>
         {
-            var html = await pageService.Get(PageConstants.Home, context.Args(), 
-                nodeId:node,
-                sourceId:source,
-                span: new Span(first,last),
+            var html = await pageService.Get(PageConstants.Home, context.Args(),
+                nodeId: node,
+                sourceId: source,
+                span: new Span(first, last),
                 ct: ct);
-            await context.Html(html , ct);
+            await context.Html(html, ct);
         });
     }
 
@@ -31,22 +31,22 @@ public static class PageHandler
     {
         var excludedUrls = string.Join("|", knownUrls.Select(x => x.Replace("/", "")));
         var prefix = $"/{{page:regex(^(?!({excludedUrls})).*)}}";
-        
+
         app.MapGet(prefix, async (
             IPageService pageService,
             HttpContext context,
             string page,
             string? node,
-            long ? source,
+            long? source,
             string? first,
             string? last,
             CancellationToken ct
         ) =>
         {
             var html = await pageService.Get(page, context.Args(),
-                nodeId:node,
-                sourceId:source,
-                span: new Span(first,last),
+                nodeId: node,
+                sourceId: source,
+                span: new Span(first, last),
                 ct: ct);
             await context.Html(html, ct);
         });
@@ -57,7 +57,7 @@ public static class PageHandler
             string page,
             string slug,
             string? node,
-            long ? source,
+            long? source,
             string? first,
             string? last,
             bool? replace,
@@ -65,10 +65,10 @@ public static class PageHandler
         ) =>
         {
             var html = await pageService.GetDetail(page, slug, context.Args(),
-                nodeId:node,
-                sourceId:source,
-                span: new Span(first,last),
-                ct:ct);
+                nodeId: node,
+                sourceId: source,
+                span: new Span(first, last),
+                ct: ct);
             await context.Html(html, ct);
         });
         return app;

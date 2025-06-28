@@ -1,9 +1,9 @@
-using FormCMS.Auth.Builders;
-using FormCMS.Cms.Builders;
 using FluentResults;
 using FormCMS.Activities.Builders;
 using FormCMS.AuditLogging.Builders;
+using FormCMS.Auth.Builders;
 using FormCMS.Auth.Models;
+using FormCMS.Cms.Builders;
 using FormCMS.Comments.Builders;
 using FormCMS.Utils.ServiceCollectionExt;
 using FormCMS.Video.Builders;
@@ -25,7 +25,7 @@ public static class WebApplicationExt
     {
         app.Services.GetService<IAuthBuilder>()?.UseCmsAuth(app);
         if (useOutputCache) app.UseOutputCache();
-        
+
         await app.Services.GetRequiredService<CmsBuilder>().UseCmsAsync(app);
         app.Services.GetService<DocumentDbQueryBuilder>()?.UseDocumentDbQuery(app);
         app.Services.GetService<CmsCrudMessageProduceBuilder>()?.UseEventProducer(app);
@@ -34,7 +34,7 @@ public static class WebApplicationExt
         app.Services.GetService<CommentBuilder>()?.UseComments(app);
         app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
         app.Services.GetService<VideoMessageProducerBuilder>()?.UseVideo(app);
-        
+
         app.UseRewriter(app.Services.GetRequiredService<RewriteOptions>());
     }
 
@@ -44,11 +44,11 @@ public static class WebApplicationExt
 
     public static IServiceCollection AddDocumentDbQuery(
         this IServiceCollection services, IEnumerable<QueryCollectionLinks> queryCollectionLinks
-        )=>DocumentDbQueryBuilder.AddDocumentDbQuery(services, queryCollectionLinks);
-    
+        ) => DocumentDbQueryBuilder.AddDocumentDbQuery(services, queryCollectionLinks);
+
     public static IServiceCollection AddPostgresCms(
         this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
-        ) => CmsBuilder.AddCms(services, DatabaseProvider.Postgres, connectionString,action);
+        ) => CmsBuilder.AddCms(services, DatabaseProvider.Postgres, connectionString, action);
 
     public static IServiceCollection AddSqliteCms(
         this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
@@ -63,17 +63,17 @@ public static class WebApplicationExt
         where TUser : CmsUser, new()
         where TRole : IdentityRole, new()
         where TContext : IdentityDbContext<TUser>
-        => AuthBuilder<TUser>.AddCmsAuth<TUser, TRole, TContext>(services,authConfig);
+        => AuthBuilder<TUser>.AddCmsAuth<TUser, TRole, TContext>(services, authConfig);
 
     public static IServiceCollection AddAuditLog(this IServiceCollection services)
         => AuditLogBuilder.AddAuditLog(services);
 
-    public static IServiceCollection AddActivity(this IServiceCollection services, bool enableBuffering=true)
-        => ActivityBuilder.AddActivity(services,enableBuffering);
+    public static IServiceCollection AddActivity(this IServiceCollection services, bool enableBuffering = true)
+        => ActivityBuilder.AddActivity(services, enableBuffering);
 
-    public static IServiceCollection AddComments(this IServiceCollection services, bool enableBuffering=true)
+    public static IServiceCollection AddComments(this IServiceCollection services, bool enableBuffering = true)
         => CommentBuilder.AddComments(services);
-    
+
     public static IServiceCollection AddMessageProducer(
         this IServiceCollection services, string[] entities
     ) => CmsCrudMessageProduceBuilder.AddMessageProducer(services, entities);

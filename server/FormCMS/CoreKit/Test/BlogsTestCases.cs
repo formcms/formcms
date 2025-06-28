@@ -1,5 +1,5 @@
-using System.Reflection;
 using FormCMS.CoreKit.ApiClient;
+using System.Reflection;
 
 namespace FormCMS.CoreKit.Test;
 
@@ -35,7 +35,7 @@ public class BlogsTestCases(QueryApiClient client, string queryName)
     private static async Task RunAllMethodsAsync(object instance)
     {
         Console.WriteLine($"Running {nameof(instance)}");
-        
+
         var methods = instance.GetType()
             .GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.DeclaredOnly)
             .Where(m => m.GetParameters().Length == 0 && typeof(Task).IsAssignableFrom(m.ReturnType));

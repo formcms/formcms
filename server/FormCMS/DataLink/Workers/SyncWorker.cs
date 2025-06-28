@@ -1,12 +1,12 @@
-using System.Text.Json;
-using FormCMS.Utils.HttpClientExt;
-using FormCMS.Utils.jsonElementExt;
-using FormCMS.Utils.ResultExt;
 using FluentResults;
 using FormCMS.Core.Messaging;
 using FormCMS.DataLink.Types;
 using FormCMS.Infrastructure.DocumentDbDao;
 using FormCMS.Infrastructure.EventStreaming;
+using FormCMS.Utils.HttpClientExt;
+using FormCMS.Utils.jsonElementExt;
+using FormCMS.Utils.ResultExt;
+using System.Text.Json;
 
 namespace FormCMS.DataLink.Workers;
 
@@ -22,11 +22,11 @@ public sealed class SyncWorker(
     private readonly HttpClient _httpClient = new();
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
-        await consumer.Subscribe(Topics.CmsCrud,async s =>
+        await consumer.Subscribe(Topics.CmsCrud, async s =>
         {
             using var scope = serviceScopeFactory.CreateScope();
             var dao = scope.ServiceProvider.GetRequiredService<IDocumentDbDao>();
-            
+
             try
             {
                 var message = JsonSerializer.Deserialize<RecordMessage>(s);
@@ -72,13 +72,13 @@ public sealed class SyncWorker(
         }, ct);
     }
 
-    private async Task<Result> FetchSaveSingle(ApiLinks links, string id, IDocumentDbDao dao )
+    private async Task<Result> FetchSaveSingle(ApiLinks links, string id, IDocumentDbDao dao)
     {
         if (!(await _httpClient.GetResult<JsonElement>($"{links.Api}/single?{links.PrimaryKey}={id}"))
             .Try(out var s, out var e))
         {
             return Result.Fail(e).WithError("Failed to fetch single data");
-        } 
+        }
         return await Result.Try(() => dao.Upsert(links.Collection, links.PrimaryKey, s.ToDictionary()));
     }
 }

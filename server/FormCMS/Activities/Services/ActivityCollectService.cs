@@ -1,7 +1,6 @@
 using FormCMS.Activities.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
-using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.EnumExt;
@@ -12,14 +11,14 @@ namespace FormCMS.Activities.Services;
 public class ActivityCollectService(
     ICountBuffer countBuffer,
     IStatusBuffer statusBuffer,
-        
+
     ActivitySettings settings,
     IIdentityService identityService,
-    IEntitySchemaService entitySchemaService,  
+    IEntitySchemaService entitySchemaService,
     IEntityService entityService,
     IQueryService queryService,
     IPageResolver pageResolver,
-    
+
     KateQueryExecutor executor,
     IRelationDbDao dao,
     DatabaseMigrator migrator
@@ -44,42 +43,42 @@ public class ActivityCollectService(
         var counts = await countBuffer.GetAfterLastFlush(lastFlushTime.Value);
         var countRecords = counts.Select(pair =>
             (ActivityCounts.Parse(pair.Key) with { Count = pair.Value }).UpsertRecord()).ToArray();
-        
-        await dao.BatchUpdateOnConflict(ActivityCounts.TableName,  countRecords, ActivityCounts.KeyFields,ct);
-        
+
+        await dao.BatchUpdateOnConflict(ActivityCounts.TableName, countRecords, ActivityCounts.KeyFields, ct);
+
         //Query title and image 
         var statusList = await statusBuffer.GetAfterLastFlush(lastFlushTime.Value);
         var activities = statusList.Select(pair => Models.Activities.Parse(pair.Key) with { IsActive = pair.Value }).ToArray();
-        await UpsertActivities(activities,ct);
+        await UpsertActivities(activities, ct);
     }
-    
-    public async Task<Dictionary<string, StatusDto>> Get(string cookieUserId,string entityName, long recordId, CancellationToken ct)
+
+    public async Task<Dictionary<string, StatusDto>> Get(string cookieUserId, string entityName, long recordId, CancellationToken ct)
     {
-        var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
+        var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId, ct).Ok();
         var ret = new Dictionary<string, StatusDto>();
-        foreach (var pair in await InternalRecord(cookieUserId,entity,entityName, recordId, settings.CommandAutoRecordActivities.ToArray(), ct))
+        foreach (var pair in await InternalRecord(cookieUserId, entity, entityName, recordId, settings.CommandAutoRecordActivities.ToArray(), ct))
         {
             ret[pair.Key] = new StatusDto(true, pair.Value);
         }
 
-        string[] types = [..settings.CommandToggleActivities, ..settings.CommandRecordActivities];
+        string[] types = [.. settings.CommandToggleActivities, .. settings.CommandRecordActivities];
         var userId = identityService.GetUserAccess()?.Id;
-        
-        var counts = types.Select(x => 
+
+        var counts = types.Select(x =>
             new ActivityCount(entityName, recordId, x)).ToArray();
 
         Dictionary<string, bool>? statusDict = null;
         if (userId is not null)
         {
-            var activities = types.Select(x 
+            var activities = types.Select(x
                 => new Activity(entityName, recordId, x, userId)
             ).ToArray();
-            statusDict = settings.EnableBuffering 
-                ? await GetBufferStatusDict(activities) 
+            statusDict = settings.EnableBuffering
+                ? await GetBufferStatusDict(activities)
                 : await GetDbStatusDict(activities, ct);
         }
 
-        var countDict = await GetCountDict(entityName,recordId, types,ct);
+        var countDict = await GetCountDict(entityName, recordId, types, ct);
 
         foreach (var t in types)
         {
@@ -91,22 +90,22 @@ public class ActivityCollectService(
         return ret;
     }
 
-    public async Task<Dictionary<string,long>> GetCountDict(string entityName, long recordId,string[] types, CancellationToken ct)
+    public async Task<Dictionary<string, long>> GetCountDict(string entityName, long recordId, string[] types, CancellationToken ct)
     {
-        var counts = types.Select(x => 
+        var counts = types.Select(x =>
             new ActivityCount(entityName, recordId, x)).ToArray();
- 
+
         return settings.EnableBuffering
             ? await GetBufferCountDict(counts)
-            : await GetDbCountDict(counts, ct); 
+            : await GetDbCountDict(counts, ct);
     }
 
     //why not log visit at page service directly?page service might cache result
-    public async Task Visit( string cookieUserId, string url, CancellationToken ct )
+    public async Task Visit(string cookieUserId, string url, CancellationToken ct)
     {
         var path = new Uri(url).AbsolutePath.TrimStart('/');
         var page = await pageResolver.GetPage(path, ct);
-        await InternalRecord(cookieUserId, null,Constants.PageEntity, page.Id, [Constants.VisitActivityType], ct);
+        await InternalRecord(cookieUserId, null, Constants.PageEntity, page.Id, [Constants.VisitActivityType], ct);
     }
 
     public async Task<Dictionary<string, long>> Record(
@@ -124,9 +123,9 @@ public class ActivityCollectService(
         {
             throw new ResultException("One or more activity types are not supported.");
         }
-        var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
+        var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId, ct).Ok();
 
-        return await InternalRecord(cookieUserId, entity,entityName, recordId, activityTypes, ct);
+        return await InternalRecord(cookieUserId, entity, entityName, recordId, activityTypes, ct);
     }
 
     public async Task<long> Toggle(
@@ -143,9 +142,9 @@ public class ActivityCollectService(
             throw new ResultException("User is not logged in");
 
         var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId, ct).Ok();
- 
 
-        var activity = new Activity(entityName, recordId, activityType, userId,isActive);
+
+        var activity = new Activity(entityName, recordId, activityType, userId, isActive);
         var count = new ActivityCount(entityName, recordId, activityType);
         var delta = isActive ? 1 : -1;
 
@@ -161,10 +160,10 @@ public class ActivityCollectService(
         //only update is Active field, to determine if you should increase count
         var changed = await dao.UpdateOnConflict(
             Models.Activities.TableName,
-            activity.UpsertRecord(false), 
-            Models.Activities.KeyFields, 
+            activity.UpsertRecord(false),
+            Models.Activities.KeyFields,
             ct);
-        var ret= changed switch
+        var ret = changed switch
         {
             true => await UpdateActivityMetaAndIncrease(),
             false => (await dao.FetchValues<long>(
@@ -175,8 +174,8 @@ public class ActivityCollectService(
                     ct))
                 .FirstOrDefault().Value
         };
-        
-        await UpdateScore(entity,[count],ct);
+
+        await UpdateScore(entity, [count], ct);
         return ret;
 
         async Task<long> UpdateActivityMetaAndIncrease()
@@ -199,12 +198,12 @@ public class ActivityCollectService(
                 ct);
         }
     }
-  
 
-    private async Task UpdateScore(LoadedEntity entity,ActivityCount[] counts, CancellationToken ct)
+
+    private async Task UpdateScore(LoadedEntity entity, ActivityCount[] counts, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(entity.BookmarkQuery)) return;
-        
+
         foreach (var a in counts)
         {
             await UpdateOneScore(a);
@@ -229,7 +228,7 @@ public class ActivityCollectService(
                 var timeScore = await GetInitialScoreByPublishedAt();
                 await dao.Increase(
                     ActivityCounts.TableName, count.Condition(true),
-                    ActivityCounts.CountField,timeScore, weight, ct);
+                    ActivityCounts.CountField, timeScore, weight, ct);
             }
 
             return;
@@ -247,11 +246,11 @@ public class ActivityCollectService(
 
             async Task<long> GetInitialScoreByPublishedAt()
             {
-                var rec = await executor.Single(entity.PublishedAt(count.RecordId),ct);
-                if (rec is null 
-                    || !rec.TryGetValue(DefaultAttributeNames.PublishedAt.Camelize(), out var value) 
+                var rec = await executor.Single(entity.PublishedAt(count.RecordId), ct);
+                if (rec is null
+                    || !rec.TryGetValue(DefaultAttributeNames.PublishedAt.Camelize(), out var value)
                     || value is null) throw new ResultException("invalid publish time");
-                
+
                 var publishTime = value switch
                 {
                     string s => DateTime.Parse(s),
@@ -270,7 +269,8 @@ public class ActivityCollectService(
         long recordId,
         string[] activityTypes,
         CancellationToken ct
-    ){
+    )
+    {
 
         var userId = identityService.GetUserAccess()?.Id ?? cookieUserId;
         var activities = activityTypes.Select(x => new Activity(entityName, recordId, x, userId)).ToArray();
@@ -283,7 +283,7 @@ public class ActivityCollectService(
 
         if (settings.EnableBuffering)
         {
-            await statusBuffer.Set( activities.Select(a => a.Key()).ToArray());
+            await statusBuffer.Set(activities.Select(a => a.Key()).ToArray());
             foreach (var count in counts)
             {
                 result[count.ActivityType] = await countBuffer.Increase(count.Key(), 1, GetCount);
@@ -291,18 +291,18 @@ public class ActivityCollectService(
         }
         else
         {
-            await UpsertActivities(activities,ct);
+            await UpsertActivities(activities, ct);
             foreach (var count in counts)
             {
                 result[count.ActivityType] = await dao.Increase(
                     ActivityCounts.TableName, count.Condition(true),
-                    ActivityCounts.CountField, 0,1, ct);
+                    ActivityCounts.CountField, 0, 1, ct);
             }
         }
 
         if (entity is not null)
         {
-            await UpdateScore(entity,counts,ct);
+            await UpdateScore(entity, counts, ct);
         }
         return result;
     }
@@ -312,18 +312,18 @@ public class ActivityCollectService(
         {
             return activities;
         }
-        
+
         var ids = activities
-            .Where(x=>x.IsActive)
+            .Where(x => x.IsActive)
             .Select(x => x.RecordId.ToString())
             .ToArray();
         if (ids.Length == 0) return activities;
-        
+
         var strAgs = new StrArgs
         {
             [entity.BookmarkQueryParamName] = ids
         };
-        var records = await queryService.ListWithAction(entity.BookmarkQuery, new Span(),new Pagination(),strAgs,ct);
+        var records = await queryService.ListWithAction(entity.BookmarkQuery, new Span(), new Pagination(), strAgs, ct);
         var dict = records.ToDictionary(x => x[entity.PrimaryKey].ToString()!);
 
         var list = new List<Activity>();
@@ -333,28 +333,28 @@ public class ActivityCollectService(
             if (dict.TryGetValue(ac.RecordId.ToString(), out var record))
             {
                 list.Add(ac.LoadMetaData(entity, record));
-            } 
+            }
         }
         return list.ToArray();
     }
 
-    private async Task UpsertActivities(Activity[] activities,CancellationToken ct)
+    private async Task UpsertActivities(Activity[] activities, CancellationToken ct)
     {
         var groups = activities.GroupBy(a => a.EntityName);
         var toUpdate = new List<Record>();
         var entities = await entitySchemaService.AllEntities(ct);
-        
+
         foreach (var group in groups)
         {
             if (group.Key == Constants.PageEntity)
             {
-                toUpdate.AddRange(group.Select(x=>x.UpsertRecord(false)));
+                toUpdate.AddRange(group.Select(x => x.UpsertRecord(false)));
             }
             else
             {
                 var entity = entities.FirstOrDefault(x => x.Name == group.Key);
                 if (entity == null) continue;
-                var loadedActivities = await LoadMetaData(entity.ToLoadedEntity(), [..group], ct);
+                var loadedActivities = await LoadMetaData(entity.ToLoadedEntity(), [.. group], ct);
                 toUpdate.AddRange(loadedActivities.Select(x => x.UpsertRecord(true)));
             }
         }
@@ -377,17 +377,17 @@ public class ActivityCollectService(
         }
         return ret;
     }
-    
-    private  async Task<Dictionary<string,bool>> GetDbStatusDict(Activity[] activities, CancellationToken ct)
+
+    private async Task<Dictionary<string, bool>> GetDbStatusDict(Activity[] activities, CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id;
         if (activities.Length == 0 || userId is null) return [];
-        
+
         return await dao.FetchValues<bool>(
-            Models.Activities.TableName, 
-            activities.First().Condition(false), 
+            Models.Activities.TableName,
+            activities.First().Condition(false),
             Models.Activities.TypeField,
-            activities.Select(x=>x.ActivityType), 
+            activities.Select(x => x.ActivityType),
             Models.Activities.ActiveField,
             ct);
     }
@@ -403,10 +403,10 @@ public class ActivityCollectService(
         }
         return ret;
     }
-    
+
     private async Task<Dictionary<string, long>> GetDbCountDict(ActivityCount[] counts, CancellationToken ct)
     {
-        if (counts.Length == 0 ) return [];
+        if (counts.Length == 0) return [];
 
         return await dao.FetchValues<long>(
             ActivityCounts.TableName,
@@ -421,9 +421,9 @@ public class ActivityCollectService(
     {
         var activity = Models.Activities.Parse(key);
         var res = await dao.FetchValues<bool>(
-            Models.Activities.TableName, 
-            activity.Condition(true), 
-            null,null,Models.Activities.ActiveField);
+            Models.Activities.TableName,
+            activity.Condition(true),
+            null, null, Models.Activities.ActiveField);
         return res.Count > 0 && res.First().Value;
     }
 
@@ -431,10 +431,10 @@ public class ActivityCollectService(
     {
         var count = ActivityCounts.Parse(key);
         var res = await dao.FetchValues<long>(
-            ActivityCounts.TableName, 
-            count.Condition(true), 
-            null,null,
+            ActivityCounts.TableName,
+            count.Condition(true),
+            null, null,
             ActivityCounts.CountField);
-        return res.Count > 0 ? res.First().Value:0;
+        return res.Count > 0 ? res.First().Value : 0;
     }
 }

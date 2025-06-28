@@ -1,32 +1,31 @@
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using FormCMS.Activities.Models;
 using FormCMS.AuditLogging.Models;
 using FormCMS.Auth.Handlers;
-using FormCMS.Auth.Services;
-using NJsonSchema;
-using NJsonSchema.CodeGeneration.TypeScript;
-using FormCMS.Core.Descriptors;
 using FormCMS.Core.Assets;
+using FormCMS.Core.Descriptors;
 using FormCMS.Core.Identities;
 using FormCMS.Core.Tasks;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
+using NJsonSchema;
+using NJsonSchema.CodeGeneration.TypeScript;
 using NJsonSchema.Generation;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 var apps = new string[] { "FormCmsAdminApp", "FormCmsPortal" };
 foreach (var app in apps)
 {
-//shared
+    //shared
     TsGenerator.GenerateCode<XEntity>($"../../../{app}/libs/FormCmsAdminSdk/types/xEntity.ts");
     TsGenerator.GenerateCode<ListResponse>($"../../../{app}/libs/FormCmsAdminSdk/types/listResponse.ts");
     TsGenerator.GenerateCode<ListResponseMode>(
         $"../../../{app}/libs/FormCmsAdminSdk/types/listResponseMode.ts");
 
-//audit log
+    //audit log
     TsGenerator.GenerateCode<AuditLog>($"../../../{app}/libs/FormCmsAdminSdk/auditLog/types/auditLog.ts");
 
-//cms
+    //cms
     TsGenerator.GenerateCode<Asset>($"../../../{app}/libs/FormCmsAdminSdk/cms/types/asset.ts");
     TsGenerator.GenerateCode<AssetLink>($"../../../{app}/libs/FormCmsAdminSdk/cms/types/assetLink.ts");
     TsGenerator.GenerateCode<LookupListResponse>(
@@ -41,7 +40,7 @@ foreach (var app in apps)
         $"../../../{app}/libs/FormCmsAdminSdk/cms/types/specialQueryKeys.ts");
     TsGenerator.GenerateCode<SystemTask>($"../../../{app}/libs/FormCmsAdminSdk/cms/types/systemTask.ts");
 
-//auth
+    //auth
     TsGenerator.GenerateCode<Menu>($"../../../{app}/libs/FormCmsAdminSdk/auth/types/menu.ts");
     TsGenerator.GenerateCode<ProfileHandler.ChangePasswordReq>(
         $"../../../{app}/libs/FormCmsAdminSdk/auth/types/changePasswordReq.ts");

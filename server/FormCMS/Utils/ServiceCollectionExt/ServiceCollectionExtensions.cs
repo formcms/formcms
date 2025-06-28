@@ -1,8 +1,7 @@
 using FormCMS.Infrastructure.RelationDbDao;
-using Microsoft.Data.Sqlite;
-using NATS.Client.Core;
-using Npgsql;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.Sqlite;
+using Npgsql;
 
 namespace FormCMS.Utils.ServiceCollectionExt;
 public enum DatabaseProvider
@@ -18,7 +17,7 @@ public enum MessagingProvider
 }
 public static class ServiceCollectionExtensions
 {
-    public  static IServiceCollection  AddDao(this IServiceCollection services, DatabaseProvider databaseProvider, string connectionString)
+    public static IServiceCollection AddDao(this IServiceCollection services, DatabaseProvider databaseProvider, string connectionString)
     {
         _ = databaseProvider switch
         {
@@ -37,7 +36,7 @@ public static class ServiceCollectionExtensions
 
         IServiceCollection AddSqlServerDbServices()
         {
-            services.AddScoped(_ =>  new SqlConnection(connectionString));
+            services.AddScoped(_ => new SqlConnection(connectionString));
             services.AddScoped<IRelationDbDao, SqlServerDao>();
             return services;
         }

@@ -12,29 +12,29 @@ public static class RedisConstants
 
 public class RedisTrackingBuffer<T>(
     IConnectionMultiplexer redis,
-    BufferSettings settings, 
+    BufferSettings settings,
     string prefix,
-    Func<T,RedisValue> toRedisValue,
-    Func<RedisValue,T> toT
-    ) 
+    Func<T, RedisValue> toRedisValue,
+    Func<RedisValue, T> toT
+    )
 {
     private readonly IDatabase _db = redis.GetDatabase();
 
-    internal async Task<Dictionary<string,T>> GetAfterLastFlush(DateTime lastFlushTime)
+    internal async Task<Dictionary<string, T>> GetAfterLastFlush(DateTime lastFlushTime)
     {
         var now = DateTime.UtcNow;
         var lockKey = $"{prefix}:flush-lock";
         var lockValue = Guid.NewGuid().ToString();
-        var lockTimeout = TimeSpan.FromSeconds(30); 
-        
+        var lockTimeout = TimeSpan.FromSeconds(30);
+
         // only one worker need to do flush work, other threads are blocked in 30 seconds
         var acquired = await _db.StringSetAsync(lockKey, lockValue, lockTimeout, When.NotExists);
         if (!acquired)
         {
             return [];
-        } 
-        
-        var ret = new Dictionary<string,T>();
+        }
+
+        var ret = new Dictionary<string, T>();
         for (var t = lastFlushTime; t < now; t = t.AddMinutes(1))
         {
             var key = GetNextFlushTimeKey(t);
@@ -78,7 +78,7 @@ public class RedisTrackingBuffer<T>(
                     if (storedValue == lockValue)
                     {
                         await _db.KeyDeleteAsync(lockKey);
-                    } 
+                    }
                 }
             }
             attempts++;
@@ -90,10 +90,10 @@ public class RedisTrackingBuffer<T>(
         throw new ResultException("Failed to acquire lock");
     }
 
-    internal async Task<Dictionary<string,T>> SafeGet(string[] keys, Func<string,Task<T>> getAsync)
+    internal async Task<Dictionary<string, T>> SafeGet(string[] keys, Func<string, Task<T>> getAsync)
     {
         var (hits, misses) = await GetAndParse(keys);
-        
+
         var ret = new Dictionary<string, T>(hits);
         foreach (var key in misses)
         {
@@ -112,7 +112,7 @@ public class RedisTrackingBuffer<T>(
     internal async Task SetFlushKey(string[] keys)
     {
         if (keys.Length == 0) return;
-        
+
         var flushKey = GetNextFlushTimeKey(DateTime.UtcNow);
         var redisValues = keys.Select(AddPrefix).Select(k => (RedisValue)k).ToArray();
 
@@ -147,9 +147,9 @@ public class RedisTrackingBuffer<T>(
         recordId = AddPrefix(recordId);
         return _db.StringSetAsync(recordId, toRedisValue(value), settings.Expiration);
     }
-    
 
-    internal async Task<(Dictionary<string,T> Hits, string[]Misses)> GetAndParse(string[] keys)
+
+    internal async Task<(Dictionary<string, T> Hits, string[] Misses)> GetAndParse(string[] keys)
     {
         var redisKeys = keys.Select(k => (RedisKey)AddPrefix(k)).ToArray();
         var redisValues = await _db.StringGetAsync(redisKeys);
@@ -179,17 +179,17 @@ public class RedisTrackingBuffer<T>(
            return nil
         end
         """;
- 
-    internal  Task<RedisResult> Increase(string recordId, long delta)
+
+    internal Task<RedisResult> Increase(string recordId, long delta)
     {
         recordId = AddPrefix(recordId);
-        return _db.ScriptEvaluateAsync(IncreaseLuaScript, [recordId],[delta] );
+        return _db.ScriptEvaluateAsync(IncreaseLuaScript, [recordId], [delta]);
     }
-    
-    private string AddPrefix(string k) => k.StartsWith(prefix) ? k:prefix + k;
-    private string RemovePrefix (string k) => k.StartsWith(prefix) ?k[prefix.Length..]: k;
 
-    private  string GetNextFlushTimeKey(DateTime now)
+    private string AddPrefix(string k) => k.StartsWith(prefix) ? k : prefix + k;
+    private string RemovePrefix(string k) => k.StartsWith(prefix) ? k[prefix.Length..] : k;
+
+    private string GetNextFlushTimeKey(DateTime now)
     {
         var currentMinute = now.TruncateToMinute();
         var t = now.Second >= 30 ? currentMinute.AddMinutes(1).AddSeconds(30) : currentMinute.AddSeconds(30);

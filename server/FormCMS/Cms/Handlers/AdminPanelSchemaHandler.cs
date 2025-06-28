@@ -18,7 +18,7 @@ public static class AdminPanelSchemaHandler
             string name,
             CancellationToken ct
         ) => service.GetEntity(name, ct));
-        
+
         return app;
     }
 }

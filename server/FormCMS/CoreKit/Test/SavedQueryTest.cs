@@ -1,8 +1,8 @@
-using System.Text.Json;
-using FormCMS.CoreKit.ApiClient;
 using FormCMS.Core.Descriptors;
+using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
+using System.Text.Json;
 
 namespace FormCMS.CoreKit.Test;
 
@@ -17,11 +17,11 @@ public class SavedQueryTest(QueryApiClient client, string queryName)
                                  }
                             }
                             """.GraphQlQuery<JsonElement[]>(client).Ok();
-        
+
         var items = await client.List(queryName).Ok();
-        SimpleAssert.IsTrue(items.Length == 0);    
+        SimpleAssert.IsTrue(items.Length == 0);
     }
-    
+
     public async Task PaginationByCursor()
     {
         await $$"""
@@ -58,8 +58,8 @@ public class SavedQueryTest(QueryApiClient client, string queryName)
         var items = (await client.Many(queryName, [1, 2])).Ok();
         SimpleAssert.AreEqual(2, items.Length);
     }
-    
-    
+
+
     public async Task VerifySingleApi()
     {
         await $$"""

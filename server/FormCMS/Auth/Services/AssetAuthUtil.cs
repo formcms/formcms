@@ -16,16 +16,16 @@ public static class AssetAuthUtil
             return args;
         });
 
-        registry.AssetPreAdd.RegisterDynamic("*",  (IAssetAuthService service, AssetPreAddArgs args)
-            => args with{RefAsset = service.PreAdd(args.RefAsset)});
-        
+        registry.AssetPreAdd.RegisterDynamic("*", (IAssetAuthService service, AssetPreAddArgs args)
+            => args with { RefAsset = service.PreAdd(args.RefAsset) });
+
         registry.AssetPreUpdate.RegisterDynamic("*", async (IAssetAuthService service, AssetPreUpdateArgs args)
             =>
         {
             await service.PreUpdateOrDelete(args.Id);
             return args;
         });
-        
+
         registry.AssetPreDelete.RegisterDynamic("*", async (IAssetAuthService service, AssetPreDeleteArgs args)
             =>
         {

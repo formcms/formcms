@@ -21,21 +21,21 @@ public static class Matches
     public const string DateIsNot = "dateIsNot";
     public const string DateBefore = "dateBefore";
     public const string DateAfter = "dateAfter";
-    
-    
-    public static readonly HashSet<string> SingleInt = [EqualsTo,Lt,Lte,Gt,Gte];
-    public static readonly HashSet<string> MultiInt = [Between,In,NotIn];
-    
+
+
+    public static readonly HashSet<string> SingleInt = [EqualsTo, Lt, Lte, Gt, Gte];
+    public static readonly HashSet<string> MultiInt = [Between, In, NotIn];
+
     public static readonly HashSet<string> SingleStr = [
         EqualsTo,Lt,Lte,Gt,Gte,
         StartsWith, Contains, NotContains, EndsWith
     ];
-    public static readonly HashSet<string> MultiStr = [Between,In,NotIn];
-    
-    public static readonly HashSet<string> SingleDate = [DateIs,DateIsNot,DateBefore, DateAfter];
-    public static readonly HashSet<string> MultiDate = [Between,In,NotIn];
-    
-    public static readonly HashSet<string> Multi = [Between,In,NotIn];
+    public static readonly HashSet<string> MultiStr = [Between, In, NotIn];
+
+    public static readonly HashSet<string> SingleDate = [DateIs, DateIsNot, DateBefore, DateAfter];
+    public static readonly HashSet<string> MultiDate = [Between, In, NotIn];
+
+    public static readonly HashSet<string> Multi = [Between, In, NotIn];
     public static readonly HashSet<string> Single = [
         StartsWith, Contains, NotContains, EndsWith,
         EqualsTo,Lt,Lte,Gt,Gte,
@@ -45,7 +45,7 @@ public static class Matches
 
 public static class MatchHelper
 {
-     public static Result<SqlKata.Query> ApplyAndConstraint(this SqlKata.Query query, string field, string match, object?[] values)
+    public static Result<SqlKata.Query> ApplyAndConstraint(this SqlKata.Query query, string field, string match, object?[] values)
     {
         return match switch
         {
@@ -53,8 +53,8 @@ public static class MatchHelper
             Matches.Contains => query.WhereContains(field, values[0]),
             Matches.NotContains => query.WhereNotContains(field, values[0]),
             Matches.EndsWith => query.WhereEnds(field, values[0]),
-            Matches.EqualsTo =>  query.Where(field, values[0]),
-            Matches.NotEquals => query.WhereNot(field, values[0] ),
+            Matches.EqualsTo => query.Where(field, values[0]),
+            Matches.NotEquals => query.WhereNot(field, values[0]),
             Matches.NotIn => query.WhereNotIn(field, values),
             Matches.In => query.WhereIn(field, values),
             Matches.Lt => query.Where(field, "<", values[0]),

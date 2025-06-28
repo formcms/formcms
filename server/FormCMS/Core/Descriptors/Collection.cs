@@ -15,7 +15,7 @@ public static class CollectionHelper
         PublicationStatus? status
     )
     {
-        var query = c.TargetEntity.GetCommonListQuery(filters, sorts, pagination,span, attrs,status);
+        var query = c.TargetEntity.GetCommonListQuery(filters, sorts, pagination, span, attrs, status);
         query.WhereIn(c.LinkAttribute.Field, parentsIds.GetValues());
         return query;
     }

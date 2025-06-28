@@ -14,11 +14,11 @@ e.g. user user1 comments on user2's post 1,
 }
 */
 public record ActivityMessage(
-    string UserId, 
-    string TargetUserId, 
-    string EntityName, 
-    long RecordId, 
-    string Activity,  
+    string UserId,
+    string TargetUserId,
+    string EntityName,
+    long RecordId,
+    string Activity,
     string Operation
 );
 

@@ -22,7 +22,7 @@ public static class AccountHandlers
         app.MapPost("/roles", (IAccountService svc, RoleAccess dto) => svc.SaveRole(dto));
 
         app.MapDelete("/roles/{name}", (IAccountService svc, string name) => svc.DeleteRole(name));
-        
-        app.MapGet("/entities",(IAccountService svc, CancellationToken ct) => svc.GetEntities(ct));
+
+        app.MapGet("/entities", (IAccountService svc, CancellationToken ct) => svc.GetEntities(ct));
     }
 }

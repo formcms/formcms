@@ -1,7 +1,7 @@
-using System.Text.Json;
-using FormCMS.Utils.ResultExt;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.EnumExt;
+using FormCMS.Utils.ResultExt;
+using System.Text.Json;
 
 namespace FormCMS.CoreKit.Test;
 
@@ -15,16 +15,16 @@ public class VariableTest(QueryApiClient client, string queryName)
                          id, publishedAt
                      }
                 }
-                """.GraphQlQuery<JsonElement[]>(client, new {d ="2025-01-01"}).Ok();
-        
+                """.GraphQlQuery<JsonElement[]>(client, new { d = "2025-01-01" }).Ok();
+
         SimpleAssert.IsTrue(items.Length > 0);
         items = await client.List(queryName, new StrArgs
         {
             { "d", "2225-01-01" }
         }).Ok();
-        SimpleAssert.IsTrue(items.Length == 0);    
+        SimpleAssert.IsTrue(items.Length == 0);
     }
-    
+
     public async Task ValueInSet()
     {
         var e = await $$"""
@@ -34,7 +34,7 @@ public class VariableTest(QueryApiClient client, string queryName)
                            }
                         }
                         """.GraphQlQuery<JsonElement>(client, new { id = 9 }).Ok();
-        SimpleAssert.AreEqual(9,e.Id());
+        SimpleAssert.AreEqual(9, e.Id());
     }
 
     public async Task StartsWith()
@@ -71,7 +71,7 @@ public class VariableTest(QueryApiClient client, string queryName)
                         """.GraphQlQuery<JsonElement[]>(client, new { sort_field = "idDesc" }).Ok();
         SimpleAssert.IsTrue(e[0].Id() > e[1].Id());
     }
-    
+
     public async Task SortExpression()
     {
         var e = await $$"""
@@ -93,6 +93,6 @@ public class VariableTest(QueryApiClient client, string queryName)
                            }
                         }
                         """.GraphQlQuery<JsonElement[]>(client, new { offset = 2 }).Ok();
-        SimpleAssert.IsTrue(e[0].Id() >2);
+        SimpleAssert.IsTrue(e[0].Id() > 2);
     }
 }

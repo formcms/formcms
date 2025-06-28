@@ -83,10 +83,10 @@ public sealed class AuthBuilder<TCmsUser>(ILogger<AuthBuilder<TCmsUser>> logger)
         Print();
         app.UseAuthentication();
         app.UseAuthorization();
-        
+
         app.Services.GetService<PluginRegistry>()?.FeatureMenus.Add(AuthManageMenus.MenuRoles);
         app.Services.GetService<PluginRegistry>()?.FeatureMenus.Add(AuthManageMenus.MenuUsers);
-        
+
         MapEndpoints();
         RegisterHooks();
         return app;

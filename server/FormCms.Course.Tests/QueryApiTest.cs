@@ -1,13 +1,12 @@
-using System.Text.Json;
-using FormCMS.CoreKit.ApiClient;
 using FormCMS.Core.Descriptors;
-using FormCMS.Utils.ResultExt;
 using FormCMS.CoreKit.Test;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.jsonElementExt;
+using FormCMS.Utils.ResultExt;
 using Microsoft.Extensions.Primitives;
 using NUlid;
+using System.Text.Json;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Course.Tests;
@@ -15,8 +14,8 @@ namespace FormCMS.Course.Tests;
 public class QueryApiTest
 {
     private readonly string _queryName = "qry_query_" + Ulid.NewUlid();
-    private readonly  string _post = "qry_post_" + Ulid.NewUlid();
-    private readonly BlogsTestCases _commonTestCases; 
+    private readonly string _post = "qry_post_" + Ulid.NewUlid();
+    private readonly BlogsTestCases _commonTestCases;
     private AppFactory Factory { get; }
 
     public QueryApiTest(AppFactory factory)
@@ -26,20 +25,20 @@ public class QueryApiTest
         _commonTestCases = new BlogsTestCases(factory.QueryApi, _queryName);
     }
     [Fact]
-     public async Task TestCsv()
-     {
-         var items =
-             await $$"""
+    public async Task TestCsv()
+    {
+        var items =
+            await $$"""
                      query {
                           {{TestEntityNames.TestPost.Camelize()}}List{
                               id, {{TestFieldNames.Language.Camelize()}}
                           }
                      }
                      """.GraphQlQuery<JsonElement[]>(Factory.QueryApi).Ok();
-         var first = items.First();
-         var ele = first.GetProperty(TestFieldNames.Language.Camelize());
-         Assert.True(ele.ValueKind == JsonValueKind.Array);
-     }   
+        var first = items.First();
+        var ele = first.GetProperty(TestFieldNames.Language.Camelize());
+        Assert.True(ele.ValueKind == JsonValueKind.Array);
+    }
     [Fact]
     public async Task TestDictionary()
     {
@@ -54,9 +53,9 @@ public class QueryApiTest
                     """.GraphQlQuery<JsonElement[]>(Factory.QueryApi).Ok();
         var first = items.First();
         var ele = first.GetProperty(TestFieldNames.MetaData.Camelize());
-        Assert.True(ele.TryGetProperty("Key",out var url));
+        Assert.True(ele.TryGetProperty("Key", out var url));
     }
-    
+
     [Fact]
     public async Task TestAssets()
     {
@@ -73,9 +72,9 @@ public class QueryApiTest
                     """.GraphQlQuery<JsonElement[]>(Factory.QueryApi).Ok();
         var first = items.First();
         var image = first.GetProperty("image");
-        Assert.True(image.TryGetProperty("url",out var url));
-        Assert.True(image.TryGetProperty("title",out var title));
-        
+        Assert.True(image.TryGetProperty("url", out var url));
+        Assert.True(image.TryGetProperty("title", out var title));
+
         var gallery = first.GetProperty("gallery");
         foreach (var jsonElement in gallery.EnumerateArray())
         {
@@ -106,8 +105,8 @@ public class QueryApiTest
                      """.GraphQlQuery<JsonElement[]>(Factory.QueryApi).Ok();
         Assert.True(items.Length == 1);
     }
-    
-    
+
+
     [Fact]
     public async Task EnsureDraftEntitySchemaNotAffectQuery()
     {
@@ -117,7 +116,7 @@ public class QueryApiTest
             new ("name1", "Name1", DisplayType: DisplayType.Text)
         ];
         await Factory.SchemaApi.EnsureEntity(_post, "name", false, attrs).Ok();
-        
+
         var payload = new Dictionary<string, object>
         {
             {"name","post21"},
@@ -134,12 +133,12 @@ public class QueryApiTest
         // remove name1 this latest version is draft
         await Factory.SchemaApi.EnsureSimpleEntity(_post, "name", false).Ok();
         await Factory.EntityApi.Insert(_post, "name", "post1").Ok();// should be draft now
-        
-       
+
+
         //query use published schema, so it is still working
         var items = await Factory.QueryApi.List(_queryName).Ok();
-        Assert.Equal(2,items.Length);
-        
+        Assert.Equal(2, items.Length);
+
         //use draft post, so should fail
         var args = new Dictionary<string, StringValues>
         {
@@ -148,13 +147,13 @@ public class QueryApiTest
         var res = await Factory.QueryApi.List(_queryName, args);
         Assert.True(res.IsFailed);
     }
-    
+
     [Fact]
     public async Task EnsureDaftDataNotAffectQuery()
     {
         await Factory.SchemaApi.EnsureSimpleEntity(_post, "name", true).Ok();
         await Factory.EntityApi.Insert(_post, "name", "post1");// should be draft now
-        
+
         await $$"""
                 query {{_queryName}}{
                    {{_post}}List{id }
@@ -162,7 +161,7 @@ public class QueryApiTest
                 """.GraphQlQuery(Factory.QueryApi).Ok();
         var items = (await Factory.QueryApi.List(_queryName)).Ok();
         Assert.Empty(items);
-        
+
         var args = new Dictionary<string, StringValues>
         {
             {"preview","1"}
@@ -193,7 +192,7 @@ public class QueryApiTest
     [Fact]
     public Task VerifySingleApi() => _commonTestCases.SavedQuery.VerifySingleApi();
 
-    
+
     [Fact]
     public Task VerifySort() => _commonTestCases.Sort.VerifySort();
 
@@ -206,7 +205,7 @@ public class QueryApiTest
 
     [Fact]
     public Task VerifyComplexFieldSelection() => _commonTestCases.RealtimeQueryTest.ComplexFieldSelection();
-    
+
     [Fact]
     public Task VerifyPagination() => _commonTestCases.RealtimeQueryTest.RealtimeQueryPagination();
 
@@ -218,23 +217,23 @@ public class QueryApiTest
 
     [Fact]
     public Task VariableFilterExpression() => _commonTestCases.Variable.FilterExpression();
-    
+
     [Fact]
     public Task VariableSort() => _commonTestCases.Variable.Sort();
     [Fact]
     public Task VariableSortExpression() => _commonTestCases.Variable.SortExpression();
     [Fact]
     public Task VariablePagination() => _commonTestCases.Variable.Pagination();
-    
-    [Fact] 
+
+    [Fact]
     public Task FilterByPublishedAtRealTime() => _commonTestCases.RealtimeQueryTest.FilterByPublishedAt();
-    
-    [Fact] 
+
+    [Fact]
     public Task FilterByPublishedAtSaved() => _commonTestCases.SavedQuery.FilterByPublishedAt();
 
     [Fact]
     public Task FilterByPublishedVariable() => _commonTestCases.Variable.FilterByPublishedAt();
-    
+
     [Fact]
     public Task CollectionPart() => QueryParts("attachments", ["id", "post"]);
 
@@ -270,7 +269,7 @@ public class QueryApiTest
             var id = (long)post["id"];
 
             var cursor = SpanHelper.Cursor(last);
-            var items = (await Factory.QueryApi.Part(sourceId:id,query: _queryName, attr: attrName, last: cursor, limit: limit)).Ok();
+            var items = (await Factory.QueryApi.Part(sourceId: id, query: _queryName, attr: attrName, last: cursor, limit: limit)).Ok();
             Assert.Equal(limit, items.Length);
         }
         else

@@ -16,7 +16,7 @@ public static class AttributeVectorConstants
 //reference type make it easier to build a tree
 public class AttributeTreeNode(LoadedAttribute? attribute = null)
 {
-    public LoadedAttribute? Attribute { get;} = attribute;
+    public LoadedAttribute? Attribute { get; } = attribute;
     public List<AttributeTreeNode> Children { get; } = new();
 
     public static AttributeTreeNode Parse(IEnumerable<AttributeVector> vectors)

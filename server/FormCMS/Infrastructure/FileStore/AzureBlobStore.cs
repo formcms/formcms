@@ -74,7 +74,7 @@ public class AzureBlobStore(AzureBlobStoreOptions options) : IFileStore
         }
         await blobClient.DownloadToAsync(localPath, ct);
     }
-    
+
     public async Task DownloadFileWithRelated(string path, string localPath, CancellationToken ct)
     {
         await foreach (var blob in _containerClient.GetBlobsAsync(prefix: path, cancellationToken: ct))
@@ -93,7 +93,7 @@ public class AzureBlobStore(AzureBlobStoreOptions options) : IFileStore
         var blobClient = _containerClient.GetBlobClient(file);
         await blobClient.DeleteIfExistsAsync(cancellationToken: ct);
     }
-    
+
     public async Task DelByPrefix(string prefix, CancellationToken ct)
     {
         await foreach (var blob in _containerClient.GetBlobsAsync(prefix: prefix, cancellationToken: ct))

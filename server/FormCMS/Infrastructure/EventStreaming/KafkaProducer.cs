@@ -2,7 +2,7 @@ using Confluent.Kafka;
 
 namespace FormCMS.Infrastructure.EventStreaming;
 
-public sealed class KafkaProducer(ILogger<KafkaProducer> logger,IProducer<string,string> producer):IStringMessageProducer
+public sealed class KafkaProducer(ILogger<KafkaProducer> logger, IProducer<string, string> producer) : IStringMessageProducer
 {
     public async Task Produce(string topic, string message)
     {

@@ -3,8 +3,8 @@ using FormCMS.Infrastructure.FileStore;
 
 namespace FormCMS.Course;
 
-public  class Worker(string databaseProvider, string databaseConnectionString, 
-    AzureBlobStoreOptions? azureBlobStoreOptions, 
+public class Worker(string databaseProvider, string databaseConnectionString,
+    AzureBlobStoreOptions? azureBlobStoreOptions,
     TaskTimingSeconds? taskTimingSeconds)
 {
     public IHost Build()
@@ -12,9 +12,9 @@ public  class Worker(string databaseProvider, string databaseConnectionString,
         var builder = Host.CreateApplicationBuilder();
         _ = databaseProvider switch
         {
-            Constants.Sqlite => builder.Services.AddSqliteCmsWorker(databaseConnectionString,taskTimingSeconds),
-            Constants.Postgres => builder.Services.AddPostgresCmsWorker(databaseConnectionString,taskTimingSeconds),
-            Constants.SqlServer => builder.Services.AddSqlServerCmsWorker(databaseConnectionString,taskTimingSeconds),
+            Constants.Sqlite => builder.Services.AddSqliteCmsWorker(databaseConnectionString, taskTimingSeconds),
+            Constants.Postgres => builder.Services.AddPostgresCmsWorker(databaseConnectionString, taskTimingSeconds),
+            Constants.SqlServer => builder.Services.AddSqlServerCmsWorker(databaseConnectionString, taskTimingSeconds),
             _ => throw new Exception("Database provider not found")
         };
 

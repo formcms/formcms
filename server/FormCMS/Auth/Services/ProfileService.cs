@@ -1,10 +1,10 @@
-using System.Security.Claims;
 using FormCMS.Auth.Models;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
 using NUlid;
+using System.Security.Claims;
 
 namespace FormCMS.Auth.Services;
 
@@ -14,7 +14,7 @@ public class ProfileService<TUser>(
     IResizer resizer,
     UserManager<TUser> userManager,
     SignInManager<TUser> signInManager
-    ):IProfileService
+    ) : IProfileService
     where TUser : CmsUser, new()
 
 {
@@ -24,7 +24,7 @@ public class ProfileService<TUser>(
         var result = await userManager.ChangePasswordAsync(user, password, newPassword);
         if (!result.Succeeded) throw new ResultException(IdentityErrMsg(result));
     }
-    
+
     public async Task UploadAvatar(IFormFile file, CancellationToken ct)
     {
         //delete old avatar
@@ -35,20 +35,21 @@ public class ProfileService<TUser>(
             {
                 await store.Del(user.AvatarPath, ct);
             }
-            catch { //ignore
+            catch
+            { //ignore
             }
         }
 
-        if (file.Length ==0)  throw new ResultException($"File [{file.FileName}] is empty");
+        if (file.Length == 0) throw new ResultException($"File [{file.FileName}] is empty");
         file = resizer.CompressImage(file);
         var path = Path.Join("avatar", Ulid.NewUlid().ToString()) + Path.GetExtension(file.FileName);
-        await store.Upload([(path,file)],ct);
+        await store.Upload([(path, file)], ct);
 
         user.AvatarPath = path;
         await userManager.UpdateAsync(user);
         await signInManager.RefreshSignInAsync(user);
     }
-    
+
     public AccessLevel MustGetReadWriteLevel(string entityName)
     {
         if (HasRole(Roles.Sa) || CanFullReadWrite(entityName))
@@ -97,7 +98,7 @@ public class ProfileService<TUser>(
             await signInManager.RefreshSignInAsync(user);
         }
     }
-    public  void MustHasAnyRole(IEnumerable<string> role)
+    public void MustHasAnyRole(IEnumerable<string> role)
     {
         if (role.Any(HasRole))
         {
@@ -106,11 +107,11 @@ public class ProfileService<TUser>(
 
         throw new ResultException("You don't have permission to do this operation");
     }
-    public  bool HasRole(string role)
+    public bool HasRole(string role)
     {
         return contextAccessor.HttpContext?.User.IsInRole(role) ?? false;
-    } 
-    
+    }
+
     private async Task<TUser> MustGetCurrentUser()
     {
         var claims = contextAccessor.HttpContext?.User;
@@ -124,13 +125,13 @@ public class ProfileService<TUser>(
 
     private bool CanFullReadOnly(string entityName) => HasClaims(AccessScope.FullRead, entityName);
 
-    private  bool CanRestrictedReadOnly(string entityName) => HasClaims(AccessScope.RestrictedRead, entityName);
+    private bool CanRestrictedReadOnly(string entityName) => HasClaims(AccessScope.RestrictedRead, entityName);
 
-    private  bool CanFullReadWrite( string entityName) => HasClaims(AccessScope.FullAccess, entityName);
+    private bool CanFullReadWrite(string entityName) => HasClaims(AccessScope.FullAccess, entityName);
 
-    private  bool CanRestrictedReadWrite( string entityName) => HasClaims(AccessScope.RestrictedAccess, entityName);
-    
-    private  bool HasClaims(string claimType, string value)
+    private bool CanRestrictedReadWrite(string entityName) => HasClaims(AccessScope.RestrictedAccess, entityName);
+
+    private bool HasClaims(string claimType, string value)
     {
         var userClaims = contextAccessor.HttpContext?.User;
         if (userClaims?.Identity?.IsAuthenticated != true)

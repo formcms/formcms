@@ -5,7 +5,7 @@ var nats = builder
 
 var postgres = builder
     .AddPostgres("postgres")
-    .WithDataVolume(isReadOnly:false)
+    .WithDataVolume(isReadOnly: false)
     .WithLifetime(ContainerLifetime.Persistent);
 builder.AddProject<Projects.PostgresWebApp>("web")
     .WithReference(nats).WaitFor(nats)

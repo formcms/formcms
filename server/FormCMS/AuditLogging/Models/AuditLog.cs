@@ -34,7 +34,7 @@ public static class AuditLogConstants
 
 public static class AuditLogHelper
 {
-    public static readonly XEntity Entity  = XEntityExtensions.CreateEntity<AuditLog>(
+    public static readonly XEntity Entity = XEntityExtensions.CreateEntity<AuditLog>(
         nameof(AuditLog.RecordLabel),
         defaultPageSize: AuditLogConstants.DefaultPageSize,
         attributes:
@@ -44,14 +44,14 @@ public static class AuditLogHelper
             XAttrExtensions.CreateAttr<AuditLog, string>(x => x.EntityName),
             XAttrExtensions.CreateAttr<AuditLog, string>(x => x.RecordLabel),
             XAttrExtensions.CreateAttr<AuditLog, string>(x => x.UserName),
-            
+
             XAttrExtensions.CreateAttr<AuditLog, string>(x => x.RecordId, inList:false),
             XAttrExtensions.CreateAttr<AuditLog, string>(x => x.UserId, inList:false),
             XAttrExtensions.CreateAttr<AuditLog, DateTime>(x => x.CreatedAt,isDefault:true),
             XAttrExtensions.CreateAttr<AuditLog, object>(x => x.Payload, inList: false)
         ]);
 
-    public static readonly Column[] Columns =  [
+    public static readonly Column[] Columns = [
         ColumnHelper.CreateCamelColumn<AuditLog>(x=>x.Id,ColumnType.Id),
         ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.RecordId),
         ColumnHelper.CreateCamelColumn<AuditLog,string>(x=>x.RecordLabel),
@@ -70,10 +70,10 @@ public static class AuditLogHelper
                 blackList: [nameof(AuditLog.Id), nameof(AuditLog.CreatedAt)]
             ));
 
-    public static Query List(int?offset = null, int? limit = null)
+    public static Query List(int? offset = null, int? limit = null)
     {
         var q = new Query(AuditLogConstants.TableName);
-        q= q.Select(Entity.Attributes.Where(x=>x.InList).Select(x=>x.Field));
+        q = q.Select(Entity.Attributes.Where(x => x.InList).Select(x => x.Field));
         if (offset > 0) q.Offset(offset.Value);
         q.Limit(limit ?? AuditLogConstants.DefaultPageSize);
         return q;
@@ -81,13 +81,13 @@ public static class AuditLogHelper
 
     public static Query ById(long id)
     {
-        var fields = Entity.Attributes.Select(x=>x.Field);
+        var fields = Entity.Attributes.Select(x => x.Field);
         return new Query(AuditLogConstants.TableName)
-            .Where(nameof(AuditLog.Id).Camelize(),id)
+            .Where(nameof(AuditLog.Id).Camelize(), id)
             .Select(fields);
     }
 
-    public static Query GetDailyActionCount(Func<string,string>CastDate, int daysAgo)
+    public static Query GetDailyActionCount(Func<string, string> CastDate, int daysAgo)
     {
         var sevenDaysAgo = DateTime.UtcNow.Date.AddDays(-daysAgo);
         var dateExp = CastDate(nameof(AuditLog.CreatedAt).Camelize());
@@ -100,7 +100,7 @@ public static class AuditLogHelper
             .GroupByRaw($"{dateExp}, {nameof(AuditLog.Action).Camelize()}")
             .OrderBy(nameof(DailyActionCount.Day).Camelize());
     }
-    
-    public static Query Count() => new (AuditLogConstants.TableName);
-    
+
+    public static Query Count() => new(AuditLogConstants.TableName);
+
 }

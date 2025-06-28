@@ -1,6 +1,5 @@
-using System.Collections.Immutable;
-using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
+using System.Collections.Immutable;
 
 namespace FormCMS.Core.HookFactory;
 
@@ -17,7 +16,7 @@ public record QueryPostListArgs(
     LoadedQuery Query,
     ValidSpan Span,
     ValidPagination Pagination,
-    Record[] RefRecords 
+    Record[] RefRecords
 ) : BaseArgs(Query.Name);
 
 
@@ -38,13 +37,13 @@ public record QueryPartialArgs(
     ValidSpan Span,
     ValidPagination Pagination,
     long SourceId,
-    Record[]? OutRecords  = null 
-):BaseArgs(Node.Field);
+    Record[]? OutRecords = null
+) : BaseArgs(Node.Field);
 
 public record QueryPostPartialArgs(
     GraphNode Node,
-    Record[] RefRecords  
-):BaseArgs(Node.Field);
+    Record[] RefRecords
+) : BaseArgs(Node.Field);
 
 
 

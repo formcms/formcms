@@ -1,27 +1,27 @@
 using Humanizer;
 
-namespace  FormCMS.Utils.DisplayModels;
+namespace FormCMS.Utils.DisplayModels;
 
 public record XEntity(
     XAttr[] Attributes,
-    string Name ,
-    string DisplayName ,
-    
-    string PrimaryKey ,
+    string Name,
+    string DisplayName,
+
+    string PrimaryKey,
     string LabelAttributeName,
-    int DefaultPageSize ,
+    int DefaultPageSize,
     string PreviewUrl
 );
 
 public static class XEntityExtensions
 {
-    public static XEntity CreateEntity<T>(string labelAttribute, XAttr[]attributes ,
-        string? displayName= null,
-        int defaultPageSize = 50, 
-        string primaryKey = "id") 
+    public static XEntity CreateEntity<T>(string labelAttribute, XAttr[] attributes,
+        string? displayName = null,
+        int defaultPageSize = 50,
+        string primaryKey = "id")
     {
         var name = typeof(T).Name;
         displayName ??= name.Humanize();
-        return new XEntity(attributes, name, displayName, primaryKey, labelAttribute.Camelize(),defaultPageSize,"");
+        return new XEntity(attributes, name, displayName, primaryKey, labelAttribute.Camelize(), defaultPageSize, "");
     }
 }

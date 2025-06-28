@@ -6,7 +6,7 @@ namespace FormCMS.Activities.Workers;
 public class BufferFlushWorker(
     IServiceScopeFactory scopeFactory,
     ILogger<BufferFlushWorker> logger
-    ): BackgroundService
+    ) : BackgroundService
 {
     private DateTime? _lastFlushTime;
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -23,7 +23,7 @@ public class BufferFlushWorker(
 
                 using var scope = scopeFactory.CreateScope();
                 var activityService = scope.ServiceProvider.GetRequiredService<IActivityCollectService>();
-                await activityService.Flush(_lastFlushTime,stoppingToken);
+                await activityService.Flush(_lastFlushTime, stoppingToken);
                 _lastFlushTime = nextMinute;
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

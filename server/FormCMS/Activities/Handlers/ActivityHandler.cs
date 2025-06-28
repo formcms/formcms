@@ -1,7 +1,5 @@
 using FormCMS.Activities.Services;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.WebUtilities;
-using NUlid;
 
 namespace FormCMS.Activities.Handlers;
 
@@ -13,23 +11,23 @@ public static class ActivityHandler
             IActivityService s,
             int n,
             CancellationToken ct
-        ) => s.GetTopVisitPages(n,ct));
-        
+        ) => s.GetTopVisitPages(n, ct));
+
         builder.MapGet("/visit-counts", (
             int n,
             bool authed,
             CancellationToken ct,
             IActivityService s
-            
-        ) => s.GetDailyPageVisitCount(n,authed,ct));
+
+        ) => s.GetDailyPageVisitCount(n, authed, ct));
 
         builder.MapGet("/activity-counts", (
             int n,
             CancellationToken ct,
             IActivityService s
-            
-        ) => s.GetDailyActivityCount(n,ct));
-        
+
+        ) => s.GetDailyActivityCount(n, ct));
+
         builder.MapGet("/list/{activityType}", (
             CancellationToken ct,
             HttpContext context,
@@ -63,11 +61,11 @@ public static class ActivityHandler
         ) => s.Toggle(entityName, recordId, type, active, ct));
 
         builder.MapGet("/visit", (
-            string url, 
+            string url,
             HttpContext context,
-            IActivityCollectService s,CancellationToken ct
+            IActivityCollectService s, CancellationToken ct
         ) => s.Visit(UserId(context), url, ct));
-        
+
         builder.MapPost("/record/{entityName}/{recordId:long}", async (
             string entityName,
             long recordId,
@@ -77,7 +75,7 @@ public static class ActivityHandler
             CancellationToken ct
         ) =>
         {
-            var res = await s.Record(UserId(context),entityName, recordId, [type], ct);
+            var res = await s.Record(UserId(context), entityName, recordId, [type], ct);
             return res.First().Value;
         });
         return builder;

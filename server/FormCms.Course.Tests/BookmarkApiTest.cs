@@ -1,16 +1,15 @@
-using System.Text.Json;
-using FormCMS.Activities.ApiClient;
 using FormCMS.Activities.Models;
 using FormCMS.CoreKit.Test;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
 using NUlid;
+using System.Text.Json;
 
 namespace FormCMS.Course.Tests;
 [Collection("API")]
 public class BookmarkApiTest(AppFactory factory)
 {
-    private const  long  RecordId = 22;
+    private const long RecordId = 22;
     private bool _ = factory.LoginAndInitTestData();
 
     [Fact]
@@ -32,7 +31,7 @@ public class BookmarkApiTest(AppFactory factory)
         await factory.BookmarkApi.DeleteFolder(folder.GetProperty("id").GetInt64()).Ok();
         folders = await factory.BookmarkApi.AllFolders().Ok();
         folder = folders.FirstOrDefault(x => x.GetProperty("name").GetString() == name);
-        Assert.Equal(JsonValueKind.Undefined,folder.ValueKind);
+        Assert.Equal(JsonValueKind.Undefined, folder.ValueKind);
     }
 
     [Fact]
@@ -43,20 +42,20 @@ public class BookmarkApiTest(AppFactory factory)
         await factory.BookmarkApi.AddBookmarks(TestEntityNames.TestPost.Camelize(), RecordId, name, []).Ok();
         var folders = await factory.BookmarkApi.AllFolders().Ok();
         var folder = folders.FirstOrDefault(x => x.GetProperty("name").GetString() == name);
-        Assert.NotEqual(JsonValueKind.Undefined,folder.ValueKind);
-    
+        Assert.NotEqual(JsonValueKind.Undefined, folder.ValueKind);
+
         //update
         var bookmarkFolder = new BookmarkFolder("", folder.GetProperty("name").GetString()!, "test");
         await factory.BookmarkApi.UpdateFolder(folder.GetProperty("id").GetInt64(), bookmarkFolder).Ok();
         folders = await factory.BookmarkApi.AllFolders().Ok();
         folder = folders.FirstOrDefault(x => x.GetProperty("name").GetString() == name);
         Assert.Equal("test", folder.GetProperty("description").GetString());
-    
+
     }
     [Fact]
     public async Task SaveToDefaultFolder()
     {
-        var res =await factory.BookmarkApi.ListBookmarks(0).Ok();
+        var res = await factory.BookmarkApi.ListBookmarks(0).Ok();
         foreach (var item in res.Items)
         {
             await factory.BookmarkApi.DeleteBookmark(item.GetLong("id")).Ok();

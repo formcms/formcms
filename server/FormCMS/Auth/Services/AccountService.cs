@@ -1,19 +1,19 @@
-using System.Security.Claims;
 using FluentResults;
 using FormCMS.Auth.Models;
 using FormCMS.Core.Assets;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.Identities;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace FormCMS.Auth.Services;
 
-public class AccountService<TUser, TRole,TCtx>(
+public class AccountService<TUser, TRole, TCtx>(
     UserManager<TUser> userManager,
     RoleManager<TRole> roleManager,
     IProfileService profileService,
@@ -28,15 +28,15 @@ public class AccountService<TUser, TRole,TCtx>(
     public async Task<string[]> GetEntities(CancellationToken ct)
     {
         var query = SchemaHelper.ByNameAndType(SchemaType.Entity, null, null);
-        var records= await queryExecutor.Many(query,ct);
+        var records = await queryExecutor.Many(query, ct);
         var entityName = records.Select(x => (string)x[nameof(Entity.Name).Camelize()]).ToArray();
-        return [..entityName, Assets.XEntity.Name];
+        return [.. entityName, Assets.XEntity.Name];
     }
-    
+
     public async Task<string[]> GetRoles(CancellationToken ct)
     {
         profileService.MustHasAnyRole([Roles.Admin, Roles.Sa]);
-        var roles = await context.Roles.Select(x => x.Name??"").ToArrayAsync(ct);
+        var roles = await context.Roles.Select(x => x.Name ?? "").ToArrayAsync(ct);
         return roles;
     }
 
@@ -44,20 +44,20 @@ public class AccountService<TUser, TRole,TCtx>(
     {
         profileService.MustHasAnyRole([Roles.Admin, Roles.Sa]);
         var query = from user in context.Users
-            where user.Id == id 
-            join userRole in context.UserRoles
-                on user.Id equals userRole.UserId into userRolesGroup
-            from userRole in userRolesGroup.DefaultIfEmpty() // Left join for roles
-            join role in context.Roles
-                on userRole.RoleId equals role.Id into rolesGroup
-            from role in rolesGroup.DefaultIfEmpty() // Left join for roles
-            join userClaim in context.UserClaims
-                on user.Id equals userClaim.UserId into userClaimsGroup
-            from userClaim in userClaimsGroup.DefaultIfEmpty() // Left join for claims
-            group new { role, userClaim } by user
+                    where user.Id == id
+                    join userRole in context.UserRoles
+                        on user.Id equals userRole.UserId into userRolesGroup
+                    from userRole in userRolesGroup.DefaultIfEmpty() // Left join for roles
+                    join role in context.Roles
+                        on userRole.RoleId equals role.Id into rolesGroup
+                    from role in rolesGroup.DefaultIfEmpty() // Left join for roles
+                    join userClaim in context.UserClaims
+                        on user.Id equals userClaim.UserId into userClaimsGroup
+                    from userClaim in userClaimsGroup.DefaultIfEmpty() // Left join for claims
+                    group new { role, userClaim } by user
             into userGroup
-            select new { userGroup.Key, Values = userGroup.ToArray() };
-        
+                    select new { userGroup.Key, Values = userGroup.ToArray() };
+
         // use client calculation to support Sqlite
         var item = await query.FirstOrDefaultAsync(ct)
             ?? throw new ResultException($"Cannot find user by id [{id}]");
@@ -65,9 +65,9 @@ public class AccountService<TUser, TRole,TCtx>(
         (
             Email: item.Key.Email!,
             Id: item.Key.Id,
-            Name:item.Key.UserName??"",
-            AvatarUrl:"",
-            Roles: [..item.Values.Where(x => x.role is not null).Select(x => x.role.Name!).Distinct()],
+            Name: item.Key.UserName ?? "",
+            AvatarUrl: "",
+            Roles: [.. item.Values.Where(x => x.role is not null).Select(x => x.role.Name!).Distinct()],
             ReadWriteEntities:
             [
                 ..item.Values
@@ -101,15 +101,15 @@ public class AccountService<TUser, TRole,TCtx>(
     {
         profileService.MustHasAnyRole([Roles.Admin, Roles.Sa]);
         var query = from user in context.Users
-            join userRole in context.UserRoles
-                on user.Id equals userRole.UserId into userRolesGroup
-            from userRole in userRolesGroup.DefaultIfEmpty() // Left join for roles
-            join role in context.Roles
-                on userRole.RoleId equals role.Id into rolesGroup
-            from role in rolesGroup.DefaultIfEmpty() // Left join for roles
-            group new { role } by user
+                    join userRole in context.UserRoles
+                        on user.Id equals userRole.UserId into userRolesGroup
+                    from userRole in userRolesGroup.DefaultIfEmpty() // Left join for roles
+                    join role in context.Roles
+                        on userRole.RoleId equals role.Id into rolesGroup
+                    from role in rolesGroup.DefaultIfEmpty() // Left join for roles
+                    group new { role } by user
             into userGroup
-            select new {userGroup.Key, Roles =userGroup.ToArray()};
+                    select new { userGroup.Key, Roles = userGroup.ToArray() };
         var items = await query.ToArrayAsync(ct);
         // use client calculation to support Sqlite
         return [..items.Select(x => new UserAccess
@@ -155,7 +155,7 @@ public class AccountService<TUser, TRole,TCtx>(
         }
 
         res = await userManager.AddToRolesAsync(user, roles);
-        return !res.Succeeded ? Fail(res): Result.Ok();
+        return !res.Succeeded ? Fail(res) : Result.Ok();
     }
 
     public async Task DeleteUser(string id)
@@ -165,7 +165,7 @@ public class AccountService<TUser, TRole,TCtx>(
             ?? throw new ResultException($"Fail to Delete User, Cannot find user by id [{id}]");
         Assure(await userManager.DeleteAsync(user));
     }
-    
+
     public async Task SaveUser(UserAccess access)
     {
         profileService.MustHasAnyRole([Roles.Sa]);
@@ -177,7 +177,7 @@ public class AccountService<TUser, TRole,TCtx>(
         await AssignClaim(user, claims, AccessScope.FullRead, access.ReadonlyEntities).Ok();
         await AssignClaim(user, claims, AccessScope.RestrictedRead, access.RestrictedReadonlyEntities).Ok();
     }
-    
+
     public async Task<RoleAccess> GetSingleRole(string name)
     {
         var role = await roleManager.FindByNameAsync(name) ?? throw new ResultException($"Cannot find role by name [{name}]");
@@ -185,18 +185,18 @@ public class AccountService<TUser, TRole,TCtx>(
         return new RoleAccess
         (
             Name: name,
-            ReadWriteEntities: [..claims.Where(x => x.Type == AccessScope.FullAccess).Select(x => x.Value)],
+            ReadWriteEntities: [.. claims.Where(x => x.Type == AccessScope.FullAccess).Select(x => x.Value)],
             RestrictedReadWriteEntities:
-            [..claims.Where(x => x.Type == AccessScope.RestrictedAccess).Select(x => x.Value)],
-            ReadonlyEntities: [..claims.Where(x => x.Type == AccessScope.FullRead).Select(x => x.Value)],
-            RestrictedReadonlyEntities: [..claims.Where(x => x.Type == AccessScope.RestrictedRead).Select(x => x.Value)]
+            [.. claims.Where(x => x.Type == AccessScope.RestrictedAccess).Select(x => x.Value)],
+            ReadonlyEntities: [.. claims.Where(x => x.Type == AccessScope.FullRead).Select(x => x.Value)],
+            RestrictedReadonlyEntities: [.. claims.Where(x => x.Type == AccessScope.RestrictedRead).Select(x => x.Value)]
         );
     }
     public async Task DeleteRole(string name)
     {
         profileService.MustHasAnyRole([Roles.Sa]);
         if (name is Roles.Admin or Roles.Sa) throw new ResultException($"Cannot delete System Build-in Role [{name}]");
-        var role = await roleManager.FindByNameAsync(name)?? throw new ResultException($"Cannot find role by name [{name}]");
+        var role = await roleManager.FindByNameAsync(name) ?? throw new ResultException($"Cannot find role by name [{name}]");
         Assure(await roleManager.DeleteAsync(role));
     }
 
@@ -209,11 +209,11 @@ public class AccountService<TUser, TRole,TCtx>(
         }
         await EnsureRoles([roleAccess.Name]).Ok();
         var role = await roleManager.FindByNameAsync(roleAccess.Name);
-        var claims =await roleManager.GetClaimsAsync(role!);
-        await AddClaimsToRole(role!, claims, AccessScope.FullAccess, roleAccess.ReadWriteEntities??[]).Ok();
-        await AddClaimsToRole(role!, claims, AccessScope.RestrictedAccess, roleAccess.RestrictedReadWriteEntities??[]).Ok();
-        await AddClaimsToRole(role!, claims, AccessScope.FullRead, roleAccess.ReadonlyEntities??[]).Ok();
-        await AddClaimsToRole(role!, claims, AccessScope.RestrictedRead, roleAccess.RestrictedReadonlyEntities??[]).Ok();
+        var claims = await roleManager.GetClaimsAsync(role!);
+        await AddClaimsToRole(role!, claims, AccessScope.FullAccess, roleAccess.ReadWriteEntities ?? []).Ok();
+        await AddClaimsToRole(role!, claims, AccessScope.RestrictedAccess, roleAccess.RestrictedReadWriteEntities ?? []).Ok();
+        await AddClaimsToRole(role!, claims, AccessScope.FullRead, roleAccess.ReadonlyEntities ?? []).Ok();
+        await AddClaimsToRole(role!, claims, AccessScope.RestrictedRead, roleAccess.RestrictedReadonlyEntities ?? []).Ok();
     }
 
 
@@ -225,7 +225,7 @@ public class AccountService<TUser, TRole,TCtx>(
 
     private async Task<Result> AssignClaim(TUser user, IList<Claim> claims, string type, IEnumerable<string> list)
     {
-        string[] values = [..list];
+        string[] values = [.. list];
         var currentValues = claims.Where(x => x.Type == type).Select(x => x.Value).ToArray();
         // Calculate roles to be removed and added
         var toRemove = currentValues.Except(values).ToArray();
@@ -234,7 +234,7 @@ public class AccountService<TUser, TRole,TCtx>(
         // Remove only the roles that are in currentRoles but not in the new roles
         if (toRemove.Any())
         {
-            var result = await userManager.RemoveClaimsAsync(user, toRemove.Select(x=>new Claim(type, x)));
+            var result = await userManager.RemoveClaimsAsync(user, toRemove.Select(x => new Claim(type, x)));
             if (!result.Succeeded)
             {
                 return Fail(result);
@@ -244,7 +244,7 @@ public class AccountService<TUser, TRole,TCtx>(
         // Add only the roles that are in the new roles but not in currentRoles
         if (toAdd.Any())
         {
-            var result = await userManager.AddClaimsAsync(user, toAdd.Select(x=>new Claim(type, x)));
+            var result = await userManager.AddClaimsAsync(user, toAdd.Select(x => new Claim(type, x)));
             if (!result.Succeeded)
             {
                 return Fail(result);
@@ -253,9 +253,9 @@ public class AccountService<TUser, TRole,TCtx>(
         return Result.Ok();
     }
 
-    private async Task<Result> AssignRole(TUser user, IEnumerable<string> list )
+    private async Task<Result> AssignRole(TUser user, IEnumerable<string> list)
     {
-        string[] roles = [..list];
+        string[] roles = [.. list];
         var currentRoles = await userManager.GetRolesAsync(user);
 
         // Calculate roles to be removed and added
@@ -284,8 +284,8 @@ public class AccountService<TUser, TRole,TCtx>(
         return Result.Ok();
     }
 
- 
-    private async Task<Result> AddClaimsToRole(TRole role,  IList<Claim> claims, string type, string[] values )
+
+    private async Task<Result> AddClaimsToRole(TRole role, IList<Claim> claims, string type, string[] values)
     {
         var currentValues = claims.Where(x => x.Type == type).Select(x => x.Value).ToArray();
         // Calculate roles to be removed and added
@@ -293,7 +293,7 @@ public class AccountService<TUser, TRole,TCtx>(
         var toAdd = values.Except(currentValues).ToArray();
 
         // Remove only the roles that are in currentRoles but not in the new roles
-        foreach (var claim in toRemove.Select(x=>new Claim(type,x)))
+        foreach (var claim in toRemove.Select(x => new Claim(type, x)))
         {
             var identityResult = await roleManager.RemoveClaimAsync(role, claim);
             if (!identityResult.Succeeded)
@@ -312,7 +312,7 @@ public class AccountService<TUser, TRole,TCtx>(
         }
         return Result.Ok();
     }
-    
+
     private async Task<Result> EnsureRoles(string[] roles)
     {
         foreach (var roleName in roles)
@@ -331,7 +331,7 @@ public class AccountService<TUser, TRole,TCtx>(
 
         return Result.Ok();
     }
-    
+
     private Result Fail(IdentityResult result) =>
         Result.Fail(string.Join("\r\n", result.Errors.Select(e => e.Description)));
 
@@ -341,5 +341,5 @@ public class AccountService<TUser, TRole,TCtx>(
         {
             throw new ResultException(string.Join("\r\n", result.Errors.Select(e => e.Description)));
         }
-    } 
+    }
 }

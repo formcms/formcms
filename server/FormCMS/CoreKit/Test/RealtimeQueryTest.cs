@@ -1,7 +1,7 @@
-using System.Text.Json;
-using FormCMS.Utils.ResultExt;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.EnumExt;
+using FormCMS.Utils.ResultExt;
+using System.Text.Json;
 
 namespace FormCMS.CoreKit.Test;
 
@@ -17,8 +17,8 @@ public class RealtimeQueryTest(QueryApiClient client, string queryName)
                            }
                            """.GraphQlQuery<JsonElement[]>(client).Ok();
         SimpleAssert.IsTrue(items.Length > 0);
-        
-        
+
+
         items = await $$"""
                            query {
                                 {{TestEntityNames.TestPost.Camelize()}}List(publishedAt:{dateAfter:"2226-01-01"}){
@@ -26,7 +26,7 @@ public class RealtimeQueryTest(QueryApiClient client, string queryName)
                                 }
                            }
                            """.GraphQlQuery<JsonElement[]>(client).Ok();
-        SimpleAssert.IsTrue(items.Length == 0);    
+        SimpleAssert.IsTrue(items.Length == 0);
     }
 
     public async Task SingleGraphQlQuery()

@@ -1,2 +1,2 @@
 namespace FormCMS.Core.HookFactory;
-public class HookException (string message): Exception(message); 
+public class HookException(string message) : Exception(message);

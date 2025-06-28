@@ -1,7 +1,3 @@
-using System.Collections.Immutable;
-using System.Reflection;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using FormCMS.Cms.Graph;
 using FormCMS.Cms.Handlers;
 using FormCMS.Cms.Services;
@@ -24,6 +20,10 @@ using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using System.Collections.Immutable;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using Schema = FormCMS.Cms.Graph.Schema;
 
 namespace FormCMS.Cms.Builders;
@@ -46,7 +46,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
     )
     {
         services.AddSingleton<CmsBuilder>();
-        
+
         //only set options to FormCMS enum types.
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<DataType>);
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<DisplayType>);
@@ -67,7 +67,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 { PublicUserInfos.Entity.Name, PublicUserInfos.Entity }
             },
             PluginAttributes: []);
-        
+
         services.AddSingleton(registry);
 
         services.AddSingleton(new DbOption(databaseProvider, connectionString));
@@ -153,7 +153,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             services.TryAddSingleton<IStringMessageProducer>(sp => sp.GetRequiredService<InMemoryChannelBus>());
             services.TryAddSingleton<IStringMessageConsumer>(sp => sp.GetRequiredService<InMemoryChannelBus>());
         }
-        
+
         void AddGraphqlServices()
         {
             // init for each request, make sure get the latest entity definition
@@ -243,7 +243,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                         Mappings =
                         {
                             [".m3u8"] = "application/vnd.apple.mpegurl",
-                            [".ts"] = "video/mp2t" 
+                            [".ts"] = "video/mp2t"
                         }
                     }
                 }
@@ -292,7 +292,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             apiGroup.MapIdentityHandlers();
             apiGroup.MapGroup("/tasks").MapTasksHandler();
 
-            var knownPath = new []
+            var knownPath = new[]
             {
                 "admin",
                 "doc",
@@ -302,9 +302,9 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 "js",
                 options.RouteOptions.ApiBaseUrl
             }.Concat(options.KnownPaths);
-            
+
             app.MapGroup(options.RouteOptions.PageBaseUrl)
-                .MapPages([..knownPath])
+                .MapPages([.. knownPath])
                 .CacheOutput(SystemSettings.PageCachePolicyName);
             if (options.MapCmsHomePage)
                 app.MapHomePage().CacheOutput(SystemSettings.PageCachePolicyName);

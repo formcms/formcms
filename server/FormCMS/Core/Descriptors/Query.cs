@@ -1,7 +1,7 @@
-using System.Collections.Immutable;
-using FormCMS.Utils.ResultExt;
 using FluentResults;
 using FormCMS.Utils.DataModels;
+using FormCMS.Utils.ResultExt;
+using System.Collections.Immutable;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -14,7 +14,7 @@ public sealed record Query(
     ImmutableArray<string> ReqVariables,
     bool Distinct,
     string IdeUrl = "",
-    Pagination? Pagination= null
+    Pagination? Pagination = null
 );
 
 
@@ -23,8 +23,8 @@ public sealed record LoadedQuery(
     string Source,
     LoadedEntity Entity,
     Pagination? Pagination,
-    ImmutableArray<GraphNode> Selection , 
-    ImmutableArray<ValidFilter> Filters, 
+    ImmutableArray<GraphNode> Selection,
+    ImmutableArray<ValidFilter> Filters,
     ImmutableArray<ValidSort> Sorts,
     ImmutableArray<string> ReqVariables,
     bool Distinct
@@ -54,9 +54,9 @@ public static class QueryHelper
             Pagination: query.Pagination,
             ReqVariables: query.ReqVariables,
             Entity: entity,
-            Selection: [..selection],
-            Sorts: [..sorts],
-            Filters: [..filters],
+            Selection: [.. selection],
+            Sorts: [.. sorts],
+            Filters: [.. filters],
             Distinct: query.Distinct
         );
     }
@@ -65,7 +65,7 @@ public static class QueryHelper
     {
         foreach (var key in query.ReqVariables.Where(key => !args.ContainsKey(key)))
         {
-            throw new  ResultException($"Variable {key} doesn't exist");
+            throw new ResultException($"Variable {key} doesn't exist");
         }
     }
 
@@ -74,21 +74,21 @@ public static class QueryHelper
         HashSet<string> keys = [FilterConstants.FilterExprKey, SortConstant.SortExprKey];
         var simpleArgs = args.Where(x => !keys.Contains(x.Name()));
 
-        var (isSuccess, _, (sorts, filters,pagination,distinct),errors) = ParseSimpleArguments(simpleArgs);
+        var (isSuccess, _, (sorts, filters, pagination, distinct), errors) = ParseSimpleArguments(simpleArgs);
         if (!isSuccess)
         {
             return Result.Fail<QueryArgs>(errors);
         }
-        
+
         foreach (var input in args.Where(x => keys.Contains(x.Name())))
         {
             var res = input.Name() switch
             {
                 FilterConstants.FilterExprKey => GraphFilterResolver.ResolveExpr(input)
-                    .PipeAction(f => filters = [..filters, ..f]),
+                    .PipeAction(f => filters = [.. filters, .. f]),
 
                 SortConstant.SortExprKey => SortHelper.ParseSortExpr(input)
-                    .PipeAction(s => sorts = [..sorts, ..s]),
+                    .PipeAction(s => sorts = [.. sorts, .. s]),
                 _ => Result.Ok()
             };
 
@@ -98,17 +98,17 @@ public static class QueryHelper
             }
         }
 
-        return new QueryArgs(sorts, filters, pagination,distinct);
+        return new QueryArgs(sorts, filters, pagination, distinct);
     }
 
-    public static Result<QueryArgs> ParseSimpleArguments( IEnumerable<IArgument> args)
+    public static Result<QueryArgs> ParseSimpleArguments(IEnumerable<IArgument> args)
     {
         var sorts = new List<Sort>();
         var filters = new List<Filter>();
         string? limit = null;
         string? offset = null;
         bool distinct = false;
-        
+
         foreach (var input in args)
         {
             var name = input.Name();
@@ -126,7 +126,7 @@ public static class QueryHelper
             }
         }
 
-        return new QueryArgs(sorts.ToArray(), filters.ToArray(),new Pagination(offset, limit), distinct);
+        return new QueryArgs(sorts.ToArray(), filters.ToArray(), new Pagination(offset, limit), distinct);
 
         Result<string> Val(IArgument input) => input.GetString(out var val) && !string.IsNullOrWhiteSpace(val)
             ? val

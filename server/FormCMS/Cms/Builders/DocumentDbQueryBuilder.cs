@@ -1,6 +1,6 @@
-using FormCMS.CoreKit.DocDbQuery;
-using FormCMS.Core.HookFactory;
 using FormCMS.Core.Descriptors;
+using FormCMS.Core.HookFactory;
+using FormCMS.CoreKit.DocDbQuery;
 using FormCMS.Utils.ResultExt;
 
 namespace FormCMS.Cms.Builders;
@@ -31,7 +31,7 @@ public class DocumentDbQueryBuilder(ILogger<DocumentDbQueryBuilder> logger, Quer
                 query,
                 async (IDocumentDbQuery dao, QueryPreListArgs p) =>
                 {
-                    var res = (await dao.Query(collection, p.Filters, [..p.Sorts], p.Pagination, p.Span)).Ok();
+                    var res = (await dao.Query(collection, p.Filters, [.. p.Sorts], p.Pagination, p.Span)).Ok();
                     return p with { OutRecords = res };
                 }
             );
@@ -57,6 +57,6 @@ public class DocumentDbQueryBuilder(ILogger<DocumentDbQueryBuilder> logger, Quer
             Query Collection Links:
             {queryLinksArray}
             *********************************************************
-            """,info); 
+            """, info);
     }
 }

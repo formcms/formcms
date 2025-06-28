@@ -1,17 +1,12 @@
-using System.Reflection;
-using System.Runtime.CompilerServices;
-using System.Text.Json;
-using FormCMS.Auth;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.CoreKit.Test;
-using FormCMS.Cms.Builders;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.EnumExt;
-using FormCMS.Utils.RecordExt;
-using FormCMS.Utils.ResultExt;
-using Microsoft.AspNetCore.Identity;
+using System.Reflection;
+using System.Runtime.CompilerServices;
+using System.Text.Json;
 using Attribute = System.Attribute;
 
 namespace FormCMS.App;
@@ -35,8 +30,8 @@ public static class WebApp
         var entities = builder.Configuration.GetRequiredSection("TrackingEntities").Get<string[]>()!;
         builder.Services.AddNatsMessageProducer(entities);
         */
-        
-        
+
+
         /*
         builder.AddMongoDBClient(connectionName: AppConstants.MongoCms);
         var queryLinksArray = builder.Configuration.GetRequiredSection("QueryLinksArray").Get<QueryCollectionLinks[]>()!;
@@ -56,10 +51,10 @@ public static class WebApp
         {
             using var scope = app.Services.CreateScope();
             var entitySchemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
-            var res = await entitySchemaService.LoadEntity(TestEntityNames.TestPost.Camelize(),null,CancellationToken.None);
+            var res = await entitySchemaService.LoadEntity(TestEntityNames.TestPost.Camelize(), null, CancellationToken.None);
             if (res.IsFailed)
             {
-                await BlogsTestData.EnsureBlogEntities(x => entitySchemaService.SaveTableDefine(x,true,CancellationToken.None));
+                await BlogsTestData.EnsureBlogEntities(x => entitySchemaService.SaveTableDefine(x, true, CancellationToken.None));
                 await app.AddQuery();
                 await app.AddData();
             }
@@ -88,7 +83,7 @@ public static class WebApp
         var service = scope.ServiceProvider.GetRequiredService<IQuerySchemaService>();
         var query = new Query
         (
-            Distinct:false,
+            Distinct: false,
             Name: "post_sync",
             EntityName: TestEntityNames.TestPost.Camelize(),
             Filters: [new Filter("id", MatchTypes.MatchAll, [new Constraint(Matches.In, ["$id"])])],
@@ -107,7 +102,7 @@ public static class WebApp
             }
             """
         );
-        await service.SaveQuery(query,null,CancellationToken.None);
+        await service.SaveQuery(query, null, CancellationToken.None);
     }
 
     private static bool IsAnonymousType(object obj)
@@ -127,7 +122,7 @@ public static class WebApp
         var executor = scope.ServiceProvider.GetRequiredService<KateQueryExecutor>();
         for (var i = 0; i < 10000; i++)
         {
-            await BlogsTestData.PopulateData(i * 100 + 1, 100, [],async data =>
+            await BlogsTestData.PopulateData(i * 100 + 1, 100, [], async data =>
             {
                 foreach (var record in data.Records)
                 {
@@ -135,9 +130,9 @@ public static class WebApp
                     {
                         record[key] = value switch
                         {
-                            string[] array => string.Join(",",array),
+                            string[] array => string.Join(",", array),
                             Enum valueEnum => valueEnum.Camelize(),
-                            _ when IsAnonymousType(value)=> JsonSerializer.Serialize(value),
+                            _ when IsAnonymousType(value) => JsonSerializer.Serialize(value),
                             _ => value
                         };
                     }
@@ -151,7 +146,7 @@ public static class WebApp
                     {data.SourceField, data.SourceId },
                     {data.TargetField,x}
                 });
-                await executor.BatchInsert(data.JunctionTableName, [..objs]);
+                await executor.BatchInsert(data.JunctionTableName, [.. objs]);
             });
         }
     }

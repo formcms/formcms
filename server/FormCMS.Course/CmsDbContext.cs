@@ -7,6 +7,6 @@ namespace FormCMS.Course;
 
 internal class CmsDbContext : IdentityDbContext<CmsUser>
 {
-    public CmsDbContext(){}
-    public CmsDbContext(DbContextOptions<CmsDbContext> options):base(options){}
+    public CmsDbContext() { }
+    public CmsDbContext(DbContextOptions<CmsDbContext> options) : base(options) { }
 }

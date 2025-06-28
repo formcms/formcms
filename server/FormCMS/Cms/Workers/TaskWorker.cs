@@ -2,7 +2,6 @@ using FormCMS.Core.Tasks;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
-using Microsoft.Data.Sqlite;
 using TaskStatus = FormCMS.Core.Tasks.TaskStatus;
 
 namespace FormCMS.Cms.Workers;
@@ -34,7 +33,7 @@ public abstract class TaskWorker(
     {
         var taskType = GetTaskType();
         logger.LogInformation("Checking {t} tasks...", taskType);
-        
+
         using var scope = serviceScopeFactory.CreateScope();
         var executor = scope.ServiceProvider.GetRequiredService<KateQueryExecutor>();
         var record = await executor.Single(TaskHelper.GetNewTask(taskType), ct);
@@ -47,20 +46,20 @@ public abstract class TaskWorker(
         try
         {
             await executor.Exec(
-                TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.InProgress, Progress = 50 }),false,
+                TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.InProgress, Progress = 50 }), false,
                 ct
             );
             logger.LogInformation("Got {taskType} task, id = {id}", task.Type, task.Id);
-            await DoTask(scope, executor, task,ct);
+            await DoTask(scope, executor, task, ct);
             await executor.Exec(
-                TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.Finished, Progress = 100 }),false,
+                TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.Finished, Progress = 100 }), false,
                 ct);
         }
         catch (Exception e)
         {
             logger.LogError("{error}", e);
             await executor.Exec(
-                TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.Failed, Progress = 0, Error = e.ToString()}), false,ct);
+                TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.Failed, Progress = 0, Error = e.ToString() }), false, ct);
         }
     }
 

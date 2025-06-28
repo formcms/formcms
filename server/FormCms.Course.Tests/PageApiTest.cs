@@ -28,7 +28,7 @@ public class PageApiTest
         var schema = new Schema(_query + "/{id}", SchemaType.Page, new Settings(
             Page: new Page(_query + "/{id}", "", _query, html, "", "", "")
         ));
-        
+
         await Factory.SchemaApi.Save(schema).Ok();
 
         //save the query again, remove the field 'id', the query is draft, so will not effect page
@@ -39,10 +39,10 @@ public class PageApiTest
                    }
                 }    
                 """.GraphQlQuery(Factory.QueryApi).Ok();
-        
+
         var s = await Factory.PageApi.GetDetailPage(_query, "2").Ok();
         Assert.True(s.IndexOf('2', StringComparison.Ordinal) > 0);
-        
+
     }
 
     [Fact]
@@ -53,10 +53,10 @@ public class PageApiTest
             Page: new Page(_query + "/{id}", "", _query, html, "", "", "")
         ));
         await Factory.SchemaApi.Save(schema).Ok();
-        var s =await Factory.PageApi.GetDetailPage(_query,"2").Ok();
+        var s = await Factory.PageApi.GetDetailPage(_query, "2").Ok();
         Assert.True(s.IndexOf("--2--", StringComparison.Ordinal) > 0);
     }
-    
+
     [Fact]
     public async Task GetLandingPageAndPartialPage()
     {
@@ -73,9 +73,9 @@ public class PageApiTest
             Page: new Page(_query, "", null, html, "", "", "")
         ));
         await Factory.SchemaApi.Save(schema).Ok();
-        html =await Factory.PageApi.GetLandingPage(_query).Ok();
+        html = await Factory.PageApi.GetLandingPage(_query).Ok();
         Assert.True(html.IndexOf("--1--", StringComparison.Ordinal) > 0);
-        
+
         var doc = new HtmlDocument();
         doc.LoadHtml(html);
 
@@ -83,10 +83,10 @@ public class PageApiTest
         var divs = foreachNode.SelectNodes(".//div");
         var lastNode = divs.Last();
         var lastValue = lastNode.GetAttributeValue("cursor", "Attribute not found");
-        html = await Factory.PageApi.GetLandingPage(_query,"foreach",lastValue).Ok();
+        html = await Factory.PageApi.GetLandingPage(_query, "foreach", lastValue).Ok();
         Assert.True(html.IndexOf("--5--", StringComparison.Ordinal) > 0);
-        
-        
+
+
     }
 
     private async Task PrepareData()

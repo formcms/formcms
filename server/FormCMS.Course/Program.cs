@@ -25,7 +25,7 @@ public class Program
         var enableWorker = builder.Configuration.GetValue<bool>("enable-worker");
         var enableActivityBuffer = builder.Configuration.GetValue<bool>("EnableActivityBuffer");
 
-        var webApp = await new WebApp(builder, databaseProvider, databaseConnectionString,enableActivityBuffer, redisConnectionString, azureBlobStoreOptions)
+        var webApp = await new WebApp(builder, databaseProvider, databaseConnectionString, enableActivityBuffer, redisConnectionString, azureBlobStoreOptions)
             .Build();
 
         var worker = enableWorker

@@ -13,9 +13,9 @@ public class ResultException(string message, Exception? inner = null) : Exceptio
         {
             return await func();
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            throw new ResultException(ex.Message,ex);
+            throw new ResultException(ex.Message, ex);
         }
     }
 
@@ -27,7 +27,7 @@ public class ResultException(string message, Exception? inner = null) : Exceptio
         }
         catch (Exception ex)
         {
-            throw new ResultException(ex.Message,ex);
+            throw new ResultException(ex.Message, ex);
         }
     }
 }
@@ -49,7 +49,7 @@ public static class ResultExt
         var result = await res;
         if (result.IsFailed)
         {
-            result = Result.Fail([new Error(message), ..result.Errors]);
+            result = Result.Fail([new Error(message), .. result.Errors]);
         }
         return result;
     }
@@ -62,10 +62,10 @@ public static class ResultExt
             return Result.Ok();
         });
     }
-    
+
     public static bool Try<T>(this Result<T> res, out T val, out List<IError>? err)
     {
-        (var ok, _, val,  err) = res;
+        (var ok, _, val, err) = res;
         return ok;
     }
 
@@ -74,23 +74,23 @@ public static class ResultExt
         (var ok, _, err) = res;
         return ok;
     }
-    
-     public static async Task<Result<TTarget[]>> ShortcutMap<TSource, TTarget>(this IEnumerable<TSource> items,Func<TSource,Task<Result<TTarget>> > mapper)
-     {
-         var ret = new List<TTarget>();
-         foreach (var s in items)
-         {
-             var res = await mapper(s);
-             if (res.IsFailed)
-             {
-                 return Result.Fail(res.Errors);
-             }
-             ret.Add(res.Value);
-         }
-         return ret.ToArray();
-     }
-     
-    public static Result<TTarget[]> ShortcutMap<TSource, TTarget>(this IEnumerable<TSource> items,Func<TSource,Result<TTarget> > mapper)
+
+    public static async Task<Result<TTarget[]>> ShortcutMap<TSource, TTarget>(this IEnumerable<TSource> items, Func<TSource, Task<Result<TTarget>>> mapper)
+    {
+        var ret = new List<TTarget>();
+        foreach (var s in items)
+        {
+            var res = await mapper(s);
+            if (res.IsFailed)
+            {
+                return Result.Fail(res.Errors);
+            }
+            ret.Add(res.Value);
+        }
+        return ret.ToArray();
+    }
+
+    public static Result<TTarget[]> ShortcutMap<TSource, TTarget>(this IEnumerable<TSource> items, Func<TSource, Result<TTarget>> mapper)
     {
         var ret = new List<TTarget>();
         foreach (var s in items)
@@ -104,7 +104,7 @@ public static class ResultExt
         }
         return ret.ToArray();
     }
-    
+
     /// <summary>
     /// Throws a <see cref="ResultException"/> if the result indicates failure.
     /// Use this method to terminate the current execution flow and return an error message to the client.
@@ -114,15 +114,15 @@ public static class ResultExt
     {
         if (result is not null && result.IsFailed)
         {
-            throw new ResultException($"{string.Join(";",result.Errors.Select(e =>e.Message))}");
+            throw new ResultException($"{string.Join(";", result.Errors.Select(e => e.Message))}");
         }
     }
-    
+
     public static T Ok<T>(this Result<T> result)
     {
         return result switch
         {
-            { IsFailed: true } => throw new ResultException($"{string.Join(";",result.Errors.Select(x=>x.Message))}"),
+            { IsFailed: true } => throw new ResultException($"{string.Join(";", result.Errors.Select(x => x.Message))}"),
             _ => result.Value
         };
     }
@@ -132,11 +132,11 @@ public static class ResultExt
         var result = await t;
         return result switch
         {
-            { IsFailed: true } => throw new ResultException($"{string.Join(";",result.Errors.Select(x=>x.Message))}"),
+            { IsFailed: true } => throw new ResultException($"{string.Join(";", result.Errors.Select(x => x.Message))}"),
             _ => result.Value
-        }; 
+        };
     }
-    
+
     public static async Task Ok(this Task<Result> t)
     {
         var result = await t;

@@ -1,8 +1,8 @@
-using System.Collections.Immutable;
-using FormCMS.Utils.ResultExt;
 using FluentResults;
 using FormCMS.Utils.DataModels;
+using FormCMS.Utils.ResultExt;
 using FormCMS.Utils.StrArgsExt;
+using System.Collections.Immutable;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -27,26 +27,26 @@ public static class ConstraintsHelper
 
             if (values.Length > 0)
             {
-                ret.Add(new ValidConstraint(match, [..values]));
+                ret.Add(new ValidConstraint(match, [.. values]));
             }
         }
 
         return ret.ToArray();
     }
-    
+
     private static Result<ValidValue[]> ResolveValues(IEnumerable<string?> fromValues, LoadedAttribute attribute)
     {
         var list = new List<ValidValue>();
 
         foreach (var fromValue in fromValues)
         {
-            if (fromValue?.StartsWith(QueryConstants.VariablePrefix)??false)
+            if (fromValue?.StartsWith(QueryConstants.VariablePrefix) ?? false)
             {
                 list.Add(new ValidValue(fromValue));
             }
             else
             {
-                if (!ValidValueHelper.Resolve(attribute, fromValue).Try(out var val,out _))
+                if (!ValidValueHelper.Resolve(attribute, fromValue).Try(out var val, out _))
                 {
                     return Result.Fail(
                         $"Resolve constraint value fail: can not cast value [{fromValue}] to [{attribute.DataType}]");
@@ -73,13 +73,13 @@ public static class ConstraintsHelper
 
             if (values.Length > 0)
             {
-                ret.Add(new ValidConstraint(match, [..values]));
+                ret.Add(new ValidConstraint(match, [.. values]));
             }
         }
 
         return ret.ToArray();
     }
-    
+
     private static Result<ValidValue[]> ReplaceVariables(IEnumerable<ValidValue> fromValues, LoadedAttribute attribute,
         StrArgs? args)
     {
@@ -93,7 +93,7 @@ public static class ConstraintsHelper
                 {
                     return Result.Fail($"can not resolve {fromValue} when replace filter");
                 }
-                
+
                 foreach (var str in args.ResolveVariable(s, QueryConstants.VariablePrefix))
                 {
                     if (str is not null && attribute.ResolveVal(str, out var obj))

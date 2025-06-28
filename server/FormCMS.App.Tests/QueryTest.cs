@@ -7,7 +7,7 @@ namespace FormCMS.App.Tests;
 public class QueryTest
 {
     private readonly BlogsTestCases _blogsTest =
-        new (
+        new(
             new QueryApiClient(
                 new HttpClient { BaseAddress = new Uri("http://localhost:5001") }
             ),

@@ -1,5 +1,5 @@
-using FormCMS.Utils.PageRender;
 using FormCMS.Core.Descriptors;
+using FormCMS.Utils.PageRender;
 using FormCMS.Utils.ResultExt;
 using FormCMS.Utils.StrArgsExt;
 using HandlebarsDotNet;
@@ -31,7 +31,7 @@ public sealed class PageService(
         }
         if (nodeId is not null)
         {
-            return await RenderPartialPage(ctx.LoadPartialContext(nodeId), sourceId, span??new Span(), strArgs, ct);
+            return await RenderPartialPage(ctx.LoadPartialContext(nodeId), sourceId, span ?? new Span(), strArgs, ct);
         }
         return await RenderPage(ctx.LoadPageContext(), new Dictionary<string, object>(), strArgs, ct);
     }
@@ -54,7 +54,7 @@ public sealed class PageService(
             strArgs[node.Field + PaginationConstants.OffsetSuffix] = node.Offset.ToString();
             strArgs[node.Field + PaginationConstants.LimitSuffix] = node.Limit.ToString();
         }
-        
+
         var data = string.IsNullOrWhiteSpace(ctx.Page.Query)
             ? new Dictionary<string, object>()
             : await querySvc.SingleWithAction(ctx.Page.Query, strArgs, ct)
@@ -66,20 +66,20 @@ public sealed class PageService(
     {
         Record[] items;
         var node = ctx.DataNodes.First();
-        
+
         if (!string.IsNullOrWhiteSpace(node.Query))
         {
             var pagination = new Pagination(null, node.Limit.ToString());
             args = args.OverwrittenBy(QueryHelpers.ParseQuery(node.QueryString));
-            items = await querySvc.ListWithAction(node.Query, span, pagination,args , ct);
+            items = await querySvc.ListWithAction(node.Query, span, pagination, args, ct);
         }
         else
         {
-            items = await querySvc.Partial(ctx.Page.Query!, 
+            items = await querySvc.Partial(ctx.Page.Query!,
                 node.Field,
-                sourceId!.Value, 
-                span, 
-                node.Limit, 
+                sourceId!.Value,
+                span,
+                node.Limit,
                 args,
                 ct);
         }
@@ -127,26 +127,26 @@ public sealed class PageService(
     private static void SetMetadata(HtmlNode node)
     {
         node.SetAttributeValue(QueryConstants.RecordId, $$$"""{{{{{QueryConstants.RecordId}}}}}""");
-        
+
         var first = node.FirstChild;
 
         while (first is { NodeType: HtmlNodeType.Text })
         {
             first = first.NextSibling;
         }
-        
+
         first.SetAttributeValue(QueryConstants.RecordId, $$$"""{{{{{QueryConstants.RecordId}}}}}""");
         first.SetAttributeValue(SpanConstants.Cursor, $$$"""{{{{{SpanConstants.Cursor}}}}}""");
         first.SetAttributeValue(SpanConstants.HasNextPage, $$$"""{{{{{SpanConstants.HasNextPage}}}}}""");
         first.SetAttributeValue(SpanConstants.HasPreviousPage, $$$"""{{{{{SpanConstants.HasPreviousPage}}}}}""");
-    } 
-    
+    }
+
     private record Context(Page Page, HtmlDocument Doc)
     {
         public PartialContext LoadPartialContext(string nodeId)
         {
             var htmlNode = Doc.GetElementbyId(nodeId);
-            return new PartialContext(Page,htmlNode , htmlNode.GetDataNodesIncludeRoot().Ok());
+            return new PartialContext(Page, htmlNode, htmlNode.GetDataNodesIncludeRoot().Ok());
         }
 
         public PageContext LoadPageContext() => new(Page, Doc, Doc.DocumentNode.GetDataNodes().Ok());

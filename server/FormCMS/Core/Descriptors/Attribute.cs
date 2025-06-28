@@ -94,15 +94,15 @@ public static class AttributeHelper
         ];
 
         ret.AddRange(from attr in timeAttrs
-            where attributes.FirstOrDefault(x => x.Field == attr) is null
-            select new Attribute(
-                Field: attr,
-                Header: attr,
-                InList: true,
-                InDetail: false,
-                IsDefault: true,
-                DataType: DataType.Datetime,
-                DisplayType: DisplayType.LocalDatetime)
+                     where attributes.FirstOrDefault(x => x.Field == attr) is null
+                     select new Attribute(
+                         Field: attr,
+                         Header: attr,
+                         InList: true,
+                         InDetail: false,
+                         IsDefault: true,
+                         DataType: DataType.Datetime,
+                         DisplayType: DisplayType.LocalDatetime)
         );
 
         return ret.ToArray();
@@ -190,7 +190,7 @@ public static class AttributeHelper
         return ret.ToArray();
     }
 
-    
+
 
     public static Column[] ToColumns(this IEnumerable<Attribute> attributes, Dictionary<string, LoadedEntity> dictEntity)
     {
@@ -242,4 +242,4 @@ public static class AttributeHelper
             }
         }
     }
-} 
+}

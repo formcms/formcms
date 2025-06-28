@@ -1,7 +1,7 @@
-using FormCMS.Infrastructure.Cache;
 using FormCMS.Cms.Graph;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.Plugins;
+using FormCMS.Infrastructure.Cache;
 using FormCMS.Utils.ResultExt;
 using GraphQLParser.AST;
 using Converter = FormCMS.Utils.GraphTypeConverter.Converter;
@@ -96,7 +96,7 @@ public sealed class QuerySchemaService(
         var entity = registry.PluginEntities.TryGetValue(query.EntityName, out var pluginEntity)
             ? pluginEntity.ToLoadedEntity()
             : await entitySchemaSvc.LoadEntity(query.EntityName, status, ct).Ok();
-        
+
         selection = await LoadAttributes(selection, entity, null, status, ct);
         var sorts = await query.Sorts.ToValidSorts(entity, entitySchemaSvc, status).Ok();
         var validFilter = await query.Filters.ToValidFilters(entity, status, entitySchemaSvc).Ok();
@@ -129,15 +129,15 @@ public sealed class QuerySchemaService(
             var arguments = field.Arguments?.Select(x => new GraphArgument(x)) ?? [];
             var queryArgs = QueryHelper.ParseSimpleArguments(arguments).Ok();
             var node = new GraphNode(
-                Field: fieldName, 
-                Sorts:[..queryArgs.Sorts],
-                Pagination:queryArgs.Pagination,
-                Filters:[..queryArgs.Filters],
-                Prefix: prefix, 
+                Field: fieldName,
+                Sorts: [.. queryArgs.Sorts],
+                Pagination: queryArgs.Pagination,
+                Filters: [.. queryArgs.Filters],
+                Prefix: prefix,
                 Selection: [],
                 LoadedAttribute: new LoadedAttribute("", fieldName),
-                ValidFilters:[],
-                ValidSorts:[]
+                ValidFilters: [],
+                ValidSorts: []
                 );
             if (field.SelectionSet is not null)
             {
@@ -146,7 +146,7 @@ public sealed class QuerySchemaService(
                     : prefix + "." + fieldName;
                 node = node with
                 {
-                    Selection = [..ParseGraphNodes(field.SelectionSet!.Selections.OfType<GraphQLField>(), newPrefix)]
+                    Selection = [.. ParseGraphNodes(field.SelectionSet!.Selections.OfType<GraphQLField>(), newPrefix)]
                 };
             }
 
@@ -157,7 +157,7 @@ public sealed class QuerySchemaService(
     }
 
     private async Task<GraphNode[]> LoadAttributes(
-        GraphNode[] nodes, LoadedEntity entity, GraphNode? parent, 
+        GraphNode[] nodes, LoadedEntity entity, GraphNode? parent,
         PublicationStatus? status, CancellationToken ct)
     {
         var ret = new List<GraphNode>();
@@ -202,7 +202,7 @@ public sealed class QuerySchemaService(
                 [
                     ..await node.Filters.ToValidFilters(desc.TargetEntity, status, entitySchemaSvc).Ok()
                 ],
-                Selection = [..await LoadAttributes([..node.Selection], desc.TargetEntity, newNode, status, ct)]
+                Selection = [.. await LoadAttributes([.. node.Selection], desc.TargetEntity, newNode, status, ct)]
             };
             return newNode;
         }

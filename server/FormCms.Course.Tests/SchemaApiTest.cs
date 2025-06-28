@@ -1,5 +1,4 @@
 using FormCMS.Auth.ApiClient;
-using FormCMS.CoreKit.ApiClient;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.ResultExt;
 using IdGen;
@@ -14,7 +13,7 @@ public class SchemaApiTest
     private const string Name = "name";
 
     private readonly Schema _testSchema;
-    
+
     public SchemaApiTest(AppFactory factory)
     {
         Factory = factory;
@@ -44,7 +43,7 @@ public class SchemaApiTest
         );
     }
 
-  
+
     [Fact]
     public async Task GetAll_NUllType()
     {

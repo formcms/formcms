@@ -6,7 +6,7 @@ public class DatabaseMigrator(IRelationDbDao dao)
 {
     public async Task MigrateTable(string tableName, Column[] columns)
     {
-        var existingColumns = await dao.GetColumnDefinitions(tableName,CancellationToken.None);
+        var existingColumns = await dao.GetColumnDefinitions(tableName, CancellationToken.None);
         if (existingColumns.Length == 0)
         {
             await dao.CreateTable(tableName, columns);

@@ -9,7 +9,7 @@ public static class FileUtils
             Directory.CreateDirectory(destDir);
         }
     }
-    
+
     public static void EnsureParentFolder(string destPath)
     {
         var destDir = Path.GetDirectoryName(destPath);

@@ -9,10 +9,10 @@ public sealed class PageTemplate(PageTemplateConfig config)
     {
         return File.Exists(templatePath)
             ? File.ReadAllText(templatePath)
-            :"";
+            : "";
     }
-    
-    public string Build(string title,string body,  string css)
+
+    public string Build(string title, string body, string css)
     {
         return _template.
             Replace("<!--title-->", title).

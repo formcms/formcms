@@ -1,9 +1,9 @@
-using System.Text.Json;
 using FormCMS.Core.Descriptors;
 using FormCMS.CoreKit.Test;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
 using NUlid;
+using System.Text.Json;
 
 namespace FormCMS.Course.Tests;
 [Collection("API")]
@@ -20,22 +20,22 @@ public class ActivityApiTest(AppFactory factory)
         var counts = await factory.ActivityApi.ActivityCounts().Ok();
         Assert.True(counts.Length > 0);
     }
-    
+
     [Fact]
     public async Task VisitCountAndPageCount()
     {
         //create home page
         var schema = new Schema("home", SchemaType.Page, new Settings(
-            Page: new Page("home", "",null, "home", "", "", "")
+            Page: new Page("home", "", null, "home", "", "", "")
         ));
         await factory.SchemaApi.Save(schema);
-        
+
         //authed visit
         await factory.ActivityApi.Visit(factory.GetHttpClient().BaseAddress + "/home");
         var authedCount = await factory.ActivityApi.VisitCounts(true).Ok();
         Assert.True(authedCount.Length > 0);
         await factory.AuthApi.Logout();
-        
+
         //anonymous visit
         await factory.ActivityApi.Visit(factory.GetHttpClient().BaseAddress + "/home");
         await factory.AuthApi.EnsureSaLogin().Ok();
@@ -46,7 +46,7 @@ public class ActivityApiTest(AppFactory factory)
         var pageCount = await factory.ActivityApi.PageCounts().Ok();
         Assert.True(pageCount.Length > 0);
     }
-    
+
     [Fact]
     public async Task TestListHistoryAndDelete()
     {
@@ -79,7 +79,7 @@ public class ActivityApiTest(AppFactory factory)
         Assert.True(item.First().GetProperty("viewCount").GetInt64() > 0);
     }
 
-    
+
     [Fact]
     private async Task ViewShareLike()
     {
@@ -98,7 +98,7 @@ public class ActivityApiTest(AppFactory factory)
 
         //record share 
         var count = await factory.ActivityApi.Record(TestEntityNames.TestPost.Camelize(), RecordId, "share").Ok();
-        Assert.True(count>0);
+        Assert.True(count > 0);
         await factory.ActivityApi.Record(TestEntityNames.TestPost.Camelize(), RecordId, "share").Ok();
         rootElement = await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
         var shareElement = rootElement.GetProperty("share");

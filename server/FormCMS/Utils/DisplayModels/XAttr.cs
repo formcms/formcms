@@ -1,18 +1,18 @@
 
-using System.Linq.Expressions;
 using Humanizer;
+using System.Linq.Expressions;
 
 namespace FormCMS.Utils.DisplayModels;
 
 
 public record XAttr(
     string Field,
-    string Header ,
-    DisplayType DisplayType ,
-    bool InList ,
-    bool InDetail ,
-    bool IsDefault ,
-    string Options ,
+    string Header,
+    DisplayType DisplayType,
+    bool InList,
+    bool InDetail,
+    bool IsDefault,
+    string Options,
     XEntity? Junction = null,
     XEntity? Lookup = null,
     XEntity? Collection = null
@@ -33,7 +33,7 @@ public static class XAttrExtensions
         var name = expression.GetName();
         header ??= name.Humanize();
         name = name.Camelize();
-        
+
         displayType ??= typeof(TValue) switch
         {
             { } t when t == typeof(string) => DisplayType.Text,
@@ -41,11 +41,11 @@ public static class XAttrExtensions
             { } t when t == typeof(DateTime) => DisplayType.LocalDatetime,
             _ => DisplayType.Text
         };
-        
-        return new XAttr(name, header,displayType.Value,inList,inDetail,isDefault,options);
+
+        return new XAttr(name, header, displayType.Value, inList, inDetail, isDefault, options);
     }
-    
-    private static string GetName<TClass,TValue>(this Expression<Func<TClass, TValue>> e)
+
+    private static string GetName<TClass, TValue>(this Expression<Func<TClass, TValue>> e)
     {
         return e.Body switch
         {

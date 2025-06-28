@@ -1,11 +1,11 @@
-using System.Reflection;
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using FluentResults;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.jsonElementExt;
 using Humanizer;
 using Microsoft.IdentityModel.Tokens;
+using System.Reflection;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace FormCMS.Utils.RecordExt;
 
@@ -28,7 +28,7 @@ public static class RecordExtensions
     }
 
     public static string StrOrEmpty(this Record r, string field)
-        =>(r.TryGetValue(field, out var o) && o is not null)?o.ToString() ?? string.Empty:string.Empty;
+        => (r.TryGetValue(field, out var o) && o is not null) ? o.ToString() ?? string.Empty : string.Empty;
 
 
     public static string ToToken(this Record r)
@@ -37,7 +37,7 @@ public static class RecordExtensions
     public static Record FromToken(string token)
     {
         var recordStr = Base64UrlEncoder.Decode(token);
-        var item = JsonSerializer.Deserialize<JsonElement>(recordStr,JsonSerializerOptions);
+        var item = JsonSerializer.Deserialize<JsonElement>(recordStr, JsonSerializerOptions);
         return item.ToDictionary();
     }
 
@@ -97,7 +97,7 @@ public static class RecordExtensions
     {
         if (input == null) throw new ArgumentNullException(nameof(input));
         var dict = new Dictionary<string, object>();
-        
+
         foreach (var property in input.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (whiteList != null && !whiteList.Contains(property.Name)) continue;
@@ -107,10 +107,10 @@ public static class RecordExtensions
             {
                 null => null!,
                 Enum valueEnum => valueEnum.Camelize(),
-                _ when typeof(Record).IsAssignableFrom(property.PropertyType) || 
+                _ when typeof(Record).IsAssignableFrom(property.PropertyType) ||
                        property.PropertyType.IsClass && property.PropertyType != typeof(string)
                     => JsonSerializer.Serialize(value, JsonSerializerOptions),
-                
+
                 _ => value
             };
         }

@@ -20,7 +20,7 @@ public static class BookmarkHandler
             IBookmarkService s,
             CancellationToken ct
         ) => s.FolderWithRecordStatus(entityName, recordId, ct));
-        
+
         builder.MapPost("/folders/update/{id:long}", (
             long id,
             IBookmarkService s,
@@ -42,20 +42,20 @@ public static class BookmarkHandler
             int? limit,
             IBookmarkService s
         ) => s.List(folderId, QueryHelpers.ParseQuery(context.Request.QueryString.Value), offset, limit, ct));
-        
+
         builder.MapPost("/{entityName}/{recordId:long}", (
             string entityName,
             long recordId,
             SaveBookmarkPayload payload,
             IBookmarkService s,
             CancellationToken ct
-        ) => s.AddBookmark(entityName, recordId, payload.NewFolderName,payload.SelectedFolders, ct));
-        
+        ) => s.AddBookmark(entityName, recordId, payload.NewFolderName, payload.SelectedFolders, ct));
+
         builder.MapPost("/delete/{id:long}", (
             IBookmarkService s,
             long id,
             CancellationToken ct
-        ) => s.DeleteBookmark(id, ct)); 
+        ) => s.DeleteBookmark(id, ct));
         return builder;
     }
 }

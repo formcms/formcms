@@ -39,7 +39,7 @@ public sealed class KeyValueCache<T>
                  Prefix = {prefix}, Type : Memory cache, Expiration: {_expiration}
                  ************************************************************************************************************
                  """);
-             
+
             _cacheProvider = new MemoryCacheProvider(memoryCache);
             return;
         }
@@ -47,8 +47,8 @@ public sealed class KeyValueCache<T>
         throw new Exception("failed to get cache provider");
     }
 
-    public ValueTask Remove(string key,CancellationToken ct = default) => _cacheProvider.Remove(CacheKey(key), ct);
+    public ValueTask Remove(string key, CancellationToken ct = default) => _cacheProvider.Remove(CacheKey(key), ct);
 
-    public  ValueTask<T> GetOrSet(string key, Func<CancellationToken,ValueTask<T>> factory, CancellationToken ct = default)
-        => _cacheProvider.GetOrCreate(CacheKey(key),_expiration,_localCacheExpiration,factory, ct);
+    public ValueTask<T> GetOrSet(string key, Func<CancellationToken, ValueTask<T>> factory, CancellationToken ct = default)
+        => _cacheProvider.GetOrCreate(CacheKey(key), _expiration, _localCacheExpiration, factory, ct);
 }

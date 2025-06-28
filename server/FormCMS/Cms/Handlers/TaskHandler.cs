@@ -8,34 +8,34 @@ public static class TaskHandler
     public static void MapTasksHandler(this RouteGroupBuilder builder)
     {
         builder.MapGet("/", (
-            ITaskService s, 
+            ITaskService s,
             HttpContext context,
-            int? offset, 
-            int? limit, 
+            int? offset,
+            int? limit,
             CancellationToken ct
         ) => s.List(QueryHelpers.ParseQuery(context.Request.QueryString.Value), offset, limit, ct));
 
-        builder.MapGet("/entity", (ITaskService s) => s.GetEntity());    
-        
+        builder.MapGet("/entity", (ITaskService s) => s.GetEntity());
+
         builder.MapPost("/export", (ITaskService s) => s.AddExportTask());
-        
+
         builder.MapGet("/export/download/{id:int}", async (
             HttpContext context,
-            ITaskService s, 
+            ITaskService s,
             int id,
             CancellationToken ct
-        ) => context.Response.Redirect(await s.GetTaskFileUrl(id,ct)));
+        ) => context.Response.Redirect(await s.GetTaskFileUrl(id, ct)));
 
         builder.MapPost("/export/archive/{id:int}", (
             ITaskService s,
             int id,
             CancellationToken ct
-        ) => s.DeleteTaskFile(id,ct));
+        ) => s.DeleteTaskFile(id, ct));
 
         builder.MapPost($"/import/", (
             HttpContext context,
             ITaskService s
-        ) =>s.AddImportTask(context.Request.Form.Files[0]));
+        ) => s.AddImportTask(context.Request.Form.Files[0]));
 
         builder.MapPost($"/import/demo", (
             HttpContext context,

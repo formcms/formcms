@@ -1,11 +1,8 @@
-using FormCMS.AuditLogging.Models;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
-using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using Humanizer;
-using Microsoft.EntityFrameworkCore;
 using SqlKata;
 using Column = FormCMS.Utils.DataModels.Column;
 
@@ -40,7 +37,7 @@ public static class BookmarkFolders
     {
         return new Query(TableName)
             .Where(nameof(BookmarkFolder.UserId).Camelize(), userId)
-            .Where(nameof(DefaultColumnNames.Deleted).Camelize(),false)
+            .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false)
             .OrderBy(nameof(BookmarkFolder.Name).Camelize())
             .Select(
                 nameof(BookmarkFolder.Id).Camelize(),
@@ -59,13 +56,13 @@ public static class BookmarkFolders
         ]);
 
     //although folderId is global uniq, add userId to prevent forge identity
-    public static Query Delete(string userId, long id) 
+    public static Query Delete(string userId, long id)
         => new Query(TableName)
             .Where(nameof(BookmarkFolder.UserId).Camelize(), userId)
             .Where(nameof(BookmarkFolder.Id).Camelize(), id)
             .AsUpdate([DefaultColumnNames.Deleted.Camelize()], [true]);
 
-    public static Query Insert(this BookmarkFolder folder) 
+    public static Query Insert(this BookmarkFolder folder)
         => new Query(TableName).AsInsert(RecordExtensions.FormObject(
             folder, whiteList:
             [
@@ -73,7 +70,7 @@ public static class BookmarkFolders
                 nameof(BookmarkFolder.Name),
                 nameof(BookmarkFolder.Description),
             ]
-        ),true);
+        ), true);
 
     public static Query Update(this BookmarkFolder folder)
         => new Query(TableName)

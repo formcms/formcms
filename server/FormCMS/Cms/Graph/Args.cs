@@ -1,8 +1,8 @@
-using System.Globalization;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
 using GraphQL.Types;
+using System.Globalization;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Cms.Graph;
@@ -13,7 +13,7 @@ public static class Args
     {
         var args = new List<QueryArgument>();
         var arr = entity.Attributes.Where(x => x.DataType.IsLocal()).ToArray();
-        args.AddRange(arr.Select(a=>SimpleFilter(a,graphMap)));
+        args.AddRange(arr.Select(a => SimpleFilter(a, graphMap)));
         args.AddRange(arr.Select(ComplexFilter));
         return args.ToArray();
     }
@@ -40,7 +40,7 @@ public static class Args
     private static QueryArgument SimpleFilter(Attribute attr, Dictionary<string, GraphInfo> graphMap)
     {
         var displayType = attr.DataType is not DataType.Lookup ? attr.DisplayType : GetLookupDisplayType(attr);
-        
+
         var arg = displayType switch
         {
             DisplayType.Number => new QueryArgument<ListGraphType<IntGraphType>>(),
@@ -55,7 +55,7 @@ public static class Args
 
         DisplayType GetLookupDisplayType(Attribute a) =>
             a.GetLookupTarget(out var t) && graphMap.TryGetValue(t, out var info)
-                ? info.Entity.Attributes.FirstOrDefault(x=>x.Field==info.Entity.PrimaryKey)?.DisplayType ?? DisplayType.Number
+                ? info.Entity.Attributes.FirstOrDefault(x => x.Field == info.Entity.PrimaryKey)?.DisplayType ?? DisplayType.Number
                 : DisplayType.Number;
     }
 
@@ -65,7 +65,7 @@ public static class Args
         {
             Name = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(entity.Name) + "SortEnum"
         };
-        var arr = entity.Attributes.Where(x=>x.DataType.IsLocal()).ToArray();
+        var arr = entity.Attributes.Where(x => x.DataType.IsLocal()).ToArray();
         foreach (var attribute in arr)
         {
             type.Add(new EnumValueDefinition(attribute.Field, attribute.Field));
@@ -90,7 +90,7 @@ public static class Args
         {
             type.Add(new EnumValueDefinition("NA", "NA"));
         }
-        foreach (var selectItem in selectItems )
+        foreach (var selectItem in selectItems)
         {
             type.Add(new EnumValueDefinition(selectItem, selectItem));
         }
@@ -113,17 +113,17 @@ public static class Args
     {
         Name = name
     };
-    
-    public static  QueryArgument LimitArg => new QueryArgument<IntGraphType>
+
+    public static QueryArgument LimitArg => new QueryArgument<IntGraphType>
     {
         Name = PaginationConstants.LimitKey
     };
 
-    public static  QueryArgument OffsetArg => new QueryArgument<IntGraphType>
+    public static QueryArgument OffsetArg => new QueryArgument<IntGraphType>
     {
         Name = PaginationConstants.OffsetKey
     };
-    public static  QueryArgument DistinctArg => new QueryArgument<BooleanGraphType>
+    public static QueryArgument DistinctArg => new QueryArgument<BooleanGraphType>
     {
         Name = QueryConstants.DistinctKey
     };
@@ -133,7 +133,7 @@ public static class Args
         Name = SortConstant.SortExprKey
     };
 
-    public static  QueryArgument FilterExprArg => new  QueryArgument<ListGraphType<FilterExpr>>
+    public static QueryArgument FilterExprArg => new QueryArgument<ListGraphType<FilterExpr>>
     {
         Name = FilterConstants.FilterExprKey
     };

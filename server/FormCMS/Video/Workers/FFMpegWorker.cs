@@ -1,4 +1,3 @@
-using System.Text.Json;
 using FormCMS.Core.Assets;
 using FormCMS.Core.Auth;
 using FormCMS.CoreKit.ApiClient;
@@ -6,6 +5,7 @@ using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Utils.ResultExt;
 using FormCMS.Video.Models;
+using System.Text.Json;
 using Xabe.FFmpeg;
 
 namespace FormCMS.Video.Workers;
@@ -13,7 +13,7 @@ namespace FormCMS.Video.Workers;
 public sealed class FFMpegWorker(
     ILogger<FFMpegWorker> logger,
     IStringMessageConsumer consumer,
-    CmsRestClientSettings  restClientSettings,
+    CmsRestClientSettings restClientSettings,
     IFileStore fileStore
 ) : BackgroundService
 {
@@ -32,14 +32,14 @@ public sealed class FFMpegWorker(
                     if (msg is null) return;
 
                     var task = HlsConvertingTaskHelper.CreatTask(msg.Path);
- 
+
                     if (msg.IsDelete)
                     {
                         await fileStore.DelByPrefix(task.StorageFolder, ct);
                     }
                     else
                     {
-                        await DoConvert(task); 
+                        await DoConvert(task);
                     }
                 }
                 catch (Exception ex)
@@ -55,11 +55,11 @@ public sealed class FFMpegWorker(
     {
         await fileStore.Download(task.StoragePath, task.TempPath, CancellationToken.None);
         await RunConversion(task);
-        await fileStore.UploadFolder(task.TempFolder, task.StorageFolder,CancellationToken.None);
+        await fileStore.UploadFolder(task.TempFolder, task.StorageFolder, CancellationToken.None);
         File.Delete(task.TempPath);
         Directory.Delete(task.TempFolder, recursive: true);
         await UpdateStatus(task);
-        logger.LogInformation( "Processed message. Task={task}", task);       
+        logger.LogInformation("Processed message. Task={task}", task);
     }
 
     private FFMpegMessage? ParseMessage(string s)
@@ -86,7 +86,7 @@ public sealed class FFMpegWorker(
         return message;
 
     }
-    
+
     private async Task RunConversion(HlsConvertingTask task)
     {
         // Directory.CreateDirectory(task.TempFolder);
@@ -103,16 +103,16 @@ public sealed class FFMpegWorker(
 
     private async Task UpdateStatus(HlsConvertingTask task)
     {
-        var client=new HttpClient();
-        client.BaseAddress = new Uri(restClientSettings.BaseUrl );
-        client.DefaultRequestHeaders.Add( "X-Cms-Adm-Api-Key", restClientSettings.ApiKey);
-        
+        var client = new HttpClient();
+        client.BaseAddress = new Uri(restClientSettings.BaseUrl);
+        client.DefaultRequestHeaders.Add("X-Cms-Adm-Api-Key", restClientSettings.ApiKey);
+
         var assetApiClient = new AssetApiClient(client);
         var assetToUpdated = new Asset
         (
-            Path : task.StoragePath,
-            Url : fileStore.GetUrl(task.StorageTargetPath), 
-            Progress : 100
+            Path: task.StoragePath,
+            Url: fileStore.GetUrl(task.StorageTargetPath),
+            Progress: 100
         );
         await assetApiClient.UpdateHlsProgress(assetToUpdated).Ok();
     }

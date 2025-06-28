@@ -3,30 +3,30 @@ namespace FormCMS.Utils.DisplayModels;
 public enum DisplayType
 {
     Text,
-    Textarea ,
-    Editor ,
+    Textarea,
+    Editor,
 
-    Number ,
+    Number,
 
-    Date ,
+    Date,
     Datetime,
-    LocalDatetime ,
+    LocalDatetime,
 
-    Image ,
+    Image,
     Gallery,
     File,
 
     Dictionary,
 
-    Dropdown, 
-    Multiselect, 
+    Dropdown,
+    Multiselect,
 
-    Lookup, 
+    Lookup,
     TreeSelect,
-    
-    Picklist, 
+
+    Picklist,
     Tree,
-    
+
     EditTable,
 }
 

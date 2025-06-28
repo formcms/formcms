@@ -8,10 +8,10 @@ namespace FormCMS.CoreKit.RelationDbQuery;
 
 public static class KateQueryExt
 {
-    
+
     public static void ApplyJoin(
-        this SqlKata.Query query, 
-        IEnumerable<AttributeVector> vectors, 
+        this SqlKata.Query query,
+        IEnumerable<AttributeVector> vectors,
         PublicationStatus? publicationStatus
         )
     {
@@ -48,10 +48,10 @@ public static class KateQueryExt
     }
 
     private static SqlKata.Query ApplyJoin(
-        SqlKata.Query query, 
-        EntityLinkDesc desc, 
-        string prefix, 
-        string nextPrefix, 
+        SqlKata.Query query,
+        EntityLinkDesc desc,
+        string prefix,
+        string nextPrefix,
         PublicationStatus? publicationStatus)
     {
         query.LeftJoin($"{desc.TargetEntity.TableName} as {nextPrefix}",
@@ -65,7 +65,7 @@ public static class KateQueryExt
         return query;
     }
 
-    private static SqlKata.Query ApplyJunctionJoin(SqlKata.Query query, Junction junction, 
+    private static SqlKata.Query ApplyJunctionJoin(SqlKata.Query query, Junction junction,
         string prefix, string nextPrefix, PublicationStatus? publicationStatus)
     {
         var crossAlias = $"{prefix}_{junction.JunctionEntity.TableName}";
@@ -92,7 +92,7 @@ public static class KateQueryExt
     {
         query.Offset(pagination.Offset).Limit(pagination.Limit);
     }
-    
+
     public static void ApplySorts(this SqlKata.Query query, IEnumerable<Sort> sorts)
     {
         foreach (var sort in sorts)
@@ -107,7 +107,7 @@ public static class KateQueryExt
             }
         }
     }
-    
+
     public static void ApplyValidSorts(this SqlKata.Query query, IEnumerable<ValidSort> sorts)
     {
         foreach (var sort in sorts)
@@ -151,12 +151,12 @@ public static class KateQueryExt
         return result;
     }
 
-   
-    
-    public static void ApplySpanFilter<T>(this SqlKata.Query? query,  ValidSpan? span,T[] sorts, Func<T, string> tableModify, Func<T, string> fullPath)
-    where T:Sort
+
+
+    public static void ApplySpanFilter<T>(this SqlKata.Query? query, ValidSpan? span, T[] sorts, Func<T, string> tableModify, Func<T, string> fullPath)
+    where T : Sort
     {
-        
+
         if (query is null || span?.EdgeItem is null)
         {
             return;
@@ -174,29 +174,29 @@ public static class KateQueryExt
             }
             return q;
         });
-        return ;
+        return;
 
-        void ApplyFilter(SqlKata.Query q,int idx)
+        void ApplyFilter(SqlKata.Query q, int idx)
         {
             for (var i = 0; i < idx; i++)
             {
                 ApplyEq(q, sorts[i]);
             }
-            ApplyCompare(q,sorts[idx]);
+            ApplyCompare(q, sorts[idx]);
         }
 
         void ApplyEq(SqlKata.Query q, T sort)
         {
-            q.Where(tableModify(sort),  span.Edge(fullPath(sort)));
+            q.Where(tableModify(sort), span.Edge(fullPath(sort)));
         }
 
         void ApplyCompare(SqlKata.Query q, T sort)
         {
             q.Where(
                 tableModify(sort),
-                span.Span.GetCompareOperator(sort.Order), 
+                span.Span.GetCompareOperator(sort.Order),
                 span.Edge(fullPath(sort)));
         }
-        
+
     }
 }

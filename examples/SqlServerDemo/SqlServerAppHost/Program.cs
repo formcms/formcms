@@ -5,7 +5,7 @@ var nats = builder
 
 var sqlServer = builder
     .AddSqlServer("sqlserver")
-    .WithDataVolume(isReadOnly:false)
+    .WithDataVolume(isReadOnly: false)
     .WithLifetime(ContainerLifetime.Persistent);
 
 builder.AddProject<Projects.SqlServerCmsApp>("web")

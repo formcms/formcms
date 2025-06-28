@@ -1,26 +1,26 @@
-using System.Collections.Concurrent;
 using FormCMS.Utils.DateTimeExt;
 using Microsoft.Extensions.Caching.Memory;
+using System.Collections.Concurrent;
 
 namespace FormCMS.Infrastructure.Buffers;
 
 public class MemoryTrackingBuffer<T>(BufferSettings settings) where T : struct
 {
-    private readonly MemoryCache _cache = new (new MemoryCacheOptions());
-    private readonly MemoryCache _locks = new (new MemoryCacheOptions());
-    private readonly MemoryCache _flush = new (new MemoryCacheOptions());
-    
-    internal Dictionary<string,T> GetAfterLastFlush(DateTime lastFlushTime)
+    private readonly MemoryCache _cache = new(new MemoryCacheOptions());
+    private readonly MemoryCache _locks = new(new MemoryCacheOptions());
+    private readonly MemoryCache _flush = new(new MemoryCacheOptions());
+
+    internal Dictionary<string, T> GetAfterLastFlush(DateTime lastFlushTime)
     {
         var now = DateTime.UtcNow;
-       
+
         var ret = new Dictionary<string, T>();
-        for (var t = lastFlushTime ; t < now; t = t.AddMinutes(1))
+        for (var t = lastFlushTime; t < now; t = t.AddMinutes(1))
         {
             var key = GetNextFlushTimeKey(t);
             if (!_flush.TryGetValue(key, out var value) ||
                 value is not ConcurrentDictionary<string, bool> dict) continue;
-            
+
             foreach (var k in dict.Keys)
             {
                 if (_cache.TryGetValue(k, out var cachedValue) && cachedValue is T v)
@@ -33,8 +33,8 @@ public class MemoryTrackingBuffer<T>(BufferSettings settings) where T : struct
 
         return ret;
     }
-    
-    internal async Task<Dictionary<string,T>> SafeGet(string[] keys, Func<string,Task<T>> getAsync)
+
+    internal async Task<Dictionary<string, T>> SafeGet(string[] keys, Func<string, Task<T>> getAsync)
     {
         var ret = new Dictionary<string, T>();
         foreach (var key in keys)
@@ -54,7 +54,7 @@ public class MemoryTrackingBuffer<T>(BufferSettings settings) where T : struct
 
         return ret;
     }
-    
+
     internal SemaphoreSlim GetSemaphore(string recordId)
         => _locks.GetOrCreate(recordId + ":lock", entry =>
         {
@@ -70,7 +70,7 @@ public class MemoryTrackingBuffer<T>(BufferSettings settings) where T : struct
     internal void SetFlushKey(string key)
     {
         var flushKey = GetNextFlushTimeKey(DateTime.UtcNow);
-        
+
         var dict = _flush.GetOrCreate(flushKey, entry =>
         {
             entry.SetSlidingExpiration(settings.Expiration);

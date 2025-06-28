@@ -12,12 +12,12 @@ public static class Constants
     public const string AttrQueryString = "qs";
     public const string AttrField = "field";
     public const string AttrLazy = "lazy";
-    
+
     public const string DataList = "data-list";
     public const string Foreach = "foreach";
 }
 
-public record DataNode(HtmlNode HtmlNode,string Field, string Query, string QueryString, int Offset, int Limit, bool Lazy=false);
+public record DataNode(HtmlNode HtmlNode, string Field, string Query, string QueryString, int Offset, int Limit, bool Lazy = false);
 
 public static class DataNodeHelper
 {
@@ -48,7 +48,7 @@ public static class DataNodeHelper
     public static Result<DataNode[]> GetDataNodesIncludeRoot(this HtmlNode eachNode)
     {
         var ret = new List<DataNode>();
-        var rootRes = GetDataNode(eachNode.ParentNode,eachNode);
+        var rootRes = GetDataNode(eachNode.ParentNode, eachNode);
         if (rootRes.IsFailed) return Result.Fail<DataNode[]>(rootRes.Errors);
         ret.Add(rootRes.Value);
 
@@ -75,7 +75,7 @@ public static class DataNodeHelper
         }
 
         field = string.IsNullOrWhiteSpace(field) ? listNode.Id : field;
-        return new DataNode(eachNode, field, query, qs, offset, limit,lazy);       
+        return new DataNode(eachNode, field, query, qs, offset, limit, lazy);
     }
 
     public static void SetEach(this HtmlNode node, string field)
@@ -97,7 +97,7 @@ public static class DataNodeHelper
         }
         node.AppendChild(endEach);
     }
-    
+
     private static bool GetInt(this HtmlNode node, string attribute, out int value)
         => int.TryParse(node.GetAttributeValue(attribute, "0"), out value);
 }

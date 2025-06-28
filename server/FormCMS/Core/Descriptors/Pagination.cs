@@ -1,5 +1,4 @@
 using FormCMS.Utils.StrArgsExt;
-using Microsoft.Extensions.Primitives;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -13,7 +12,7 @@ public static class PaginationConstants
 {
     public const string LimitKey = "limit";
     public const string OffsetKey = "offset";
-    
+
     public const string PaginationSeparator = ".";
     public const string OffsetSuffix = $"{PaginationSeparator}{OffsetKey}";
     public const string LimitSuffix = $"{PaginationSeparator}{LimitKey}";
@@ -45,19 +44,19 @@ public static class PaginationHelper
             : defaultPageSize;
         return new ValidPagination(offset, limit);
     }
-    
-    public static ValidPagination MergeLimit(Pagination? variablePagination, Pagination? nodePagination,StrArgs args, int defaultPageSize)
+
+    public static ValidPagination MergeLimit(Pagination? variablePagination, Pagination? nodePagination, StrArgs args, int defaultPageSize)
     {
         variablePagination ??= new Pagination();
         nodePagination ??= new Pagination();
-        
+
         if (variablePagination.Limit is null)
         {
             variablePagination = variablePagination with { Limit = nodePagination?.Limit };
         }
 
         variablePagination = variablePagination.ReplaceVariable(args);
-        
+
         //have cursor then ignore offset
         var offset = 0;
         var limit = int.TryParse(variablePagination.Limit, out var limitVal) && limitVal > 0 && limitVal < defaultPageSize
@@ -66,11 +65,11 @@ public static class PaginationHelper
         return new ValidPagination(offset, limit);
     }
     //pagination from variable has high priority than pagination setting in node
-    public static ValidPagination MergePagination(Pagination? variablePagination, Pagination? nodePagination,StrArgs args, int defaultPageSize)
+    public static ValidPagination MergePagination(Pagination? variablePagination, Pagination? nodePagination, StrArgs args, int defaultPageSize)
     {
         variablePagination ??= new Pagination();
         nodePagination ??= new Pagination();
-        
+
         if (variablePagination.Offset is null)
         {
             variablePagination = variablePagination with { Offset = nodePagination.Offset };
@@ -82,7 +81,7 @@ public static class PaginationHelper
         }
 
         variablePagination = variablePagination.ReplaceVariable(args);
-        
+
         //have cursor then ignore offset
         var offset = int.TryParse(variablePagination.Offset, out var offsetVal) ? offsetVal : 0;
         var limit = int.TryParse(variablePagination.Limit, out var limitVal) && limitVal > 0 && limitVal < defaultPageSize
@@ -106,10 +105,10 @@ public static class PaginationHelper
         }
 
         key += field;
-        return FromVariables(args,key);
+        return FromVariables(args, key);
     }
 
-    private static Pagination? FromVariables(StrArgs args,string key)
+    private static Pagination? FromVariables(StrArgs args, string key)
     {
         var offsetOk = args.TryGetValue(key + PaginationConstants.OffsetSuffix, out var offset);
         var limitOk = args.TryGetValue(key + PaginationConstants.LimitSuffix, out var limit);

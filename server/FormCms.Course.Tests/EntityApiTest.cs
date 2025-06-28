@@ -1,14 +1,11 @@
-using System.Text.Json;
-using FormCMS.Auth.ApiClient;
-using FormCMS.CoreKit.ApiClient;
 using FormCMS.Core.Descriptors;
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
-using FormCMS.Infrastructure.RelationDbDao;
-
 using Microsoft.Extensions.Primitives;
 using NUlid;
+using System.Text.Json;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Course.Tests;
@@ -24,7 +21,7 @@ public class EntityApiTest(AppFactory factory)
 
     private static readonly string[] Payload = ["a", "b", "c"];
     private bool _ = factory.LoginAndInitTestData();
- 
+
 
     [Fact]
     public async Task InsertAndQueryDateField()
@@ -168,7 +165,7 @@ public class EntityApiTest(AppFactory factory)
     [Fact]
     public async Task TestDictionary()
     {
-        var attr = new Attribute(Name, Name, DataType:DataType.Text, DisplayType: DisplayType.Dictionary);
+        var attr = new Attribute(Name, Name, DataType: DataType.Text, DisplayType: DisplayType.Dictionary);
         await factory.SchemaApi.EnsureEntity(_post, Name, false, attr).Ok();
         var dict = new
         {
@@ -178,14 +175,14 @@ public class EntityApiTest(AppFactory factory)
 
         await factory.EntityApi.Insert(_post, new { name = dict }).Ok();
         var ele = await factory.EntityApi.Single(_post, 1).Ok();
-        
+
         Assert.True(
-            ele.TryGetProperty(Name, out var val) 
-            && val.ValueKind == JsonValueKind.Object  
+            ele.TryGetProperty(Name, out var val)
+            && val.ValueKind == JsonValueKind.Object
             && val.GetProperty("a").GetInt64() == 1
             && val.GetProperty("b").GetInt64() == 2
             );
-        
+
     }
 
     [Fact]

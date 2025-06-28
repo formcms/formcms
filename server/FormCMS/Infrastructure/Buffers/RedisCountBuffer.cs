@@ -3,7 +3,7 @@ using StackExchange.Redis;
 
 namespace FormCMS.Infrastructure.Buffers;
 
-public class RedisCountBuffer(IConnectionMultiplexer redis, BufferSettings settings,ILogger<RedisCountBuffer>logger) : ICountBuffer
+public class RedisCountBuffer(IConnectionMultiplexer redis, BufferSettings settings, ILogger<RedisCountBuffer> logger) : ICountBuffer
 {
     private readonly object _ = logger.LogInformationEx(
         """
@@ -12,19 +12,19 @@ public class RedisCountBuffer(IConnectionMultiplexer redis, BufferSettings setti
         ************************************************
         """);
     private readonly RedisTrackingBuffer<long> _buffer = new(
-        redis, 
-        settings, 
-        "count-buffer:", 
-        l =>l,
-        l=>(long)l);
+        redis,
+        settings,
+        "count-buffer:",
+        l => l,
+        l => (long)l);
 
-    public Task<Dictionary<string,long>> GetAfterLastFlush(DateTime lastFlushTime)
+    public Task<Dictionary<string, long>> GetAfterLastFlush(DateTime lastFlushTime)
         => _buffer.GetAfterLastFlush(lastFlushTime);
 
     public Task<Dictionary<string, long>> Get(string[] keys, Func<string, Task<long>> getCountAsync)
         => _buffer.SafeGet(keys, getCountAsync);
 
-    public async Task<long> Increase(string recordId, long delta, Func<string,Task<long>> getCountAsync)
+    public async Task<long> Increase(string recordId, long delta, Func<string, Task<long>> getCountAsync)
     {
         var result = await _buffer.Increase(recordId, delta);
         if (!result.IsNull)

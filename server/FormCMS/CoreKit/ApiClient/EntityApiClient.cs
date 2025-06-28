@@ -1,12 +1,11 @@
-using System.Text.Json;
-using Amazon.Runtime;
-using FormCMS.Utils.HttpClientExt;
 using FluentResults;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
+using FormCMS.Utils.HttpClientExt;
 using FormCMS.Utils.StrArgsExt;
+using System.Text.Json;
 
 namespace FormCMS.CoreKit.ApiClient;
 
@@ -62,36 +61,36 @@ public class EntityApiClient(HttpClient client)
 
     public Task<Result> Update(
         string entity, long id, string field, string val, string updatedAt
-    ) => Update(entity, new Dictionary<string,object>
+    ) => Update(entity, new Dictionary<string, object>
     {
         { DefaultAttributeNames.Id.Camelize(), id },
         { DefaultColumnNames.UpdatedAt.Camelize(),  updatedAt},
         { field, val },
-        
+
     });
 
     public Task<Result> Update(
         string entity, IDictionary<string, object> payload
-    ) => client.PostResult( $"/{entity}/update".ToEntityApi(),payload);
+    ) => client.PostResult($"/{entity}/update".ToEntityApi(), payload);
 
     public Task<Result> Delete(
         string entity, object payload
     ) => client.PostResult(
         $"/{entity}/delete".ToEntityApi(),
-        payload );
+        payload);
 
 
     public Task<Result> SavePublicationSettings(
         string entity, object payload
     ) => client.PostResult(
         $"/{entity}/publication".ToEntityApi(),
-        payload );
+        payload);
 
     public Task<Result> JunctionAdd(string entity, string attr, int sourceId, int id)
     {
         var payload = new object[] { new { id } };
         return client.PostResult(
-            $"/junction/{entity}/{sourceId}/{attr}/save".ToEntityApi(), 
+            $"/junction/{entity}/{sourceId}/{attr}/save".ToEntityApi(),
             payload);
     }
 
@@ -99,33 +98,33 @@ public class EntityApiClient(HttpClient client)
     {
         var payload = new object[] { new { id } };
         return client.PostResult(
-            $"/junction/{entity}/{sourceId}/{attr}/delete".ToEntityApi(), 
-            payload );
+            $"/junction/{entity}/{sourceId}/{attr}/delete".ToEntityApi(),
+            payload);
     }
     public Task<Result<int[]>> JunctionTargetIds(
         string entity, string attr, int sourceId
     ) => client.GetResult<int[]>(
-        $"/junction/target_ids/{entity}/{sourceId}/{attr}".ToEntityApi() );
+        $"/junction/target_ids/{entity}/{sourceId}/{attr}".ToEntityApi());
 
     public Task<Result<ListResponse>> JunctionList(
         string entity, string attr, int sourceId, bool exclude
     ) => client.GetResult<ListResponse>(
-        $"/junction/{entity}/{sourceId}/{attr}?exclude={exclude}".ToEntityApi() );
+        $"/junction/{entity}/{sourceId}/{attr}?exclude={exclude}".ToEntityApi());
 
     public Task<Result<JsonElement>> LookupList(
         string entity, string query
     ) => client.GetResult<JsonElement>(
-        $"/lookup/{entity}/?query={Uri.EscapeDataString(query)}".ToEntityApi() );
+        $"/lookup/{entity}/?query={Uri.EscapeDataString(query)}".ToEntityApi());
 
     public Task<Result<ListResponse>> CollectionList(
         string entity, string attr, int sourceId
     ) => client.GetResult<ListResponse>(
-        $"/collection/{entity}/{sourceId}/{attr}".ToEntityApi() );
+        $"/collection/{entity}/{sourceId}/{attr}".ToEntityApi());
 
 
     public Task<Result<JsonElement>> CollectionInsert(
         string entity, string attr, int sourceId, object payload
     ) => client.PostResult<JsonElement>(
         $"/collection/{entity}/{sourceId}/{attr}/insert".ToEntityApi(),
-        payload );
+        payload);
 }

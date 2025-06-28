@@ -1,14 +1,14 @@
-using System.Collections.Immutable;
-using System.Text.Json;
 using FluentResults;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.RecordExt;
+using System.Collections.Immutable;
+using System.Text.Json;
 
 namespace FormCMS.Core.Descriptors;
 
 public sealed record Span(string? First = null, string? Last = null);
 
-public sealed record ValidSpan(Span Span, ImmutableDictionary<string,object>? EdgeItem = default);
+public sealed record ValidSpan(Span Span, ImmutableDictionary<string, object>? EdgeItem = default);
 
 public static class SpanConstants
 {
@@ -43,7 +43,7 @@ public static class SpanHelper
     public static string Cursor(Record item) =>
         item.TryGetValue(SpanConstants.Cursor, out var v) && v is string s ? s : null ?? "";
 
-    public static string LastCursor(IEnumerable<Record> items) => 
+    public static string LastCursor(IEnumerable<Record> items) =>
         items.LastOrDefault() is { } item ? Cursor(item) : "";
 
     public static string FirstCursor(IEnumerable<Record> items) =>
@@ -55,7 +55,7 @@ public static class SpanHelper
     public static bool IsEmpty(this Span c) => string.IsNullOrWhiteSpace(c.First) && string.IsNullOrWhiteSpace(c.Last);
 
     public static bool IsForward(Span? c) =>
-        c is null ||!string.IsNullOrWhiteSpace(c.Last) || string.IsNullOrWhiteSpace(c.First);
+        c is null || !string.IsNullOrWhiteSpace(c.Last) || string.IsNullOrWhiteSpace(c.First);
 
     public static string GetCompareOperator(this Span c, string order)
         => IsForward(c)
@@ -76,7 +76,7 @@ public static class SpanHelper
 
         if (!IsForward(span))
         {
-            items = [..items.Reverse()];
+            items = [.. items.Reverse()];
         }
 
         var (pre, next) = (hasMore, span.First ?? "", span.Last ?? "") switch
@@ -101,7 +101,7 @@ public static class SpanHelper
             if (item.ByJsonPath<object>(sort, out var val)) dict[sort] = val!;
         }
 
-        item[SpanConstants.Cursor] = dict.ToToken();       
+        item[SpanConstants.Cursor] = dict.ToToken();
     }
 
     public static Result<ValidSpan> ToValid(this Span c, LoadedAttribute[] attrs)
@@ -116,7 +116,7 @@ public static class SpanHelper
             foreach (var (key, value) in dict)
             {
                 if (value is not string s || arr.FirstOrDefault(x => x.Field == key) is not { } attr) continue;
-                if (!attr.ResolveVal( s, out var result))
+                if (!attr.ResolveVal(s, out var result))
                 {
                     return Result.Fail($"Fail to cast s to {attr.DataType}");
                 }

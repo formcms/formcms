@@ -11,13 +11,13 @@ public static class AuditLogHandlers
             int n,
             IAuditLogService auditLogService,
             CancellationToken ct
-        ) => auditLogService.GetActionCounts(n,ct));
-        
+        ) => auditLogService.GetActionCounts(n, ct));
+
         builder.MapGet("/", (
-            IAuditLogService s, 
+            IAuditLogService s,
             HttpContext context,
-            int? offset, 
-            int? limit, 
+            int? offset,
+            int? limit,
             CancellationToken ct
         ) => s.List(QueryHelpers.ParseQuery(context.Request.QueryString.Value), offset, limit, ct));
 
@@ -26,7 +26,7 @@ public static class AuditLogHandlers
             int id,
             CancellationToken ct
         ) => s.Single(id, ct));
-        
+
         builder.MapGet("/entity", (IAuditLogService s) => s.GetAuditLogEntity());
     }
 }

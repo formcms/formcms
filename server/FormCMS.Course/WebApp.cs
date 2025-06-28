@@ -1,11 +1,7 @@
 using FormCMS.Activities.Workers;
-using FormCMS.Auth;
-using FormCMS.Auth.Builders;
 using FormCMS.Auth.Models;
-using FormCMS.Cms.Builders;
 using FormCMS.Core.Auth;
 using FormCMS.Infrastructure.Buffers;
-using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Utils.ResultExt;
 using FormCMS.Video.Workers;
@@ -40,23 +36,23 @@ public class WebApp(
             AddCorsPolicy();
         }
 
-        
+
         var apiKey = builder.Configuration.GetValue<string>("Authentication:ApiKey");
-        var apiBaseUrl = builder.Configuration.GetValue<string>("ApiInfo:Url"); 
+        var apiBaseUrl = builder.Configuration.GetValue<string>("ApiInfo:Url");
 
         AddCms();
         builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(GetAuthConfig(apiKey));
         builder.Services.AddAuditLog();
         builder.Services.AddActivity(enableActivityBuffer);
         builder.Services.AddComments();
-        
-       
+
+
         if (azureBlobStoreOptions != null)
         {
             builder.Services.AddSingleton(azureBlobStoreOptions);
             builder.Services.AddSingleton<IFileStore, AzureBlobStore>();
         }
-        
+
         // For distributed deployments, it's recommended to runEvent Handling services in a separate hosted App.
         // In this case, we register them within the web application to share the in-memory channel bus.
         builder.Services.AddHostedService<ActivityEventHandler>();
@@ -73,20 +69,20 @@ public class WebApp(
 
         var app = builder.Build();
         app.MapDefaultEndpoints();
-        
+
         if (app.Environment.IsDevelopment())
         {
             app.MapScalarApiReference();
             app.MapOpenApi();
             app.UseCors(Cors);
         }
-        
+
         // use formCms 
         await EnsureDbCreatedAsync();
         await app.UseCmsAsync(true);
         await EnsureUserCreatedAsync();
-        
-        
+
+
         return app;
 
         async Task EnsureDbCreatedAsync()
@@ -146,9 +142,9 @@ public class WebApp(
         var gitHubOAuthConfig = clientId is not null && clientSecrets is not null
             ? new OAuthCredential(clientId, clientSecrets)
             : null;
-        
+
         var keyConfig = apiKey is not null ? new KeyAuthConfig(apiKey) : null;
-        return new AuthConfig(gitHubOAuthConfig,keyConfig);
+        return new AuthConfig(gitHubOAuthConfig, keyConfig);
     }
 
     private void TryUserRedis()

@@ -1,8 +1,8 @@
-using System.Security.Claims;
 using FormCMS.Auth.Models;
 using Humanizer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Options;
+using System.Security.Claims;
 
 namespace FormCMS.Auth.Services;
 
@@ -22,5 +22,5 @@ public class CustomPrincipalFactory(
         }
 
         return identity;
-    } 
+    }
 }

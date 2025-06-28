@@ -5,5 +5,5 @@ namespace FormCMS.Utils.DateTimeExt;
 public static class DateTimeExtensions
 {
     public static DateTime TruncateToMinute(this DateTime dt) =>
-        new (dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, 0, dt.Kind);
+        new(dt.Year, dt.Month, dt.Day, dt.Hour, dt.Minute, 0, dt.Kind);
 }

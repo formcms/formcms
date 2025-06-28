@@ -1,5 +1,4 @@
 using FluentResults;
-using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
 
 namespace FormCMS.Core.Descriptors;
@@ -16,12 +15,12 @@ public record LoadedAttribute(
     bool InDetail = true,
     bool IsDefault = false,
 
-    string Options = "", 
+    string Options = "",
     string Validation = "",
-    
+
     Junction? Junction = null,
     Lookup? Lookup = null,
-    Collection ? Collection = null
+    Collection? Collection = null
 ) : Attribute(
     Field: Field,
     Header: Header,
@@ -29,8 +28,8 @@ public record LoadedAttribute(
     DataType: DataType,
     InList: InList,
     InDetail: InDetail,
-    IsDefault:IsDefault,
-    Validation:Validation,
+    IsDefault: IsDefault,
+    Validation: Validation,
     Options: Options
 );
 
@@ -79,7 +78,7 @@ public static class LoadedAttributeExtensions
             ),
         _ => Result.Fail($"Cannot get entity link desc for attribute [{attribute.Field}]")
     };
-    
+
     public static bool ResolveVal(this LoadedAttribute attr, string v, out ValidValue? result)
     {
         var dataType = attr.DataType == DataType.Lookup
@@ -90,12 +89,12 @@ public static class LoadedAttributeExtensions
         {
             DataType.Text or DataType.String => result,
             DataType.Int => long.TryParse(v, out var l) ? new ValidValue(L: l) : null,
-            DataType.Datetime => Converter.TryParseTime(v, out var d)? new ValidValue(D:d): null,
+            DataType.Datetime => Converter.TryParseTime(v, out var d) ? new ValidValue(D: d) : null,
             _ => null
         };
         return result != null;
     }
-    
+
     public static object GetValueOrLookup(this LoadedAttribute attribute, Record rec)
         => attribute.DataType switch
         {

@@ -1,16 +1,16 @@
-using System.Text.Json;
 using FluentResults;
-using FormCMS.Core.HookFactory;
-using FormCMS.Core.Descriptors;
 using FormCMS.Core.Assets;
+using FormCMS.Core.Descriptors;
+using FormCMS.Core.HookFactory;
 using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.Cache;
 using FormCMS.Infrastructure.RelationDbDao;
-using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.DataModels;
+using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
+using System.Text.Json;
 using DataType = FormCMS.Core.Descriptors.DataType;
 using Task = System.Threading.Tasks.Task;
 
@@ -72,7 +72,7 @@ public sealed class EntityService(
 
         parentField.GetCollectionTarget(out _, out var linkField);
         var attributes = entity.Attributes.Where(
-            x => 
+            x =>
                 x.Field == entity.PrimaryKey ||
                 x.Field == DefaultColumnNames.UpdatedAt.Camelize()
                 || x.InList && x.DataType.IsLocal());
@@ -215,7 +215,7 @@ public sealed class EntityService(
 
         var listQuery = exclude
             ? junction.GetNotRelatedItems(attrs, filters, sorts, validPagination, [id])
-            : junction.GetRelatedItems(filters, [..sorts], validPagination, null, attrs, [id], null);
+            : junction.GetRelatedItems(filters, [.. sorts], validPagination, null, attrs, [id], null);
 
         var countQuery = exclude
             ? junction.GetNotRelatedItemsCount(filters, [id])
@@ -265,8 +265,8 @@ public sealed class EntityService(
     {
         var args = new EntityPreGetListArgs(
             Entity: entity,
-            RefFilters: [..filters],
-            RefSorts: [..sorts],
+            RefFilters: [.. filters],
+            RefSorts: [.. sorts],
             RefPagination: pagination
         );
 
@@ -278,7 +278,7 @@ public sealed class EntityService(
                 || x.InList && x.DataType.IsLocal()
             ).ToArray();
 
-        var countQuery = entity.CountQuery([..res.RefFilters], null);
+        var countQuery = entity.CountQuery([.. res.RefFilters], null);
         return mode switch
         {
             ListResponseMode.Count => new ListResponse([], await executor.Count(countQuery, ct)),
@@ -289,7 +289,7 @@ public sealed class EntityService(
 
         async Task<Record[]> RetrieveItems()
         {
-            var listQuery = entity.ListQuery([..res.RefFilters], [..res.RefSorts], res.RefPagination, null, attributes, null);
+            var listQuery = entity.ListQuery([.. res.RefFilters], [.. res.RefSorts], res.RefPagination, null, attributes, null);
             var items = await executor.Many(listQuery, ct);
             await LoadItems(attributes, items, ct);
             return items;
@@ -305,7 +305,7 @@ public sealed class EntityService(
             {
                 await LoadLookupData(attribute, items, ct);
             }
-            else 
+            else
             {
                 attribute.FormatForDisplay(items);
             }
@@ -365,7 +365,7 @@ public sealed class EntityService(
             }
 
             var oldLinks = await executor.Many(AssetLinks.GetAssetIdsByEntityAndRecordId(entity.Name, id), ct);
-            await assetService.UpdateAssetsLinks(oldLinks,entity.GetAssets(record), entity.Name, id, ct);
+            await assetService.UpdateAssetsLinks(oldLinks, entity.GetAssets(record), entity.Name, id, ct);
             trans.Commit();
 
             await hookRegistry.EntityPostUpdate.Trigger(provider, new EntityPostUpdateArgs(entity, record));
@@ -394,7 +394,7 @@ public sealed class EntityService(
 
             var id = await executor.Exec(entity.Insert(record), true, ct);
 
-            await assetService.UpdateAssetsLinks([],entity.GetAssets(record), entity.Name, id, ct);
+            await assetService.UpdateAssetsLinks([], entity.GetAssets(record), entity.Name, id, ct);
             record[entity.PrimaryKey] = id;
             trans.Commit();
 
@@ -434,7 +434,7 @@ public sealed class EntityService(
             }
 
             var oldLinks = await executor.Many(AssetLinks.GetAssetIdsByEntityAndRecordId(entity.Name, id), ct);
-            await assetService.UpdateAssetsLinks(oldLinks,[], entity.Name, id, ct);
+            await assetService.UpdateAssetsLinks(oldLinks, [], entity.Name, id, ct);
 
             transaction.Commit();
 
@@ -471,7 +471,7 @@ public sealed class EntityService(
                          throw new ResultException(
                              $"Failed to get Collection Context, cannot find [{attr}] in [{entity}]");
 
-        if (!loadedEntity.PrimaryKeyAttribute.ResolveVal( sid, out var id))
+        if (!loadedEntity.PrimaryKeyAttribute.ResolveVal(sid, out var id))
         {
             throw new ResultException($"Failed to cast {sid} to {loadedEntity.PrimaryKeyAttribute.DataType}");
         }
@@ -491,7 +491,7 @@ public sealed class EntityService(
                         throw new ResultException(errMessage);
 
         var junction = attribute.Junction ?? throw new ResultException(errMessage);
-        if (!junction.SourceAttribute.ResolveVal( sid, out var id))
+        if (!junction.SourceAttribute.ResolveVal(sid, out var id))
         {
             throw new ResultException($"Failed to cast {sid} to {junction.SourceAttribute.DataType}");
         }

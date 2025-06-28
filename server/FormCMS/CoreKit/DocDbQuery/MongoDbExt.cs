@@ -1,7 +1,7 @@
-using FormCMS.Utils.ResultExt;
 using FluentResults;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.DataModels;
+using FormCMS.Utils.ResultExt;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -9,7 +9,7 @@ namespace FormCMS.CoreKit.DocDbQuery;
 
 internal static class MongoDbExt
 {
-    private static readonly FilterDefinitionBuilder<BsonDocument> Filter =  Builders<BsonDocument>.Filter;
+    private static readonly FilterDefinitionBuilder<BsonDocument> Filter = Builders<BsonDocument>.Filter;
     private static readonly SortDefinitionBuilder<BsonDocument> Sort = Builders<BsonDocument>.Sort;
 
     internal static Result<FilterDefinition<BsonDocument>[]> ToFilter(
@@ -24,11 +24,11 @@ internal static class MongoDbExt
         (curr, s) => s.Order == SortOrder.Asc
             ? curr?.Ascending(s.Field) ?? Sort.Ascending(s.Field)
             : curr?.Descending(s.Field) ?? Sort.Descending(s.Field));
-    
+
     internal static Result<FilterDefinition<BsonDocument>> GetFilters(this ValidSpan span, ValidSort[] sorts)
     {
         if (span.EdgeItem?.Count == 0) return Filter.Empty;
-        
+
         var definitions = new List<FilterDefinition<BsonDocument>>();
         for (var i = 0; i < sorts.Length; i++)
         {
@@ -41,22 +41,22 @@ internal static class MongoDbExt
             for (var i = 0; i < idx; i++)
             {
                 list.Add(GetEq(sorts[i]));
-            } 
+            }
             list.Add(GetCompare(sorts[idx]));
             return Filter.And(list);
         }
-        
+
         FilterDefinition<BsonDocument> GetEq(ValidSort sort)
         {
             var (f, v) = (sort.Vector.FullPath, span.Edge(sort.Vector.FullPath));
             return Filter.Eq(f, v);
         }
-  
+
         FilterDefinition<BsonDocument> GetCompare(ValidSort sort)
         {
             var (f, v) = (sort.Vector.FullPath, span.Edge(sort.Vector.FullPath));
             return span.Span.GetCompareOperator(sort.Order) == ">" ? Filter.Gt(f, v) : Filter.Lt(f, v);
-        } 
+        }
     }
 
 
@@ -64,7 +64,7 @@ internal static class MongoDbExt
         this ValidFilter filter
     ) => filter.Constraints
         .ShortcutMap(x
-            => GetConstraintDefinition(filter.Vector.FullPath, x.Match, [..x.Values.GetValues()]))
+            => GetConstraintDefinition(filter.Vector.FullPath, x.Match, [.. x.Values.GetValues()]))
         .Map(x
             => filter.MatchType == MatchTypes.MatchAny
                 ? Builders<BsonDocument>.Filter.Or(x)
@@ -80,14 +80,14 @@ internal static class MongoDbExt
 
         Matches.StartsWith => Filter.Regex(fieldName, new BsonRegularExpression($"^{values[0]}")),
 
-        Matches.Contains => Filter.Regex(fieldName, new BsonRegularExpression((string)(values[0]??""), "i")),
+        Matches.Contains => Filter.Regex(fieldName, new BsonRegularExpression((string)(values[0] ?? ""), "i")),
 
         Matches.NotContains => Filter.Not(Filter.Regex("fieldName",
-            new BsonRegularExpression((string)(values[0]??""), "i"))),
+            new BsonRegularExpression((string)(values[0] ?? ""), "i"))),
 
         Matches.EndsWith => Filter.Regex(fieldName, new BsonRegularExpression($"{values[0]}$")),
 
-        Matches.EqualsTo =>Filter.Eq(fieldName, values[0]),
+        Matches.EqualsTo => Filter.Eq(fieldName, values[0]),
 
         Matches.NotEquals => Filter.Ne(fieldName, values[0]),
 

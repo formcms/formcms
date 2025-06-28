@@ -1,7 +1,7 @@
-using System.Text.Json;
-using FormCMS.Utils.ResultExt;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.EnumExt;
+using FormCMS.Utils.ResultExt;
+using System.Text.Json;
 
 namespace FormCMS.CoreKit.Test;
 
@@ -41,5 +41,5 @@ public class SortTest(QueryApiClient client, string queryName)
                             """.GraphQlQuery<JsonElement[]>(client).Ok();
 
         SimpleAssert.IsTrue(items[0].Id() > items[1].Id());
-    } 
+    }
 }

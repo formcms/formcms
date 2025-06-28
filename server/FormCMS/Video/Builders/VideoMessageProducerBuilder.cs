@@ -1,8 +1,7 @@
-using System.Text.Json;
 using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.EventStreaming;
-using FormCMS.Infrastructure.FileStore;
 using FormCMS.Video.Models;
+using System.Text.Json;
 
 namespace FormCMS.Video.Builders;
 
@@ -13,7 +12,7 @@ public class VideoMessageProducerBuilder
         services.AddSingleton(new VideoMessageProducerBuilder());
         return services;
     }
-    
+
     public WebApplication UseVideo(WebApplication app)
     {
         var registry = app.Services.GetRequiredService<HookRegistry>();
@@ -21,17 +20,17 @@ public class VideoMessageProducerBuilder
         {
             if (args.Asset.Type.Contains("video/"))
             {
-                var msg = JsonSerializer.Serialize(new FFMpegMessage(args.Asset.Name, args.Asset.Path, "m3u8",false));
+                var msg = JsonSerializer.Serialize(new FFMpegMessage(args.Asset.Name, args.Asset.Path, "m3u8", false));
                 await producer.Produce(VideoTopics.Rdy4FfMpeg, msg);
             }
 
             return args;
         });
-        registry.AssetPostDelete.RegisterDynamic("*", async (AssetPostDeleteArgs args,  IStringMessageProducer producer) =>
+        registry.AssetPostDelete.RegisterDynamic("*", async (AssetPostDeleteArgs args, IStringMessageProducer producer) =>
         {
             if (args.Asset.Type.Contains("video/"))
             {
-                var msg = JsonSerializer.Serialize(new FFMpegMessage(args.Asset.Name, args.Asset.Path, "m3u8",true));
+                var msg = JsonSerializer.Serialize(new FFMpegMessage(args.Asset.Name, args.Asset.Path, "m3u8", true));
                 await producer.Produce(VideoTopics.Rdy4FfMpeg, msg);
             }
             return args;

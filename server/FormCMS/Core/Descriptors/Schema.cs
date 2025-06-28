@@ -16,7 +16,7 @@ public enum SchemaType
     Page
 }
 
-public sealed record Settings(Entity? Entity = null, Query? Query =null, Menu? Menu =null, Page? Page = null);
+public sealed record Settings(Entity? Entity = null, Query? Query = null, Menu? Menu = null, Page? Page = null);
 
 //when creating, assign a unique schemaID, id is the auto increase field, use to identify a version.
 //When updating, create a new record with the same schemaId but increase id, set it status to scheduled,so the same schemaID has different versions (differentiate by id);
@@ -24,12 +24,12 @@ public sealed record Settings(Entity? Entity = null, Query? Query =null, Menu? M
 //when get schema view a preview=true parameter, return the latest version schema;
 //can get all versions of schema by schemaId, and set an old version to published;
 public record Schema(
-    string Name ,
-    SchemaType Type ,
+    string Name,
+    SchemaType Type,
     Settings Settings,
-    
+
     long Id = 0,
-    string SchemaId ="",
+    string SchemaId = "",
     bool IsLatest = false,
     PublicationStatus PublicationStatus = PublicationStatus.Draft,
     DateTime CreatedAt = default,
@@ -49,22 +49,22 @@ public static class SchemaHelper
         ColumnHelper.CreateCamelColumn<Schema,Enum>(x => x.PublicationStatus),
         ColumnHelper.CreateCamelColumn<Schema,bool>(x => x.IsLatest),
         ColumnHelper.CreateCamelColumn<Schema, string>(x => x.CreatedBy),
-        
+
         ColumnHelper.CreateCamelColumn<Schema>(x => x.Settings, ColumnType.Text),
 
         DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
 
-    ];  
-    
+    ];
+
     public static SqlKata.Query ById(long id)
         => BaseQuery().Where(nameof(Schema.Id).Camelize(), id);
 
     public static SqlKata.Query ByIds(IEnumerable<object> ids)
         => BaseQuery().WhereIn(nameof(Schema.Id).Camelize(), ids)
             .Select(nameof(Schema.Id).Camelize(), nameof(Schema.Name).Camelize());
-    
+
     public static SqlKata.Query BySchemaId(string schemaId)
         => BaseQuery()
             .OrderByDesc(nameof(Schema.Id).Camelize())
@@ -76,17 +76,17 @@ public static class SchemaHelper
             .WithStatus(publicationStatus)
             .WhereStarts(nameof(Schema.Name).Camelize(), name)
             .Where(nameof(Schema.Type).Camelize(), type.Camelize());
-    
+
 
     public static SqlKata.Query ByNameAndTypeAndNotId(string name, SchemaType type, string schemaId)
         => BaseQuery()
-            .Where(nameof(Schema.IsLatest).Camelize(),true)
+            .Where(nameof(Schema.IsLatest).Camelize(), true)
             .Where(nameof(Schema.Name).Camelize(), name)
             .Where(nameof(Schema.Type).Camelize(), type.Camelize())
             .WhereNot(nameof(Schema.SchemaId).Camelize(), schemaId);
-    
-    public static SqlKata.Query ByNameAndType(SchemaType? type, 
-        IEnumerable<string>? names,PublicationStatus? publicationStatus)
+
+    public static SqlKata.Query ByNameAndType(SchemaType? type,
+        IEnumerable<string>? names, PublicationStatus? publicationStatus)
     {
         var query = BaseQuery()
             .WithStatus(publicationStatus);
@@ -98,7 +98,7 @@ public static class SchemaHelper
         if (names is not null)
         {
             query = query.WhereIn(nameof(Schema.Name).Camelize(), names);
-        } 
+        }
         return query;
     }
 
@@ -106,12 +106,12 @@ public static class SchemaHelper
         => status.HasValue
             ? query.Where(nameof(Schema.PublicationStatus).Camelize(), status.Value.Camelize())
             : query.Where(nameof(Schema.IsLatest).Camelize(), true);
-    
+
     private static SqlKata.Query BaseQuery()
-        =>new SqlKata.Query(TableName)
-            .Select(new []{
-                nameof(Schema.SchemaId).Camelize(), 
-                nameof(Schema.PublicationStatus).Camelize(), 
+        => new SqlKata.Query(TableName)
+            .Select(new[]{
+                nameof(Schema.SchemaId).Camelize(),
+                nameof(Schema.PublicationStatus).Camelize(),
                 nameof(Schema.Id).Camelize(),
                 nameof(Schema.Name).Camelize(),
                 nameof(Schema.Type).Camelize(),
@@ -119,13 +119,13 @@ public static class SchemaHelper
                 nameof(Schema.CreatedAt).Camelize(),
                 nameof(Schema.CreatedBy).Camelize(),
                 nameof(Schema.IsLatest).Camelize()
-            }.Select(x=>x.Camelize()))
+            }.Select(x => x.Camelize()))
             .Where(DefaultColumnNames.Deleted.Camelize(), false);
 
     public static SqlKata.Query SoftDelete(string schemaId)
     {
         return new SqlKata.Query(TableName)
-            .Where(nameof(Schema.SchemaId).Camelize(),schemaId)
+            .Where(nameof(Schema.SchemaId).Camelize(), schemaId)
             .AsUpdate([DefaultColumnNames.Deleted.Camelize()], [true]);
     }
 
@@ -171,10 +171,10 @@ public static class SchemaHelper
         var record = RecordExtensions.FormObject(schema, whiteList: fields);
         return new SqlKata.Query(TableName).AsInsert(record, true);
     }
-    
-    
+
+
 
     public static Result<Schema> RecordToSchema(Record? record)
         => record is null ? Result.Fail("Can not parse schema, input record is null") : record.ToObject<Schema>();
-   
+
 }

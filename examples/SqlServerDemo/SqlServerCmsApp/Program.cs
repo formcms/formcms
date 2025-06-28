@@ -15,14 +15,14 @@ var webBuilder = WebApplication.CreateBuilder(args);
 var dbConn = webBuilder.Configuration.GetConnectionString("sqlserver")!;
 
 // communication between web app and worker app
-webBuilder.AddNatsClient(connectionName:"nats");
+webBuilder.AddNatsClient(connectionName: "nats");
 webBuilder.Services.AddSingleton<IStringMessageProducer, NatsMessageBus>();
 
 webBuilder.Services.AddOutputCache();
 webBuilder.Services.AddSqlServerCms(dbConn);
 //auth
 webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(dbConn));
-webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, AppDbContext>(new AuthConfig(KeyAuthConfig:new KeyAuthConfig(apiKey)));
+webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, AppDbContext>(new AuthConfig(KeyAuthConfig: new KeyAuthConfig(apiKey)));
 
 // Add built-in CMS features: audit log, activity tracking, comment system
 webBuilder.Services.AddAuditLog();
@@ -36,7 +36,7 @@ var webApp = webBuilder.Build();
 //ensure identity tables are created
 using var scope = webApp.Services.CreateScope();
 var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-await  ctx.Database.EnsureCreatedAsync();
+await ctx.Database.EnsureCreatedAsync();
 
 //use cms' CRUD 
 await webApp.UseCmsAsync();
@@ -56,10 +56,10 @@ var workerBuilder = Host.CreateApplicationBuilder(args);
 
 // communication between web app and worker app
 // web app-> worker app
-workerBuilder.AddNatsClient(connectionName:"nats");
+workerBuilder.AddNatsClient(connectionName: "nats");
 workerBuilder.Services.AddSingleton<IStringMessageConsumer, NatsMessageBus>();
 // worker app call web app
-workerBuilder.Services.AddSingleton(new CmsRestClientSettings( "http://localhost:5170", apiKey));
+workerBuilder.Services.AddSingleton(new CmsRestClientSettings("http://localhost:5170", apiKey));
 
 workerBuilder.Services.AddSqlServerCmsWorker(dbConn);
 

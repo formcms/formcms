@@ -1,5 +1,5 @@
-using System.Collections.Immutable;
 using FormCMS.Utils.DataModels;
+using System.Collections.Immutable;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -9,12 +9,12 @@ public sealed record GraphNode(
     ImmutableArray<Sort> Sorts,
     ImmutableArray<Filter> Filters,
     Pagination Pagination,
-    
+
     ImmutableArray<GraphNode> Selection,
     LoadedAttribute LoadedAttribute,
-    ImmutableArray<ValidSort> ValidSorts ,
-    ImmutableArray<ValidFilter> ValidFilters ,
-    bool IsNormalAttribute= false
+    ImmutableArray<ValidSort> ValidSorts,
+    ImmutableArray<ValidFilter> ValidFilters,
+    bool IsNormalAttribute = false
 );
 
 public static class GraphNodeExtensions
@@ -36,41 +36,41 @@ public static class GraphNodeExtensions
 
         return attrs.FirstOrDefault(x => x.Field == parts.Last());
     }
-    public static async Task IterateAsync(this GraphNode[] nodes, 
-        LoadedEntity entity,Record[] records, 
-        Func<LoadedEntity,GraphNode,Record,Task>? singleAction = null, 
-        Func<LoadedEntity,GraphNode[],Record[], Task>? batchAction = null)
+    public static async Task IterateAsync(this GraphNode[] nodes,
+        LoadedEntity entity, Record[] records,
+        Func<LoadedEntity, GraphNode, Record, Task>? singleAction = null,
+        Func<LoadedEntity, GraphNode[], Record[], Task>? batchAction = null)
     {
-        if (batchAction != null) 
+        if (batchAction != null)
             await batchAction(entity, nodes, records);
-        
+
         foreach (var record in records)
         {
             foreach (var node in nodes)
             {
-                if (singleAction is not null) 
-                    await singleAction(entity,node, record);
-                
-                if (node.LoadedAttribute.DataType.IsCompound() && record.TryGetValue(node.Field,out var value))
+                if (singleAction is not null)
+                    await singleAction(entity, node, record);
+
+                if (node.LoadedAttribute.DataType.IsCompound() && record.TryGetValue(node.Field, out var value))
                 {
                     var (_, _, linkDesc) = node.LoadedAttribute.GetEntityLinkDesc();
                     if (linkDesc.IsCollective && value is Record[] subRecords)
                     {
-                        await IterateAsync([..node.Selection],linkDesc.TargetEntity, subRecords,  singleAction,batchAction);
+                        await IterateAsync([.. node.Selection], linkDesc.TargetEntity, subRecords, singleAction, batchAction);
                     }
                     else if (value is Record rec)
                     {
-                        await IterateAsync([..node.Selection], linkDesc.TargetEntity,[rec], singleAction,batchAction);
-                    } 
+                        await IterateAsync([.. node.Selection], linkDesc.TargetEntity, [rec], singleAction, batchAction);
+                    }
                 }
             }
         }
     }
 
     public static void Iterate(this GraphNode[] nodes,
-        LoadedEntity entity, Record[] records, 
-        Action<LoadedEntity,GraphNode,Record>? singleAction = null, 
-        Action<LoadedEntity,GraphNode[],Record[]>? batchAction = null)
+        LoadedEntity entity, Record[] records,
+        Action<LoadedEntity, GraphNode, Record>? singleAction = null,
+        Action<LoadedEntity, GraphNode[], Record[]>? batchAction = null)
     {
         batchAction?.Invoke(entity, nodes, records);
 
@@ -78,19 +78,19 @@ public static class GraphNodeExtensions
         {
             foreach (var node in nodes)
             {
-                singleAction?.Invoke(entity,node, record);
-                
-                if (node.LoadedAttribute.DataType.IsCompound() && record.TryGetValue(node.Field, out var value  ))
+                singleAction?.Invoke(entity, node, record);
+
+                if (node.LoadedAttribute.DataType.IsCompound() && record.TryGetValue(node.Field, out var value))
                 {
                     var (_, _, linkDesc) = node.LoadedAttribute.GetEntityLinkDesc();
                     if (linkDesc.IsCollective && value is Record[] subRecords)
                     {
-                        Iterate([..node.Selection],linkDesc.TargetEntity, subRecords, singleAction,batchAction);
+                        Iterate([.. node.Selection], linkDesc.TargetEntity, subRecords, singleAction, batchAction);
                     }
                     else if (value is Record rec)
                     {
-                        Iterate([..node.Selection],linkDesc.TargetEntity,[rec], singleAction,batchAction);
-                    } 
+                        Iterate([.. node.Selection], linkDesc.TargetEntity, [rec], singleAction, batchAction);
+                    }
                 }
             }
         }

@@ -36,5 +36,5 @@ public static class ValidValueHelper
         _ => new ValidValue(o.ToString() ?? "")
     };
 
-    public static object?[] GetValues(this IEnumerable<ValidValue> values) => [..values.Select(v => v.ObjectValue)];
+    public static object?[] GetValues(this IEnumerable<ValidValue> values) => [.. values.Select(v => v.ObjectValue)];
 }

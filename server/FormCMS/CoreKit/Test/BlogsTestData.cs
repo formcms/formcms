@@ -1,8 +1,8 @@
-using FormCMS.Utils.ResultExt;
 using FormCMS.Core.Descriptors;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
+using FormCMS.Utils.ResultExt;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.CoreKit.Test;
@@ -17,7 +17,7 @@ public enum TestFieldNames
     Language,
     MetaData,
     Post,
-    
+
     Title,
     Abstract,
     Body,
@@ -46,12 +46,12 @@ public enum TestTableNames
 }
 
 public record EntityData(TestEntityNames EntityName, TestTableNames TableName, Record[] Records);
-public record JunctionData(string EntityName,  string Attribute,string JunctionTableName, string SourceField, string TargetField, int SourceId, int[] TargetIds);
+public record JunctionData(string EntityName, string Attribute, string JunctionTableName, string SourceField, string TargetField, int SourceId, int[] TargetIds);
 
 /// a set of blog entities to test queries
 public static class BlogsTestData
 {
-    private static Attribute CreateAttr(this TestFieldNames fieldName) => new (fieldName.Camelize(), fieldName.Camelize());
+    private static Attribute CreateAttr(this TestFieldNames fieldName) => new(fieldName.Camelize(), fieldName.Camelize());
     public static async Task EnsureBlogEntities(SchemaApiClient client)
     {
         await EnsureBlogEntities(x => client.EnsureEntity(x).Ok());
@@ -60,20 +60,20 @@ public static class BlogsTestData
     {
         foreach (var entity in Entities)
         {
-            await  action(entity);
+            await action(entity);
         }
     }
 
     public static async Task PopulateData(EntityApiClient client, AssetApiClient assetClient, QueryApiClient queryClient)
     {
-        var list = new List<(string,byte[])>();
+        var list = new List<(string, byte[])>();
         for (var i = 0; i < 100; i++)
         {
             list.Add(($"{i}.txt", [1]));
         }
         var paths = await assetClient.AddAsset(list.ToArray()).Ok();
-        
-        await PopulateData(1, 100,paths.Split(","), async data =>
+
+        await PopulateData(1, 100, paths.Split(","), async data =>
         {
             foreach (var dataRecord in data.Records)
             {
@@ -101,9 +101,9 @@ public static class BlogsTestData
                 """.GraphQlQuery(queryClient).Ok();
     }
 
-    public static async Task PopulateData(int startId, int count, string[]assetPaths, 
-        Func<EntityData,Task> insertEntity, 
-        Func<JunctionData,Task> insertJunction
+    public static async Task PopulateData(int startId, int count, string[] assetPaths,
+        Func<EntityData, Task> insertEntity,
+        Func<JunctionData, Task> insertJunction
         )
     {
         var tags = new List<Record>();
@@ -113,18 +113,18 @@ public static class BlogsTestData
         var tagsIds = new List<int>();
         var authorsIds = new List<int>();
         var attachments = new List<Record>();
-        
+
         for (var i = startId; i < startId + count; i++)
         {
             tagsIds.Add(i);
             authorsIds.Add(i);
-            
+
             tags.Add(GetObject([TestFieldNames.Name, TestFieldNames.Description], i));
             authors.Add(GetObject([TestFieldNames.Name, TestFieldNames.Description], i));
             categories.Add(GetObject([TestFieldNames.Name, TestFieldNames.Description], i));
-            
+
             var post = GetObject([TestFieldNames.Title, TestFieldNames.Abstract, TestFieldNames.Body], i);
-            
+
             post[TestFieldNames.Category.Camelize()] = i;
 
             if (assetPaths.Length > 0)
@@ -134,10 +134,10 @@ public static class BlogsTestData
             }
 
             post[TestFieldNames.MetaData.Camelize()] = new { Key = "Value" };
-            post[TestFieldNames.Language.Camelize()] = new []{"English","French"};
-            
+            post[TestFieldNames.Language.Camelize()] = new[] { "English", "French" };
+
             posts.Add(post);
-            
+
             var attachment = GetObject([TestFieldNames.Name, TestFieldNames.Description], i);
             attachment["post"] = startId;
             attachments.Add(attachment);
@@ -161,7 +161,7 @@ public static class BlogsTestData
                 .ToArray();
             return string.Join(",", randomElements);
         }
-        
+
         await insertJunction(new JunctionData(
                 TestEntityNames.TestPost.Camelize(),
                 TestFieldNames.Tags.Camelize(),
@@ -183,17 +183,17 @@ public static class BlogsTestData
             )
         );
     }
-    
-    private static Dictionary<string,object> GetObject(TestFieldNames[] fields, int i)
+
+    private static Dictionary<string, object> GetObject(TestFieldNames[] fields, int i)
     {
         var returnValue = new Dictionary<string, object>();
         foreach (var field in fields)
         {
             returnValue.Add(field.Camelize(), $"{field}-{i}");
         }
-        returnValue[DefaultAttributeNames.PublicationStatus.Camelize()] =PublicationStatus.Published.Camelize();
+        returnValue[DefaultAttributeNames.PublicationStatus.Camelize()] = PublicationStatus.Published.Camelize();
         returnValue[DefaultAttributeNames.PublishedAt.Camelize()] = DateTime.UtcNow;
-        return returnValue; 
+        return returnValue;
 
     }
 

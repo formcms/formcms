@@ -12,7 +12,7 @@ public record GraphQlRequestDto(Query Query, GraphQLField[] Fields, StrArgs Args
 
 public static class Resolvers
 {
-    public static readonly IFieldResolver ValueResolver = new FuncFieldResolver<object>(context => 
+    public static readonly IFieldResolver ValueResolver = new FuncFieldResolver<object>(context =>
         context.Source is Record record ? record[context.FieldDefinition.Name] : null);
 
     public static IFieldResolver GetSingleResolver(IQueryService queryService, string entityName)
@@ -20,7 +20,7 @@ public static class Resolvers
         return new FuncFieldResolver<Record>(async context =>
         {
             var dto = GetRequestDto(context, entityName);
-            return await ResultException.Try(()=>queryService.SingleWithAction(dto));
+            return await ResultException.Try(() => queryService.SingleWithAction(dto));
         });
     }
 
@@ -45,23 +45,23 @@ public static class Resolvers
         var res = QueryHelper.ParseArguments(args);
         if (res.IsFailed)
         {
-            throw new ResultException(string.Join(";", res.Errors.Select(x=>x.Message)));
+            throw new ResultException(string.Join(";", res.Errors.Select(x => x.Message)));
         }
-        var (sorts,filters,pagination,distinct) = res.Value;
-        
+        var (sorts, filters, pagination, distinct) = res.Value;
+
         var query = new Query(
-            Name: queryName, 
-            EntityName: entityName, context.Document.Source.ToString(), 
+            Name: queryName,
+            EntityName: entityName, context.Document.Source.ToString(),
             IdeUrl: "",
             Pagination: pagination,
-            Filters: [..filters], 
-            Sorts: [..sorts], 
-            ReqVariables: [..context.Variables.GetRequiredNames()],
+            Filters: [.. filters],
+            Sorts: [.. sorts],
+            ReqVariables: [.. context.Variables.GetRequiredNames()],
             Distinct: distinct
         );
-        
-        return new GraphQlRequestDto(query, 
-            context.FieldAst.SelectionSet?.Selections.OfType<GraphQLField>().ToArray()??[],
+
+        return new GraphQlRequestDto(query,
+            context.FieldAst.SelectionSet?.Selections.OfType<GraphQLField>().ToArray() ?? [],
             context.Variables.ToPairArray());
     }
 }

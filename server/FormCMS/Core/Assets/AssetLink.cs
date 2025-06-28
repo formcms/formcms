@@ -21,7 +21,7 @@ public static class AssetLinks
 {
     public const string TableName = "__assetLinks";
     private const int DefaultPageSize = 50;
-    
+
     public static readonly XEntity Entity = XEntityExtensions.CreateEntity<Asset>(
         nameof(Asset.Type),
         defaultPageSize: DefaultPageSize,
@@ -34,7 +34,7 @@ public static class AssetLinks
             XAttrExtensions.CreateAttr<AssetLink, DateTime>(x => x.UpdatedAt, isDefault:true),
             XAttrExtensions.CreateAttr<AssetLink, long>(x => x.Id,isDefault:true),
         ]);
-    
+
 
     public static readonly Column[] Columns =
     [
@@ -42,7 +42,7 @@ public static class AssetLinks
         ColumnHelper.CreateCamelColumn<AssetLink,long>(x => x.AssetId),
         ColumnHelper.CreateCamelColumn<AssetLink,long>(x => x.RecordId),
         ColumnHelper.CreateCamelColumn<AssetLink>(x => x.Id, ColumnType.Id),
-        
+
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
         DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
@@ -52,8 +52,8 @@ public static class AssetLinks
     {
         return new Query(TableName)
             .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false)
-            .Where(nameof(AssetLink.EntityName).Camelize(),entity)
-            .Where(nameof(AssetLink.RecordId).Camelize(),recordId)
+            .Where(nameof(AssetLink.EntityName).Camelize(), entity)
+            .Where(nameof(AssetLink.RecordId).Camelize(), recordId)
             .Select(
                 nameof(AssetLink.AssetId).Camelize()
             );
@@ -63,13 +63,13 @@ public static class AssetLinks
     {
         var newSet = new HashSet<long>(newIds);
         var oldSet = new HashSet<long>(oldIds);
-    
+
         // Find IDs to add (in newIds but not in oldIds)
         var toAdd = newSet.Except(oldSet).ToArray();
-    
+
         // Find IDs to delete (in oldIds but not in newIds)
         var toDel = oldSet.Except(newSet).ToArray();
-    
+
         return (toAdd, toDel);
     }
 
@@ -85,25 +85,25 @@ public static class AssetLinks
         => new Query(TableName)
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .WhereIn(nameof(AssetLink.AssetId).Camelize(), assetIds)
-            .Select(Entity.Attributes.Select(x=>x.Field));  
-    
+            .Select(Entity.Attributes.Select(x => x.Field));
+
     public static Query DeleteByEntityAndRecordId(string entity, long recordId, IEnumerable<long> ids)
     {
         return new Query(TableName)
             .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false)
-            .WhereIn(nameof(AssetLink.AssetId).Camelize(),ids)
+            .WhereIn(nameof(AssetLink.AssetId).Camelize(), ids)
             .Where(nameof(AssetLink.EntityName).Camelize(), entity)
             .Where(nameof(AssetLink.RecordId).Camelize(), recordId)
-            .AsUpdate([nameof(DefaultColumnNames.Deleted).Camelize()],[true]);
+            .AsUpdate([nameof(DefaultColumnNames.Deleted).Camelize()], [true]);
     }
-    
-    public static Record[] ToInsertRecords(string entityName,long recordId, IEnumerable<long> assetIds)
+
+    public static Record[] ToInsertRecords(string entityName, long recordId, IEnumerable<long> assetIds)
     {
-        return assetIds.Select(x => new Dictionary<string,object>
+        return assetIds.Select(x => new Dictionary<string, object>
         {
             {nameof(AssetLink.EntityName).Camelize(),entityName},
             {nameof(AssetLink.RecordId).Camelize(),recordId},
             {nameof(AssetLink.AssetId).Camelize(),x},
-        }).ToArray<Record>(); 
+        }).ToArray<Record>();
     }
 }

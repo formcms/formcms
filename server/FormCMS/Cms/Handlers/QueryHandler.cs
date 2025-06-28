@@ -1,4 +1,3 @@
-using Azure.Core;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.HttpContextExt;
@@ -9,7 +8,7 @@ public static class QueryHandlers
 {
     public static RouteGroupBuilder MapQueryHandlers(this RouteGroupBuilder app)
     {
-        app.MapGet("/{name}",  (
+        app.MapGet("/{name}", (
             IQueryService svc,
             HttpContext ctx,
             string name,
@@ -18,16 +17,16 @@ public static class QueryHandlers
             string? offset,
             string? limit,
             CancellationToken ct
-        ) =>  svc.ListWithAction(name, new Span(first, last), new Pagination(offset, limit), ctx.Args(), ct));
+        ) => svc.ListWithAction(name, new Span(first, last), new Pagination(offset, limit), ctx.Args(), ct));
 
-        app.MapGet("/{name}/single",  (
+        app.MapGet("/{name}/single", (
             IQueryService queryService,
             HttpContext httpContext,
             string name,
             CancellationToken token
-        ) =>  queryService.SingleWithAction(name, httpContext.Args(), token));
+        ) => queryService.SingleWithAction(name, httpContext.Args(), token));
 
-        app.MapGet("/{name}/part/{attr}",  (
+        app.MapGet("/{name}/part/{attr}", (
             IQueryService svc,
             HttpContext ctx,
             string name,
@@ -37,7 +36,7 @@ public static class QueryHandlers
             string? last,
             int limit,
             CancellationToken token
-        ) =>  svc.Partial(name, attr,source, new Span(first, last), limit, ctx.Args(), token));
+        ) => svc.Partial(name, attr, source, new Span(first, last), limit, ctx.Args(), token));
         return app;
     }
 }

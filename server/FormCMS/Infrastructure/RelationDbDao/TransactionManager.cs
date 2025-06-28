@@ -2,12 +2,12 @@ using System.Data;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public class TransactionManager(IDbTransaction transaction):IDisposable
+public class TransactionManager(IDbTransaction transaction) : IDisposable
 {
     private bool _isDisposed;
-    
-    public IDbTransaction? Transaction ()=> _isDisposed ? null : transaction;
-    
+
+    public IDbTransaction? Transaction() => _isDisposed ? null : transaction;
+
     public void Commit()
     {
         transaction.Commit();
@@ -19,7 +19,7 @@ public class TransactionManager(IDbTransaction transaction):IDisposable
         transaction.Rollback();
         Dispose();
     }
-    
+
     public void Dispose()
     {
         _isDisposed = true;

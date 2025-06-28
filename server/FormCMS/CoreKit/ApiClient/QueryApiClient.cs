@@ -1,14 +1,10 @@
-using System.Text.Json;
-using FormCMS.Utils.HttpClientExt;
 using FluentResults;
-using FormCMS.Core.Descriptors;
-using FormCMS.Utils.EnumExt;
+using FormCMS.Utils.HttpClientExt;
 using FormCMS.Utils.StrArgsExt;
 using GraphQL;
 using GraphQL.Client.Http;
-
 using GraphQL.Client.Serializer.SystemTextJson;
-using Humanizer;
+using System.Text.Json;
 
 namespace FormCMS.CoreKit.ApiClient;
 
@@ -39,7 +35,7 @@ public class QueryApiClient(HttpClient client)
 
 
     public Task<Result<JsonElement[]>> Part(
-        string query, string attr, long sourceId,  string? first = null, string? last = null, int limit = 0
+        string query, string attr, long sourceId, string? first = null, string? last = null, int limit = 0
     ) => client.GetResult<JsonElement[]>(
         $"/{query}/part/{attr}?source={sourceId}&first={first ?? ""}&last={last ?? ""}&limit={limit}".ToQueryApi());
 
@@ -75,7 +71,7 @@ public class QueryApiClient(HttpClient client)
           """);
 
     public Task<Result<JsonElement[]>> ListGraphQlByIds(
-        string entity, object[] ids 
+        string entity, object[] ids
     ) => SendGraphQuery<JsonElement[]>(
         $$"""
           query {{entity}}{
@@ -94,7 +90,7 @@ public class QueryApiClient(HttpClient client)
 
         return response.Data.First().Value;
     }
-    
+
     public async Task<Result> SendGraphQuery(string query)
     {
         var response = await _graph.SendQueryAsync<JsonElement>(new GraphQLRequest(query));

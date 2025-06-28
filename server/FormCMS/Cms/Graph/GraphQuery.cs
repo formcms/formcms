@@ -1,7 +1,6 @@
 using FormCMS.Cms.Services;
 using FormCMS.Core.Assets;
 using FormCMS.Core.Descriptors;
-using FormCMS.Core.Identities;
 using FormCMS.Core.Plugins;
 using FormCMS.Utils.DisplayModels;
 using GraphQL.Types;
@@ -40,7 +39,7 @@ public sealed class GraphQuery : ObjectGraphType
                 ]
             };
         }
-        
+
         var graphMap = new Dictionary<string, GraphInfo>();
 
         foreach (var entity in entities)

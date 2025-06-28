@@ -18,14 +18,14 @@ public record ActivityCount(
 public static class ActivityCounts
 {
     public const string TableName = "__counts";
-    
-    public static readonly string [] KeyFields = [
+
+    public static readonly string[] KeyFields = [
         nameof(ActivityCount.EntityName).Camelize(),
         nameof(ActivityCount.RecordId).Camelize(),
         nameof(ActivityCount.ActivityType).Camelize()
     ];
 
-    public static string ActivityCountField(string activityType)=> activityType + "Count";
+    public static string ActivityCountField(string activityType) => activityType + "Count";
     public static readonly string CountField = nameof(ActivityCount.Count).Camelize();
     public static readonly string TypeField = nameof(ActivityCount.ActivityType).Camelize();
 
@@ -41,7 +41,7 @@ public static class ActivityCounts
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime)
     ];
-    
+
     public static ActivityCount Parse(string key)
     {
         var parts = key.Split('.');
@@ -58,10 +58,10 @@ public static class ActivityCounts
             nameof(ActivityCount.ActivityType),
             nameof(ActivityCount.Count)
         ]);
-    
-    public static Record Condition(this ActivityCount count,bool includeType)
+
+    public static Record Condition(this ActivityCount count, bool includeType)
     {
-        var ret= new Dictionary<string, object>
+        var ret = new Dictionary<string, object>
         {
             { nameof(ActivityCount.EntityName).Camelize(), count.EntityName },
             { nameof(ActivityCount.RecordId).Camelize(), count.RecordId }
@@ -78,7 +78,7 @@ public static class ActivityCounts
             .Select(nameof(TopCountItem.EntityName).Camelize())
             .Select(nameof(TopCountItem.RecordId).Camelize())
             .Select(nameof(TopCountItem.Count).Camelize())
-            
+
             .Where(nameof(ActivityCount.ActivityType).Camelize(), Constants.ScoreActivityType)
             .Where(nameof(ActivityCount.EntityName).Camelize(), entityName)
             .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false)

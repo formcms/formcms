@@ -53,12 +53,12 @@ public class BookmarkService(
         return folders;
     }
 
-    public async Task UpdateFolder(long id,BookmarkFolder folder, CancellationToken ct)
+    public async Task UpdateFolder(long id, BookmarkFolder folder, CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
-        folder = folder with { UserId = userId, Id=id};
-            
-        var affected = await executor.Exec(folder.Update(),false, ct);
+        folder = folder with { UserId = userId, Id = id };
+
+        var affected = await executor.Exec(folder.Update(), false, ct);
         if (affected == 0) throw new ResultException("Failed to update folder.");
     }
 
@@ -68,26 +68,26 @@ public class BookmarkService(
         using var trans = await dao.BeginTransaction();
         try
         {
-            await executor.Exec(Bookmarks.DeleteBookmarksByFolder(userId, folderId),false,ct);
+            await executor.Exec(Bookmarks.DeleteBookmarksByFolder(userId, folderId), false, ct);
             await executor.Exec(BookmarkFolders.Delete(userId, folderId), false, ct);
             trans.Commit();
         }
-        catch 
+        catch
         {
             trans.Rollback();
             throw;
         }
     }
-    
-    public async Task<ListResponse> List(long folderId, StrArgs args, int?offset, int?limit, CancellationToken ct)
+
+    public async Task<ListResponse> List(long folderId, StrArgs args, int? offset, int? limit, CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
-        var (filters, sorts) = QueryStringParser.Parse(args); 
+        var (filters, sorts) = QueryStringParser.Parse(args);
         var listQuery = Bookmarks.List(userId, folderId, offset, limit);
-        var items = await executor.Many(listQuery, Models.Bookmarks.Columns,filters,sorts,ct);
+        var items = await executor.Many(listQuery, Models.Bookmarks.Columns, filters, sorts, ct);
         var countQuery = Bookmarks.Count(userId, folderId);
-        var count = await executor.Count(countQuery,Models.Activities.Columns,filters,ct);
-        return new ListResponse(items,count);  
+        var count = await executor.Count(countQuery, Models.Activities.Columns, filters, ct);
+        return new ListResponse(items, count);
     }
 
     //folderId 0, means default folder, to avoid foreign key error, need to convert it to null
@@ -113,8 +113,8 @@ public class BookmarkService(
 
         if (!string.IsNullOrWhiteSpace(newFolderName))
         {
-            var newFolder = await AddFolder(userId, new BookmarkFolder("",newFolderName,""), ct);
-            toAdd = [..toAdd, newFolder.Id];
+            var newFolder = await AddFolder(userId, new BookmarkFolder("", newFolderName, ""), ct);
+            toAdd = [.. toAdd, newFolder.Id];
         }
 
         if (toAdd.Length > 0)
@@ -124,13 +124,13 @@ public class BookmarkService(
                 .ToArray();
             var loadedBookmark = await LoadMetaData(entity, bookmarks, ct);
             var records = loadedBookmark.Select(x => x.ToInsertRecord()).ToArray();
-            await executor.BatchInsert(Bookmarks.TableName,records);
+            await executor.BatchInsert(Bookmarks.TableName, records);
         }
 
         var count = new ActivityCount(entityName, recordId, Bookmarks.ActivityType, 1);
         await dao.Increase(
             ActivityCounts.TableName, count.Condition(true),
-            ActivityCounts.CountField, 0,1, ct);
+            ActivityCounts.CountField, 0, 1, ct);
     }
 
     public Task DeleteBookmark(long bookmarkId, CancellationToken ct)
@@ -164,20 +164,20 @@ public class BookmarkService(
 
         return list.ToArray();
     }
-    
-    private async Task<BookmarkFolder> AddFolder(string userId,BookmarkFolder folder, CancellationToken ct)
+
+    private async Task<BookmarkFolder> AddFolder(string userId, BookmarkFolder folder, CancellationToken ct)
     {
-         folder = folder with { UserId = userId };
-         var query = folder.Insert();
-         var id = await executor.Exec(query, true, ct);
-         folder = folder with { Id = id };
-         return folder;       
+        folder = folder with { UserId = userId };
+        var query = folder.Insert();
+        var id = await executor.Exec(query, true, ct);
+        folder = folder with { Id = id };
+        return folder;
     }
 
     private async Task<Record[]> GetFoldersByUserId(string userId, CancellationToken ct)
     {
         var records = await executor.Many(BookmarkFolders.All(userId), ct);
-        records = [new BookmarkFolder("", "", "", Id: 0).ToRecord(), ..records];
+        records = [new BookmarkFolder("", "", "", Id: 0).ToRecord(), .. records];
         return records;
     }
 

@@ -1,6 +1,6 @@
-using System.Text;
 using FormCMS.Utils.EnumExt;
 using Microsoft.Extensions.Primitives;
+using System.Text;
 
 namespace FormCMS.Utils.StrArgsExt;
 
@@ -8,7 +8,7 @@ public static class StrArgsExtensions
 {
     public static bool ContainsEnumKey(this StrArgs args, Enum key)
         => args.ContainsKey(key.Camelize());
-    
+
     public static string ToQueryString(this StrArgs? args)
     {
         if (args == null || args.Count == 0)
@@ -43,9 +43,9 @@ public static class StrArgsExtensions
             ? val
             : StringValues.Empty;
     }
-    
-    
-    
+
+
+
     public static StrArgs OverwrittenBy(this StrArgs baseDict, StrArgs overWriteDict)
     {
         var ret = new StrArgs(baseDict);

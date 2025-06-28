@@ -1,7 +1,6 @@
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.DataModels;
 using GraphQL.Types;
-using Humanizer;
 
 namespace FormCMS.Cms.Graph;
 
@@ -10,7 +9,7 @@ public sealed class Clause : InputObjectGraphType
     public Clause()
     {
         Name = "Clause";
-        
+
         foreach (var se in Matches.Single)
         {
             AddField(new FieldType
@@ -36,7 +35,7 @@ public sealed class StringClause : InputObjectGraphType
     public StringClause()
     {
         Name = "StringClause";
-        
+
         foreach (var se in Matches.SingleStr)
         {
             AddField(new FieldType
@@ -61,8 +60,8 @@ public sealed class MatchTypeEnum : EnumerationGraphType
     public MatchTypeEnum()
     {
         Name = "MatchTypeEnum";
-        Add(new EnumValueDefinition(MatchTypes.MatchAll,MatchTypes.MatchAll));
-        Add(new EnumValueDefinition(MatchTypes.MatchAny,MatchTypes.MatchAny));
+        Add(new EnumValueDefinition(MatchTypes.MatchAll, MatchTypes.MatchAll));
+        Add(new EnumValueDefinition(MatchTypes.MatchAny, MatchTypes.MatchAny));
     }
 }
 public sealed class DateClause : InputObjectGraphType
@@ -70,7 +69,7 @@ public sealed class DateClause : InputObjectGraphType
     public DateClause()
     {
         Name = "DateClause";
-        
+
         foreach (var se in Matches.SingleDate)
         {
             AddField(new FieldType
@@ -95,7 +94,7 @@ public sealed class IntClause : InputObjectGraphType
     public IntClause()
     {
         Name = "IntClause";
-        
+
         foreach (var se in Matches.SingleInt)
         {
             AddField(new FieldType
@@ -107,11 +106,11 @@ public sealed class IntClause : InputObjectGraphType
 
         foreach (var se in Matches.MultiInt)
         {
-             AddField(new FieldType
-             {
-                 Name = se,
-                 Type = typeof(ListGraphType<IntGraphType>)
-             });
+            AddField(new FieldType
+            {
+                Name = se,
+                Type = typeof(ListGraphType<IntGraphType>)
+            });
         }
         this.AddClauseCommonField();
     }
@@ -123,7 +122,7 @@ public static class ClauseExt
     {
         t.AddField(new FieldType
         {
-            Name = FilterConstants.MatchTypeKey ,
+            Name = FilterConstants.MatchTypeKey,
             Type = typeof(MatchTypeEnum),
         });
     }

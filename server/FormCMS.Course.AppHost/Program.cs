@@ -9,7 +9,7 @@ var databaseProvider = useSqlServer ? Constants.SqlServer : Constants.Postgres;
 
 IResourceBuilder<IResourceWithConnectionString> db = useSqlServer
     ? builder.AddSqlServer(Constants.SqlServer)
-        .WithDataVolume(isReadOnly:false)
+        .WithDataVolume(isReadOnly: false)
         .WithLifetime(ContainerLifetime.Persistent)
     : builder.AddPostgres(Constants.Postgres);
 

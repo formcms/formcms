@@ -2,7 +2,7 @@ using System.Reflection;
 namespace FormCMS.Core.HookFactory;
 
 public class Hook<TArgs>
-where TArgs: BaseArgs
+where TArgs : BaseArgs
 {
     public string SchemaName { get; init; } = "";
     public Delegate Callback { get; init; } = null!;
@@ -62,9 +62,9 @@ where TArgs: BaseArgs
 
             throw new HookException($"{ExceptionPrefix} didn't find return value of type {typeof(TArgs).Name}");
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
-            throw ex.InnerException??ex;
+            throw ex.InnerException ?? ex;
         }
     }
 
@@ -76,7 +76,7 @@ where TArgs: BaseArgs
         {
             return null;
         }
-        var resultProperty = task.GetType().GetProperty("Result")??
+        var resultProperty = task.GetType().GetProperty("Result") ??
             throw new HookException($"{ExceptionPrefix}Cannot get result property of [{method}]");
         return resultProperty.GetValue(task) ??
             throw new HookException($"{ExceptionPrefix}Cannot get result from async hook method[{method}]");

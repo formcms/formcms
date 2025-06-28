@@ -12,17 +12,17 @@ public class ImageSharpResizer(ResizeOptions opts) : IResizer
         {
             return inputFile;
         }
-        
+
         using var inputStream = inputFile.OpenReadStream();
         using var image = Image.Load(inputStream);
-        
+
         if (image.Width > opts.MaxWidth)
         {
             var scaleFactor = (float)opts.MaxWidth / image.Width;
             var newHeight = (int)(image.Height * scaleFactor);
             image.Mutate(x => x.Resize(opts.MaxWidth, newHeight));
         }
-        
+
         var outputStream = new MemoryStream(); // No 'using' to keep it open for FormFile
         image.Save(outputStream, new JpegEncoder { Quality = opts.Quality });
         outputStream.Position = 0;
@@ -34,7 +34,7 @@ public class ImageSharpResizer(ResizeOptions opts) : IResizer
             ContentType = "image/jpeg"
         };
     }
-    
+
     private bool IsImage(IFormFile file)
     {
         string[] validExtensions = [".jpg", ".jpeg", ".png", ".bmp"];

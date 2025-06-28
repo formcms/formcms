@@ -1,13 +1,13 @@
-using System.Data;
 using FormCMS.Utils.DataModels;
 using Npgsql;
 using NpgsqlTypes;
 using SqlKata.Compilers;
 using SqlKata.Execution;
+using System.Data;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connection):IRelationDbDao
+public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connection) : IRelationDbDao
 {
     private TransactionManager? _transaction;
     private readonly Compiler _compiler = new PostgresCompiler();
@@ -26,16 +26,16 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     }
 
     public async ValueTask<TransactionManager> BeginTransaction()
-        =>_transaction= new TransactionManager(await GetConnection().BeginTransactionAsync());
-    
+        => _transaction = new TransactionManager(await GetConnection().BeginTransactionAsync());
+
     public bool InTransaction() => _transaction?.Transaction() != null;
-    
+
     public Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
     {
         var db = new QueryFactory(GetConnection(), _compiler);
         db.Logger = result => logger.LogInformation(result.ToString());
-            
-        return queryFunc(db,_transaction?.Transaction());
+
+        return queryFunc(db, _transaction?.Transaction());
     }
 
     public async Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct)
@@ -59,11 +59,11 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         return columnDefinitions.ToArray();
     }
 
-    public async Task CreateTable(string table, IEnumerable<Column> cols,CancellationToken ct)
+    public async Task CreateTable(string table, IEnumerable<Column> cols, CancellationToken ct)
     {
         var parts = new List<string>();
         var updateAtField = "";
-        
+
         foreach (var column in cols)
         {
             if (column.Type == ColumnType.UpdatedTime)
@@ -79,7 +79,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         var sql = $"""
             CREATE TABLE "{table}" ({string.Join(", ", parts)});
         """;
-        
+
         if (updateAtField != "")
         {
             sql += $"""
@@ -138,7 +138,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
         await command.ExecuteNonQueryAsync(ct);
     }
-    
+
     public async Task CreateIndex(string table, string[] fields, bool isUnique, CancellationToken ct)
     {
         var indexType = isUnique ? "UNIQUE" : "";
@@ -162,7 +162,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
 
         var quotedKeyFields = keyFields.Select(Quote).ToArray();
         var keyValues = keyConditions.Values.ToArray();
-        
+
         var updateFields = data.Keys.Where(fld => !keyFields.Contains(fld)).ToArray();
         var quotedUpdateFields = updateFields.Select(Quote).ToArray();
 
@@ -227,7 +227,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         var quotedAllFields = allFields.Select(Quote).ToArray();
         var insertColumns = string.Join(", ", quotedAllFields);
         var conflictFields = string.Join(", ", keyFields.Select(Quote));
-    
+
         var valueRows = new List<string>();
         var parameters = new List<NpgsqlParameter>();
         var paramIndex = 0;
@@ -322,7 +322,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                 var paramName = $"@p{paramIndex++}";
                 whereClauses.Add($"{Quote(key)} = {paramName}");
                 parameters.Add(new NpgsqlParameter(paramName, GetNpgsqlDbType(value))
-                    { Value = value ?? DBNull.Value });
+                { Value = value ?? DBNull.Value });
             }
         }
 
@@ -343,7 +343,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         }
 
         var idField = inField is null ? "0 as id" : Quote(inField);
-        
+
         var sql = $"""
                    SELECT {idField}, {Quote(valueField)} 
                    FROM "{tableName}"
@@ -379,7 +379,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         return result != DBNull.Value && result != null ? Convert.ToInt64(result) : 0L;
     }
 
-    public string CastDate(string field)=> $"Date({Quote(field)})";
+    public string CastDate(string field) => $"Date({Quote(field)})";
 
     private static NpgsqlDbType GetNpgsqlDbType(object? value)
     {
@@ -403,18 +403,18 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
             ColumnType.Id => "BIGSERIAL PRIMARY KEY",
             ColumnType.Int => "BIGINT",
             ColumnType.Boolean => "BOOLEAN DEFAULT FALSE",
-            
+
             ColumnType.Text => "TEXT",
             ColumnType.String => "varchar(255)",
-            
+
             ColumnType.Datetime => "TIMESTAMP",
-            ColumnType.CreatedTime or ColumnType.UpdatedTime=> "TIMESTAMP  DEFAULT timezone('UTC', now())",
+            ColumnType.CreatedTime or ColumnType.UpdatedTime => "TIMESTAMP  DEFAULT timezone('UTC', now())",
             _ => throw new NotSupportedException($"Type {t} is not supported")
         };
     }
 
     private static string Quote(string s) => "\"" + s + "\"";
-    
+
     private ColumnType StringToColType(string s)
     {
         s = s.ToLower();

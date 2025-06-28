@@ -1,16 +1,16 @@
-using System.Data;
 using FormCMS.Utils.DataModels;
 using Microsoft.Data.SqlClient;
 using SqlKata.Compilers;
 using SqlKata.Execution;
+using System.Data;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : IRelationDbDao
+public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger) : IRelationDbDao
 {
     private readonly Compiler _compiler = new SqlServerCompiler();
     private TransactionManager? _transaction;
-    
+
     private SqlConnection GetConnection()
     {
         if (conn.State != ConnectionState.Open)
@@ -23,7 +23,7 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
         }
         return conn;
     }
-    
+
     public async ValueTask<TransactionManager> BeginTransaction()
             => _transaction = new TransactionManager(await GetConnection().BeginTransactionAsync());
     public bool InTransaction() => _transaction?.Transaction() != null;
@@ -59,13 +59,13 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
         return columnDefinitions.ToArray();
     }
 
-    public async Task CreateTable(string table, IEnumerable<Column> cols,  CancellationToken ct)
+    public async Task CreateTable(string table, IEnumerable<Column> cols, CancellationToken ct)
     {
         var parts = new List<string>();
         var updateAtField = "";
         foreach (var column in cols)
         {
-            if (column.Type ==  ColumnType.UpdatedTime)
+            if (column.Type == ColumnType.UpdatedTime)
             {
                 updateAtField = column.Name;
             }
@@ -77,7 +77,7 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
         await using var command = new SqlCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as SqlTransaction;
         await command.ExecuteNonQueryAsync(ct);
- 
+
         if (updateAtField != "")
         {
             sql = $"""
@@ -125,7 +125,7 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
         command.Transaction = _transaction?.Transaction() as SqlTransaction;
         await command.ExecuteNonQueryAsync(ct);
     }
-    
+
     public async Task CreateIndex(string table, string[] fields, bool isUnique, CancellationToken ct)
     {
         var indexName = $"idx_{table}_{string.Join("_", fields)}";
@@ -204,7 +204,7 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
         }
     }
 
-    public async Task<long> Increase(string tableName, Record keyConditions, string valueField,long initVal, long delta, CancellationToken ct)
+    public async Task<long> Increase(string tableName, Record keyConditions, string valueField, long initVal, long delta, CancellationToken ct)
     {
         string[] keyFields = keyConditions.Keys.ToArray();
         object[] keyValues = keyConditions.Values.ToArray();
@@ -247,7 +247,7 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
         return result is long value ? value : throw new InvalidOperationException("Merge failed or value is null.");
     }
 
-    public async Task<Dictionary<string,T>> FetchValues<T>(
+    public async Task<Dictionary<string, T>> FetchValues<T>(
         string tableName,
         Record? keyConditions,
         string? inField,
@@ -291,13 +291,13 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
         command.Transaction = _transaction?.Transaction() as SqlTransaction;
         command.Parameters.AddRange(parameters.ToArray());
 
-        var results = new Dictionary<string,T>();
+        var results = new Dictionary<string, T>();
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))
         {
             var key = reader.GetValue(0);
             var value = reader.IsDBNull(1) ? default : reader.GetFieldValue<T>(1);
-            results.Add(key.ToString()??"", value);
+            results.Add(key.ToString() ?? "", value);
         }
         return results;
     }
@@ -312,8 +312,8 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
         var result = await command.ExecuteScalarAsync(ct);
         return result != null && long.TryParse(result.ToString(), out var maxId) ? maxId : 0;
     }
-    
-    public string CastDate(string field)=> $"CAST({field} AS DATE)";
+
+    public string CastDate(string field) => $"CAST({field} AS DATE)";
 
     private static string ColumnTypeToString(ColumnType dataType)
         => dataType switch
@@ -326,7 +326,7 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
             ColumnType.String => "NVARCHAR(255)",
 
             ColumnType.Datetime => "DATETIME",
-            ColumnType.CreatedTime or ColumnType.UpdatedTime=> "DATETIME DEFAULT GETUTCDATE()",
+            ColumnType.CreatedTime or ColumnType.UpdatedTime => "DATETIME DEFAULT GETUTCDATE()",
             _ => throw new NotSupportedException($"Type {dataType} is not supported")
         };
 

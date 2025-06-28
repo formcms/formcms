@@ -26,9 +26,9 @@ public enum TaskStatus
 
 public record SystemTask(
     TaskStatus TaskStatus,
-    TaskType Type = TaskType.Default, 
+    TaskType Type = TaskType.Default,
     string CreatedBy = "",
-    
+
     long Id = 0,
     string TaskId = "",
     int Progress = 0,
@@ -43,10 +43,10 @@ public static class TaskHelper
     private const int DefaultPageSize = 50;
 
     public static TaskPaths GetPaths(this SystemTask task)
-        => new (
+        => new(
             $"{task.TaskId}.zip",
-            Path.Join(Path.GetTempPath(),$"{task.TaskId}.zip"),
-            Path.Join(Path.GetTempPath(),$"{task.TaskId}"),
+            Path.Join(Path.GetTempPath(), $"{task.TaskId}.zip"),
+            Path.Join(Path.GetTempPath(), $"{task.TaskId}"),
             Path.Join(Path.GetTempPath(), $"{task.TaskId}/cms.db")
         );
 
@@ -65,7 +65,7 @@ public static class TaskHelper
             XAttrExtensions.CreateAttr<SystemTask, DateTime>(x => x.CreatedAt, isDefault: true),
             XAttrExtensions.CreateAttr<SystemTask, DateTime>(x => x.UpdatedAt, isDefault: true,inList:false),
         ]);
-    
+
     public static readonly Column[] Columns =
     [
         ColumnHelper.CreateCamelColumn<SystemTask>(x => x.Id, ColumnType.Id),
@@ -75,7 +75,7 @@ public static class TaskHelper
         ColumnHelper.CreateCamelColumn<SystemTask, string>(x => x.TaskId),
         ColumnHelper.CreateCamelColumn<SystemTask, string>(x => x.CreatedBy),
         ColumnHelper.CreateCamelColumn<SystemTask, int>(x => x.Progress),
-        
+
         DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
@@ -88,18 +88,18 @@ public static class TaskHelper
             TaskId: Ulid.NewUlid().ToString(),
             CreatedBy: userName
         );
-    
+
     public static SqlKata.Query AddTask(SystemTask task)
     {
         var record = RecordExtensions.FormObject(task,
-            whiteList:[
-                nameof(SystemTask.Type), 
-                nameof(SystemTask.TaskId), 
-                nameof(SystemTask.CreatedBy), 
+            whiteList: [
+                nameof(SystemTask.Type),
+                nameof(SystemTask.TaskId),
+                nameof(SystemTask.CreatedBy),
                 nameof(SystemTask.Progress),
                 nameof(SystemTask.TaskStatus)
             ]);
-        return new SqlKata.Query(TableName).AsInsert(record,true);
+        return new SqlKata.Query(TableName).AsInsert(record, true);
     }
 
     public static SqlKata.Query GetNewTask(TaskType t)
@@ -115,7 +115,7 @@ public static class TaskHelper
     {
         var record = RecordExtensions.FormObject(
             systemTask,
-            whiteList: [nameof(SystemTask.TaskStatus), nameof(SystemTask.Progress),nameof(SystemTask.Error)]
+            whiteList: [nameof(SystemTask.TaskStatus), nameof(SystemTask.Progress), nameof(SystemTask.Error)]
         );
         var query = new SqlKata.Query(TableName)
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
@@ -129,14 +129,14 @@ public static class TaskHelper
             .Where(nameof(SystemTask.Id).Camelize(), id)
             .Select(Entity.Attributes.Select(x => x.Field));
 
-    public static SqlKata.Query List(int?offset = null, int? limit = null)
+    public static SqlKata.Query List(int? offset = null, int? limit = null)
     {
         var q = new SqlKata.Query(TableName);
-        q= q.Select(Entity.Attributes.Where(x=>x.InList).Select(x=>x.Field));
+        q = q.Select(Entity.Attributes.Where(x => x.InList).Select(x => x.Field));
         if (offset > 0) q.Offset(offset.Value);
         q.Limit(limit ?? DefaultPageSize);
         return q;
     }
-    public static SqlKata.Query Query() => new (TableName);
+    public static SqlKata.Query Query() => new(TableName);
 
 }

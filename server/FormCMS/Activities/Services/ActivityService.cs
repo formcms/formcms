@@ -46,7 +46,7 @@ public class ActivityService(
 
         return counts;
     }
-    public async Task<ListResponse> List(string activityType, StrArgs args, int?offset, int?limit, CancellationToken ct = default)
+    public async Task<ListResponse> List(string activityType, StrArgs args, int? offset, int? limit, CancellationToken ct = default)
     {
         if (!settings.CommandToggleActivities.Contains(activityType)
             && !settings.CommandRecordActivities.Contains(activityType)
@@ -54,19 +54,19 @@ public class ActivityService(
         {
             throw new ResultException("Unknown activity type");
         }
-        
+
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
         var (filters, sorts) = QueryStringParser.Parse(args);
         var query = Models.Activities.List(userId, activityType, offset, limit);
-        var items = await executor.Many(query, Models.Activities.Columns,filters,sorts,ct);
+        var items = await executor.Many(query, Models.Activities.Columns, filters, sorts, ct);
         var countQuery = Models.Activities.Count(userId, activityType);
-        var count = await executor.Count(countQuery,Models.Activities.Columns,filters,ct);
-        return new ListResponse(items,count); 
+        var count = await executor.Count(countQuery, Models.Activities.Columns, filters, ct);
+        return new ListResponse(items, count);
     }
 
     public Task Delete(long id, CancellationToken ct = default)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
-        return executor.Exec(Models.Activities.Delete(userId, id), false,ct);
+        return executor.Exec(Models.Activities.Delete(userId, id), false, ct);
     }
 }

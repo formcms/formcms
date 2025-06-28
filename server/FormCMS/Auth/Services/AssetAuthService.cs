@@ -1,4 +1,3 @@
-using System.Collections.Immutable;
 using FormCMS.Auth.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Assets;
@@ -7,21 +6,22 @@ using FormCMS.Utils.DataModels;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
+using System.Collections.Immutable;
 
 namespace FormCMS.Auth.Services;
 
-public class AssetAuthService( 
+public class AssetAuthService(
     IIdentityService identityService,
     IProfileService profileService,
     KateQueryExecutor executor
-    ):IAssetAuthService
+    ) : IAssetAuthService
 {
     public Asset PreAdd(Asset asset)
     {
         profileService.MustGetReadWriteLevel(Assets.XEntity.Name);
-        return asset with{CreatedBy = identityService.GetUserAccess()!.Id};
+        return asset with { CreatedBy = identityService.GetUserAccess()!.Id };
     }
-    
+
     public async Task PreGetSingle(long id)
     {
         var level = profileService.MustGetReadLevel(Assets.XEntity.Name);
@@ -46,9 +46,9 @@ public class AssetAuthService(
         if (level == AccessLevel.Full) return filters;
         var constraint = new Constraint(Matches.EqualsTo, [identityService.GetUserAccess()!.Id]);
         var filter = new Filter(nameof(Asset.CreatedBy).Camelize(), MatchTypes.MatchAll, [constraint]);
-        return [..filters, filter];
+        return [.. filters, filter];
     }
-    
+
     private async Task EnsureCreatedByCurrentUser(long recordId)
     {
         var query = new SqlKata.Query(Assets.TableName)

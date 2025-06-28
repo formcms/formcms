@@ -6,7 +6,7 @@ public static class BsonDocumentExtensions
 {
     internal static IDictionary<string, object> ToRecord(this BsonDocument doc)
         => doc.ToDictionary(x => x.Name, x => ToBson(x.Value));
-    
+
     private static object ToBson(
         BsonValue val
     ) => (val.BsonType switch

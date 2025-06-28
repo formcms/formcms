@@ -1,9 +1,8 @@
-using System.Data;
-using Fluid.Values;
 using FormCMS.Utils.DataModels;
 using Microsoft.Data.Sqlite;
 using SqlKata.Compilers;
 using SqlKata.Execution;
+using System.Data;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
@@ -185,11 +184,11 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
         }
     }
 
-    public async Task<long> Increase(string tableName, Record keyConditions, string valueField,long initVal, long delta, CancellationToken ct)
+    public async Task<long> Increase(string tableName, Record keyConditions, string valueField, long initVal, long delta, CancellationToken ct)
     {
         string[] keyFields = keyConditions.Keys.ToArray();
         object[] keyValues = keyConditions.Values.ToArray();
-        
+
 
         var insertColumns = string.Join(", ", keyFields.Concat([valueField]));
         var insertParams = string.Join(", ", keyFields.Select((_, i) => $"@p{i}").Concat(["@initVal"]));
@@ -216,7 +215,7 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
         return scalar != null && scalar != DBNull.Value ? (long)scalar : delta;
     }
 
-    public async Task<Dictionary<string,T>> FetchValues<T>(
+    public async Task<Dictionary<string, T>> FetchValues<T>(
         string tableName,
         Record? keyConditions,
         string? inClauseField,
@@ -261,7 +260,7 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
         var whereClause = conditions.Count > 0 ? "WHERE " + string.Join(" AND ", conditions) : string.Empty;
         var sql = $"SELECT {inClauseField ?? "0 as id"}, {valueField} FROM {tableName} {whereClause}";
 
-        var results = new Dictionary<string,T>();
+        var results = new Dictionary<string, T>();
 
         await using var command = new SqliteCommand(sql, GetConnection()); // assumes `connection` is open
         command.Parameters.AddRange(parameters.ToArray());
@@ -286,11 +285,11 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
 
         // Handle null (no rows in the table)
         return result != DBNull.Value && result != null ? Convert.ToInt64(result) : 0L;
-        
+
     }
 
-    public string CastDate(string field)=> $"Date({field})";
-    
+    public string CastDate(string field) => $"Date({field})";
+
 
     private static string ColumnTypeToString(ColumnType dataType)
         => dataType switch

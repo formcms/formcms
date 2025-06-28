@@ -1,5 +1,4 @@
 using FormCMS.Core.Descriptors;
-using FormCMS.Utils.GraphTypeConverter;
 using GraphQLParser.AST;
 using Microsoft.Extensions.Primitives;
 using Converter = FormCMS.Utils.GraphTypeConverter.Converter;
@@ -17,26 +16,26 @@ public record GraphArgument(GraphQLArgument Argument) : IArgument
     {
         array = Argument.Value switch
         {
-            GraphQLListValue listValue => Converter.ToPrimitiveStrings(listValue,QueryConstants.VariablePrefix),
-            _ => Converter.ToPrimitiveString(Argument.Value,QueryConstants.VariablePrefix,out var s) ? [s] : Array.Empty<string?>()
+            GraphQLListValue listValue => Converter.ToPrimitiveStrings(listValue, QueryConstants.VariablePrefix),
+            _ => Converter.ToPrimitiveString(Argument.Value, QueryConstants.VariablePrefix, out var s) ? [s] : Array.Empty<string?>()
         };
         return array.Length > 0;
     }
 
     public bool GetString(out string? value)
     {
-        return Converter.ToPrimitiveString(Argument.Value,QueryConstants.VariablePrefix,out value);
+        return Converter.ToPrimitiveString(Argument.Value, QueryConstants.VariablePrefix, out value);
     }
 
-    public bool GetPairArray(out KeyValuePair<string,StringValues>[] arr)
+    public bool GetPairArray(out KeyValuePair<string, StringValues>[] arr)
     {
         if (Argument.Value is GraphQLNullValue)
         {
-            arr = [new KeyValuePair<string,StringValues>("", new StringValues([null]))];
+            arr = [new KeyValuePair<string, StringValues>("", new StringValues([null]))];
         }
         else
         {
-            arr = Converter.ToPairArray(Argument.Value,QueryConstants.VariablePrefix);
+            arr = Converter.ToPairArray(Argument.Value, QueryConstants.VariablePrefix);
         }
         return arr.Length > 0;
     }
@@ -64,10 +63,10 @@ public record GraphObject(GraphQLObjectValue ObjectValue) : IObject
     {
         value = "";
         var field = ObjectValue.Field(fieldName);
-        return field is not null && Converter.ToPrimitiveString(field.Value,QueryConstants.VariablePrefix ,out value);
+        return field is not null && Converter.ToPrimitiveString(field.Value, QueryConstants.VariablePrefix, out value);
     }
 
-    public bool GetPairArray(string fieldName, out KeyValuePair<string,StringValues>[] dict)
+    public bool GetPairArray(string fieldName, out KeyValuePair<string, StringValues>[] dict)
     {
         dict = [];
         var field = ObjectValue.Field(fieldName);

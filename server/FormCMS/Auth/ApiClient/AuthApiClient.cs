@@ -6,16 +6,16 @@ namespace FormCMS.Auth.ApiClient;
 
 public class AuthApiClient(HttpClient client)
 {
-    private const string Sa ="sadmin@cms.com";
+    private const string Sa = "sadmin@cms.com";
     private const string Admin = "admin@cms.com";
     private const string Pwd = "Admin1!";
-    
-    
+
+
     public Task<Result> EnsureSaLogin() => Login(Sa, Pwd);
 
     private Task<Result> Login(string usernameOrEmail, string password)
     {
-        var loginData = new {usernameOrEmail, password};
+        var loginData = new { usernameOrEmail, password };
         return client.PostAndSaveCookie("/api/login", loginData);
     }
 
@@ -25,16 +25,16 @@ public class AuthApiClient(HttpClient client)
         client.DefaultRequestHeaders.Remove("Cookie");
     }
 
-    public async Task Register(string username,string email, string password)
+    public async Task Register(string username, string email, string password)
     {
-        var loginData = new {username, email, password };
+        var loginData = new { username, email, password };
         await client.PostResult("/api/register", loginData).Ok();
     }
 
     public async Task RegisterAndLogin(string username, string email, string password)
     {
-        await client.PostResult("/api/register", new { username, email, password} ).Ok();
-        await client.PostAndSaveCookie("/api/login", new {usernameOrEmail= email, password} ).Ok();
+        await client.PostResult("/api/register", new { username, email, password }).Ok();
+        await client.PostAndSaveCookie("/api/login", new { usernameOrEmail = email, password }).Ok();
     }
 
     public async Task Sudo(string email, string password, Func<Task> action)
@@ -43,8 +43,8 @@ public class AuthApiClient(HttpClient client)
         await action();
         await Logout();
     }
-   
-    public  Task SaDo(Func<Task> action) => Sudo(Sa,Pwd,action);
-    public  Task AdminDo(Func<Task> action) => Sudo(Admin,Pwd,action);
-    
+
+    public Task SaDo(Func<Task> action) => Sudo(Sa, Pwd, action);
+    public Task AdminDo(Func<Task> action) => Sudo(Admin, Pwd, action);
+
 }

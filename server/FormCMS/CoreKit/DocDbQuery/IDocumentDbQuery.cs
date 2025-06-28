@@ -5,5 +5,5 @@ namespace FormCMS.CoreKit.DocDbQuery;
 
 public interface IDocumentDbQuery
 {
-    Task<Result<Record[]>> Query(string collection, IEnumerable<ValidFilter> filters, ValidSort[] sorts, ValidPagination pagination , ValidSpan? span = null );
+    Task<Result<Record[]>> Query(string collection, IEnumerable<ValidFilter> filters, ValidSort[] sorts, ValidPagination pagination, ValidSpan? span = null);
 }

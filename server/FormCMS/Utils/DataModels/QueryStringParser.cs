@@ -20,10 +20,10 @@ public static class QueryStringParser
             }
             else
             {
-                filters.Add(ParseFilter(key,value));
+                filters.Add(ParseFilter(key, value));
             }
         }
-        return new ParseResult([..filters],sorts);
+        return new ParseResult([.. filters], sorts);
     }
 
     private static Filter ParseFilter(string field, StrArgs args)
@@ -46,7 +46,7 @@ public static class QueryStringParser
     }
 
     private static Sort[] ParseSorts(StrArgs args)
-        => args.Select(x 
+        => args.Select(x
             => new Sort(x.Key, x.Value == "1" ? SortOrder.Asc : SortOrder.Desc)
         ).ToArray();
 

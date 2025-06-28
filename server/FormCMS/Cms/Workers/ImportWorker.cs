@@ -1,6 +1,5 @@
-using System.Collections.Immutable;
-using FormCMS.Core.Descriptors;
 using FormCMS.Core.Assets;
+using FormCMS.Core.Descriptors;
 using FormCMS.Core.Tasks;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.RelationDbDao;
@@ -9,6 +8,7 @@ using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
+using System.Collections.Immutable;
 using Query = SqlKata.Query;
 
 namespace FormCMS.Cms.Workers;
@@ -20,14 +20,14 @@ public class ImportWorker(
     ILogger<ImportWorker> logger,
     ILoggerFactory logFactory,
     IFileStore fileStore
-) : TaskWorker(serviceScopeFactory: scopeFactory, logger: logger,delaySeconds: options.DelaySeconds)
+) : TaskWorker(serviceScopeFactory: scopeFactory, logger: logger, delaySeconds: options.DelaySeconds)
 {
     protected override async Task DoTask(
         IServiceScope serviceScope, KateQueryExecutor destinationExecutor,
         SystemTask task, CancellationToken ct)
     {
         task.GetPaths().ExtractTaskFile();
-        
+
         var sourceConnection = task.GetPaths().CreateConnection();
         var sourceDao = new SqliteDao(sourceConnection, new Logger<SqliteDao>(logFactory));
         var sourceExecutor = new KateQueryExecutor(sourceDao, new KateQueryExecutorOption(300));
@@ -37,7 +37,7 @@ public class ImportWorker(
         var attributeToLookupEntity = GetAttributeToLookup();
 
         //data is too big to put into a transaction 
-       
+
         await ImportSchemas();
         await ImportEntities();
         await ImportJunctions();
@@ -49,7 +49,7 @@ public class ImportWorker(
 
         async Task ImportAssets()
         {
-            await destMigrator.MigrateTable(Assets.TableName, Assets.Columns.EnsureColumn(DefaultColumnNames.ImportKey,ColumnType.String));
+            await destMigrator.MigrateTable(Assets.TableName, Assets.Columns.EnsureColumn(DefaultColumnNames.ImportKey, ColumnType.String));
             await KateQueryExecutor.GetPageDataAndInsert(
                 sourceExecutor,
                 destinationExecutor,
@@ -59,20 +59,20 @@ public class ImportWorker(
                 async records =>
                 {
                     RenamePrimaryKeyToImportKey(records, nameof(Asset.Id).Camelize());
-                    ConvertDateTime(records, [nameof(Asset.CreatedAt).Camelize(),nameof(Asset.UpdatedAt).Camelize()]);
-                    
+                    ConvertDateTime(records, [nameof(Asset.CreatedAt).Camelize(), nameof(Asset.UpdatedAt).Camelize()]);
+
                     foreach (var rec in records)
                     {
                         var path = rec.StrOrEmpty(nameof(Asset.Path).Camelize());
                         if (string.IsNullOrEmpty(path)) continue;
-                        
+
                         var local = Path.Join(task.GetPaths().Folder, path);
                         await fileStore.UploadFileAndRelated(local, path, ct);
-                        
+
                         var url = rec.StrOrEmpty(nameof(Asset.Url).Camelize());
                         var relativeUrl = url[url.IndexOf(path, StringComparison.Ordinal)..];
                         rec[nameof(Asset.Url).Camelize()] = fileStore.GetUrl(relativeUrl);
-                    } 
+                    }
                 },
                 ct
             );
@@ -88,7 +88,7 @@ public class ImportWorker(
                 AssetLinks.Entity.Attributes.Select(x => x.Field),
                 async records =>
                 {
-                    ConvertDateTime(records, [nameof(DefaultColumnNames.CreatedAt).Camelize(),nameof(DefaultColumnNames.UpdatedAt).Camelize()]);
+                    ConvertDateTime(records, [nameof(DefaultColumnNames.CreatedAt).Camelize(), nameof(DefaultColumnNames.UpdatedAt).Camelize()]);
                     foreach (var record in records)
                     {
                         record.Remove(nameof(Asset.Id).Camelize());
@@ -108,7 +108,7 @@ public class ImportWorker(
                 var recordId = record.StrOrEmpty(nameof(AssetLink.RecordId).Camelize());
                 if (entityNameToRecordArray.ContainsKey(entityName))
                 {
-                    entityNameToRecordArray[entityName] = [..entityNameToRecordArray[entityName], recordId];
+                    entityNameToRecordArray[entityName] = [.. entityNameToRecordArray[entityName], recordId];
                 }
                 else
                 {
@@ -121,7 +121,7 @@ public class ImportWorker(
             {
                 var entity = entityNameToEntity[key];
                 var dictImportKeyToId = await destinationExecutor.LoadDict(
-                    new Query(entity.TableName).WhereIn(DefaultColumnNames.ImportKey.Camelize(),ids),
+                    new Query(entity.TableName).WhereIn(DefaultColumnNames.ImportKey.Camelize(), ids),
                     DefaultColumnNames.ImportKey.Camelize(),
                     entity.PrimaryKey,
                      ct
@@ -132,7 +132,7 @@ public class ImportWorker(
 
             var assetIds = records.Select(x => x.StrOrEmpty(nameof(AssetLink.AssetId).Camelize()));
             var dictAssetImportKeyToId = await destinationExecutor.LoadDict(
-                    new Query(Assets.TableName).WhereIn(DefaultColumnNames.ImportKey.Camelize(),assetIds),
+                    new Query(Assets.TableName).WhereIn(DefaultColumnNames.ImportKey.Camelize(), assetIds),
                 DefaultColumnNames.ImportKey.Camelize(),
                 nameof(Asset.Id).Camelize(),
                  ct
@@ -148,7 +148,7 @@ public class ImportWorker(
             }
         }
 
-        async Task<(ImmutableArray<Schema>, ImmutableArray<LoadedEntity>, ImmutableDictionary<string, LoadedEntity>,ImmutableArray<Junction>)> LoadData()
+        async Task<(ImmutableArray<Schema>, ImmutableArray<LoadedEntity>, ImmutableDictionary<string, LoadedEntity>, ImmutableArray<Junction>)> LoadData()
         {
             var records = await sourceExecutor.Many(SchemaHelper.ByNameAndType(null, null, null), ct);
             var schemas = records.Select(x => SchemaHelper.RecordToSchema(x).Ok()).ToArray();
@@ -169,7 +169,7 @@ public class ImportWorker(
                 }
             }
 
-            return ([..schemas], [..entities], dict.ToImmutableDictionary(), [..junctionDict.Values]);
+            return ([.. schemas], [.. entities], dict.ToImmutableDictionary(), [.. junctionDict.Values]);
         }
 
         ImmutableDictionary<(string, string), LoadedEntity> GetAttributeToLookup()
@@ -192,7 +192,7 @@ public class ImportWorker(
                     }
                 }
             }
-            
+
             foreach (var junction in allJunctions)
             {
                 toLookupEntity[(junction.JunctionEntity.Name, junction.SourceAttribute.Field)] = junction.SourceEntity;
@@ -218,7 +218,9 @@ public class ImportWorker(
                     var find = SchemaHelper.RecordToSchema(findRecord).Ok();
                     schema = schema with
                     {
-                        SchemaId = find.SchemaId, PublicationStatus = PublicationStatus.Draft, IsLatest = true
+                        SchemaId = find.SchemaId,
+                        PublicationStatus = PublicationStatus.Draft,
+                        IsLatest = true
                     };
                 }
                 else
@@ -228,10 +230,10 @@ public class ImportWorker(
 
                 var resetQuery = schema.ResetLatest();
                 var save = schema.Save();
-                await destinationExecutor.ExecBatch([(resetQuery,false), (save,false)], ct);
+                await destinationExecutor.ExecBatch([(resetQuery, false), (save, false)], ct);
             }
         }
-        
+
         async Task ImportEntities()
         {
             var dict = GetEntityToParents();
@@ -381,7 +383,7 @@ public class ImportWorker(
         {
             ConvertDateTime(records, entity.Attributes
                 .Where(x => x.DataType == DataType.Datetime)
-                .Select(x=>x.Field));
+                .Select(x => x.Field));
             RenamePrimaryKeyToImportKey(records, entity.PrimaryKey);
             await ReplaceLookupFields();
             async Task ReplaceLookupFields()
@@ -411,6 +413,6 @@ public class ImportWorker(
             }
         }
     }
-    
+
     protected override TaskType GetTaskType() => TaskType.Import;
 }

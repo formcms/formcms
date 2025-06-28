@@ -15,7 +15,7 @@ public record PublicUserInfo(
 
 public static class PublicUserInfos
 {
-    public static readonly Entity Entity = new (
+    public static readonly Entity Entity = new(
         Attributes: [
             new Attribute(Field:nameof(PublicUserInfo.Id).Camelize() ),
             new Attribute(Field:nameof(PublicUserInfo.Name).Camelize() ),

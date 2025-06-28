@@ -72,7 +72,7 @@ public class LocalFileStore(
         var sourceRoot = options.PathPrefix.TrimEnd('/');
         var fullFilePath = Path.Join(sourceRoot, path);
         await Download(path, localPath, ct);
-        
+
 
         var parentDir = Path.GetDirectoryName(fullFilePath) ?? sourceRoot;
         var filePrefix = Path.GetFileName(path);
@@ -101,7 +101,7 @@ public class LocalFileStore(
         File.Delete(file);
         return Task.CompletedTask;
     }
-    
+
     public Task DelByPrefix(string prefix, CancellationToken ct)
     {
         var fullPrefixPath = Path.Combine(options.PathPrefix, prefix);

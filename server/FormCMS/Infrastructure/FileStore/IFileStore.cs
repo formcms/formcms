@@ -4,7 +4,7 @@ public record FileMetadata(long Size, string ContentType);
 
 public interface IFileStore
 {
-    Task Upload(IEnumerable<(string,IFormFile)> files, CancellationToken ct);
+    Task Upload(IEnumerable<(string, IFormFile)> files, CancellationToken ct);
     Task Upload(string localPath, string path, CancellationToken ct);
     Task<FileMetadata?> GetMetadata(string filePath, CancellationToken ct);
     string GetUrl(string file);
@@ -14,7 +14,7 @@ public interface IFileStore
     Task DelByPrefix(string prefix, CancellationToken ct);
 }
 
-public static class FileStoreExtensions 
+public static class FileStoreExtensions
 {
     public static async Task UploadFileAndRelated(this IFileStore fileStore, string localPath, string path, CancellationToken ct)
     {
@@ -34,7 +34,7 @@ public static class FileStoreExtensions
             await fileStore.UploadFolder(matchingDir, destPath, ct);
         }
     }
-    
+
     public static async Task UploadFolder(this IFileStore fileStore, string localPath, string path, CancellationToken ct)
     {
         ArgumentNullException.ThrowIfNull(fileStore);

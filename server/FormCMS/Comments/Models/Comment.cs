@@ -45,7 +45,7 @@ public static class CommentHelper
     ];
 
 
-    public static readonly Entity Entity = new (
+    public static readonly Entity Entity = new(
         Attributes: [
             new Attribute(nameof(Comment.Id).Camelize(),DataType:DataType.Int),
             new Attribute(nameof(Comment.EntityName).Camelize(),DisplayType:DisplayType.Number),
@@ -57,14 +57,14 @@ public static class CommentHelper
             new Attribute(nameof(Comment.UpdatedAt).Camelize(),DataType:DataType.Datetime,DisplayType:DisplayType.LocalDatetime),
             new Attribute(DefaultAttributeNames.PublicationStatus.Camelize())
         ],
-        
+
         Name: nameof(Comment).Camelize(),
         DisplayName: "",
         TableName: "__comments",
         LabelAttributeName: nameof(Comment.Content).Camelize(),
         PrimaryKey: nameof(Comment.Id).Camelize()
     );
-    
+
     private static readonly string[] Fields =
     [
         nameof(Comment.Id).Camelize(),
@@ -77,7 +77,7 @@ public static class CommentHelper
         nameof(Comment.CreatedAt).Camelize(),
         nameof(Comment.UpdatedAt).Camelize()
     ];
-    public static Query List(ValidFilter[] filters,Sort[] sorts, ValidSpan span, ValidPagination pg)
+    public static Query List(ValidFilter[] filters, Sort[] sorts, ValidSpan span, ValidPagination pg)
     {
         var query = new Query(Entity.TableName)
             .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false)
@@ -86,14 +86,14 @@ public static class CommentHelper
             .Limit(pg.Limit);
 
         query.ApplyFilters(filters);
-        
+
         if (span.Span.IsEmpty())
         {
             query.ApplySorts(sorts);
         }
         else
         {
-            query.ApplySpanFilter(span,sorts,s=>s.Field,s=>s.Field);
+            query.ApplySpanFilter(span, sorts, s => s.Field, s => s.Field);
             query.ApplySorts(SpanHelper.IsForward(span.Span) ? sorts : sorts.ReverseOrder());
         }
         return query;
@@ -109,14 +109,14 @@ public static class CommentHelper
             .Select(Fields)
             .Offset(pg.Offset)
             .Limit(pg.Limit);
-        
+
         if (span is not null && span.Span.IsEmpty())
         {
             query.ApplySorts(sorts);
         }
         else
         {
-            query.ApplySpanFilter(span,sorts,s=>s.Field,s=>s.Field);
+            query.ApplySpanFilter(span, sorts, s => s.Field, s => s.Field);
             query.ApplySorts(SpanHelper.IsForward(span?.Span) ? sorts : sorts.ReverseOrder());
         }
         return query;
@@ -129,7 +129,7 @@ public static class CommentHelper
             .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false)
             .Select(Fields);
     }
-    
+
     public static Query Insert(this Comment comment)
         => new Query(Entity.TableName).AsInsert(
             RecordExtensions.FormObject(
@@ -142,8 +142,8 @@ public static class CommentHelper
                     nameof(Comment.Parent),
                     nameof(Comment.Mention)
                 ]
-            ),true);
-    
+            ), true);
+
     public static Query Update(this Comment comment)
         => new Query(Entity.TableName)
             .Where(nameof(comment.Id).Camelize(), comment.Id)
@@ -158,5 +158,5 @@ public static class CommentHelper
         .Where(nameof(Comment.User).Camelize(), userId)
         .Where(nameof(Comment.Id).Camelize(), id)
         .AsUpdate([DefaultColumnNames.Deleted.Camelize()], [true]);
-    
+
 }

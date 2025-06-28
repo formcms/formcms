@@ -1,7 +1,7 @@
-using System.Text.Json;
-using FormCMS.Utils.ResultExt;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.Utils.EnumExt;
+using FormCMS.Utils.ResultExt;
+using System.Text.Json;
 
 namespace FormCMS.CoreKit.Test;
 
@@ -49,7 +49,7 @@ public class FilterTest(QueryApiClient client, string queryName)
         SimpleAssert.AreEqual(98, e[0].Id());
         SimpleAssert.AreEqual(99, e[1].Id());
     }
-    
+
     public async Task VerifyFilterExpression()
     {
         var items = await $$"""

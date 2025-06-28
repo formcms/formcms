@@ -35,7 +35,7 @@ public static class Activities
     public static string GetAnonymouseCookieUserId() => Constants.AnonymousPrefix + "cookie_" + Ulid.NewUlid();
 
     public static string AddAnonymouseHeader(string useId) => Constants.AnonymousPrefix + useId;
-    
+
     public static readonly string[] KeyFields =
     [
         nameof(Activity.EntityName).Camelize(),
@@ -59,7 +59,7 @@ public static class Activities
         ColumnHelper.CreateCamelColumn<Activity, string>(x => x.Url),
         ColumnHelper.CreateCamelColumn<Activity, string>(x => x.Subtitle),
         ColumnHelper.CreateCamelColumn<Activity, string>(x => x.Image),
-        
+
         DefaultAttributeNames.PublishedAt.CreateCamelColumn(ColumnType.Datetime),
         DefaultColumnNames.CreatedAt.CreateCamelColumn(ColumnType.CreatedTime),
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime),
@@ -77,7 +77,7 @@ public static class Activities
         activity = activity with { Url = entity.PageUrl + activity.RecordId };
         if (record.ByJsonPath<string>(entity.BookmarkTitleField, out var title))
         {
-            activity = activity with { Title = Trim(title)};
+            activity = activity with { Title = Trim(title) };
         }
 
         if (record.ByJsonPath<Asset>(entity.BookmarkImageField, out var asset))
@@ -87,7 +87,7 @@ public static class Activities
 
         if (record.ByJsonPath<string>(entity.BookmarkSubtitleField, out var subtitle))
         {
-            activity = activity with { Subtitle = Trim(subtitle)};
+            activity = activity with { Subtitle = Trim(subtitle) };
         }
 
         if (record.ByJsonPath<DateTime>(entity.BookmarkPublishTimeField, out var publishTime))
@@ -95,13 +95,13 @@ public static class Activities
             activity = activity with { PublishedAt = publishTime };
         }
         return activity;
-        
-        string Trim(string? s) => s?.Length > 255 ? s[..255] : s??"";
+
+        string Trim(string? s) => s?.Length > 255 ? s[..255] : s ?? "";
     }
 
     public static string Key(this Activity activityApi)
         => $"{activityApi.EntityName}.{activityApi.RecordId}.{activityApi.ActivityType}.{activityApi.UserId}";
-    
+
     public static Record UpsertRecord(this Activity activityApi, bool includeMetaData)
     {
         var whitList = new List<string>
@@ -122,10 +122,10 @@ public static class Activities
                 nameof(Activity.PublishedAt)
             ]);
         }
-        return RecordExtensions.FormObject(activityApi, [..whitList]);
+        return RecordExtensions.FormObject(activityApi, [.. whitList]);
     }
-    
-    public static Record Condition(this Activity activityApi,bool includeType)
+
+    public static Record Condition(this Activity activityApi, bool includeType)
     {
         var ret = new Dictionary<string, object>
         {
@@ -139,14 +139,14 @@ public static class Activities
         }
         return ret;
     }
-    
+
     public static Query Delete(string userId, long id)
         => new Query(TableName)
             .Where(nameof(Activity.UserId).Camelize(), userId)
             .Where(nameof(Activity.Id).Camelize(), id)
             .AsUpdate([nameof(Activity.IsActive).Camelize()], [false]);
-    
-    public static Query List(string userId, string activityType,int?offset,int?limit)
+
+    public static Query List(string userId, string activityType, int? offset, int? limit)
     {
         var query = new Query(TableName)
             .Select(
@@ -161,12 +161,12 @@ public static class Activities
             .Where(nameof(Activity.UserId).Camelize(), userId)
             .Where(nameof(Activity.ActivityType).Camelize(), activityType)
             .Where(nameof(Activity.IsActive).Camelize(), true);
-        
+
         if (offset > 0) query.Offset(offset.Value);
-        query.Limit(limit??DefaultPageSize);
+        query.Limit(limit ?? DefaultPageSize);
         return query;
     }
-    
+
     public static Query Count(string userId, string activityType)
     {
         var q = new Query(TableName)
@@ -176,13 +176,13 @@ public static class Activities
         return q;
     }
 
-    public static Query GetDailyVisitCount(Func<string, string> CastDate, int daysAgo,bool isAuthed)
+    public static Query GetDailyVisitCount(Func<string, string> CastDate, int daysAgo, bool isAuthed)
     {
         var start = DateTime.UtcNow.Date.AddDays(-daysAgo);
         var dateExp = CastDate(nameof(DefaultColumnNames.UpdatedAt).Camelize());
         var query = new Query(TableName)
                 .Where(nameof(DefaultColumnNames.UpdatedAt).Camelize(), ">=", start)
-                .Where(nameof(Activity.ActivityType).Camelize(),Constants.VisitActivityType)
+                .Where(nameof(Activity.ActivityType).Camelize(), Constants.VisitActivityType)
                 .Where(nameof(Activity.IsActive).Camelize(), true)
                 .SelectRaw($"{dateExp} as {nameof(DailyActivityCount.Day).Camelize()}")
                 .SelectRaw($"COUNT(*) as {nameof(DailyActivityCount.Count).Camelize()}")
@@ -191,11 +191,11 @@ public static class Activities
         query = isAuthed
             ? query.WhereNotStarts(nameof(Activity.UserId).Camelize(), Constants.AnonymousPrefix)
             : query.WhereStarts(nameof(Activity.UserId).Camelize(), Constants.AnonymousPrefix);
-        
+
         return query;
     }
-    
-    public static Query GetDailyActivityCount(Func<string,string>CastDate,int daysAgo)
+
+    public static Query GetDailyActivityCount(Func<string, string> CastDate, int daysAgo)
     {
         var start = DateTime.UtcNow.Date.AddDays(-daysAgo);
         var dateExp = CastDate(nameof(DefaultColumnNames.UpdatedAt).Camelize());

@@ -6,7 +6,7 @@ public record ActivitySettings(
     HashSet<string> CommandRecordActivities,
     HashSet<string> CommandAutoRecordActivities,
     HashSet<string> EventRecordActivities,
-    Dictionary<string,long> Weights,
+    Dictionary<string, long> Weights,
     DateTime ReferenceDateTime,
     long HourBoostWeight
 );

@@ -1,6 +1,6 @@
-using GraphQLParser.AST;
 using FluentResults;
 using GraphQL.Validation;
+using GraphQLParser.AST;
 using Microsoft.Extensions.Primitives;
 
 namespace FormCMS.Utils.GraphTypeConverter;
@@ -14,7 +14,7 @@ public static class Converter
         {
             return [];
         }
-        
+
         var ret = new List<string>();
         foreach (var variable in variables)
         {
@@ -67,46 +67,46 @@ public static class Converter
     public static string?[] ToPrimitiveStrings(GraphQLListValue vals, string variablePrefix)
     {
         var ret = new List<string?>();
-        foreach (var graphQlValue in vals.Values??[])
+        foreach (var graphQlValue in vals.Values ?? [])
         {
-            if (!ToPrimitiveString(graphQlValue,variablePrefix,out var s))
+            if (!ToPrimitiveString(graphQlValue, variablePrefix, out var s))
             {
                 return [];
             }
             ret.Add(s);
         }
 
-        return [..ret];
+        return [.. ret];
     }
-    
+
     public static bool ToPrimitiveString(GraphQLValue value, string variablePrefix, out string? result)
     {
-        var (b,s) = value switch
+        var (b, s) = value switch
         {
             GraphQLNullValue => (true, null),
-            GraphQLIntValue integer => (true,integer.Value.ToString()),
-            GraphQLBooleanValue booleanValue=>(true, booleanValue.BoolValue.ToString()),
-            GraphQLStringValue stringValue => (true,stringValue.Value.ToString()),
-            GraphQLEnumValue enumValue => (true,enumValue.Name.StringValue),
-            GraphQLVariable graphQlVariable => (true,variablePrefix + graphQlVariable.Name.StringValue),
-            _ => (false,null)
+            GraphQLIntValue integer => (true, integer.Value.ToString()),
+            GraphQLBooleanValue booleanValue => (true, booleanValue.BoolValue.ToString()),
+            GraphQLStringValue stringValue => (true, stringValue.Value.ToString()),
+            GraphQLEnumValue enumValue => (true, enumValue.Name.StringValue),
+            GraphQLVariable graphQlVariable => (true, variablePrefix + graphQlVariable.Name.StringValue),
+            _ => (false, null)
         };
         result = s;
         return b;
     }
 
-    public static KeyValuePair<string,StringValues>[] ToPairArray(GraphQLValue? v,string variablePrefix)
+    public static KeyValuePair<string, StringValues>[] ToPairArray(GraphQLValue? v, string variablePrefix)
         => v switch
         {
-            GraphQLObjectValue objectValue => ToPairArray(objectValue,variablePrefix),
-            GraphQLListValue listValue => ToPairArray(listValue,variablePrefix),
+            GraphQLObjectValue objectValue => ToPairArray(objectValue, variablePrefix),
+            GraphQLListValue listValue => ToPairArray(listValue, variablePrefix),
             _ => []
         };
 
-    private static KeyValuePair<string,StringValues>[] ToPairArray(this GraphQLListValue pairs, string variablePrefix)
+    private static KeyValuePair<string, StringValues>[] ToPairArray(this GraphQLListValue pairs, string variablePrefix)
     {
-        var ret = new List<KeyValuePair<string,StringValues>>();
-        foreach (var val in pairs.Values??[])
+        var ret = new List<KeyValuePair<string, StringValues>>();
+        foreach (var val in pairs.Values ?? [])
         {
             var list = val switch
             {
@@ -118,7 +118,7 @@ public static class Converter
         return ret.ToArray();
     }
 
-    private static KeyValuePair<string,StringValues>[] ToPairArray(GraphQLObjectValue objectValue,string variablePrefix)
+    private static KeyValuePair<string, StringValues>[] ToPairArray(GraphQLObjectValue objectValue, string variablePrefix)
     {
         var result = new List<KeyValuePair<string, StringValues>>();
         foreach (var field in objectValue.Fields ?? [])
@@ -126,13 +126,13 @@ public static class Converter
             var arr = field.Value switch
             {
                 GraphQLListValue list => list.Values?
-                    .Select(x=>ToPrimitiveString(x,variablePrefix,out var v)?v:"")
+                    .Select(x => ToPrimitiveString(x, variablePrefix, out var v) ? v : "")
                     .Where(x => !string.IsNullOrEmpty(x))
                     .ToArray(),
-                _ =>  ToPrimitiveString(field.Value,variablePrefix,out var v)?[v]:[]   
+                _ => ToPrimitiveString(field.Value, variablePrefix, out var v) ? [v] : []
             };
-            
-            result.Add(new (field.Name.StringValue, arr??[]));
+
+            result.Add(new(field.Name.StringValue, arr ?? []));
         }
 
         return result.ToArray();

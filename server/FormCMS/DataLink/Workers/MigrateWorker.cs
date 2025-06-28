@@ -1,11 +1,11 @@
-using System.Text.Json;
-using FormCMS.Utils.HttpClientExt;
-using FormCMS.Utils.jsonElementExt;
-using FormCMS.Utils.ResultExt;
 using FluentResults;
 using FormCMS.Core.Descriptors;
 using FormCMS.DataLink.Types;
 using FormCMS.Infrastructure.DocumentDbDao;
+using FormCMS.Utils.HttpClientExt;
+using FormCMS.Utils.jsonElementExt;
+using FormCMS.Utils.ResultExt;
+using System.Text.Json;
 
 namespace FormCMS.DataLink.Workers;
 
@@ -34,7 +34,7 @@ public class MigrateWorker(
                     continue;
                 }
 
-                var res = await BatchSaveData(dao,link);
+                var res = await BatchSaveData(dao, link);
                 if (res.IsSuccess)
                 {
                     logger.LogInformation("Sync [{collection}] is finished...", link.Collection);
@@ -47,9 +47,9 @@ public class MigrateWorker(
         logger.LogInformation("Exiting migrate worker...");
     }
 
-    private async Task<Result> BatchSaveData(IDocumentDbDao dao,ApiLinks links)
+    private async Task<Result> BatchSaveData(IDocumentDbDao dao, ApiLinks links)
     {
-        var res = await FetchAndSave(dao,links, "");
+        var res = await FetchAndSave(dao, links, "");
         while (res.IsSuccess)
         {
             var (curr, next) = res.Value;
@@ -59,7 +59,7 @@ public class MigrateWorker(
                 break;
             }
 
-            res = await FetchAndSave(dao,links, next);
+            res = await FetchAndSave(dao, links, next);
         }
 
         if (res.IsFailed)
@@ -73,7 +73,7 @@ public class MigrateWorker(
         return Result.Ok();
     }
 
-    private async Task<Result<(string curosr, string next)>> FetchAndSave(IDocumentDbDao dao,ApiLinks links, string cursor)
+    private async Task<Result<(string curosr, string next)>> FetchAndSave(IDocumentDbDao dao, ApiLinks links, string cursor)
     {
         var url = links.Api + $"?last={cursor}";
         if (!(await new HttpClient().GetStringResult(url)).Try(out var s, out var err))

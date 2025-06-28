@@ -13,7 +13,7 @@ public static class DocDbLinkerBuilder
     )
     {
 
-        var arr = string.Join(",", [..apiLinksArray]);
+        var arr = string.Join(",", [.. apiLinksArray]);
         Console.WriteLine(
             $"""
              *********************************************************

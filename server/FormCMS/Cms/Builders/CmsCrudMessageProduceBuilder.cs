@@ -1,8 +1,8 @@
-using System.Text.Json;
-using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Messaging;
+using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Utils.RecordExt;
+using System.Text.Json;
 
 namespace FormCMS.Cms.Builders;
 
@@ -12,7 +12,7 @@ public class CmsCrudMessageProduceBuilder(ILogger<CmsCrudMessageProduceBuilder> 
 {
     public static IServiceCollection AddMessageProducer(IServiceCollection services, string[] entities)
     {
-        services.AddSingleton(new CmsCrudMessageProduceBuilderOptions(Entities:entities));
+        services.AddSingleton(new CmsCrudMessageProduceBuilderOptions(Entities: entities));
         services.AddSingleton<CmsCrudMessageProduceBuilder>();
         return services;
     }
@@ -23,7 +23,7 @@ public class CmsCrudMessageProduceBuilder(ILogger<CmsCrudMessageProduceBuilder> 
         RegisterHooks(app);
         return app;
     }
-    
+
     private void Print()
     {
         var info = string.Join(",", options.Entities.Select(x => x.ToString()));
@@ -33,7 +33,7 @@ public class CmsCrudMessageProduceBuilder(ILogger<CmsCrudMessageProduceBuilder> 
             Using Message Producer
             Produce message for these entities: {info}
             *********************************************************
-            """,info); 
+            """, info);
     }
 
     private void RegisterHooks(WebApplication app)
@@ -71,4 +71,3 @@ public class CmsCrudMessageProduceBuilder(ILogger<CmsCrudMessageProduceBuilder> 
     private static string EncodeMessage(string operation, string entity, string id, Record data
     ) => JsonSerializer.Serialize(new RecordMessage(operation, entity, id, data));
 }
-    

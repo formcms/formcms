@@ -8,7 +8,7 @@ public record Junction(
     LoadedEntity JunctionEntity,
     LoadedEntity TargetEntity,
     LoadedEntity SourceEntity,
-    
+
     LoadedAttribute SourceAttribute,
     LoadedAttribute TargetAttribute
 );
@@ -19,20 +19,20 @@ public static class JunctionHelper
     {
         return CreateJunction(sourceEntity.ToLoadedEntity(), targetEntity.ToLoadedEntity(), attr.ToLoaded(sourceEntity.TableName));
     }
-    
+
     public static Junction CreateJunction(LoadedEntity sourceEntity, LoadedEntity targetEntity,
         LoadedAttribute crossAttribute)
     {
         var tableName = GetJunctionTableName(sourceEntity.Name, targetEntity.Name);
         var id = DefaultAttributeNames.Id.CreateLoadedAttribute(tableName, DataType.Int, DisplayType.Number);
-        var deleted =  DefaultColumnNames.Deleted.CreateLoadedAttribute(tableName,DataType.Int, DisplayType.Number);
-        var publicationStatusAttr = DefaultAttributeNames.PublicationStatus.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.LocalDatetime);
-        var updatedAtAttr = DefaultColumnNames.UpdatedAt.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.LocalDatetime);
-        var createdAtAttr = DefaultColumnNames.CreatedAt.CreateLoadedAttribute(tableName,DataType.Datetime, DisplayType.LocalDatetime);
+        var deleted = DefaultColumnNames.Deleted.CreateLoadedAttribute(tableName, DataType.Int, DisplayType.Number);
+        var publicationStatusAttr = DefaultAttributeNames.PublicationStatus.CreateLoadedAttribute(tableName, DataType.Datetime, DisplayType.LocalDatetime);
+        var updatedAtAttr = DefaultColumnNames.UpdatedAt.CreateLoadedAttribute(tableName, DataType.Datetime, DisplayType.LocalDatetime);
+        var createdAtAttr = DefaultColumnNames.CreatedAt.CreateLoadedAttribute(tableName, DataType.Datetime, DisplayType.LocalDatetime);
         sourceEntity = sourceEntity with
         {
             Attributes =
-            [..sourceEntity.Attributes.Select(x => x.Field == crossAttribute.Field ? x with { Junction = null } : x)]
+            [.. sourceEntity.Attributes.Select(x => x.Field == crossAttribute.Field ? x with { Junction = null } : x)]
         };
 
         var sourceAttribute = new LoadedAttribute
@@ -40,7 +40,7 @@ public static class JunctionHelper
             Field: $"{sourceEntity.Name}Id",
             TableName: tableName,
             DataType: DataType.Int,
-            DisplayType:DisplayType.Number
+            DisplayType: DisplayType.Number
         );
 
         var targetAttribute = new LoadedAttribute
@@ -48,33 +48,33 @@ public static class JunctionHelper
             Field: $"{targetEntity.Name}Id",
             TableName: tableName,
             DataType: DataType.Int,
-            DisplayType:DisplayType.Number
+            DisplayType: DisplayType.Number
         );
-        
+
         var junctionEntity = new LoadedEntity
         (
-            Attributes: [id,sourceAttribute, targetAttribute,createdAtAttr,updatedAtAttr],
+            Attributes: [id, sourceAttribute, targetAttribute, createdAtAttr, updatedAtAttr],
             PrimaryKeyAttribute: id,
             LabelAttribute: id,
             DeletedAttribute: deleted,
             Name: tableName,
             TableName: tableName,
-            PrimaryKey:id.Field,
-            DisplayName:"",
-            LabelAttributeName:"",
-            DefaultPageSize:EntityConstants.DefaultPageSize,
-            DefaultPublicationStatus:PublicationStatus.Published,
+            PrimaryKey: id.Field,
+            DisplayName: "",
+            LabelAttributeName: "",
+            DefaultPageSize: EntityConstants.DefaultPageSize,
+            DefaultPublicationStatus: PublicationStatus.Published,
             PublicationStatusAttribute: publicationStatusAttr,
-            UpdatedAtAttribute:updatedAtAttr,
-            PageUrl:"",
-            BookmarkImageField:"",
-            BookmarkQuery:"",
-            BookmarkTitleField:"",
-            BookmarkPublishTimeField:"",
-            BookmarkQueryParamName:"",
-            BookmarkSubtitleField:""
+            UpdatedAtAttribute: updatedAtAttr,
+            PageUrl: "",
+            BookmarkImageField: "",
+            BookmarkQuery: "",
+            BookmarkTitleField: "",
+            BookmarkPublishTimeField: "",
+            BookmarkQueryParamName: "",
+            BookmarkSubtitleField: ""
         );
-        
+
         return new Junction(
             JunctionEntity: junctionEntity,
             TargetEntity: targetEntity,
@@ -107,7 +107,7 @@ public static class JunctionHelper
         return new SqlKata.Query(c.JunctionEntity.TableName).AsInsert(cols, vals);
     }
 
-    public static SqlKata.Query GetTargetIds(this Junction junction,IEnumerable<ValidValue> sourceIds)
+    public static SqlKata.Query GetTargetIds(this Junction junction, IEnumerable<ValidValue> sourceIds)
         => junction.JunctionEntity
             .Basic().Select(junction.SourceAttribute.Field, junction.TargetAttribute.Field)
             .WhereIn(junction.SourceAttribute.Field, sourceIds.GetValues());
@@ -139,7 +139,7 @@ public static class JunctionHelper
         PublicationStatus? publicationStatus
     )
     {
-        selectAttributes = [..selectAttributes, c.SourceAttribute];
+        selectAttributes = [.. selectAttributes, c.SourceAttribute];
         var query = c.TargetEntity.GetCommonListQuery(filters, sorts, pagination, span, selectAttributes, publicationStatus);
         c.ApplyJunctionFilter(query, sourceIds);
         return query;

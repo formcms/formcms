@@ -17,23 +17,23 @@ public class AccountApiTest(AppFactory factory)
         var entities = await factory.AccountApi.GetEntities().Ok();
         Assert.NotEmpty(entities);
     }
-    
+
     [Fact]
     public async Task GetUsers()
     {
-        await  factory.AuthApi.RegisterAndLogin(_email.Split('@')[0],_email, "Admin!1");
-        await  factory.AuthApi.SaDo(async () =>
+        await factory.AuthApi.RegisterAndLogin(_email.Split('@')[0], _email, "Admin!1");
+        await factory.AuthApi.SaDo(async () =>
         {
             var users = await factory.AccountApi.GetUsers().Ok();
             Assert.NotEmpty(users);
         });
     }
-    
+
     [Fact]
     public async Task SingleUser()
     {
-        await  factory.AuthApi.RegisterAndLogin(_email.Split('@')[0],_email, "Admin!1");
-        await  factory.AuthApi.SaDo(async () =>
+        await factory.AuthApi.RegisterAndLogin(_email.Split('@')[0], _email, "Admin!1");
+        await factory.AuthApi.SaDo(async () =>
         {
             var user = await factory.AccountApi.GetSingleUserByEmail(_email);
             Assert.NotNull(user);
@@ -43,8 +43,8 @@ public class AccountApiTest(AppFactory factory)
     [Fact]
     public async Task DeleteUser()
     {
-        await  factory.AuthApi.RegisterAndLogin(_email.Split("@")[0],_email, "Admin!1");
-        await  factory.AuthApi.SaDo(async () =>
+        await factory.AuthApi.RegisterAndLogin(_email.Split("@")[0], _email, "Admin!1");
+        await factory.AuthApi.SaDo(async () =>
         {
             var user = await factory.AccountApi.GetSingleUserByEmail(_email).Ok();
             await factory.AccountApi.DeleteUser(user.Id).Ok();
@@ -56,7 +56,7 @@ public class AccountApiTest(AppFactory factory)
     [Fact]
     public async Task GetRoles()
     {
-        await  factory.AuthApi.EnsureSaLogin().Ok();
+        await factory.AuthApi.EnsureSaLogin().Ok();
         var roles = await factory.AccountApi.GetRoles().Ok();
         Assert.NotEmpty(roles);
     }
@@ -64,7 +64,7 @@ public class AccountApiTest(AppFactory factory)
     [Fact]
     public async Task AddGetSingleDelete()
     {
-        await  factory.AuthApi.EnsureSaLogin().Ok();
+        await factory.AuthApi.EnsureSaLogin().Ok();
 
         var role = new RoleAccess(_role, [], [], [], []);
         await factory.AccountApi.SaveRole(role).Ok();
@@ -72,7 +72,7 @@ public class AccountApiTest(AppFactory factory)
         role = await factory.AccountApi.GetRole(_role).Ok();
         Assert.NotNull(role);
 
-        await factory.AccountApi.DeleteRole(role.Name).Ok();     
+        await factory.AccountApi.DeleteRole(role.Name).Ok();
 
         var res = await factory.AccountApi.GetRole(_role);
         Assert.True(res.IsFailed);

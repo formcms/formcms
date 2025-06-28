@@ -14,12 +14,12 @@ namespace FormCMS.Core.Assets;
 public record Asset(
     string Path, // unique name, yyyy-MM date + ulid
     string Url,
-    string Name ="", // original name, for search
-    string Title ="", // default as name, for link title, picture caption
-    long Size =0,
-    string Type="",
-    Record Metadata=null!,
-    string CreatedBy ="",
+    string Name = "", // original name, for search
+    string Title = "", // default as name, for link title, picture caption
+    long Size = 0,
+    string Type = "",
+    Record Metadata = null!,
+    string CreatedBy = "",
     DateTime CreatedAt = default,
     DateTime UpdatedAt = default,
     long Id = 0,
@@ -33,13 +33,13 @@ public static class Assets
     public const string TableName = "__assets";
     private const int DefaultPageSize = 48;
 
-    public static readonly Entity Entity = new (
+    public static readonly Entity Entity = new(
         Name: "sysAsset",
         DisplayName: "sysAsset",
         TableName: TableName,
         LabelAttributeName: nameof(Asset.Name).Camelize(),
-        PrimaryKey:nameof(Asset.Id).Camelize(),
-        Attributes:[
+        PrimaryKey: nameof(Asset.Id).Camelize(),
+        Attributes: [
             new Attribute(nameof(Asset.Id).Camelize()),
             new Attribute(nameof(Asset.Path).Camelize()),
             new Attribute(nameof(Asset.Url).Camelize()),
@@ -50,7 +50,7 @@ public static class Assets
             new Attribute(nameof(Asset.Metadata).Camelize(),DisplayType:DisplayType.Dictionary),
         ]
     );
-    
+
     public static readonly XEntity XEntity = XEntityExtensions.CreateEntity<Asset>(
         nameof(Asset.Title),
         defaultPageSize: DefaultPageSize,
@@ -71,7 +71,7 @@ public static class Assets
 
         ]);
 
-    public static readonly XEntity EntityWithLinkCount = 
+    public static readonly XEntity EntityWithLinkCount =
         XEntity with
         {
             Attributes = [
@@ -90,7 +90,7 @@ public static class Assets
         ColumnHelper.CreateCamelColumn<Asset, long>(x => x.Size),
         ColumnHelper.CreateCamelColumn<Asset, string>(x => x.Type),
         ColumnHelper.CreateCamelColumn<Asset, string>(x => x.CreatedBy),
-        
+
         ColumnHelper.CreateCamelColumn<Asset>(x => x.Metadata, ColumnType.Text),
         ColumnHelper.CreateCamelColumn<Asset, int>(x => x.Progress),
         DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
@@ -137,7 +137,7 @@ public static class Assets
     public static Query Single(long id)
         => new Query(TableName)
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
-            .Where(nameof(Asset.Id).Camelize(),id)
+            .Where(nameof(Asset.Id).Camelize(), id)
             .Select(XEntity.Attributes.Select(x => x.Field));
 
     public static Query Single(string path)
@@ -145,8 +145,8 @@ public static class Assets
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .Where(nameof(Asset.Path).Camelize(), path)
             .Select(XEntity.Attributes.Select(x => x.Field));
-        
-    public static Query List(int?offset = null, int? limit = null)
+
+    public static Query List(int? offset = null, int? limit = null)
     {
         var q = new Query(TableName)
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
@@ -160,8 +160,8 @@ public static class Assets
         return q;
     }
 
-    public static bool IsValidPath(string path)=> 
-        !string.IsNullOrWhiteSpace(path) 
+    public static bool IsValidPath(string path) =>
+        !string.IsNullOrWhiteSpace(path)
         && !path.StartsWith("http"); // not external link
 
     public static Query UpdateFile(long id, string fileName, long size, string contentType) =>
@@ -182,13 +182,13 @@ public static class Assets
 
     public static Query GetAssetIDsByPaths(IEnumerable<string> paths)
         => new Query(TableName)
-            .Select( nameof(Asset.Id).Camelize(), nameof(Asset.Path).Camelize())
+            .Select(nameof(Asset.Id).Camelize(), nameof(Asset.Path).Camelize())
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .WhereIn(nameof(Asset.Path).Camelize(), paths);
 
     public static Query GetAssetsByPaths(IEnumerable<string> paths)
         => new Query(TableName)
-            .Select(Entity.Attributes.Select(x=>x.Field))
+            .Select(Entity.Attributes.Select(x => x.Field))
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .WhereIn(nameof(Asset.Path).Camelize(), paths);
 

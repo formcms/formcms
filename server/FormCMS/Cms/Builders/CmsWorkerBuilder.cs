@@ -50,8 +50,8 @@ public static class CmsWorkerBuilder
 
         services.AddSingleton(new DataPublishingWorkerOptions(taskTimingSeconds.PublishDelay));
         services.AddHostedService<DataPublishingWorker>();
-       
-        
+
+
         Console.WriteLine(
             $"""
             *********************************************************

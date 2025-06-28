@@ -7,7 +7,7 @@ namespace FormCMS.Cms.Services;
 public class PageResolver(
     KeyValueCache<Schema> pageCache,
     ISchemaService schemaSvc
-    ):IPageResolver
+    ) : IPageResolver
 {
     public Task<Schema> GetPage(string path, CancellationToken ct)
     {
@@ -27,7 +27,7 @@ public class PageResolver(
         return GetCachePage(name, matchPrefix, ct);
     }
 
-    public  Task<Schema> GetPage(string name, bool matchPrefix, PublicationStatus? status, CancellationToken ct)
+    public Task<Schema> GetPage(string name, bool matchPrefix, PublicationStatus? status, CancellationToken ct)
     {
         if (matchPrefix) name += "/{";
         return status == PublicationStatus.Published
@@ -38,17 +38,17 @@ public class PageResolver(
     private async Task<Schema> GetCachePage(string name, bool matchPrefix, CancellationToken token) =>
         await pageCache.GetOrSet(name + ":" + matchPrefix,
             async ct => await GetDbPage(name, matchPrefix, PublicationStatus.Published, ct), token);
-    
+
     private async Task<Schema> GetDbPage(
-        string name, 
-        bool matchPrefix, 
+        string name,
+        bool matchPrefix,
         PublicationStatus? publicationStatus,
         CancellationToken token)
     {
         var schema = matchPrefix
             ? await schemaSvc.ByStartsOrDefault(name, SchemaType.Page, publicationStatus, token)
             : await schemaSvc.ByNameOrDefault(name, SchemaType.Page, publicationStatus, token);
-        if (schema is not { Type: SchemaType.Page })throw new ResultException($"cannot find page {name}");
+        if (schema is not { Type: SchemaType.Page }) throw new ResultException($"cannot find page {name}");
         return schema;
     }
 }

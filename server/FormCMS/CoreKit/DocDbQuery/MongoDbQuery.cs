@@ -1,8 +1,8 @@
-using FormCMS.Utils.BsonDocumentExt;
-using FormCMS.Utils.ResultExt;
 using FluentResults;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.DocumentDbDao;
+using FormCMS.Utils.BsonDocumentExt;
+using FormCMS.Utils.ResultExt;
 using MongoDB.Bson;
 using MongoDB.Driver;
 
@@ -27,9 +27,9 @@ public class MongoDbQuery(ILogger<MongoDao> logger, IMongoDatabase db) : IDocume
 
         if (span is not null && !span.Span.IsEmpty())
         {
-            if (!span.GetFilters([..validSorts]).Try(out var spanFilters, out err))
+            if (!span.GetFilters([.. validSorts]).Try(out var spanFilters, out err))
                 return Result.Fail(err);
-            filters = [..filters, spanFilters];
+            filters = [.. filters, spanFilters];
         }
 
         var records = await GetCollection(collection)
@@ -38,6 +38,6 @@ public class MongoDbQuery(ILogger<MongoDao> logger, IMongoDatabase db) : IDocume
             .Skip(pagination.Offset)
             .Limit(pagination.Limit).ToListAsync();
 
-        return records.Select(x=>x.ToRecord()).ToArray();
+        return records.Select(x => x.ToRecord()).ToArray();
     }
 }

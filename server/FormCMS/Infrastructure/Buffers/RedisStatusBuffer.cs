@@ -20,14 +20,14 @@ public class RedisStatusBuffer(IConnectionMultiplexer redis, BufferSettings sett
         "status-buffer:", b => b,
         b => (bool)b
     );
-    
-    public Task<bool> Toggle(string key, bool isActive, Func<string,Task<bool>> getStatusAsync)
+
+    public Task<bool> Toggle(string key, bool isActive, Func<string, Task<bool>> getStatusAsync)
     {
         //the key is for per user, lock won't affect system performance
         return _buffer.DoTaskInLock(key, async () =>
         {
-            var (hits,_) = await _buffer.GetAndParse([key]);
-            var currentStatus =  hits.Count > 0? hits.First().Value : await getStatusAsync(key);
+            var (hits, _) = await _buffer.GetAndParse([key]);
+            var currentStatus = hits.Count > 0 ? hits.First().Value : await getStatusAsync(key);
             if (currentStatus == isActive)
             {
                 if (hits.Count == 0) await _buffer.SetValue(key, isActive);
@@ -40,9 +40,9 @@ public class RedisStatusBuffer(IConnectionMultiplexer redis, BufferSettings sett
         });
     }
 
-    public Task<Dictionary<string,bool>> Get(string[] keys, Func<string,Task<bool>> getStatusAsync)
+    public Task<Dictionary<string, bool>> Get(string[] keys, Func<string, Task<bool>> getStatusAsync)
     {
-        return _buffer.SafeGet(keys,getStatusAsync);
+        return _buffer.SafeGet(keys, getStatusAsync);
     }
 
     public async Task Set(string[] keys)
@@ -53,6 +53,6 @@ public class RedisStatusBuffer(IConnectionMultiplexer redis, BufferSettings sett
         await _buffer.SetFlushKey(keys);
     }
 
-    public Task<Dictionary<string,bool>> GetAfterLastFlush(DateTime lastFlushTime)
+    public Task<Dictionary<string, bool>> GetAfterLastFlush(DateTime lastFlushTime)
         => _buffer.GetAfterLastFlush(lastFlushTime);
 }

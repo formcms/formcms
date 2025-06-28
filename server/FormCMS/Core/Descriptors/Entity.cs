@@ -1,16 +1,15 @@
-using System.Collections.Immutable;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 using DynamicExpresso;
-
-using FormCMS.CoreKit.RelationDbQuery;
-using FormCMS.Utils.ResultExt;
 using FluentResults;
+using FormCMS.CoreKit.RelationDbQuery;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.jsonElementExt;
+using FormCMS.Utils.ResultExt;
 using GraphQL.Client.Abstractions.Utilities;
+using System.Collections.Immutable;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace FormCMS.Core.Descriptors;
 
@@ -25,14 +24,14 @@ public record Entity(
 
     int DefaultPageSize = EntityConstants.DefaultPageSize,
     PublicationStatus DefaultPublicationStatus = PublicationStatus.Published,
-    
+
     string PageUrl = "",
     string BookmarkQuery = "",
     string BookmarkQueryParamName = "",
     string BookmarkTitleField = "",
-    string BookmarkSubtitleField ="",
-    string BookmarkImageField="",
-    string BookmarkPublishTimeField =""
+    string BookmarkSubtitleField = "",
+    string BookmarkImageField = "",
+    string BookmarkPublishTimeField = ""
 );
 
 public record LoadedEntity(
@@ -51,13 +50,13 @@ public record LoadedEntity(
     int DefaultPageSize,
     PublicationStatus DefaultPublicationStatus,
     string PageUrl,
-    string BookmarkQuery ,
-    string BookmarkQueryParamName ,
-    string BookmarkTitleField ,
+    string BookmarkQuery,
+    string BookmarkQueryParamName,
+    string BookmarkTitleField,
     string BookmarkSubtitleField,
     string BookmarkImageField,
     string BookmarkPublishTimeField
-); 
+);
 
 public static class EntityConstants
 {
@@ -66,38 +65,38 @@ public static class EntityConstants
 
 public static class EntityHelper
 {
- 
+
     public static LoadedEntity ToLoadedEntity(this Entity entity)
     {
         var attributes = entity.Attributes.Select(x => x.ToLoaded(entity.TableName)).ToArray();
-        var primaryKey = attributes.First(x=>x.Field == entity.PrimaryKey);
+        var primaryKey = attributes.First(x => x.Field == entity.PrimaryKey);
         var labelAttribute = attributes.First(x => x.Field == entity.LabelAttributeName);
-        var publicationStatusAttribute  = attributes.First(x=>x.Field == DefaultAttributeNames.PublicationStatus.Camelize());
-        
+        var publicationStatusAttribute = attributes.First(x => x.Field == DefaultAttributeNames.PublicationStatus.Camelize());
+
         var deletedAttribute = DefaultColumnNames.Deleted.CreateLoadedAttribute(entity.TableName, DataType.Int, DisplayType.Number);
-        var updatedAtAttribute =  attributes.First(x=>x.Field == DefaultColumnNames.UpdatedAt.Camelize());
-        
+        var updatedAtAttribute = attributes.First(x => x.Field == DefaultColumnNames.UpdatedAt.Camelize());
+
         return new LoadedEntity(
-            [..attributes],
-            PrimaryKeyAttribute:primaryKey,
+            [.. attributes],
+            PrimaryKeyAttribute: primaryKey,
             LabelAttribute: labelAttribute,
-            DeletedAttribute:deletedAttribute,
-            Name:entity.Name,
+            DeletedAttribute: deletedAttribute,
+            Name: entity.Name,
             TableName: entity.TableName,
-            PrimaryKey:entity.PrimaryKey,
-            DisplayName:entity.DisplayName,
-            LabelAttributeName:entity.LabelAttributeName,
-            DefaultPageSize:entity.DefaultPageSize,
-            DefaultPublicationStatus:entity.DefaultPublicationStatus,
-            UpdatedAtAttribute:updatedAtAttribute,
-            PublicationStatusAttribute:publicationStatusAttribute,
-            PageUrl:entity.PageUrl,
-            BookmarkQuery:entity.BookmarkQuery,
-            BookmarkQueryParamName:entity.BookmarkQueryParamName,
-            BookmarkTitleField:entity.BookmarkTitleField,
-            BookmarkSubtitleField:entity.BookmarkSubtitleField,
-            BookmarkImageField:entity.BookmarkImageField,
-            BookmarkPublishTimeField:entity.BookmarkPublishTimeField
+            PrimaryKey: entity.PrimaryKey,
+            DisplayName: entity.DisplayName,
+            LabelAttributeName: entity.LabelAttributeName,
+            DefaultPageSize: entity.DefaultPageSize,
+            DefaultPublicationStatus: entity.DefaultPublicationStatus,
+            UpdatedAtAttribute: updatedAtAttribute,
+            PublicationStatusAttribute: publicationStatusAttribute,
+            PageUrl: entity.PageUrl,
+            BookmarkQuery: entity.BookmarkQuery,
+            BookmarkQueryParamName: entity.BookmarkQueryParamName,
+            BookmarkTitleField: entity.BookmarkTitleField,
+            BookmarkSubtitleField: entity.BookmarkSubtitleField,
+            BookmarkImageField: entity.BookmarkImageField,
+            BookmarkPublishTimeField: entity.BookmarkPublishTimeField
         );
     }
     public static string[] GetAssets(this LoadedEntity entity, Record record)
@@ -105,8 +104,8 @@ public static class EntityHelper
         var paths = new List<string>();
         foreach (var attribute in entity.Attributes.Where(x => x.DisplayType.IsAsset()))
         {
-            if (record.TryGetValue(attribute.Field, out var value) 
-                && value is string stringValue )
+            if (record.TryGetValue(attribute.Field, out var value)
+                && value is string stringValue)
             {
                 paths.AddRange(stringValue.Split(","));
             }
@@ -123,7 +122,7 @@ public static class EntityHelper
         ValidFilter[] filters,
         ValidSort[] sorts,
         IEnumerable<LoadedAttribute> attributes,
-        PublicationStatus? publicationStatus 
+        PublicationStatus? publicationStatus
     )
     {
         var query = e.Basic().Select(attributes.Select(x => x.AddTableModifier()));
@@ -132,7 +131,7 @@ public static class EntityHelper
             query.Where(e.PublicationStatusAttribute.AddTableModifier(), publicationStatus.Value.Camelize());
         }
 
-        query.ApplyJoin([..filters.Select(x => x.Vector), ..sorts.Select(x => x.Vector)], publicationStatus);
+        query.ApplyJoin([.. filters.Select(x => x.Vector), .. sorts.Select(x => x.Vector)], publicationStatus);
         var result = query.ApplyFilters(filters);
         if (result.IsFailed)
         {
@@ -164,18 +163,18 @@ public static class EntityHelper
         this LoadedEntity e,
         IEnumerable<LoadedAttribute> attributes
     ) => e.Basic().Select(attributes.Select(x => x.Field));
-    
+
     public static SqlKata.Query ListQuery(
         this LoadedEntity e,
-        ValidFilter[] filters, 
-        ValidSort[] sorts, 
-        ValidPagination? pagination, 
-        ValidSpan? span, 
-        IEnumerable<LoadedAttribute> attributes,PublicationStatus? publicationStatus
+        ValidFilter[] filters,
+        ValidSort[] sorts,
+        ValidPagination? pagination,
+        ValidSpan? span,
+        IEnumerable<LoadedAttribute> attributes, PublicationStatus? publicationStatus
         )
     {
-        var query = e.GetCommonListQuery(filters,sorts,pagination,span,attributes,publicationStatus);
-        query.ApplyJoin([..filters.Select(x => x.Vector), ..sorts.Select(x => x.Vector)], publicationStatus);
+        var query = e.GetCommonListQuery(filters, sorts, pagination, span, attributes, publicationStatus);
+        query.ApplyJoin([.. filters.Select(x => x.Vector), .. sorts.Select(x => x.Vector)], publicationStatus);
         return query;
     }
 
@@ -196,7 +195,7 @@ public static class EntityHelper
 
         q.ApplyFilters(filters);
         q.ApplyValidSorts(SpanHelper.IsForward(span?.Span) ? sorts : sorts.ReverseOrder());
-        q.ApplySpanFilter(span, sorts, x=>x.Vector.Attribute.AddTableModifier(x.Vector.TableAlias),x=>x.Vector.FullPath);
+        q.ApplySpanFilter(span, sorts, x => x.Vector.Attribute.AddTableModifier(x.Vector.TableAlias), x => x.Vector.FullPath);
         if (pagination is not null)
         {
             q.ApplyPagination(pagination);
@@ -207,7 +206,7 @@ public static class EntityHelper
 
     public static SqlKata.Query CountQuery(
         this LoadedEntity e,
-        ValidFilter[] filters , 
+        ValidFilter[] filters,
         PublicationStatus? publicationStatus
     )
     {
@@ -224,7 +223,7 @@ public static class EntityHelper
         {
             item.Remove(e.PrimaryKey);
         }
-        
+
         item[DefaultAttributeNames.PublicationStatus.Camelize()] = e.DefaultPublicationStatus.Camelize();
         if (e.DefaultPublicationStatus == PublicationStatus.Published)
         {
@@ -237,7 +236,7 @@ public static class EntityHelper
     public static Result<SqlKata.Query> SavePublicationStatus(this LoadedEntity e, object id, Record record)
     {
         if (!record.TryGetValue(DefaultAttributeNames.PublicationStatus.Camelize(), out var value)
-            || value is not string str || !Enum.TryParse<PublicationStatus>(str,true, out var status))
+            || value is not string str || !Enum.TryParse<PublicationStatus>(str, true, out var status))
         {
             return Result.Fail("Cannot save publication status, unknown status");
         }
@@ -255,7 +254,7 @@ public static class EntityHelper
             }
             updatingRecord[DefaultAttributeNames.PublishedAt.Camelize()] = dateTime;
         }
-        
+
         return new SqlKata.Query(e.TableName)
             .Where(e.PrimaryKey, id)
             .AsUpdate(updatingRecord);
@@ -266,7 +265,7 @@ public static class EntityHelper
             .Where(DefaultAttributeNames.PublicationStatus.Camelize(), PublicationStatus.Scheduled.Camelize())
             .Where(DefaultAttributeNames.PublishedAt.Camelize(), "<", DateTime.UtcNow)
             .AsUpdate([DefaultAttributeNames.PublicationStatus.Camelize()], [PublicationStatus.Published.Camelize()]);
-    
+
     public static Result<SqlKata.Query> UpdateQuery(this LoadedEntity e, long id, Record item)
     {
         if (!item.Remove(DefaultColumnNames.UpdatedAt.Camelize(), out var updatedAt))
@@ -283,7 +282,7 @@ public static class EntityHelper
         return ret;
     }
 
-    public static Result<SqlKata.Query> DeleteQuery(this LoadedEntity e,long id,Record item)
+    public static Result<SqlKata.Query> DeleteQuery(this LoadedEntity e, long id, Record item)
     {
         if (!item.Remove(DefaultColumnNames.UpdatedAt.Camelize(), out var updatedAt))
         {
@@ -312,12 +311,12 @@ public static class EntityHelper
         }
         return Result.Fail($"Validation fail for {e.LabelAttributeName}");
     }
-    
-    public static Result ValidateLocalAttributes(this LoadedEntity e,Record record)
+
+    public static Result ValidateLocalAttributes(this LoadedEntity e, Record record)
     {
         var interpreter = new Interpreter().Reference(typeof(Regex));
         var result = Result.Ok();
-        foreach (var localAttribute in e.Attributes.Where(x=>x.DataType.IsLocal() && !string.IsNullOrWhiteSpace(x.Validation)))
+        foreach (var localAttribute in e.Attributes.Where(x => x.DataType.IsLocal() && !string.IsNullOrWhiteSpace(x.Validation)))
         {
             if (!Validate(localAttribute).Try(out var err))
             {
@@ -325,7 +324,7 @@ public static class EntityHelper
             }
         }
         return result;
-        
+
         Result Validate(LoadedAttribute attribute)
         {
             record.TryGetValue(attribute.Field, out var value);
@@ -333,7 +332,7 @@ public static class EntityHelper
             {
                 DataType.Int => typeof(int),
                 DataType.Datetime => typeof(DateTime),
-                _=> typeof(string)
+                _ => typeof(string)
             };
 
             try
@@ -357,19 +356,19 @@ public static class EntityHelper
         }
     }
 
-    public static Result<Record> Parse (this LoadedEntity entity, JsonElement element)
+    public static Result<Record> Parse(this LoadedEntity entity, JsonElement element)
     {
         var rec = element.ToDictionary();
         foreach (var attribute in entity.Attributes)
         {
             if (!rec.TryGetValue(attribute.Field, out var value)) continue;
-            var dataType = attribute.DataType is DataType.Lookup ? attribute.Lookup!.TargetEntity.PrimaryKeyAttribute.DataType: attribute.DataType;
-            
+            var dataType = attribute.DataType is DataType.Lookup ? attribute.Lookup!.TargetEntity.PrimaryKeyAttribute.DataType : attribute.DataType;
+
             if (attribute.Lookup is not null && value is Record record)
             {
-                 value = record[attribute.Lookup.TargetEntity.PrimaryKeyAttribute.Field];
+                value = record[attribute.Lookup.TargetEntity.PrimaryKeyAttribute.Field];
             }
-            var (_,fail, obj,errors) = Converter.DisplayObjToDbObj(dataType, attribute.DisplayType, value);
+            var (_, fail, obj, errors) = Converter.DisplayObjToDbObj(dataType, attribute.DisplayType, value);
             if (fail)
             {
                 return Result.Fail(errors);
