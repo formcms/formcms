@@ -8,9 +8,9 @@ public record StripeProduct(
     string EntityName,
     string Id,
     string Name,
-    long Amount,
-    string Currency,
-    string Interval,
+    long? Amount,
+    string? Currency,
+    string? Interval,
     DateTime CreatedAt = default,
     DateTime UpdatedAt = default
     

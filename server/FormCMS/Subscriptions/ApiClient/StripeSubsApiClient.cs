@@ -24,4 +24,7 @@ public class StripeSubsApiClient(HttpClient client)
 
     public Task<Result<StripeSubscription>> GetSubscription(string id) =>
         client.GetResult<StripeSubscription>(id.Url());
+
+    public Task<Result<IEnumerable<StripeProduct>>> GetProducts(int count) =>
+        client.GetResult<IEnumerable<StripeProduct>>(($"products/{count}".Url()));
 }

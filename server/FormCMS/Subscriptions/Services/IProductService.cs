@@ -10,6 +10,6 @@ namespace FormCMS.Subscriptions.Services
         Task<StripeProduct> Delete(string Id, CancellationToken ct);
         Task<StripeProduct> Single(string Id, CancellationToken ct);
         
-        Task<IEnumerable<StripeProduct>> List( CancellationToken ct);
+        Task<IEnumerable<StripeProduct>> List( int count, CancellationToken ct);
     }
 }

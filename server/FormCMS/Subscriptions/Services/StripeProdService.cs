@@ -1,4 +1,5 @@
 ﻿using FormCMS.Subscriptions.Models;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Extensions.Options;
 using Stripe;
 using static FormCMS.SystemSettings;
@@ -55,9 +56,46 @@ namespace FormCMS.Subscriptions.Services
             throw new NotImplementedException();
         }
 
-        public Task<IEnumerable<StripeProduct>> List(CancellationToken ct)
+        public async Task<IEnumerable<StripeProduct>> List(int count, CancellationToken ct)
         {
-            throw new NotImplementedException();
+            List<StripeProduct> stripeProducts = new List<StripeProduct>();
+            var reqOption = new RequestOptions { ApiKey = conf.Value.StripeSecretKey };
+            var options = new ProductListOptions { Limit = count };
+            StripeList<Product> products = await productService.ListAsync(options, reqOption);
+            foreach (var product in products.Data)
+            {
+                var price =
+                    product.DefaultPriceId != null
+                        ? priceService.Get(product.DefaultPriceId, null, reqOption)
+                        : null;
+                if (price != null)
+                    stripeProducts.Add(
+                        new StripeProduct(
+                            "Product",
+                            product.Id,
+                            product.Name,
+                            price.UnitAmount,
+                            price.Currency,
+                            price.Recurring.Interval,
+                            product.Created,
+                            product.Updated
+                        )
+                    );
+                else
+                    stripeProducts.Add(
+                        new StripeProduct(
+                            "Product",
+                            product.Id,
+                            product.Name,
+                            null,
+                            null,
+                            null,
+                            product.Created,
+                            product.Updated
+                        )
+                    );
+            }
+            return stripeProducts;
         }
 
         public async Task<StripeProduct> Single(string id, CancellationToken ct)

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using FormCMS.Core.Assets;
 using FormCMS.Subscriptions.Models;
 using FormCMS.Utils.ResultExt;
- 
+
 namespace FormCMS.Course.Tests;
 
 [Collection("API")]
@@ -14,13 +14,18 @@ public class StripeSubApiTestShould(AppFactory factory)
 {
     [Fact]
     public async Task CustomerShouldCreated()
-    { 
-        //Arrange 
-        var expected = new StripeCustomer(factory.Faker.Internet.Email(), "pm_card_visa", factory.Faker.Name.FullName(), null);
+    {
+        //Arrange
+        var expected = new StripeCustomer(
+            factory.Faker.Internet.Email(),
+            "pm_card_visa",
+            factory.Faker.Name.FullName(),
+            null
+        );
         //Act
         var result = await factory.StripeSubClient.CreateCustomer(expected);
         //Assert
-        var actual = await  factory.StripeSubClient.GetCustomer(result.Value.Id);
+        var actual = await factory.StripeSubClient.GetCustomer(result.Value.Id);
         Assert.Equal(expected.Name, actual.Value.Name);
         Assert.Equal(expected.Email, actual.Value.Email);
     }
@@ -33,7 +38,7 @@ public class StripeSubApiTestShould(AppFactory factory)
         );
         Assert.True(result.IsSuccess);
         Assert.NotEmpty(result.Value.Id);
-        Assert.Equal("USD", result.Value.Currency,true);
+        Assert.Equal("USD", result.Value.Currency, true);
     }
 
     [Fact]
@@ -61,9 +66,18 @@ public class StripeSubApiTestShould(AppFactory factory)
         var sub = await factory.StripeSubClient.GetSubscription(subId);
         Assert.NotNull(sub);
 
-         await factory.StripeSubClient.CancelSubscription(sub.Value.Id, default);
-       var su = await factory.StripeSubClient.GetSubscription(subId);
-        Assert.Equal("sub_1Re5P91ULvZc5yjVu8183hND",su.Value.Id);
+        await factory.StripeSubClient.CancelSubscription(sub.Value.Id, default);
+        var su = await factory.StripeSubClient.GetSubscription(subId);
+        Assert.Equal("sub_1Re5P91ULvZc5yjVu8183hND", su.Value.Id);
         Assert.Equal("canceled", su.Value.Status);
+    }
+
+    [Theory]
+    [InlineData(3)]
+    public async Task ProductsShouldBeGet(int count)
+    {
+        var prods = await factory.StripeSubClient.GetProducts(count);
+        Assert.NotNull(prods);
+        Assert.Equal(count, prods.Value.Count());
     }
 }
