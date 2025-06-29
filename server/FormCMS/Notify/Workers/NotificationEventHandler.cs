@@ -10,6 +10,7 @@ namespace FormCMS.Notify.Workers;
 public class NotificationEventHandler(
     IServiceScopeFactory scopeFactory,
     IStringMessageConsumer consumer,
+    IStringMessageProducer producer,
     NotifySettings  notifySettings,
     ILogger<NotificationEventHandler> logger
 ):BackgroundService
@@ -30,14 +31,17 @@ public class NotificationEventHandler(
                         var notification = new Notification(
                             UserId: message.TargetUserId,
                             SenderId: message.UserId,
-                            NotificationType: message.Activity,
-                            Message: message.Message
-                            // Url:message.Url
+                            ActionType: message.Activity,
+                            MessageType:message.EntityName,
+                            Message: message.Message,
+                            Url:message.Url
                         );
 
                         using var scope = scopeFactory.CreateScope();
                         await scope.ServiceProvider.GetRequiredService<KateQueryExecutor>()
                             .Exec(notification.Insert(),false,ct);
+                        
+                        
                     }
                     catch (Exception e)
                     {

@@ -31,10 +31,13 @@ public class NotificationService(
         await LoadSender(items, ct);
         
         var countQuery = Notifications.Count(userId);
-        var count = await executor.Count(countQuery,Models.Notifications.Columns,filters,ct);
+        var count = await executor.Count(countQuery,Notifications.Columns,filters,ct);
+        
+        await executor.Exec(Notifications.ReadAll(userId), false,ct);
         return new ListResponse(items,count); 
     }
     
+    //todo: need another table to save count, to improve performance
     public  Task<int> UnreadCount(CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User not logged in");

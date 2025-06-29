@@ -11,12 +11,13 @@ namespace FormCMS.Notify.Models;
 public record Notification(
     string UserId,
     string SenderId,
-    string NotificationType,
-    DateTime CreatedAt = default,
+    string ActionType,
+    string MessageType,
     string Message = "",
     string Url = "",
     bool IsRead = false,
     long Id = 0,
+    DateTime CreatedAt = default,
     PublicUserInfo? Sender = null
 );
 
@@ -30,7 +31,8 @@ public static class Notifications
         ColumnHelper.CreateCamelColumn<Notification>(x=>x.Id,ColumnType.Id),
         ColumnHelper.CreateCamelColumn<Notification,string>(x=>x.UserId),
         ColumnHelper.CreateCamelColumn<Notification,string>(x=>x.SenderId),
-        ColumnHelper.CreateCamelColumn<Notification,string>(x=>x.NotificationType),
+        ColumnHelper.CreateCamelColumn<Notification,string>(x=>x.ActionType),
+        ColumnHelper.CreateCamelColumn<Notification,string>(x=>x.MessageType),
         ColumnHelper.CreateCamelColumn<Notification,string>(x=>x.Message),
         ColumnHelper.CreateCamelColumn<Notification,string>(x=>x.Url),
         ColumnHelper.CreateCamelColumn<Notification,bool>(x=>x.IsRead),
@@ -45,7 +47,8 @@ public static class Notifications
         [
             nameof(Notification.UserId),
             nameof(Notification.SenderId),
-            nameof(Notification.NotificationType),
+            nameof(Notification.ActionType),
+            nameof(Notification.MessageType),
             nameof(Notification.Message),
             nameof(Notification.Url),
             nameof(Notification.IsRead)
@@ -59,7 +62,8 @@ public static class Notifications
             .Select(
                 nameof(Notification.Id).Camelize(),
                 nameof(Notification.SenderId).Camelize(),
-                nameof(Notification.NotificationType).Camelize(),
+                nameof(Notification.ActionType).Camelize(),
+                nameof(Notification.MessageType).Camelize(),
                 nameof(Notification.Message).Camelize(),
                 nameof(Notification.CreatedAt).Camelize(),
                 nameof(Notification.Url).Camelize()
@@ -78,6 +82,7 @@ public static class Notifications
             .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false);
         return query;
     }
+
     public static Query UnreadCount(string userId)
     {
         var query = new Query(TableName)

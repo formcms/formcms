@@ -7,11 +7,11 @@ export function renderNotifications() {
 
 async function loadNotificationCount(button) {
     button.addEventListener('click', (e) => {
-        window.location.href = '/portal?page=notifications';
+        window.location.href = '/portal';
     })
     
-    await fetchUser();
-    if (!getUser()) {
+    const user = await fetchUser();
+    if (!user) {
         button.style.display = 'none';
         console.log("not logged in");
         return;

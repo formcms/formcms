@@ -7,8 +7,7 @@ import {
     fetchBookmarkFolders,
     recordActivity,
     saveBookmark,
-    toggleActivity,
-    trackVisit
+    toggleActivity
 } from "../services/activityService.js";
 import {shareDialogHTML} from "./components/shareDiaogHtml.js";
 import {bookmarkDialogHtml} from "./components/bookmarkDialogHtml.js";

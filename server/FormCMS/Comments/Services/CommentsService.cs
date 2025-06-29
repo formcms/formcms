@@ -93,6 +93,7 @@ public class CommentsService(
         
         var activityMessage = new ActivityMessage(comment.CreatedBy, parentComment.CreatedBy, CommentHelper.Entity.Name,
             parentComment.Id, CommentHelper.CommentActivity, CmsOperations.Create,comment.Content);
+        
         activityMessage =await SetLinkUrl(activityMessage,entity,comment.RecordId,ct);
         await producer.Produce(CmsTopics.CmsActivity, activityMessage.ToJson());
         return comment with{Id = id};

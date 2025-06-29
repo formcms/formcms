@@ -1,3 +1,5 @@
+import {fetchMe} from "../services/userService.js";
+
 let user; 
 let currentUserPromise;
 
@@ -17,6 +19,7 @@ export function ensureUser(){
     return false; 
 }
 
+//single flight
 export async function fetchUser() {
     if (user) return;
     if (currentUserPromise) {
@@ -24,21 +27,9 @@ export async function fetchUser() {
     }
 
     try {
-        currentUserPromise = (async () => {
-            const response = await fetch('/api/me', {
-                credentials: 'include' // ensures cookies are sent with the request
-            });
-
-            if (response.ok) {
-                user = await response.json();
-                return user;
-            }else {
-                throw new Error('API call failed');
-            }
-        })();
-
-        const result = await currentUserPromise;
-        return result;
+        currentUserPromise = fetchMe();
+        user = await currentUserPromise;
+        return user;
     } catch (error) {
         console.error('API call failed:', error);
         return false;
