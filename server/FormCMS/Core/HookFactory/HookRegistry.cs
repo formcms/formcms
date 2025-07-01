@@ -3,6 +3,7 @@ public class HookRegistry
 {
         public HookList<SchemaPreGetAllArgs> SchemaPreGetAll { get; } = new();
         public HookList<SchemaPostGetSingleArgs> SchemaPostGetSingle { get; } = new();
+        public HookList<SchemaPostGetHistoryArgs> SchemaPostGetHistory { get; } = new();
         public HookList<SchemaPreSaveArgs> SchemaPreSave { get; } = new();
         public HookList<SchemaPostSaveArgs> SchemaPostSave { get; } = new();
         public HookList<SchemaPreDelArgs> SchemaPreDel { get; } = new();

@@ -15,12 +15,7 @@ public class SchemaAuthService(
 ) :ISchemaAuthService
 {
 
-    public void GetAll()
-    {
-        profileService.MustHasAnyRole([Roles.Sa,Roles.Admin]);
-    }
-
-    public void GetOne(Schema schema)
+    public void CheckRole()
     {
         profileService.MustHasAnyRole([Roles.Sa,Roles.Admin]);
     }

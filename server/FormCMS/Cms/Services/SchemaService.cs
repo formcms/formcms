@@ -47,7 +47,9 @@ public sealed class SchemaService(
     {
         var query = SchemaHelper.BySchemaId(schemaId);
         var items = await queryExecutor.Many(query, ct);
-        return items.Select(x => SchemaHelper.RecordToSchema(x).Ok()).ToArray();
+        var schemas= items.Select(x => SchemaHelper.RecordToSchema(x).Ok()).ToArray();
+        await hook.SchemaPostGetHistory.Trigger(provider, new SchemaPostGetHistoryArgs([..schemas]));
+        return schemas;
     }
 
     public async Task<Schema?> ById(long id, CancellationToken ct = default)
