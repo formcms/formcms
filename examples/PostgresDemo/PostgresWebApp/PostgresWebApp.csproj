@@ -8,7 +8,7 @@
 
     <ItemGroup>
         <PackageReference Include="Aspire.NATS.Net" Version="9.3.1" />
-        <PackageReference Include="FormCMS" Version="0.5.4" />
+        <PackageReference Include="FormCMS" Version="0.5.5" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0"/>
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
