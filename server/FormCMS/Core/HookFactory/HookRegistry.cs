@@ -3,6 +3,7 @@ public class HookRegistry
 {
         public HookList<SchemaPreGetAllArgs> SchemaPreGetAll { get; } = new();
         public HookList<SchemaPostGetSingleArgs> SchemaPostGetSingle { get; } = new();
+        public HookList<SchemaPostGetHistoryArgs> SchemaPostGetHistory { get; } = new();
         public HookList<SchemaPreSaveArgs> SchemaPreSave { get; } = new();
         public HookList<SchemaPostSaveArgs> SchemaPostSave { get; } = new();
         public HookList<SchemaPreDelArgs> SchemaPreDel { get; } = new();
@@ -12,7 +13,8 @@ public class HookRegistry
         public HookList<QueryPostSingleArgs> QueryPostSingle { get; } = new();
         public HookList<QueryPartialArgs>  QueryPartial{ get; } = new();
         public HookList<QueryPostPartialArgs>  QueryPostPartial{ get; } = new();
-        public HookList<PlugInQueryArgs> PlugInQueryArgs { get; } = new();
+        public HookList<ListPlugInQueryArgs> ListPlugInQueryArgs { get; } = new();
+        public HookList<SinglePlugInQueryArgs> SinglePlugInQueryArgs { get; } = new();
         public HookList<EntityPreGetSingleArgs> EntityPreGetSingle { get; } = new();
         public HookList<EntityPreGetListArgs> EntityPreGetList { get; } = new();
         public HookList<EntityPreUpdateArgs> EntityPreUpdate { get; } = new();

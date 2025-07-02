@@ -33,13 +33,13 @@ export const comments = {
         </form>
     </div>
     <div class="space-y-4" data-gjs-type="foreach" data-component="foreach">
-        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200" data-component='comment-container' data-user-id="{{user.id}}">
+        <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200" data-component='comment-container' data-user-id="{{createdBy.id}}">
              <div class="flex items-start" >
                   <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3 overflow-hidden">
-                       <img src="{{user.avatarUrl}}" alt="User Avatar" class="w-full h-full object-cover">
+                       <img src="{{createdBy.avatarUrl}}" alt="User Avatar" class="w-full h-full object-cover">
                   </div>
                   <div class="flex-1">
-                       <p class="text-xs text-gray-400 mt-1">{{user.name}} · <span data-component="localDateTime">{{createdAt}}</span></p>
+                       <p class="text-xs text-gray-400 mt-1">{{createdBy.name}} · <span data-component="localDateTime">{{createdAt}}</span></p>
                        <p data-component="comment-content" class="text-sm text-gray-600">{{content}}</p>
                   </div>
              </div>
@@ -73,13 +73,13 @@ export const comments = {
              
              <div  data-gjs-type="data-list" data-component="data-list"  query="commentReplies" lazy="true" offset="0" limit="5" pagination="Button">
                 <div class="space-y-4"  data-gjs-type="foreach" data-component="foreach">
-                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200" data-component='comment-container' data-id="{{id}}" data-user-id="{{user.id}}">
+                    <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200" data-component='comment-container' data-id="{{id}}" data-user-id="{{createdBy.id}}">
                         <div class="flex items-start" >
                             <div class="w-10 h-10 rounded-full bg-gray-300 flex items-center justify-center mr-3 overflow-hidden">
-                                <img src="{{user.avatarUrl}}" alt="User Avatar" class="w-full h-full object-cover">
+                                <img src="{{createdBy.avatarUrl}}" alt="User Avatar" class="w-full h-full object-cover">
                             </div>
                             <div class="flex-1">
-                                <p class="text-xs text-gray-400 mt-1">{{user.name}} · {{createdAt}}</p>
+                                <p class="text-xs text-gray-400 mt-1">{{createdBy.name}} · {{createdAt}}</p>
                                 <p data-component="comment-content" class="text-sm text-gray-600">{{content}}</p>
                             </div>
                         </div>

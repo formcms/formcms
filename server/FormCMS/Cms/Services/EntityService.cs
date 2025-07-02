@@ -27,6 +27,7 @@ public sealed class EntityService(
     PluginRegistry pluginRegistry
 ) : IEntityService
 {
+    
     public async Task<Result<LoadedEntity>> GetEntityAndValidateRecordId(
         string entityName,
         long recordId,

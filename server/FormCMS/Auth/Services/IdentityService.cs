@@ -14,12 +14,16 @@ public class IdentityService(
     PluginRegistry registry
 ) : IIdentityService
 {
+    private const string DefaultUrl = "/_content/FormCMS/static-assets/imgs/avatar.jpg";
+
     public UserAccess? GetUserAccess()
     {
         var contextUser = contextAccessor.HttpContext?.User;
         if (contextUser?.Identity?.IsAuthenticated != true) return null;
         
         string[] roles = [..contextUser.FindAll(ClaimTypes.Role).Select(x => x.Value)];
+        var avatarUrl = contextUser.FindFirstValue(nameof(CmsUser.AvatarPath).Camelize());
+        avatarUrl = !string.IsNullOrEmpty(avatarUrl) ? store.GetUrl(avatarUrl) : DefaultUrl;
         
         var user = new UserAccess
         (
@@ -27,7 +31,7 @@ public class IdentityService(
             Name: contextUser.Identity.Name ?? "",
             Email: contextUser.FindFirstValue(ClaimTypes.Email) ??"",
             Roles: roles,
-            AvatarUrl: store.GetUrl(contextUser.FindFirstValue(nameof(CmsUser.AvatarPath).Camelize())??""),
+            AvatarUrl:  avatarUrl,
             ReadWriteEntities: [..contextUser.FindAll(AccessScope.FullAccess).Select(x => x.Value)],
             RestrictedReadWriteEntities: [..contextUser.FindAll(AccessScope.RestrictedAccess).Select(x => x.Value)],
             ReadonlyEntities: [..contextUser.FindAll(AccessScope.FullRead).Select(x => x.Value)],

@@ -46,12 +46,16 @@ public record QueryPostPartialArgs(
     Record[] RefRecords  
 ):BaseArgs(Node.Field);
 
-
-
-public record PlugInQueryArgs(
+public record ListPlugInQueryArgs(
     string Name,
     Span Span,
     Pagination Pagination,
     StrArgs Args,
     Record[]? OutRecords = null
+) : BaseArgs(Name);
+
+public record SinglePlugInQueryArgs(
+    string Name,
+    StrArgs Args,
+    Record? OutRecord = null
 ) : BaseArgs(Name);

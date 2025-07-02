@@ -38,6 +38,7 @@ function addMenuActionsButtons() {
 
 function addEntityActionsButtons() {
     headerBox.innerHTML = `
+    <button id="saveAndPublish" class="btn btn-primary">Save and Publish</button>
     <button id='saveDefine' class="btn btn-primary">Save Schema</button>
     <button id='editContent' class="btn btn-primary">Edit Content</button>
     <span>
@@ -48,9 +49,12 @@ function addEntityActionsButtons() {
         <button id='define' class="btn btn-primary">Get Columns Definition from Database</button>
         <button id='saveEntity' class="btn btn-primary">Save Schema Not Update Database</button>
     </span>`;
-
+    
+    document.getElementById('saveAndPublish').addEventListener('click', () =>
+        submit(schemaTypes.entity, (d)=>saveDefine(d,true))
+    );
     document.getElementById('saveDefine').addEventListener('click', () =>
-        submit(schemaTypes.entity, saveDefine)
+        submit(schemaTypes.entity, (d)=>saveDefine(d,false))
     );
 
     document.getElementById('editContent').addEventListener('click', function () {

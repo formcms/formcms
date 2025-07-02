@@ -71,34 +71,6 @@ public static class Activities
         return new Activity(parts[0], long.Parse(parts[1]), parts[2], parts[3]);
     }
 
-    public static Activity LoadMetaData(this Activity activity, LoadedEntity entity, Record record)
-    {
-
-        activity = activity with { Url = entity.PageUrl + activity.RecordId };
-        if (record.ByJsonPath<string>(entity.BookmarkTitleField, out var title))
-        {
-            activity = activity with { Title = Trim(title)};
-        }
-
-        if (record.ByJsonPath<Asset>(entity.BookmarkImageField, out var asset))
-        {
-            activity = activity with { Image = Trim(asset?.Url) };
-        }
-
-        if (record.ByJsonPath<string>(entity.BookmarkSubtitleField, out var subtitle))
-        {
-            activity = activity with { Subtitle = Trim(subtitle)};
-        }
-
-        if (record.ByJsonPath<DateTime>(entity.BookmarkPublishTimeField, out var publishTime))
-        {
-            activity = activity with { PublishedAt = publishTime };
-        }
-        return activity;
-        
-        string Trim(string? s) => s?.Length > 255 ? s[..255] : s??"";
-    }
-
     public static string Key(this Activity activityApi)
         => $"{activityApi.EntityName}.{activityApi.RecordId}.{activityApi.ActivityType}.{activityApi.UserId}";
     

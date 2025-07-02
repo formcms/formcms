@@ -12,9 +12,9 @@ namespace FormCMS.Activities.Services;
 
 public class BookmarkService(
     IIdentityService identityService,
-    IQueryService queryService,
     IEntitySchemaService schemaService,
     KeyValueCache<long> maxRecordIdCache,
+    IContentTagService contentTagService,
 
     DatabaseMigrator migrator,
     IRelationDbDao dao,
@@ -146,23 +146,25 @@ public class BookmarkService(
             .ToArray();
         if (ids.Length == 0) return bookmarks;
 
-        var strAgs = new StrArgs
+        var links = await contentTagService.GetContentTags(entity.ToLoadedEntity() , ids, ct);
+        
+        var dict = links.ToDictionary(x => x.RecordId);
+        return bookmarks.Select(activity=>
         {
-            [entity.BookmarkQueryParamName] = ids
-        };
-        var records = await queryService.ListWithAction(entity.BookmarkQuery, new Span(), new Pagination(), strAgs, ct);
-        var dict = records.ToDictionary(x => x[entity.PrimaryKey].ToString()!);
-
-        var list = new List<Bookmark>();
-        foreach (var ac in bookmarks)
-        {
-            if (dict.TryGetValue(ac.RecordId.ToString(), out var record))
+            if (dict.TryGetValue(activity.RecordId.ToString(), out var link))
             {
-                list.Add(ac.LoadMetaData(entity, record));
+                return activity with
+                {
+                    Title = link.Title,
+                    Url = link.Url,
+                    Image = link.Image,
+                    Subtitle = link.Subtitle,
+                    PublishedAt = link.PublishedAt 
+                };
             }
-        }
+            return activity;
 
-        return list.ToArray();
+        }).ToArray();
     }
     
     private async Task<BookmarkFolder> AddFolder(string userId,BookmarkFolder folder, CancellationToken ct)

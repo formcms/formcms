@@ -5,6 +5,7 @@ using FormCMS.Activities.Builders;
 using FormCMS.AuditLogging.Builders;
 using FormCMS.Auth.Models;
 using FormCMS.Comments.Builders;
+using FormCMS.Notify.Builders;
 using FormCMS.Utils.ServiceCollectionExt;
 using FormCMS.Video.Builders;
 using Microsoft.AspNetCore.Identity;
@@ -33,6 +34,7 @@ public static class WebApplicationExt
         //have to use comments before activity, activity query plugin can add like count
         app.Services.GetService<CommentBuilder>()?.UseComments(app);
         app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
+        app.Services.GetService<NotificationBuilder>()?.UseNotification(app);
         app.Services.GetService<VideoMessageProducerBuilder>()?.UseVideo(app);
         
         app.UseRewriter(app.Services.GetRequiredService<RewriteOptions>());
@@ -74,9 +76,11 @@ public static class WebApplicationExt
     public static IServiceCollection AddComments(this IServiceCollection services, bool enableBuffering=true)
         => CommentBuilder.AddComments(services);
     
-    public static IServiceCollection AddMessageProducer(
+    public static IServiceCollection AddNotify(this IServiceCollection services)
+        => NotificationBuilder.AddNotify(services);
+    public static IServiceCollection AddCrudMessageProducer(
         this IServiceCollection services, string[] entities
-    ) => CmsCrudMessageProduceBuilder.AddMessageProducer(services, entities);
+    ) => CmsCrudMessageProduceBuilder.AddCrudMessageProducer(services, entities);
 
     public static IServiceCollection AddVideoMessageProducer(this IServiceCollection services)
         => VideoMessageProducerBuilder.AddVideoMessageProducer(services);

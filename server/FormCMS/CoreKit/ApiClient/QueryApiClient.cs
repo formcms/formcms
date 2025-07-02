@@ -17,7 +17,6 @@ public class QueryApiClient(HttpClient client)
     private readonly GraphQLHttpClient _graph =
         new($"{client.BaseAddress!.AbsoluteUri}graphql", new SystemTextJsonSerializer(), client);
 
-
     // the json decoder will decode an unknown object as JsonRecord
     public Task<Result<JsonElement[]>> List(
         string query, string? first = null, string? last = null, int offset = 0, int limit = 0)

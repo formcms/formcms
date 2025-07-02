@@ -22,7 +22,9 @@ public sealed class SyncWorker(
     private readonly HttpClient _httpClient = new();
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
-        await consumer.Subscribe(Topics.CmsCrud,async s =>
+        await consumer.Subscribe(CmsTopics.CmsCrud,
+            "SyncWorker"
+            ,async s =>
         {
             using var scope = serviceScopeFactory.CreateScope();
             var dao = scope.ServiceProvider.GetRequiredService<IDocumentDbDao>();
@@ -44,14 +46,14 @@ public sealed class SyncWorker(
 
                 switch (message.Operation)
                 {
-                    case Operations.Create:
-                    case Operations.Update:
+                    case CmsOperations.Create:
+                    case CmsOperations.Update:
                         if (!(await FetchSaveSingle(apiLinks!, message.Id, dao)).Try(out var err))
                         {
                             logger.LogWarning("failed to fetch and save single item, err ={err}", err);
                         }
                         break;
-                    case Operations.Delete:
+                    case CmsOperations.Delete:
                         await dao.Delete(apiLinks!.Collection, message.Id);
                         break;
                     default:

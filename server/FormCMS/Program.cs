@@ -11,6 +11,7 @@ using FormCMS.Core.Assets;
 using FormCMS.Core.Identities;
 using FormCMS.Core.Tasks;
 using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Notify.Models;
 using FormCMS.Utils.DisplayModels;
 using NJsonSchema.Generation;
 
@@ -63,6 +64,8 @@ foreach (var app in apps)
         $"../../../{app}/libs/FormCmsAdminSdk/activity/types/dailyActivityCount.ts");
     TsGenerator.GenerateCode<PageVisitCount>(
         $"../../../{app}/libs/FormCmsAdminSdk/activity/types/pageVisitCount.ts");
+    TsGenerator.GenerateCode<Notification>(
+        $"../../../{app}/libs/FormCmsAdminSdk/notifications/types/notification.ts");
 }
 
 internal static class TsGenerator

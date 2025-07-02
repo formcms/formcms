@@ -22,6 +22,7 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
     public async Task<WebApplication> UseComments(WebApplication app)
     {
         var pluginRegistry = app.Services.GetRequiredService<PluginRegistry>();
+        pluginRegistry.PluginQueries.Add(CommentHelper.CommentLinkQuery);
         pluginRegistry.PluginEntities.Add(CommentHelper.Entity.Name,CommentHelper.Entity);
         pluginRegistry.PluginAttributes.Add(CommentHelper.CommentsField, new Attribute(
             Field: CommentHelper.CommentsField,
@@ -33,7 +34,7 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
         logger.LogInformation(
             $"""
              *********************************************************
-             Using Comment Services
+             Using Comment Plugin
              *********************************************************
              """);
 
@@ -49,6 +50,13 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
         void RegisterHooks()
         {
             var registry = app.Services.GetRequiredService<HookRegistry>();
+            registry.ListPlugInQueryArgs.RegisterDynamic(CommentHelper.CommentLinkQuery, async (ICommentsQueryPlugin s,ListPlugInQueryArgs args) =>
+            {
+                var ids = args.Args[nameof(Comment.Id).Camelize()]
+                    .Where(x => x is not null).Select(x => x!).Select(long.Parse).ToArray();
+                var records = await s.GetTags(ids);
+                return args with { OutRecords = records };
+            });
            
             registry.QueryPartial.RegisterDynamic("*", async (ICommentsQueryPlugin p, QueryPartialArgs args) =>
             {

@@ -104,7 +104,7 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         void RegisterHooks()
         {
             var hookRegistry = app.Services.GetRequiredService<HookRegistry>();
-            hookRegistry.PlugInQueryArgs.RegisterDynamic(ActivityQueryPluginConstants.TopList, async (IActivityQueryPlugin s,PlugInQueryArgs args) =>
+            hookRegistry.ListPlugInQueryArgs.RegisterDynamic(ActivityQueryPluginConstants.TopList, async (IActivityQueryPlugin s,ListPlugInQueryArgs args) =>
             {
                 var pg = PaginationHelper.ToValid(args.Pagination, 10);
                 if (args.Args.TryGetValue(ActivityQueryPluginConstants.EntityName,out var entityName))

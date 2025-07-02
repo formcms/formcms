@@ -10,7 +10,7 @@ public record CmsCrudMessageProduceBuilderOptions(string[] Entities);
 
 public class CmsCrudMessageProduceBuilder(ILogger<CmsCrudMessageProduceBuilder> logger, CmsCrudMessageProduceBuilderOptions options)
 {
-    public static IServiceCollection AddMessageProducer(IServiceCollection services, string[] entities)
+    public static IServiceCollection AddCrudMessageProducer(IServiceCollection services, string[] entities)
     {
         services.AddSingleton(new CmsCrudMessageProduceBuilderOptions(Entities:entities));
         services.AddSingleton<CmsCrudMessageProduceBuilder>();
@@ -45,24 +45,24 @@ public class CmsCrudMessageProduceBuilder(ILogger<CmsCrudMessageProduceBuilder> 
             registry.EntityPostAdd.RegisterAsync(entity, async parameter =>
             {
                 await messageProducer.Produce(
-                    Topics.CmsCrud,
-                    EncodeMessage(Operations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record));
+                    CmsTopics.CmsCrud,
+                    EncodeMessage(CmsOperations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record));
                 return parameter;
             });
 
             registry.EntityPostUpdate.RegisterAsync(entity, async parameter =>
             {
                 await messageProducer.Produce(
-                    Topics.CmsCrud,
-                    EncodeMessage(Operations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record)
+                    CmsTopics.CmsCrud,
+                    EncodeMessage(CmsOperations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record)
                 );
                 return parameter;
             });
             registry.EntityPostDel.RegisterAsync(entity, async parameter =>
             {
                 await messageProducer.Produce(
-                    Topics.CmsCrud,
-                    EncodeMessage(Operations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record));
+                    CmsTopics.CmsCrud,
+                    EncodeMessage(CmsOperations.Create, parameter.Name, parameter.Record.StrOrEmpty(parameter.Entity.PrimaryKey), parameter.Record));
                 return parameter;
             });
         }

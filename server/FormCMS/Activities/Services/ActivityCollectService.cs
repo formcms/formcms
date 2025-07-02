@@ -1,8 +1,9 @@
 using FormCMS.Activities.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
-using FormCMS.Core.Plugins;
+using FormCMS.Core.Messaging;
 using FormCMS.Infrastructure.Buffers;
+using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
@@ -12,16 +13,16 @@ namespace FormCMS.Activities.Services;
 public class ActivityCollectService(
     ICountBuffer countBuffer,
     IStatusBuffer statusBuffer,
-        
+    IStringMessageProducer producer,    
     ActivitySettings settings,
     IIdentityService identityService,
     IEntitySchemaService entitySchemaService,  
     IEntityService entityService,
-    IQueryService queryService,
     IPageResolver pageResolver,
-    
+    IContentTagService contentTagService,
     KateQueryExecutor executor,
     IRelationDbDao dao,
+    IUserManageService userManager,
     DatabaseMigrator migrator
 ) : IActivityCollectService
 {
@@ -185,7 +186,8 @@ public class ActivityCollectService(
             {
                 var loadedActivities = await LoadMetaData(entity, [activity], ct);
                 if (loadedActivities.Length == 0) throw new ResultException("No activities loaded");
-
+                await ProduceActivityMessage(entity, loadedActivities[0], ct);
+                
                 await dao.UpdateOnConflict(Models.Activities.TableName,
                     loadedActivities[0].UpsertRecord(true), Models.Activities.KeyFields, ct);
             }
@@ -318,26 +320,46 @@ public class ActivityCollectService(
             .Select(x => x.RecordId.ToString())
             .ToArray();
         if (ids.Length == 0) return activities;
-        
-        var strAgs = new StrArgs
-        {
-            [entity.BookmarkQueryParamName] = ids
-        };
-        var records = await queryService.ListWithAction(entity.BookmarkQuery, new Span(),new Pagination(),strAgs,ct);
-        var dict = records.ToDictionary(x => x[entity.PrimaryKey].ToString()!);
 
-        var list = new List<Activity>();
-        foreach (var ac in activities)
+        var tags = await contentTagService.GetContentTags( entity, ids, ct);
+        
+        var dict = tags.ToDictionary(x => x.RecordId);
+        return activities.Select(activity=>
         {
-            if (!ac.IsActive) list.Add(ac);
-            if (dict.TryGetValue(ac.RecordId.ToString(), out var record))
+            if (dict.TryGetValue(activity.RecordId.ToString(), out var link))
             {
-                list.Add(ac.LoadMetaData(entity, record));
-            } 
-        }
-        return list.ToArray();
+                return activity with
+                {
+                    Title = link.Title,
+                    Url = link.Url,
+                    Image = link.Image,
+                    Subtitle = link.Subtitle,
+                    PublishedAt = link.PublishedAt,
+                };
+            }
+            return activity;
+
+        }).ToArray();
     }
 
+    private async Task ProduceActivityMessage(LoadedEntity entity, Activity activity, CancellationToken ct)
+    {
+        var targetUserId = await 
+            userManager.GetCreatorId(entity.TableName, entity.PrimaryKey, activity.RecordId,ct);
+                    
+        var msg = new ActivityMessage(
+            UserId:  activity.UserId,
+            TargetUserId: targetUserId,
+            EntityName: entity.Name,
+            RecordId: activity.RecordId,
+            Activity: activity.ActivityType,
+            Operation:CmsOperations.Create,
+            Message: activity.Title,
+            Url: activity.Url
+        );
+        
+        await producer.Produce(CmsTopics.CmsActivity, msg.ToJson()); 
+    }
     private async Task UpsertActivities(Activity[] activities,CancellationToken ct)
     {
         var groups = activities.GroupBy(a => a.EntityName);
@@ -354,7 +376,12 @@ public class ActivityCollectService(
             {
                 var entity = entities.FirstOrDefault(x => x.Name == group.Key);
                 if (entity == null) continue;
-                var loadedActivities = await LoadMetaData(entity.ToLoadedEntity(), [..group], ct);
+                var loadedEntity = entity.ToLoadedEntity();
+                var loadedActivities = await LoadMetaData(loadedEntity, [..group], ct);
+                foreach (var activity in loadedActivities)
+                {
+                    await ProduceActivityMessage(loadedEntity, activity, ct);
+                }
                 toUpdate.AddRange(loadedActivities.Select(x => x.UpsertRecord(true)));
             }
         }

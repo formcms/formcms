@@ -2,15 +2,49 @@ using FormCMS.Cms.Services;
 using FormCMS.Comments.Models;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
+using Humanizer;
 
 namespace FormCMS.Comments.Services;
 
 public class CommentsQueryPlugin(
     IEntitySchemaService  schemaService,
+    IContentTagService  contentTagService,
     KateQueryExecutor executor
 ) : ICommentsQueryPlugin
 {
+    public async Task<Record[]> GetTags(long[] commentIds)
+    {
+        var query = CommentHelper.Multiple(commentIds);
+        var commentRecords = await executor.Many(query);
+        if (commentRecords.Length == 0) return commentRecords;
+
+        var group = commentRecords.GroupBy(x => (string)x[nameof(Comment.EntityName).Camelize()]);
+        foreach (var grouping in group)
+        {
+            var entity = await schemaService
+                .LoadEntity(grouping.Key, PublicationStatus.Published, CancellationToken.None).Ok();
+
+            var ids = grouping.Select(x => x.StrOrEmpty(nameof(Comment.RecordId).Camelize())).ToArray();
+            var links = await contentTagService.GetContentTags(entity,ids,CancellationToken.None);
+            var map = links.ToDictionary(x => x.RecordId);
+            foreach (var rec in grouping)
+            {
+                var recordId = rec.StrOrEmpty(nameof(Comment.RecordId).Camelize());
+                if (map.TryGetValue(recordId, out var link))
+                {
+                    rec[EntityConstants.ContentTagField] = link with
+                    {
+                        RecordId = rec.StrOrEmpty(nameof(Comment.Id).Camelize()),
+                        Title = rec.StrOrEmpty(nameof(Comment.Content).Camelize())
+                    };
+                }
+            }
+        }
+        return commentRecords;
+    }
+    
     public async Task<Record[]> GetByFilters(ValidFilter[] filters,ValidSort[] sorts, ValidPagination pagination, ValidSpan span,
         CancellationToken ct)
     {

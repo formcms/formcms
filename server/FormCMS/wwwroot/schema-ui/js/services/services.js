@@ -57,9 +57,13 @@ export async function save(data, publish) {
     );
 }
 
-export async function saveDefine(data) {
+export async function saveDefine(data, publish) {
+    let url = `/schemas/entity/define`;
+    if (publish) {
+        url += '?publish=true';
+    }
     return await tryFetch(() =>
-        buildFetch(`/schemas/entity/define`, {
+        buildFetch(url, {
             method: 'POST',
             body: JSON.stringify(data),
         })

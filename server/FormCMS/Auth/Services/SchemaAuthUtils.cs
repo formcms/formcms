@@ -34,7 +34,7 @@ public static class SchemaAuthUtil
             SchemaPreGetAllArgs args
         ) =>
         {
-            service.GetAll();
+            service.CheckRole();
             return args;
         });
 
@@ -42,7 +42,7 @@ public static class SchemaAuthUtil
             ISchemaAuthService service, SchemaPostGetSingleArgs args
         ) =>
         {
-            service.GetOne(args.Schema);
+            service.CheckRole();
             return args;
         });
     }

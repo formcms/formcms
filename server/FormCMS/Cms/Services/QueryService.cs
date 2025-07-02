@@ -16,13 +16,17 @@ namespace FormCMS.Cms.Services;
 public sealed class QueryService(
     KateQueryExecutor executor,
     IQuerySchemaService schemaSvc,
-    IEntitySchemaService resolver,
+    IEntitySchemaService entitySchemaService,
     IServiceProvider provider,
     HookRegistry hook,
     PluginRegistry  registry,
     IUserManageService userManageService
 ) : IQueryService
 {
+
+
+   
+
     public async Task<Record[]> ListWithAction(GraphQlRequestDto dto)
         => await ListWithAction(await schemaSvc.ByGraphQlRequest(dto.Query,dto.Fields), new Pagination(), new Span(), dto.Args);
 
@@ -31,7 +35,7 @@ public sealed class QueryService(
     {
         if (registry.PluginQueries.Contains(name))
         {
-            var queryRes = await hook.PlugInQueryArgs.Trigger(provider, new PlugInQueryArgs(name, span, pagination, args));
+            var queryRes = await hook.ListPlugInQueryArgs.Trigger(provider, new ListPlugInQueryArgs(name, span, pagination, args));
             return queryRes.OutRecords??throw new ResultException($"Fail to get query result for [{name}]");
         }
         var query = await FromSavedQuery(name, args, ct);
@@ -73,7 +77,7 @@ public sealed class QueryService(
             ValidFilters = [..FilterHelper.ReplaceVariables(node.ValidFilters, args).Ok()],
             ValidSorts =
             [
-                .. await SortHelper.ReplaceVariables(node.ValidSorts, args, desc.TargetEntity, resolver,
+                .. await SortHelper.ReplaceVariables(node.ValidSorts, args, desc.TargetEntity, entitySchemaService,
                     PublicationStatusHelper.GetSchemaStatus(args)).Ok()
             ],
         };
@@ -151,7 +155,7 @@ public sealed class QueryService(
         
         var validSpan = span.ToValid([..query.Entity.Attributes]).Ok();
 
-        var sort = await SortHelper.ReplaceVariables(query.Sorts, args, query.Entity, resolver,
+        var sort = await SortHelper.ReplaceVariables(query.Sorts, args, query.Entity, entitySchemaService,
             PublicationStatusHelper.GetSchemaStatus(args)).Ok();
         
         var filters = FilterHelper.ReplaceVariables(query.Filters, args).Ok();
@@ -268,7 +272,7 @@ public sealed class QueryService(
         if (desc.IsCollective)
         {
             var filters = FilterHelper.ReplaceVariables(node.ValidFilters, args).Ok();
-            var sorts = await SortHelper.ReplaceVariables(node.ValidSorts, args, desc.TargetEntity, resolver,
+            var sorts = await SortHelper.ReplaceVariables(node.ValidSorts, args, desc.TargetEntity, entitySchemaService,
                 PublicationStatusHelper.GetSchemaStatus(args)).Ok();
             var variablePagination = PaginationHelper.FromVariables(args, node.Prefix, node.Field);
             var validPagination = variablePagination.IsEmpty() && node.Pagination.IsEmpty()

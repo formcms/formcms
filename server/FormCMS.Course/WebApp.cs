@@ -7,6 +7,8 @@ using FormCMS.Core.Auth;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
+using FormCMS.Notify.Models;
+using FormCMS.Notify.Workers;
 using FormCMS.Utils.ResultExt;
 using FormCMS.Video.Workers;
 using Microsoft.AspNetCore.Identity;
@@ -49,6 +51,7 @@ public class WebApp(
         builder.Services.AddAuditLog();
         builder.Services.AddActivity(enableActivityBuffer);
         builder.Services.AddComments();
+        builder.Services.AddNotify();
         
        
         if (azureBlobStoreOptions != null)
@@ -60,6 +63,8 @@ public class WebApp(
         // For distributed deployments, it's recommended to runEvent Handling services in a separate hosted App.
         // In this case, we register them within the web application to share the in-memory channel bus.
         builder.Services.AddHostedService<ActivityEventHandler>();
+        builder.Services.AddSingleton(new NotifySettings(["comment","like"]));
+        builder.Services.AddHostedService<NotificationEventHandler>();
 
 
         if (apiBaseUrl is not null && apiKey is not null)
