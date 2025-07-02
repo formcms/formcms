@@ -18,10 +18,12 @@ async function loadNotificationCount(button) {
     }
     try {
         const count = await getNotificationCount();
-        const countElement = button.querySelector('[data-compoent="notification-count"]');
+        const countElement = button.querySelector('[data-component="notification-count"]');
         if (countElement) {
             countElement.textContent = count;
             countElement.style.display = count > 0 ? 'flex' : 'none';
+        }else {
+            console.error('Notification count could not be found.');
         }
     } catch (error) {
         console.error('Failed to load notification count:', error);
