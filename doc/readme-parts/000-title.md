@@ -6,4 +6,5 @@ Welcome to [FormCMS](https://github.com/FormCMS/FormCMS)! 🚀
 Our mission is to make **data modeling**, **backend development**, and **frontend development** as simple and intuitive as filling out a **form** 📋  
 We’d love for you to contribute to FormCMS! Check out our [CONTRIBUTING guide](https://github.com/formcms/formcms/blob/main/CONTRIBUTING.md) to get started.  
 Love FormCMS? Show your support by giving us a ⭐ on GitHub and help us grow! 🌟  
-Have suggestions? Connect with us on Reddit! https://www.reddit.com/r/FormCMS/
+
+Have suggestions? [Report an Issue](https://github.com/FormCms/FormCms/issues).

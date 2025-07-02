@@ -14,6 +14,13 @@ public class NotificationBuilder(ILogger<NotificationBuilder> logger)
 
     public async Task<WebApplication> UseNotification(WebApplication app)
     {
+        logger.LogInformation(
+            $"""
+             *********************************************************
+             Using Notification Plugin
+             *********************************************************
+             """);
+
         using var scope = app.Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<INotificationService>()
             .EnsureNotificationTables();

@@ -55,7 +55,7 @@ public class NotificationService(
         foreach (var notification in notifications)
         {
             var userId = notification.StrOrEmpty(nameof(Notification.SenderId).Camelize());
-            notification[nameof(Notification.Sender).Camelize()] = dict.TryGetValue(userId, out var User) ? User : null;
+            notification[nameof(Notification.Sender).Camelize()] = dict.TryGetValue(userId, out var User) ? User : null!;
         }
     }
 }

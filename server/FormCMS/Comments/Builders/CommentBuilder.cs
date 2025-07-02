@@ -34,7 +34,7 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
         logger.LogInformation(
             $"""
              *********************************************************
-             Using Comment Services
+             Using Comment Plugin
              *********************************************************
              """);
 

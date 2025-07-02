@@ -118,6 +118,11 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-bs-level="2"><a href="#video-processing-plugin" class="nav-link">Video Processing Plugin</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#graphql-query" class="nav-link">GraphQL Query</a>
               <ul class="nav flex-column">
               </ul>
@@ -154,6 +159,16 @@
             </li>
             
             <li class="nav-item" data-bs-level="2"><a href="#popular-score" class="nav-link">Popular Score</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#comments-plugin" class="nav-link">Comments Plugin</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#notification-plugin" class="nav-link">Notification Plugin</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -201,26 +216,30 @@
 <a href="https://github.com/FormCMS/FormCMS/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/FormCMS/FormCMS.svg?style=social&amp;label=Star" /></a></p>
 <p>Our mission is to make <strong>data modeling</strong>, <strong>backend development</strong>, and <strong>frontend development</strong> as simple and intuitive as filling out a <strong>form</strong> 📋<br />
 We’d love for you to contribute to FormCMS! Check out our <a href="https://github.com/formcms/formcms/blob/main/CONTRIBUTING.md">CONTRIBUTING guide</a> to get started.<br />
-Love FormCMS? Show your support by giving us a ⭐ on GitHub and help us grow! 🌟<br />
-Have suggestions? Connect with us on Reddit! https://www.reddit.com/r/FormCMS/</p>
+Love FormCMS? Show your support by giving us a ⭐ on GitHub and help us grow! 🌟  </p>
+<p>Have suggestions? <a href="https://github.com/FormCms/FormCms/issues">Report an Issue</a>.</p>
 <hr />
 <h2 id="what-is-formcms">What is FormCMS?</h2>
-<p><strong>FormCMS</strong> is an open-source Content Management System designed to streamline and accelerate web development workflows. Ideal for CMS projects and general web applications, it minimizes repetitive REST/GraphQL API development while offering powerful tools for data management, page design, and user interaction.</p>
+<p><strong>FormCMS</strong> is an open-source Content Management System designed to simplify and accelerate web development workflows for CMS projects and general web applications. It streamlines data modeling, backend development, and frontend design, making them as intuitive as filling out a form. With a focus on fostering <strong>user engagement</strong>, FormCMS provides robust social features alongside powerful tools for data management, API development, and dynamic page creation.</p>
 <h3 id="key-features">Key Features</h3>
-<ol>
-<li>
-<p><strong>Data Modeling and CRUD with RESTful APIs</strong><br />
-   FormCMS provides robust data modeling capabilities and built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations. These are complemented by a React-based admin panel, enabling efficient and intuitive data management for developers and content creators.</p>
-</li>
-<li>
-<p><strong>GraphQL Queries and Grapes.js Page Designer</strong><br />
-   Leverage GraphQL to fetch multiple related entities in a single query, boosting client-side performance, security, and flexibility. Additionally, the integrated <a href="https://grapesjs.com/">Grapes.js</a> page designer, powered by <a href="https://handlebarsjs.com/">Handlebars</a>, allows for effortless creation of dynamic, data-bound pages, streamlining the design process.</p>
-</li>
-<li>
-<p><strong>User Social Activity</strong><br />
-   FormCMS now includes user engagement features, allowing users to like, share, and save content, with the system tracking view counts. Users can access their interaction history, liked posts, and saved posts through a dedicated user portal, enhancing interactivity and personalization.</p>
-</li>
-</ol>
+<h4 id="1-data-modeling-and-crud-with-restful-apis">1. <strong>Data Modeling and CRUD with RESTful APIs</strong></h4>
+<p>FormCMS offers intuitive data modeling and built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations. These are complemented by a React-based admin panel, enabling seamless data management for developers and content creators alike.</p>
+<h4 id="2-graphql-queries-and-grapesjs-page-designer">2. <strong>GraphQL Queries and Grapes.js Page Designer</strong></h4>
+<p>Harness the power of GraphQL to fetch multiple related entities in a single query, enhancing client-side performance, security, and flexibility. The integrated <a href="https://grapesjs.com/">Grapes.js</a> page designer, powered by <a href="https://handlebarsjs.com/">Handlebars</a>, allows effortless creation of dynamic, data-bound pages, simplifying the design process.</p>
+<h4 id="3-rich-social-engagement-features">3. <strong>Rich Social Engagement Features</strong></h4>
+<p>FormCMS enhances user interaction with built-in social capabilities:<br />
+   - <strong>Likes, Shares, and Saves</strong>: Users can engage with content by liking, sharing, or saving it, with the system tracking view counts for analytics.<br />
+   - <strong>User Portal</strong>: A personalized portal allows users to access their interaction history, view liked and saved content, and manage their bookmarks, fostering deeper engagement.<br />
+   - <strong>Notifications</strong>: Users receive real-time alerts for actions like comment likes or replies, boosting interactivity.<br />
+   - <strong>Comments</strong>: A YouTube-inspired commenting system encourages community interaction and discussion.<br />
+   - <strong>Popular Score</strong>: A dynamic metric ranks content based on views, likes, shares, and recency, powering trending sections and personalized feeds.  </p>
+<h4 id="4-additional-features-for-enhanced-functionality">4. <strong>Additional Features for Enhanced Functionality</strong></h4>
+<ul>
+<li><strong>Video Processing</strong>: Converts MPEG files to HLS format for seamless streaming, managed by a dedicated plugin.  </li>
+<li><strong>Payment Integration</strong>: Supports subscription-based access to all content or one-time purchases for individual items.  </li>
+<li><strong>Authentication</strong>: Built on the ASP.NET Core Identity Framework, with flexible options for customization or replacement.<br />
+By combining robust CMS functionality with a strong emphasis on social engagement, FormCMS empowers developers to create interactive, scalable, and user-centric web applications with ease.  </li>
+</ul>
 <hr />
 <h2 id="new-cms-data-modeling">New CMS? — Data Modeling</h2>
 <h3 id="data-modeling-in-current-cms-solutions">Data Modeling in Current CMS Solutions</h3>
@@ -1178,6 +1197,40 @@ pnpm install
 <h3 id="swapping-ui-components">Swapping UI Components</h3>
 <p>Replace table columns, input fields, or other UI components with your custom versions as needed.</p>
 <hr />
+<h2 id="video-processing-plugin">Video Processing Plugin</h2>
+<p>FormCMS's video processing plugin converts MPEG files to HLS format, enabling seamless online video streaming.</p>
+<h3 id="overview_2">Overview</h3>
+<p>The video processing plugin can be deployed as a standalone node for scalability or deployed to the same node as the web app for simplicity.</p>
+<h3 id="deployment-options">Deployment Options</h3>
+<h4 id="distributed-deployment">Distributed Deployment</h4>
+<pre><code>Web Apps (n) ┌──→ NATS Message Broker ───→ Video Processing Apps (m)
+             │                                 │
+             └────────→ Cloud Storage ◄────────┘
+</code></pre>
+<ul>
+<li>Multiple web apps send video processing requests via a NATS message broker.</li>
+<li>Video processing apps (scalable instances) convert videos and store outputs in cloud storage.</li>
+</ul>
+<h4 id="single-node-deployment">Single-Node Deployment</h4>
+<pre><code>Web App ───→ Channel ───→ Video Processing Worker
+   │                                     │
+   └──────→ Storage (Local/Cloud) ◄──────┘
+</code></pre>
+<ul>
+<li>A single web app communicates with a background worker via a channel.</li>
+<li>Processed videos are saved to local or cloud storage.</li>
+</ul>
+<h3 id="video-upload">Video Upload</h3>
+<p>Upload videos as you would any asset. When the server detects a video file, it triggers a processing event by sending a message.</p>
+<h3 id="video-processing">Video Processing</h3>
+<p>Upon receiving the message, the plugin:
+1. Converts the MPEG file to an HLS-compliant <code>.m3u8</code> playlist and segmented video files.
+2. Stores the output in cloud storage.</p>
+<h3 id="video-playback">Video Playback</h3>
+<p>Integrate videos into your site using the Grape.js Video component:
+- Drag and drop the component into your layout.
+- Set the source to <code>{{video_field_name.url}}</code> for seamless playback.</p>
+<hr />
 <h2 id="graphql-query"><strong>GraphQL Query</strong></h2>
 <p>FormCMS simplifies frontend development by offering robust GraphQL support.</p>
 <h3 id="getting-started">Getting Started</h3>
@@ -2129,6 +2182,32 @@ To favor fresh content, the score is slightly reduced for older posts. The older
 - <strong>Quick Updates</strong>: Only update scores for new interactions to save time.
 - <strong>Fast Storage</strong>: Use Redis to store scores for instant access.
 - <strong>Background Processing</strong>: Update scores in the background to keep the platform responsive.</p>
+<h2 id="comments-plugin">Comments Plugin</h2>
+<p>FormCMS's Comments Plugin enables adding a comments feature to any entity, enhancing user interaction.</p>
+<h3 id="adding-the-comments-component">Adding the Comments Component</h3>
+<ol>
+<li>In the Page Designer, drag the <code>Comments</code> component from the <code>Blocks</code> toolbox onto your page. Customize its layout as needed.</li>
+<li>From the <code>Layout Manager</code> toolbox, select the <code>Comment-form</code> component and set its <code>Entity Name</code> trait.</li>
+</ol>
+<p>After configuring, click <code>Save and Publish</code> to enable the comments feature. The Comments Plugin is designed for <code>Detail Pages</code>, where comments are associated with an <code>Entity Name</code> and <code>RecordId</code> (automatically retrieved from the page URL parameters).</p>
+<h3 id="comment-interactions">Comment Interactions</h3>
+<p>Authenticated users can add, edit, delete, like, and reply to comments. The Comments Plugin sends events for these actions, which are handled by other plugins. For example:
+- The Notification Plugin processes these events to send notice to the comment's creator.
+- The Engage Activity Plugin uses these events to update the record's engagement score.</p>
+<h3 id="integrating-comments-with-graphql">Integrating Comments with GraphQL</h3>
+<p>Each <code>Detail Page</code> is linked to a FormCMS GraphQL query. To include comments:
+- Add the <code>Comments</code> field to your GraphQL query.
+- The Comments Plugin automatically attaches comment data to the query results.</p>
+<hr />
+<h2 id="notification-plugin">Notification Plugin</h2>
+<p>FormCMS's Notification Plugin alerts users when their comments are liked or replied to, boosting engagement.</p>
+<h3 id="adding-the-notification-bell">Adding the Notification Bell</h3>
+<p>The Notification Bell displays the number of unread notifications for a user, enhancing their interaction with the platform. To add it:
+- In the Page Designer, drag the <code>Notification Bell</code> block from the toolbox onto your page.</p>
+<h3 id="viewing-notifications-in-the-user-portal">Viewing Notifications in the User Portal</h3>
+<p>When a user clicks the Notification Bell, they are directed to the Notification List page in the User Portal. From there, users can:
+- View a list of their notifications.
+- Click any notification to access the associated content, such as the original comment or data.</p>
 <hr />
 <h2 id="optimizing-caching">Optimizing Caching</h2>
 <p>FormCMS employs advanced caching strategies to boost performance.  </p>
@@ -2454,7 +2533,7 @@ app.RegisterMessageProducerHook();
 <hr />
 <h2 id="development-guide">Development Guide</h2>
 <p>The backend is written in ASP.NET Core, the Admin Panel uses React, and the Schema Builder is developed with jQuery.</p>
-<h3 id="overview_2">Overview</h3>
+<h3 id="overview_3">Overview</h3>
 <p>The system comprises three main components:<br />
 1. <strong>Backend</strong> - Developed in ASP.NET Core.<br />
 2. <strong>Admin Panel</strong> - Built using React.<br />
@@ -2614,5 +2693,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-05-22 16:24:59.084062+00:00
+Build Date UTC : 2025-07-02 20:48:14.541543+00:00
 -->

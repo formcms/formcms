@@ -12,7 +12,6 @@ namespace FormCMS.Activities.Services;
 
 public class BookmarkService(
     IIdentityService identityService,
-    IQueryService queryService,
     IEntitySchemaService schemaService,
     KeyValueCache<long> maxRecordIdCache,
     IContentTagService contentTagService,

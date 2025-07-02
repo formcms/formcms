@@ -1,16 +1,13 @@
-using FormCMS.Activities.Workers;
 using FormCMS.Core.Messaging;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Notify.Models;
-using FormCMS.Notify.Services;
 
 namespace FormCMS.Notify.Workers;
 
 public class NotificationEventHandler(
     IServiceScopeFactory scopeFactory,
     IStringMessageConsumer consumer,
-    IStringMessageProducer producer,
     NotifySettings  notifySettings,
     ILogger<NotificationEventHandler> logger
 ):BackgroundService

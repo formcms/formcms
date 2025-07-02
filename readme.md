@@ -6,26 +6,34 @@ Welcome to [FormCMS](https://github.com/FormCMS/FormCMS)! 🚀
 Our mission is to make **data modeling**, **backend development**, and **frontend development** as simple and intuitive as filling out a **form** 📋  
 We’d love for you to contribute to FormCMS! Check out our [CONTRIBUTING guide](https://github.com/formcms/formcms/blob/main/CONTRIBUTING.md) to get started.  
 Love FormCMS? Show your support by giving us a ⭐ on GitHub and help us grow! 🌟  
-Have suggestions? Connect with us on Reddit! https://www.reddit.com/r/FormCMS/
+
+Have suggestions? [Report an Issue](https://github.com/FormCms/FormCms/issues).
+
 
 
 ---
 ## What is FormCMS?
 
-**FormCMS** is an open-source Content Management System designed to streamline and accelerate web development workflows. Ideal for CMS projects and general web applications, it minimizes repetitive REST/GraphQL API development while offering powerful tools for data management, page design, and user interaction.
+**FormCMS** is an open-source Content Management System designed to simplify and accelerate web development workflows for CMS projects and general web applications. It streamlines data modeling, backend development, and frontend design, making them as intuitive as filling out a form. With a focus on fostering **user engagement**, FormCMS provides robust social features alongside powerful tools for data management, API development, and dynamic page creation.
 
 ### Key Features
 
-1. **Data Modeling and CRUD with RESTful APIs**  
-   FormCMS provides robust data modeling capabilities and built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations. These are complemented by a React-based admin panel, enabling efficient and intuitive data management for developers and content creators.
-
-2. **GraphQL Queries and Grapes.js Page Designer**  
-   Leverage GraphQL to fetch multiple related entities in a single query, boosting client-side performance, security, and flexibility. Additionally, the integrated [Grapes.js](https://grapesjs.com/) page designer, powered by [Handlebars](https://handlebarsjs.com/), allows for effortless creation of dynamic, data-bound pages, streamlining the design process.
-
-3. **User Social Activity**  
-   FormCMS now includes user engagement features, allowing users to like, share, and save content, with the system tracking view counts. Users can access their interaction history, liked posts, and saved posts through a dedicated user portal, enhancing interactivity and personalization.
-
-
+#### 1. **Data Modeling and CRUD with RESTful APIs**  
+   FormCMS offers intuitive data modeling and built-in RESTful APIs for Create, Read, Update, and Delete (CRUD) operations. These are complemented by a React-based admin panel, enabling seamless data management for developers and content creators alike.
+#### 2. **GraphQL Queries and Grapes.js Page Designer**  
+   Harness the power of GraphQL to fetch multiple related entities in a single query, enhancing client-side performance, security, and flexibility. The integrated [Grapes.js](https://grapesjs.com/) page designer, powered by [Handlebars](https://handlebarsjs.com/), allows effortless creation of dynamic, data-bound pages, simplifying the design process.
+#### 3. **Rich Social Engagement Features**  
+   FormCMS enhances user interaction with built-in social capabilities:  
+   - **Likes, Shares, and Saves**: Users can engage with content by liking, sharing, or saving it, with the system tracking view counts for analytics.  
+   - **User Portal**: A personalized portal allows users to access their interaction history, view liked and saved content, and manage their bookmarks, fostering deeper engagement.  
+   - **Notifications**: Users receive real-time alerts for actions like comment likes or replies, boosting interactivity.  
+   - **Comments**: A YouTube-inspired commenting system encourages community interaction and discussion.  
+   - **Popular Score**: A dynamic metric ranks content based on views, likes, shares, and recency, powering trending sections and personalized feeds.  
+#### 4. **Additional Features for Enhanced Functionality**  
+   - **Video Processing**: Converts MPEG files to HLS format for seamless streaming, managed by a dedicated plugin.  
+   - **Payment Integration**: Supports subscription-based access to all content or one-time purchases for individual items.  
+   - **Authentication**: Built on the ASP.NET Core Identity Framework, with flexible options for customization or replacement.  
+By combining robust CMS functionality with a strong emphasis on social engagement, FormCMS empowers developers to create interactive, scalable, and user-centric web applications with ease.  
 
 ---
 ## New CMS? — Data Modeling
@@ -790,6 +798,54 @@ To customize text:
 
 Replace table columns, input fields, or other UI components with your custom versions as needed.
 </details>  
+
+
+---
+## Video Processing Plugin
+<details>
+<summary>
+FormCMS's video processing plugin converts MPEG files to HLS format, enabling seamless online video streaming.
+</summary>
+
+### Overview
+The video processing plugin can be deployed as a standalone node for scalability or deployed to the same node as the web app for simplicity.
+
+### Deployment Options
+
+#### Distributed Deployment
+```
+Web Apps (n) ┌──→ NATS Message Broker ───→ Video Processing Apps (m)
+             │                                 │
+             └────────→ Cloud Storage ◄────────┘
+```
+- Multiple web apps send video processing requests via a NATS message broker.
+- Video processing apps (scalable instances) convert videos and store outputs in cloud storage.
+
+#### Single-Node Deployment
+```
+Web App ───→ Channel ───→ Video Processing Worker
+   │                                     │
+   └──────→ Storage (Local/Cloud) ◄──────┘
+```
+- A single web app communicates with a background worker via a channel.
+- Processed videos are saved to local or cloud storage.
+
+### Video Upload
+Upload videos as you would any asset. When the server detects a video file, it triggers a processing event by sending a message.
+
+### Video Processing
+Upon receiving the message, the plugin:
+1. Converts the MPEG file to an HLS-compliant `.m3u8` playlist and segmented video files.
+2. Stores the output in cloud storage.
+
+### Video Playback
+Integrate videos into your site using the Grape.js Video component:
+- Drag and drop the component into your layout.
+- Set the source to `{{video_field_name.url}}` for seamless playback.
+
+</details>
+
+
 
 ---
 ## **GraphQL Query**
@@ -1887,6 +1943,54 @@ To handle lots of interactions without slowing down:
 - **Background Processing**: Update scores in the background to keep the platform responsive.
 
 </details>
+
+
+## Comments Plugin
+<details>
+<summary>
+FormCMS's Comments Plugin enables adding a comments feature to any entity, enhancing user interaction.
+</summary>
+
+### Adding the Comments Component
+1. In the Page Designer, drag the `Comments` component from the `Blocks` toolbox onto your page. Customize its layout as needed.
+2. From the `Layout Manager` toolbox, select the `Comment-form` component and set its `Entity Name` trait.
+
+After configuring, click `Save and Publish` to enable the comments feature. The Comments Plugin is designed for `Detail Pages`, where comments are associated with an `Entity Name` and `RecordId` (automatically retrieved from the page URL parameters).
+
+### Comment Interactions
+Authenticated users can add, edit, delete, like, and reply to comments. The Comments Plugin sends events for these actions, which are handled by other plugins. For example:
+- The Notification Plugin processes these events to send notice to the comment's creator.
+- The Engage Activity Plugin uses these events to update the record's engagement score.
+
+### Integrating Comments with GraphQL
+Each `Detail Page` is linked to a FormCMS GraphQL query. To include comments:
+- Add the `Comments` field to your GraphQL query.
+- The Comments Plugin automatically attaches comment data to the query results.
+
+</details>
+
+
+
+
+---
+## Notification Plugin
+<details>
+<summary>
+FormCMS's Notification Plugin alerts users when their comments are liked or replied to, boosting engagement.
+</summary>
+
+### Adding the Notification Bell
+The Notification Bell displays the number of unread notifications for a user, enhancing their interaction with the platform. To add it:
+- In the Page Designer, drag the `Notification Bell` block from the toolbox onto your page.
+
+### Viewing Notifications in the User Portal
+When a user clicks the Notification Bell, they are directed to the Notification List page in the User Portal. From there, users can:
+- View a list of their notifications.
+- Click any notification to access the associated content, such as the original comment or data.
+
+</details>
+
+
 
 ---
 ## Optimizing Caching
