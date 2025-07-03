@@ -9,6 +9,7 @@ using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Notify.Models;
 using FormCMS.Notify.Workers;
+using FormCMS.Subscriptions.Builders;
 using FormCMS.Utils.ResultExt;
 using FormCMS.Video.Workers;
 using Microsoft.AspNetCore.Identity;
@@ -52,6 +53,7 @@ public class WebApp(
         builder.Services.AddActivity(enableActivityBuffer);
         builder.Services.AddComments();
         builder.Services.AddNotify();
+        builder.Services.AddSubscriptions();
         
        
         if (azureBlobStoreOptions != null)
