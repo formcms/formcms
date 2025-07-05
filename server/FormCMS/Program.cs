@@ -3,7 +3,6 @@ using System.Text.Json.Serialization;
 using FormCMS.Activities.Models;
 using FormCMS.AuditLogging.Models;
 using FormCMS.Auth.Handlers;
-using FormCMS.Auth.Services;
 using NJsonSchema;
 using NJsonSchema.CodeGeneration.TypeScript;
 using FormCMS.Core.Descriptors;
@@ -12,6 +11,7 @@ using FormCMS.Core.Identities;
 using FormCMS.Core.Tasks;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Notify.Models;
+using FormCMS.Subscriptions.Models;
 using FormCMS.Utils.DisplayModels;
 using NJsonSchema.Generation;
 
@@ -66,6 +66,13 @@ foreach (var app in apps)
         $"../../../{app}/libs/FormCmsAdminSdk/activity/types/pageVisitCount.ts");
     TsGenerator.GenerateCode<Notification>(
         $"../../../{app}/libs/FormCmsAdminSdk/notifications/types/notification.ts");
+    
+    TsGenerator.GenerateCode<Price>(
+        $"../../../{app}/libs/FormCmsAdminSdk/sub/types/price.ts");
+    TsGenerator.GenerateCode<Session>(
+        $"../../../{app}/libs/FormCmsAdminSdk/sub/types/session.ts");
+    TsGenerator.GenerateCode<Billing>(
+        $"../../../{app}/libs/FormCmsAdminSdk/sub/types/billing.ts");
 }
 
 internal static class TsGenerator

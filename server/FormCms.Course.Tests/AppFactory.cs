@@ -4,19 +4,15 @@ using FormCMS.AuditLogging.ApiClient;
 using FormCMS.Auth.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.CoreKit.Test;
-using FormCMS.Infrastructure.EventStreaming;
+using FormCMS.Subscriptions;
 using FormCMS.Subscriptions.ApiClient;
 using FormCMS.Subscriptions.Services;
 using FormCMS.Utils.EnumExt;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.DependencyInjection;
-using MongoDB.Driver.Core.Connections;
 using Moq;
 using NATS.Client.Core;
-using Stripe;
-using FormCMS.Subscriptions.Builders;
-using CustomerService = Stripe.CustomerService;
 using Microsoft.Extensions.Configuration;
 namespace FormCMS.Course.Tests;
 
@@ -86,11 +82,11 @@ public class AppFactory : WebApplicationFactory<Program>
             var stripeSection = context.Configuration.GetSection("StripeSecretOptions");
 
             // Override the IOptions<StripeSecretOptions> registration
-            services.Configure<StripeSecretOptions>(stripeSection);
+            services.Configure<StripeSettings>(stripeSection);
 
             // Ensure StripeCustomerService is registered as ICustomerService
             // (adjust lifetime and registration if needed)
-            services.AddScoped<ICustomerService, StripeCustomerService>();
+            services.AddScoped<ICustomerService, StripeCustomerSvcImpl>();
         });
 
 
@@ -130,8 +126,6 @@ public class AppFactory : WebApplicationFactory<Program>
             }
         }
     }
-    
 }
-
 [CollectionDefinition("API")]
 public class ApiTestCollection : ICollectionFixture<AppFactory> { }

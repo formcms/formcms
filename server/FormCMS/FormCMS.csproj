@@ -49,7 +49,7 @@
         <PackageReference Include="SqlKata" Version="2.4.0" />
         <PackageReference Include="SqlKata.Execution" Version="2.4.0" />
         <PackageReference Include="StackExchange.Redis" Version="2.8.31" />
-        <PackageReference Include="Stripe.net" Version="48.2.0" />
+        <PackageReference Include="Stripe.net" Version="48.3.0" />
         <PackageReference Include="System.Data.SqlClient" Version="4.9.0" />
         <PackageReference Include="System.Runtime.Caching" Version="9.0.0" />
         <PackageReference Include="Xabe.FFmpeg" Version="6.0.1" />

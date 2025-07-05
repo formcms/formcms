@@ -11,10 +11,7 @@ public sealed class RouteOptions
     public string PageBaseUrl { get; set; } = "";
 }
 
-public sealed class StripeSecretOptions
-{
-    public string? StripeSecretKey { get; set; } = null;
-}
+
 
 public sealed class SystemSettings
 {
