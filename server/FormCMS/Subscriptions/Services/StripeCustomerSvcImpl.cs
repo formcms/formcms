@@ -1,7 +1,6 @@
-﻿using FormCMS.Subscriptions.Models;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Stripe;
-
+using Customer = FormCMS.Subscriptions.Models.Customer;
 using CustomerService = Stripe.CustomerService;
 
 namespace FormCMS.Subscriptions.Services
@@ -11,25 +10,21 @@ namespace FormCMS.Subscriptions.Services
     ) : ICustomerService
     {
         private readonly RequestOptions _requestOptions = new() { ApiKey = conf.Value.SecretKey };
-        public async Task<ICustomer?> Add(ICustomer customer, CancellationToken ct)
+
+        public async Task<Customer?> Add(Customer customer, CancellationToken ct)
         {
-            var stripeCust = customer as StripeCustomer;
-            if (stripeCust is not null)
+            var options = new CustomerCreateOptions
             {
-                var options = new CustomerCreateOptions
+                Name = customer.Name,
+                Email = customer.Email,
+                PaymentMethod = customer.PaymentMethodId,
+                InvoiceSettings = new CustomerInvoiceSettingsOptions
                 {
-                    Name = customer.Name,
-                    Email = customer.Email,
-                    PaymentMethod = stripeCust.PaymentMethodId,
-                    InvoiceSettings = new CustomerInvoiceSettingsOptions
-                    {
-                        DefaultPaymentMethod = stripeCust.PaymentMethodId,
-                    },
-                };
-                var cust = await new CustomerService().CreateAsync(options, _requestOptions, ct);
-                return new StripeCustomer(customer.Email, null, cust.Name, cust.Id);
-            }
-            return null;
+                    DefaultPaymentMethod = customer.PaymentMethodId,
+                },
+            };
+            var cust = await new CustomerService().CreateAsync(options, _requestOptions, ct);
+            return new Customer(customer.Email, null, cust.Name, cust.Id);
         }
 
         async Task<PaymentMethod?> GetPayMethod(string custId)
@@ -38,11 +33,11 @@ namespace FormCMS.Subscriptions.Services
             return (await new PaymentMethodService().ListAsync(options, _requestOptions)).FirstOrDefault();
         }
 
-        public async Task<ICustomer?> Single(string id)
+        public async Task<Customer?> Single(string id)
         {
             var cust = await new CustomerService().GetAsync( id, null, _requestOptions );
             var pay = await GetPayMethod(id);
-            return new StripeCustomer(cust.Email, pay?.Id, cust.Name, cust.Id);
+            return new Customer(cust.Email, pay?.Id, cust.Name, cust.Id);
         }
     }
 }

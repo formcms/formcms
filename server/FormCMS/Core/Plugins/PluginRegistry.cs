@@ -7,5 +7,6 @@ public record PluginRegistry(
     HashSet<string> FeatureMenus,
     HashSet<string> PluginQueries,
     Dictionary<string, Entity> PluginEntities,
-    Dictionary<string, Attribute> PluginAttributes
+    Dictionary<string, Attribute> PluginAttributes,
+    HashSet<string> PluginVariables
 );

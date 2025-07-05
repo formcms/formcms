@@ -1,3 +1,4 @@
+using FluentResults;
 using FormCMS.Cms.Graph;
 using FormCMS.Core.Plugins;
 using FormCMS.Core.Assets;
@@ -23,10 +24,6 @@ public sealed class QueryService(
     IUserManageService userManageService
 ) : IQueryService
 {
-
-
-   
-
     public async Task<Record[]> ListWithAction(GraphQlRequestDto dto)
         => await ListWithAction(await schemaSvc.ByGraphQlRequest(dto.Query,dto.Fields), new Pagination(), new Span(), dto.Args);
 
@@ -74,14 +71,13 @@ public sealed class QueryService(
         var validSpan = span.ToValid(attrs).Ok();
         node = node with
         {
-            ValidFilters = [..FilterHelper.ReplaceVariables(node.ValidFilters, args).Ok()],
+            ValidFilters = [..ReplaceVariables(node.ValidFilters, args).Ok()],
             ValidSorts =
             [
                 .. await SortHelper.ReplaceVariables(node.ValidSorts, args, desc.TargetEntity, entitySchemaService,
                     PublicationStatusHelper.GetSchemaStatus(args)).Ok()
             ],
         };
-        
         
         if (registry.PluginAttributes.ContainsKey(attr))
         {
@@ -158,7 +154,7 @@ public sealed class QueryService(
         var sort = await SortHelper.ReplaceVariables(query.Sorts, args, query.Entity, entitySchemaService,
             PublicationStatusHelper.GetSchemaStatus(args)).Ok();
         
-        var filters = FilterHelper.ReplaceVariables(query.Filters, args).Ok();
+        var filters = ReplaceVariables(query.Filters, args).Ok();
         
         query = query with { Sorts = [..sort], Filters = [..filters]};
         
@@ -208,7 +204,7 @@ public sealed class QueryService(
 
     private async Task<Record?> SingleWithAction(LoadedQuery query, StrArgs args, CancellationToken ct = default)
     {
-        var filters = FilterHelper.ReplaceVariables(query.Filters, args).Ok();
+        var filters = ReplaceVariables(query.Filters, args).Ok();
        query = query with {  Filters = [..filters]};
         var prePrams = new QueryPreSingleArgs(query);
         
@@ -271,7 +267,7 @@ public sealed class QueryService(
         CollectiveQueryArgs? collectionArgs = null;
         if (desc.IsCollective)
         {
-            var filters = FilterHelper.ReplaceVariables(node.ValidFilters, args).Ok();
+            var filters = ReplaceVariables(node.ValidFilters, args).Ok();
             var sorts = await SortHelper.ReplaceVariables(node.ValidSorts, args, desc.TargetEntity, entitySchemaService,
                 PublicationStatusHelper.GetSchemaStatus(args)).Ok();
             var variablePagination = PaginationHelper.FromVariables(args, node.Prefix, node.Field);
@@ -518,5 +514,24 @@ public sealed class QueryService(
             }
         }
         return query;
+    }
+    
+    private Result<ValidFilter[]> ReplaceVariables( IEnumerable<ValidFilter> filters, StrArgs? args )
+    {
+        var ret = new List<ValidFilter>();
+        foreach (var filter in filters)
+        {
+            if (!filter.Constraints.ReplaceVariables(filter.Vector.Attribute, args)
+                    .Try(out var constraints, out var err))
+            {
+                return Result.Fail(err);
+            }
+
+            if (constraints.Length > 0)
+            {
+                ret.Add(filter with { Constraints = [..constraints] });
+            }
+        }
+        return ret.ToArray();
     }
 }

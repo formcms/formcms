@@ -1,4 +1,4 @@
 ﻿namespace FormCMS.Subscriptions.Models;
 
-public record  StripeCustomer(string Email,string? PaymentMethodId,string Name,string Id):ICustomer;
+public record Customer(string Email, string? PaymentMethodId, string Name, string Id);
 

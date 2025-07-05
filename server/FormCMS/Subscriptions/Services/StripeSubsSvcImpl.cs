@@ -5,6 +5,7 @@ using Microsoft.Extensions.Options;
 using Stripe;
 using Stripe.Checkout;
 using Session = FormCMS.Subscriptions.Models.Session;
+using Subscription = FormCMS.Subscriptions.Models.Subscription;
 
 namespace FormCMS.Subscriptions.Services;
 
@@ -19,30 +20,15 @@ public class StripeSubsSvcImpl(
 
     public async Task<Billing> GetSubInfo(CancellationToken ct)
     {
-        var billing = await billingService.GetSubBilling(ct) ?? throw new ResultException("Sub billing not found");
-        //check subscription
-        var subscription = await new SubscriptionService()
-                               .GetAsync(billing.SubscriptionId, null, _requestOptions, ct) ??
-                           throw new ResultException("Sub billing not found");
-        
+        var billing = await GetBillingInfo(ct)?? throw new ResultException("Billing not found");
         var price = await priceService.GetSubscriptionPrice(billing.PriceId, ct) ??
                     throw new ResultException("Price not found");
-
-        price = price.GetNextBillingDate(subscription.BillingCycleAnchor);
-        billing = billing with
-        {
-            Status = subscription.Status switch
-            {
-                "active" or "trialing" => SubscriptionStatus.Active,
-                "past_due" or "unpaid" or "incomplete" or "incomplete_expired" or "paused" => SubscriptionStatus.Expired,
-                "canceled" => SubscriptionStatus.Canceled,
-            }
-        };
-
-        
+        price = price.GetNextBillingDate(billing.BillingCycleAnchor!.Value);
         //check price
         return billing with{Price = price};
     }
+
+   
 
     public async Task OnSubscriptionSuccess(string sessionId, string priceId, CancellationToken ct)
     {
@@ -67,7 +53,23 @@ public class StripeSubsSvcImpl(
         );
         await billingService.UpsertBill(billing, ct);
     }
-    
+
+    public async Task<bool> CanAccess(string entityName, long recordId, long level, CancellationToken ct)
+    {
+        switch (level)
+        {
+            case 0:
+                return true;
+            case 1:
+            {
+                var billing = await GetBillingInfo(ct);
+                return billing?.Status == SubscriptionStatus.Active;
+            }
+            //todo: check if user has paid
+        }
+        return false;
+    }
+
     public async Task<Session> CreateSubSession(string priceId, string successUrl, string cancelUrl, CancellationToken ct)
     {
         var user = identityService.GetUserAccess() ?? throw new ResultException("User is not authorized");
@@ -93,7 +95,7 @@ public class StripeSubsSvcImpl(
         return new Session(session.Id);
     }
     
-    public async Task<StripeSubscription> CancelSubscription(string subsId, CancellationToken ct)
+    public async Task<Subscription> CancelSubscription(string subsId, CancellationToken ct)
     {
         var sub = await new SubscriptionService().CancelAsync(
             subsId,
@@ -101,8 +103,7 @@ public class StripeSubsSvcImpl(
             _requestOptions,
             ct
         );
-        return new StripeSubscription(
-            "Subscription",
+        return new Subscription(
             sub.Id,
             sub.CustomerId,
             "",
@@ -112,44 +113,9 @@ public class StripeSubsSvcImpl(
         );
     }
 
-    public async Task<StripeCustomer> CreateCustomer(StripeCustomer customer, CancellationToken ct)
-    {
-        var options = new CustomerCreateOptions
-        {
-            Name = customer.Name,
-            Email = customer.Email,
-            PaymentMethod = customer.PaymentMethodId,
-            InvoiceSettings = new CustomerInvoiceSettingsOptions
-            {
-                DefaultPaymentMethod = customer.PaymentMethodId,
-            },
-        };
 
-        var cust = await new CustomerService().CreateAsync(options, _requestOptions, ct);
-        return new StripeCustomer(customer.Email, null, cust.Name, cust.Id);
-    }
 
-    public async Task<StripeProduct> CreateProduct(StripeProduct prod, CancellationToken ct)
-    {
-        var productOptions = new ProductCreateOptions { Name = prod.Name };
-        var product = await new ProductService().CreateAsync(productOptions, _requestOptions,ct);
-        var priceOptions = new PriceCreateOptions
-        {
-            UnitAmount = prod.Amount,
-            Currency = prod.Currency,
-            Recurring = new PriceRecurringOptions { Interval = prod.Interval },
-            Product = product.Id,
-        };
-
-        var price = await new PriceService().CreateAsync(priceOptions, _requestOptions, ct);
-
-        return prod with
-        {
-            Id = product.Id,
-        };
-    }
-
-    public async Task<StripeSubscription> CreateSubscription(
+    public async Task<Subscription> CreateSubscription(
         string customerId,
         string priceId,
         CancellationToken ct
@@ -170,48 +136,19 @@ public class StripeSubsSvcImpl(
             cancellationToken: ct
         );
         
-        return new StripeSubscription("Subscription",result.Id,customerId,null,result.Created,null,result.Status,null);
+        return new Subscription(result.Id,customerId,null,result.Created,null,result.Status,null);
     }
 
-   
-    public async Task<IEnumerable<StripeProduct>> GetProducts(CancellationToken ct)
-    {//TODO: Complete
-        List<StripeProduct> prodList = new();
-        var options = new ProductListOptions { Limit = 20 };
-        var service = new ProductService();
-        StripeList<Product> products = await new ProductService().ListAsync(options, _requestOptions,ct);
-        foreach (var product in products.Data)
-        {
-            var prices = await new PriceService().ListAsync(
-                new PriceListOptions { Product = product.Id, Limit = 1 },
-                _requestOptions,ct
-            );
-            product.DefaultPrice = prices.FirstOrDefault();
-            prodList.Add(
-                new StripeProduct(
-                    "Product",
-                    product.Id,
-                    product.Name,
-                    product.DefaultPrice!.UnitAmount!.Value,
-                    product.DefaultPrice.Currency,
-                    product.DefaultPrice.Recurring.Interval,
-                    product.Created,
-                    product.Updated
-                )
-            );
-        }
-        return prodList;
-    }
+  
 
-    public async Task<IEnumerable<StripeSubscription>> GetSubscriptions(
+    public async Task<IEnumerable<Subscription>> GetSubscriptions(
         int count,
         CancellationToken ct
     )
     {
         var options = new SubscriptionListOptions { Limit = count };
         var subs = await new SubscriptionService().ListAsync(options, _requestOptions,ct);
-        return subs.Data.Select(s => new StripeSubscription(
-            "Subscription",
+        return subs.Data.Select(s => new Subscription(
             s.Id,
             s.CustomerId,
             "",
@@ -222,7 +159,7 @@ public class StripeSubsSvcImpl(
         ));
     }
 
-    public async Task<StripeSubscription> Single(string id, CancellationToken ct)
+    public async Task<Subscription> Single(string id, CancellationToken ct)
     {
         var result = await new SubscriptionService().GetAsync(
             id,
@@ -231,8 +168,7 @@ public class StripeSubsSvcImpl(
             ct
         );
 
-        return new StripeSubscription(
-            "Subscription",
+        return new Subscription(
             result.Id,
             result.CustomerId,
             null,
@@ -240,5 +176,29 @@ public class StripeSubsSvcImpl(
             null,
             result.Status
         );
+    }
+    
+    private async Task<Billing?> GetBillingInfo(CancellationToken ct)
+    {
+        var billing = await billingService.GetSubBilling(ct);
+        if (billing is null) return null;
+        
+        //check subscription
+        var subscription = await new SubscriptionService()
+            .GetAsync(billing.SubscriptionId, null, _requestOptions, ct);
+        if (subscription is null) return null;
+ 
+        billing = billing with
+        {
+            BillingCycleAnchor = subscription.BillingCycleAnchor,
+            Status = subscription.Status switch
+            {
+                "active" or "trialing" => SubscriptionStatus.Active,
+                "past_due" or "unpaid" or "incomplete" or "incomplete_expired" or "paused" => SubscriptionStatus.Expired,
+                "canceled" => SubscriptionStatus.Canceled,
+                _ => SubscriptionStatus.Invalid
+            }
+        }; 
+        return billing;
     }
 }

@@ -12,6 +12,7 @@ public enum SubscriptionStatus
     Active,
     Expired,
     Canceled,
+    Invalid
 }
 
 public record Billing(
@@ -21,6 +22,7 @@ public record Billing(
     
     //query Payment Provider realtime
     SubscriptionStatus? Status = null,
+    DateTime? BillingCycleAnchor = null,
     Price ? Price = null,
     long Id = 0
 );

@@ -7,6 +7,7 @@ public record Price(
     decimal Amount,
     string Description,
     string Interval,
+    
     DateTime? NextBillingDate = null
 );
 

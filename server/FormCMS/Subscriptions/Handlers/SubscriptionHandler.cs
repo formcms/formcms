@@ -9,13 +9,13 @@ namespace FormCMS.Subscriptions.Handlers
         {
             builder.MapPost(
                 "/",
-                (ISubscriptionService s, StripeSubscription o, CancellationToken ct) =>
+                (ISubscriptionService s, Subscription o, CancellationToken ct) =>
                     s.CreateSubscription(o.CustomerId, o.PriceId, ct)
             );
 
             builder.MapPost(
                 "/customer",
-                (ICustomerService s, StripeCustomer o, CancellationToken ct) => s.Add(o, ct)
+                (ICustomerService s, Customer o, CancellationToken ct) => s.Add(o, ct)
             );
 
             builder.MapGet(
@@ -25,7 +25,7 @@ namespace FormCMS.Subscriptions.Handlers
 
             builder.MapPost(
                 "/product",
-                ( IProductService s, StripeProduct p, CancellationToken ct) => s.Add(p, ct)
+                ( IProductService s, Product p, CancellationToken ct) => s.Add(p, ct)
             );
 
             builder.MapGet(

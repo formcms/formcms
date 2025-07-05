@@ -25,6 +25,7 @@ public sealed record LoadedQuery(
     Pagination? Pagination,
     ImmutableArray<GraphNode> Selection , 
     ImmutableArray<ValidFilter> Filters, 
+    ImmutableArray<ValidFilter> PluginFilters, 
     ImmutableArray<ValidSort> Sorts,
     ImmutableArray<string> ReqVariables,
     bool Distinct
@@ -45,7 +46,8 @@ public static class QueryHelper
         LoadedEntity entity,
         IEnumerable<GraphNode> selection,
         IEnumerable<ValidSort> sorts,
-        IEnumerable<ValidFilter> filters
+        IEnumerable<ValidFilter> filters,
+        IEnumerable<ValidFilter> pluginFilters
     )
     {
         return new LoadedQuery(
@@ -57,6 +59,7 @@ public static class QueryHelper
             Selection: [..selection],
             Sorts: [..sorts],
             Filters: [..filters],
+            PluginFilters: [..pluginFilters],
             Distinct: query.Distinct
         );
     }

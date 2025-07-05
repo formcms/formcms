@@ -66,7 +66,9 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 { Assets.XEntity.Name, Assets.Entity },
                 { PublicUserInfos.Entity.Name, PublicUserInfos.Entity }
             },
-            PluginAttributes: []);
+            PluginAttributes: [],
+            PluginVariables: []
+        );
         
         services.AddSingleton(registry);
 

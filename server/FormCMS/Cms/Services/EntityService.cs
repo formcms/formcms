@@ -154,8 +154,7 @@ public sealed class EntityService(
         {
             var constraint = new Constraint(Matches.StartsWith, [startsVal]);
             var filter = new Filter(entity.LabelAttributeName, MatchTypes.MatchAll, [constraint]);
-            filters = (await FilterHelper.ToValidFilters([filter], entity, null, entitySchemaSvc))
-                .Ok();
+            filters = (await FilterHelper.ToValidFilters([filter], entity, null, entitySchemaSvc)).Ok();
         }
 
         var queryWithFilters = entity.ListQuery(filters, sorts, pagination, null, attributes, null);
@@ -529,7 +528,7 @@ public sealed class EntityService(
     private async Task<ListArgs> GetListArgs(LoadedEntity entity, StrArgs args, Pagination pagination)
     {
         var (filters, sorts) = QueryStringParser.Parse(args);
-        var validFilters = await filters.ToValidFilters(entity, null, entitySchemaSvc).Ok();
+        var validFilters  = await filters.ToValidFilters(entity, null, entitySchemaSvc).Ok();
         var validSort = await sorts.ToValidSorts(entity, entitySchemaSvc, null).Ok();
 
         var validPagination = PaginationHelper.ToValid(pagination, entity.DefaultPageSize);

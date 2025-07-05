@@ -4,7 +4,7 @@ namespace FormCMS.Subscriptions.Services
 {
     public interface ICustomerService
     {
-        Task<ICustomer> Single(string Id);
-        Task<ICustomer?> Add(ICustomer customer,CancellationToken ct);
+        Task<Customer> Single(string Id);
+        Task<Customer?> Add(Customer customer,CancellationToken ct);
     }
 }

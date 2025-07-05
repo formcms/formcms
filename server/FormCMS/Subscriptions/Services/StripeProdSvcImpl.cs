@@ -1,6 +1,6 @@
-﻿using FormCMS.Subscriptions.Models;
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 using Stripe;
+using Product = FormCMS.Subscriptions.Models.Product;
 
 namespace FormCMS.Subscriptions.Services
 {
@@ -9,7 +9,7 @@ namespace FormCMS.Subscriptions.Services
     ) : IProductService
     {
         private readonly RequestOptions _requestOptions = new() { ApiKey = conf.Value.SecretKey };
-        public async Task<StripeProduct> Add(StripeProduct product, CancellationToken ct)
+        public async Task<Product> Add(Product product, CancellationToken ct)
         {
             var options = new ProductCreateOptions
             {
@@ -33,8 +33,7 @@ namespace FormCMS.Subscriptions.Services
                 null,
                 _requestOptions, ct);
             if (price != null && price.UnitAmount != null)
-                return new StripeProduct(
-                    "Product",
+                return new Product(
                     prod.Id,
                     prod.Name,
                     price.UnitAmount.Value,
@@ -46,16 +45,12 @@ namespace FormCMS.Subscriptions.Services
             return null;
         }
 
-        public Task<StripeProduct> Delete(string Id, CancellationToken ct)
-        {
-            throw new NotImplementedException();
-        }
 
-        public async Task<IEnumerable<StripeProduct>> List(int count, CancellationToken ct)
+        public async Task<IEnumerable<Product>> List(int count, CancellationToken ct)
         {
-            List<StripeProduct> stripeProducts = new List<StripeProduct>();
+            List<Product> stripeProducts = new List<Product>();
             var options = new ProductListOptions { Limit = count };
-            StripeList<Product> products = await new ProductService().ListAsync(options, _requestOptions,ct);
+            StripeList<Stripe.Product> products = await new ProductService().ListAsync(options, _requestOptions,ct);
             foreach (var product in products.Data)
             {
                 var price =
@@ -64,8 +59,7 @@ namespace FormCMS.Subscriptions.Services
                         : null;
                 if (price != null)
                     stripeProducts.Add(
-                        new StripeProduct(
-                            "Product",
+                        new Product(
                             product.Id,
                             product.Name,
                             price.UnitAmount,
@@ -77,8 +71,7 @@ namespace FormCMS.Subscriptions.Services
                     );
                 else
                     stripeProducts.Add(
-                        new StripeProduct(
-                            "Product",
+                        new Product(
                             product.Id,
                             product.Name,
                             null,
@@ -92,7 +85,7 @@ namespace FormCMS.Subscriptions.Services
             return stripeProducts;
         }
 
-        public async Task<StripeProduct> Single(string id, CancellationToken ct)
+        public async Task<Product> Single(string id, CancellationToken ct)
         {
             var prod = await new ProductService().GetAsync(
                 id,
@@ -106,8 +99,7 @@ namespace FormCMS.Subscriptions.Services
                 _requestOptions,
                 ct
             );
-            return new StripeProduct(
-                "Product",
+            return new Product(
                 prod.Id,
                 prod.Name,
                 price.UnitAmount.Value,
@@ -117,9 +109,5 @@ namespace FormCMS.Subscriptions.Services
             );
         }
 
-        public Task<StripeProduct> Update(StripeProduct product, CancellationToken ct)
-        {
-            throw new NotImplementedException();
-        }
     }
 }
