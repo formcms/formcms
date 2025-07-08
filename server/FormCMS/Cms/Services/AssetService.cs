@@ -91,7 +91,7 @@ public class AssetService(
             if (formFile.Length == 0) throw new ResultException($"File [{formFile.FileName}] is empty");
         }
 
-        files = files.Select(resizer.CompressImage).ToArray();
+        files = files.Select(x=>x.IsImage()?resizer.CompressImage(x):x).ToArray();
         var dir = DateTime.Now.ToString("yyyy-MM");
         var pairs = files.Select(x => (Path.Join(dir, UniqNameOmitYearAndMonth(x.FileName)), x)).ToArray();
 
@@ -131,7 +131,7 @@ public class AssetService(
 
         //make sure the asset to replace existing
         var asset = await Single(id, false,ct);
-        file = resizer.CompressImage(file);
+        file = file.IsImage() ? resizer.CompressImage(file) : file;
         using var trans = await dao.BeginTransaction();
         try
         {

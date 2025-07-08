@@ -8,11 +8,6 @@ public class ImageSharpResizer(ResizeOptions opts) : IResizer
 {
     public IFormFile CompressImage(IFormFile inputFile)
     {
-        if (!IsImage(inputFile))
-        {
-            return inputFile;
-        }
-        
         using var inputStream = inputFile.OpenReadStream();
         using var image = Image.Load(inputStream);
         
@@ -33,12 +28,5 @@ public class ImageSharpResizer(ResizeOptions opts) : IResizer
             Headers = inputFile.Headers,
             ContentType = "image/jpeg"
         };
-    }
-    
-    private bool IsImage(IFormFile file)
-    {
-        string[] validExtensions = [".jpg", ".jpeg", ".png", ".bmp"];
-        var ext = Path.GetExtension(file.FileName).ToLower();
-        return validExtensions.Contains(ext);
     }
 }
