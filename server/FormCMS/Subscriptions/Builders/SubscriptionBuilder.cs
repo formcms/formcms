@@ -1,5 +1,8 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
+using FormCMS.Auth.Models;
+using FormCMS.Auth.Services;
+using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.RelationDbDao;
@@ -16,7 +19,6 @@ namespace FormCMS.Subscriptions.Builders
 {
     public class SubscriptionBuilder(ILogger<SubscriptionBuilder> logger)
     {
-
         public static IServiceCollection AddStripeSubscription(IServiceCollection services)
         {
             services.AddSingleton<SubscriptionBuilder>();
@@ -27,6 +29,7 @@ namespace FormCMS.Subscriptions.Builders
             services.AddScoped<ISubscriptionService, StripeSubsSvcImpl>();
             services.AddScoped<IPriceService, StripePriceSvcImpl>();
             return services;
+
             void AddCamelEnumConverter<T>(Microsoft.AspNetCore.Http.Json.JsonOptions options)
                 where T : struct, Enum =>
                 options.SerializerOptions.Converters.Add(
@@ -50,35 +53,36 @@ namespace FormCMS.Subscriptions.Builders
 
             void RegisterHooks()
             {
-                const string accessLevel = "$accessLevel";
+                const string accessLevel = "$access_level";
                 var pluginRegistry = app.Services.GetRequiredService<PluginRegistry>();
                 pluginRegistry.PluginVariables.Add(accessLevel);
-                
+
                 var hookRegistry = app.Services.GetRequiredService<HookRegistry>();
-                hookRegistry.QueryPostSingle.RegisterDynamic("*",async (QueryPostSingleArgs args, ISubscriptionService service) =>
+                hookRegistry.QueryPostSingle.RegisterDynamic("*", async (
+                    QueryPostSingleArgs args,
+                    ISubscriptionService service,
+                    IProfileService profile
+                ) =>
                 {
+                    if (profile.HasRole(Roles.Admin) || profile.HasRole(Roles.Sa)) return args;
+
                     foreach (var queryPluginFilter in args.Query.PluginFilters)
                     {
-                        foreach (var validConstraint in queryPluginFilter.Constraints)
+                        foreach (var validConstraint in from validConstraint in queryPluginFilter.Constraints
+                                 from validConstraintValue in validConstraint.Values
+                                 where validConstraintValue.S == accessLevel
+                                 select validConstraint)
                         {
-                            foreach (var validConstraintValue in validConstraint.Values)
+                            if (!args.RefRecord.ByJsonPath<long>(queryPluginFilter.Vector.FullPath, out var val))
+                                continue;
+                            var targetValue = validConstraint.Match == Matches.Lte ? val : val + 1;
+                            var canAccess = await service.CanAccess("", 0, targetValue, CancellationToken.None);
+                            if (!canAccess)
                             {
-                                if (validConstraintValue.S == accessLevel)
-                                {
-                                    if (args.RefRecord.ByJsonPath<long>(queryPluginFilter.Vector.FullPath, out var val))
-                                    {
-                                        var targetValue = validConstraint.Match == Matches.Lte ? val : val + 1;
-                                        var canAccess =await service.CanAccess("", 0, targetValue, CancellationToken.None);
-                                        if (!canAccess)
-                                        {
-                                            throw new ResultException("Not have enough access level");
-                                        }
-                                    }
-                                }
+                                throw new ResultException("Not have enough access level", ErrorCodes.NOT_ENOUGH_ACCESS_LEVEL);
                             }
                         }
                     }
-
                     return args;
                 });
             }
@@ -95,9 +99,10 @@ namespace FormCMS.Subscriptions.Builders
                 await using var scope = app.Services.CreateAsyncScope();
                 var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
                 await migrator.MigrateTable(Billings.TableName, Billings.Columns);
-            
+
                 var dao = scope.ServiceProvider.GetRequiredService<IRelationDbDao>();
-                await dao.CreateIndex(Billings.TableName, [nameof(Billing.UserId).Camelize()], true,CancellationToken.None);
+                await dao.CreateIndex(Billings.TableName, [nameof(Billing.UserId).Camelize()], true,
+                    CancellationToken.None);
             }
         }
     }

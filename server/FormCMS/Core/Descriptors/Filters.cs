@@ -98,23 +98,25 @@ public static class FilterHelper
     {
         var validFilters = new List<ValidFilter>();
         var plugFilters = new List<ValidFilter>();
-        var res = await filters.ToValidFilters(entity, schemaStatus,vectorResolver);
+        var res = await filters.ToValidFilters(entity, schemaStatus, vectorResolver);
         if (res.IsFailed)
         {
             return Result.Fail(res.Errors);
         }
 
-        foreach (var  filter in res.Value)
+        foreach (var filter in res.Value)
         {
-            if (filter.Constraints.Any(x => x.Values.Any(v => plugInVariables.Contains(v.S ?? ""))))
-            {
-                validFilters.Add(filter);
-            }
-            else
+            if (filter.Constraints.Any(
+                    x => x.Values.Any(v => plugInVariables.Contains(v.S ?? ""))))
             {
                 plugFilters.Add(filter);
             }
+            else
+            {
+                validFilters.Add(filter);
+            }
         }
+
         return (validFilters.ToArray(), plugFilters.ToArray());
     }
 

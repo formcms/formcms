@@ -7,15 +7,12 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Utils.ResultExt;
-using Microsoft.AspNetCore.Rewrite;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Activities.Builders;
 
 public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 {
-    private const string FormCmsContentRoot = "/_content/FormCMS";
-
     public static IServiceCollection AddActivity(IServiceCollection services, bool enableBuffering)
     {
         services.AddSingleton(ActivitySettingsExtensions.DefaultActivitySettings with
@@ -63,7 +60,6 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 
         var portalPath = "/portal";
         RegisterHooks();
-        AddCmsPortal();
         
         logger.LogInformation(
             $"""
@@ -77,29 +73,6 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
              *********************************************************
              """);
         return app;
-
-        void AddCmsPortal()
-        {
-            var webRootFileProvider = app.Services.GetRequiredService<IWebHostEnvironment>().WebRootFileProvider;
-            if (!webRootFileProvider.GetFileInfo(portalPath + "/index.html").Exists)
-            {
-                var rewriteOptions = app.Services.GetRequiredService<RewriteOptions>();
-                portalPath = FormCmsContentRoot + portalPath;
-                rewriteOptions.AddRedirect(@"^portal$", portalPath);
-            }
-            
-            app.MapWhen(context => context.Request.Path.StartsWithSegments(portalPath),
-                subApp =>
-                {
-                    subApp.UseRouting();
-                    subApp.UseEndpoints(endpoints =>
-                    {
-                        endpoints.MapFallbackToFile(portalPath, $"{portalPath}/index.html");
-                        endpoints.MapFallbackToFile($"{portalPath}/{{*path:nonfile}}",
-                            $"{portalPath}/index.html");
-                    });
-                });
-        }
 
         void RegisterHooks()
         {

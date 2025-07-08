@@ -3,9 +3,14 @@ using FluentResults;
 namespace FormCMS.Utils.ResultExt;
 
 /// <summary>
-/// Represents an exception that is deliberately thrown to notify a client about a specific error.
+/// Represents an exception deliberately thrown to notify a client about a specific error.
 /// </summary>
-public class ResultException(string message, Exception? inner = null) : Exception(message, inner)
+public class ResultException(string message, int code = 0, Exception? inner = null) : Exception(message, inner)
+{
+    public int Code => code;
+}
+
+public static class ResultExt
 {
     public static async Task<T> Try<T>(Func<Task<T>> func)
     {
@@ -15,35 +20,9 @@ public class ResultException(string message, Exception? inner = null) : Exceptio
         }
         catch(Exception ex)
         {
-            throw new ResultException(ex.Message,ex);
+            throw new ResultException(ex.Message,inner:ex);
         }
     }
-
-    public static async Task Try(Func<Task> func)
-    {
-        try
-        {
-            await func();
-        }
-        catch (Exception ex)
-        {
-            throw new ResultException(ex.Message,ex);
-        }
-    }
-}
-
-public static class ResultExt
-{
-    public static Result<T> OnFail<T>(this Result<T> result, string message)
-    {
-        if (result.IsFailed)
-        {
-            result.Errors.Insert(0, new Error(message));
-        }
-
-        return result;
-    }
-
     public static async Task<Result<T>> OnFail<T>(this Task<Result<T>> res, string message)
     {
         var result = await res;

@@ -18,7 +18,8 @@ public class BillingService(
 
     public async Task<Billing?> GetSubBilling(CancellationToken ct)
     {
-        var user = identityService.GetUserAccess() ?? throw new ResultException("User is not authorized");
+        var user = identityService.GetUserAccess();
+        if (user == null) return null;
         var query = Billings.ByUserId(user.Id);
         var ret = await executor.Single(query, ct);
         return ret?.ToObject<Billing>().Ok();
