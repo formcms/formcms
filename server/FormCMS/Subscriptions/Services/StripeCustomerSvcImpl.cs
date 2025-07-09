@@ -33,7 +33,7 @@ namespace FormCMS.Subscriptions.Services
             return (await new PaymentMethodService().ListAsync(options, _requestOptions)).FirstOrDefault();
         }
 
-        public async Task<Customer?> Single(string id)
+        public async Task<Customer> Single(string id)
         {
             var cust = await new CustomerService().GetAsync( id, null, _requestOptions );
             var pay = await GetPayMethod(id);

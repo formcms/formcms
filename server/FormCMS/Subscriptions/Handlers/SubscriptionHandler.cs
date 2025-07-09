@@ -1,5 +1,4 @@
-﻿using FormCMS.Subscriptions.Models;
-using FormCMS.Subscriptions.Services;
+﻿using FormCMS.Subscriptions.Services;
 
 namespace FormCMS.Subscriptions.Handlers
 {
@@ -7,54 +6,6 @@ namespace FormCMS.Subscriptions.Handlers
     {
         public static RouteGroupBuilder MapSubscriptionHandlers(this RouteGroupBuilder builder)
         {
-            builder.MapPost(
-                "/",
-                (ISubscriptionService s, Subscription o, CancellationToken ct) =>
-                    s.CreateSubscription(o.CustomerId, o.PriceId, ct)
-            );
-
-            builder.MapPost(
-                "/customer",
-                (ICustomerService s, Customer o, CancellationToken ct) => s.Add(o, ct)
-            );
-
-            builder.MapGet(
-                "/customer/{id}",
-                (ICustomerService s, string id, CancellationToken ct) => s.Single(id)
-            );
-
-            builder.MapPost(
-                "/product",
-                ( IProductService s, Product p, CancellationToken ct) => s.Add(p, ct)
-            );
-
-            builder.MapGet(
-                "/product/{id}",
-                (IProductService s, string id, CancellationToken ct) => s.Single(id, ct)
-            );
-
-            builder.MapGet(
-                "/products/{count:int}",
-                (IProductService s, int count, CancellationToken ct) => s.List( count,ct)
-            );
-
-            builder.MapGet(
-                "/subscriptions/{count:int}",
-                (ISubscriptionService s, int count, CancellationToken ct) =>
-                    s.GetSubscriptions(count, ct)
-            );
-
-            builder.MapDelete(
-                "/{id}",
-                (ISubscriptionService s, string id, CancellationToken ct) =>
-                    s.CancelSubscription(id, ct)
-            );
-
-            builder.MapGet(
-                "/{id}",
-                (ISubscriptionService s, string id, CancellationToken ct) => s.Single(id, ct)
-            );
-            
             builder.MapPost("/sub_sessions", async (
                 ISubscriptionService svc,
                 HttpRequest request,

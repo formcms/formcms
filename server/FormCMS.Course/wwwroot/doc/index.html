@@ -173,6 +173,11 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-bs-level="2"><a href="#subscription" class="nav-link">Subscription</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#optimizing-caching" class="nav-link">Optimizing Caching</a>
               <ul class="nav flex-column">
               </ul>
@@ -2183,31 +2188,60 @@ To favor fresh content, the score is slightly reduced for older posts. The older
 - <strong>Fast Storage</strong>: Use Redis to store scores for instant access.
 - <strong>Background Processing</strong>: Update scores in the background to keep the platform responsive.</p>
 <h2 id="comments-plugin">Comments Plugin</h2>
-<p>FormCMS's Comments Plugin enables adding a comments feature to any entity, enhancing user interaction.</p>
+<p>FormCMS's Comments Plugin enables adding a comments feature to any entity, enhancing user interaction.  </p>
 <h3 id="adding-the-comments-component">Adding the Comments Component</h3>
 <ol>
-<li>In the Page Designer, drag the <code>Comments</code> component from the <code>Blocks</code> toolbox onto your page. Customize its layout as needed.</li>
-<li>From the <code>Layout Manager</code> toolbox, select the <code>Comment-form</code> component and set its <code>Entity Name</code> trait.</li>
+<li>In the Page Designer, drag the <code>Comments</code> component from the <code>Blocks</code> toolbox onto your page. Customize its layout as needed.  </li>
+<li>From the <code>Layout Manager</code> toolbox, select the <code>Comment-form</code> component and set its <code>Entity Name</code> trait.  </li>
 </ol>
-<p>After configuring, click <code>Save and Publish</code> to enable the comments feature. The Comments Plugin is designed for <code>Detail Pages</code>, where comments are associated with an <code>Entity Name</code> and <code>RecordId</code> (automatically retrieved from the page URL parameters).</p>
+<p>After configuring, click <code>Save and Publish</code> to enable the comments feature. The Comments Plugin is designed for <code>Detail Pages</code>, where comments are associated with an <code>Entity Name</code> and <code>RecordId</code> (automatically retrieved from the page URL parameters).  </p>
 <h3 id="comment-interactions">Comment Interactions</h3>
-<p>Authenticated users can add, edit, delete, like, and reply to comments. The Comments Plugin sends events for these actions, which are handled by other plugins. For example:
-- The Notification Plugin processes these events to send notice to the comment's creator.
-- The Engage Activity Plugin uses these events to update the record's engagement score.</p>
+<p>Authenticated users can add, edit, delete, like, and reply to comments. The Comments Plugin sends events for these actions, which are handled by other plugins. For example:<br />
+- The Notification Plugin processes these events to send notice to the comment's creator.<br />
+- The Engage Activity Plugin uses these events to update the record's engagement score.  </p>
 <h3 id="integrating-comments-with-graphql">Integrating Comments with GraphQL</h3>
-<p>Each <code>Detail Page</code> is linked to a FormCMS GraphQL query. To include comments:
-- Add the <code>Comments</code> field to your GraphQL query.
-- The Comments Plugin automatically attaches comment data to the query results.</p>
+<p>Each <code>Detail Page</code> is linked to a FormCMS GraphQL query. To include comments:<br />
+- Add the <code>Comments</code> field to your GraphQL query.<br />
+- The Comments Plugin automatically attaches comment data to the query results.  </p>
 <hr />
 <h2 id="notification-plugin">Notification Plugin</h2>
-<p>FormCMS's Notification Plugin alerts users when their comments are liked or replied to, boosting engagement.</p>
+<p>FormCMS's Notification Plugin alerts users when their comments are liked or replied to, boosting engagement.  </p>
 <h3 id="adding-the-notification-bell">Adding the Notification Bell</h3>
-<p>The Notification Bell displays the number of unread notifications for a user, enhancing their interaction with the platform. To add it:
-- In the Page Designer, drag the <code>Notification Bell</code> block from the toolbox onto your page.</p>
+<p>The Notification Bell displays the number of unread notifications for a user, enhancing their interaction with the platform. To add it:<br />
+- In the Page Designer, drag the <code>Notification Bell</code> block from the toolbox onto your page.  </p>
 <h3 id="viewing-notifications-in-the-user-portal">Viewing Notifications in the User Portal</h3>
-<p>When a user clicks the Notification Bell, they are directed to the Notification List page in the User Portal. From there, users can:
-- View a list of their notifications.
-- Click any notification to access the associated content, such as the original comment or data.</p>
+<p>When a user clicks the Notification Bell, they are directed to the Notification List page in the User Portal. From there, users can:<br />
+- View a list of their notifications.<br />
+- Click any notification to access the associated content, such as the original comment or data.  </p>
+<hr />
+<h2 id="subscription">Subscription</h2>
+<p>A website can integrate a subscription feature to generate revenue.</p>
+<h3 id="overview_3">Overview</h3>
+<p>FormCms integrates Stripe to ensure secure payments. FormCms does not store any credit card information; it only uses the Stripe subscription ID to query subscription status.
+Admins and users can visit the Stripe website to view transactions and logs.</p>
+<h3 id="register-stripe-developer-account-and-obtain-keys">Register Stripe Developer Account and Obtain Keys</h3>
+<p>Follow the Stripe documentation to obtain the Stripe Publishable Key and Secret Key.
+Add these keys to the <code>appSettings.json</code> file as follows:</p>
+<pre><code class="language-json">&quot;Stripe&quot;: {
+&quot;SecretKey&quot;: &quot;sk_***&quot;,
+&quot;PublishableKey&quot;: &quot;pk_***&quot;
+}
+</code></pre>
+<h3 id="set-the-access-level">Set the Access Level</h3>
+<p>For the online course demo system at https://fluent-cms-admin.azurewebsites.net/, each course may include multiple lessons.
+The course video serves as an introduction, and the first lesson of a course is free. When users attempt to access further lessons, they are restricted and prompted by FormCms to subscribe.</p>
+<p>To implement this, add an <code>accessLevel</code> field to the <code>lesson</code> entity.
+Then, include a condition <code>accessLevel:{lte: $access_level}</code> in the query to provide data for the Lesson Page:</p>
+<pre><code class="language-graphql">query lesson($lesson_id:Int, $access_level:Int){
+lesson(idSet:[$lesson_id],
+accessLevel:{lte: $access_level}
+){
+id, name, description, introduction, accessLevel
+}
+</code></pre>
+<h3 id="the-subscription-page">The Subscription Page</h3>
+<p>When an unpaid user attempts to access restricted content (requiring a subscription), FormCms redirects them to the Stripe website for payment.
+After payment, users can view their subscription status in the user portal.</p>
 <hr />
 <h2 id="optimizing-caching">Optimizing Caching</h2>
 <p>FormCMS employs advanced caching strategies to boost performance.  </p>
@@ -2533,7 +2567,7 @@ app.RegisterMessageProducerHook();
 <hr />
 <h2 id="development-guide">Development Guide</h2>
 <p>The backend is written in ASP.NET Core, the Admin Panel uses React, and the Schema Builder is developed with jQuery.</p>
-<h3 id="overview_3">Overview</h3>
+<h3 id="overview_4">Overview</h3>
 <p>The system comprises three main components:<br />
 1. <strong>Backend</strong> - Developed in ASP.NET Core.<br />
 2. <strong>Admin Panel</strong> - Built using React.<br />
@@ -2693,5 +2727,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-07-02 20:48:14.541543+00:00
+Build Date UTC : 2025-07-08 21:40:24.722316+00:00
 -->

@@ -5,7 +5,6 @@ using Microsoft.Extensions.Options;
 using Stripe;
 using Stripe.Checkout;
 using Session = FormCMS.Subscriptions.Models.Session;
-using Subscription = FormCMS.Subscriptions.Models.Subscription;
 
 namespace FormCMS.Subscriptions.Services;
 
@@ -94,90 +93,8 @@ public class StripeSubsSvcImpl(
         var session = await service.CreateAsync(options, _requestOptions, cancellationToken: ct);
         return new Session(session.Id);
     }
-    
-    public async Task<Subscription> CancelSubscription(string subsId, CancellationToken ct)
-    {
-        var sub = await new SubscriptionService().CancelAsync(
-            subsId,
-            null,
-            _requestOptions,
-            ct
-        );
-        return new Subscription(
-            sub.Id,
-            sub.CustomerId,
-            "",
-            sub.Created,
-            null,
-            sub.Status
-        );
-    }
+   
 
-
-
-    public async Task<Subscription> CreateSubscription(
-        string customerId,
-        string priceId,
-        CancellationToken ct
-    )
-    {
-        var options = new SubscriptionCreateOptions
-        {
-            Customer = customerId,
-            Items = new List<SubscriptionItemOptions>
-            {
-                new SubscriptionItemOptions { Price = priceId },
-            },
-            Expand = new List<string> { "latest_invoice.payment_intent" },
-        };
-        var result = await new SubscriptionService().CreateAsync(
-            options,
-            _requestOptions,
-            cancellationToken: ct
-        );
-        
-        return new Subscription(result.Id,customerId,null,result.Created,null,result.Status,null);
-    }
-
-  
-
-    public async Task<IEnumerable<Subscription>> GetSubscriptions(
-        int count,
-        CancellationToken ct
-    )
-    {
-        var options = new SubscriptionListOptions { Limit = count };
-        var subs = await new SubscriptionService().ListAsync(options, _requestOptions,ct);
-        return subs.Data.Select(s => new Subscription(
-            s.Id,
-            s.CustomerId,
-            "",
-            s.Created,
-            null,
-            s.Status,
-            null
-        ));
-    }
-
-    public async Task<Subscription> Single(string id, CancellationToken ct)
-    {
-        var result = await new SubscriptionService().GetAsync(
-            id,
-            null,
-            _requestOptions,
-            ct
-        );
-
-        return new Subscription(
-            result.Id,
-            result.CustomerId,
-            null,
-            result.Created,
-            null,
-            result.Status
-        );
-    }
-    
     private async Task<Billing?> GetBillingInfo(CancellationToken ct)
     {
         var billing = await billingService.GetSubBilling(ct);

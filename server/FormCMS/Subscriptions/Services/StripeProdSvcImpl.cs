@@ -9,7 +9,7 @@ namespace FormCMS.Subscriptions.Services
     ) : IProductService
     {
         private readonly RequestOptions _requestOptions = new() { ApiKey = conf.Value.SecretKey };
-        public async Task<Product> Add(Product product, CancellationToken ct)
+        public async Task<Product?> Add(Product product, CancellationToken ct)
         {
             var options = new ProductCreateOptions
             {
@@ -102,7 +102,7 @@ namespace FormCMS.Subscriptions.Services
             return new Product(
                 prod.Id,
                 prod.Name,
-                price.UnitAmount.Value,
+                price.UnitAmount!.Value,
                 price.Currency,
                 price.Recurring.Interval,
                 prod.Created

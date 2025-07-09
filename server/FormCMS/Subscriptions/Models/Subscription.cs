@@ -4,7 +4,7 @@
         string ExternalId,
         string CustomerId,
 
-        string ProductId,
+        string? ProductId,
         DateTime CreatedAt,
         DateTime? UpdatedAt,
         string Status,

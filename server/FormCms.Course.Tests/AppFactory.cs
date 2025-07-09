@@ -64,34 +64,32 @@ public class AppFactory : WebApplicationFactory<Program>
         Faker = new Faker();
     }
 
-    protected override void ConfigureWebHost(IWebHostBuilder builder)
-    {
-
-        builder.ConfigureAppConfiguration((context, configBuilder) =>
-        {
-            // Add the test-specific appsettings file
-            configBuilder.AddJsonFile("appsettings.json", optional: false);
-        });
-
-
-
-        // Make sure to override the options registration
-        builder.ConfigureServices((context, services) =>
-        {
-            // Bind the StripeSecretOptions section from config
-            var stripeSection = context.Configuration.GetSection("StripeSecretOptions");
-
-            // Override the IOptions<StripeSecretOptions> registration
-            services.Configure<StripeSettings>(stripeSection);
-
-            // Ensure StripeCustomerService is registered as ICustomerService
-            // (adjust lifetime and registration if needed)
-            services.AddScoped<ICustomerService, StripeCustomerSvcImpl>();
-        });
-
-
-
-    }
+    // protected override void ConfigureWebHost(IWebHostBuilder builder)
+    // {
+    //
+    //     builder.ConfigureAppConfiguration((context, configBuilder) =>
+    //     {
+    //         // Add the test-specific appsettings file
+    //         configBuilder.AddJsonFile("appsettings.json", optional: false);
+    //     });
+    //
+    //
+    //
+    //     // Make sure to override the options registration
+    //     builder.ConfigureServices((context, services) =>
+    //     {
+    //         // Bind the StripeSecretOptions section from config
+    //         var stripeSection = context.Configuration.GetSection("StripeSecretOptions");
+    //
+    //         // Override the IOptions<StripeSecretOptions> registration
+    //         services.Configure<StripeSettings>(stripeSection);
+    //
+    //         // Ensure StripeCustomerService is registered as ICustomerService
+    //         // (adjust lifetime and registration if needed)
+    //         services.AddScoped<ICustomerService, StripeCustomerSvcImpl>();
+    //     });
+    // }
+    
     public bool LoginAndInitTestData()
     {
         Do().GetAwaiter().GetResult();
@@ -105,6 +103,7 @@ public class AppFactory : WebApplicationFactory<Program>
             await BlogsTestData.PopulateData(EntityApi, AssetApi, QueryApi);
         }
     }
+    
     private static void SetTestConnectionString()
     {
         (string, string)[] settings =

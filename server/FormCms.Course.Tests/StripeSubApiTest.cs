@@ -1,11 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using FormCMS.Core.Assets;
+﻿
 using FormCMS.Subscriptions.Models;
-using FormCMS.Utils.ResultExt;
 
 namespace FormCMS.Course.Tests;
 
@@ -41,42 +35,42 @@ public class StripeSubApiTestShould(AppFactory factory)
         Assert.Equal("USD", result.Value.Currency, true);
     }
 
-    [Fact]
-    public async Task SubscriptionShouldBeCreated()
-    {
-        var result = await factory.StripeSubClient.CreateSubscription(
-            new Subscription(
-                null,
-                "cus_SYSVFT9NNVnoxt",
-                "prod_SZDL7YYCazcG8X",
-                DateTime.Now,
-                null,
-                "creating",
-                "price_1Re4uR1ULvZc5yjVkcUgbrpD"
-            )
-        );
-        Assert.True(result.IsSuccess);
-    }
+    // [Fact]
+    // public async Task SubscriptionShouldBeCreated()
+    // {
+    //     var result = await factory.StripeSubClient.CreateSubscription(
+    //         new Subscription(
+    //             null,
+    //             "cus_SYSVFT9NNVnoxt",
+    //             "prod_SZDL7YYCazcG8X",
+    //             DateTime.Now,
+    //             null,
+    //             "creating",
+    //             "price_1Re4uR1ULvZc5yjVkcUgbrpD"
+    //         )
+    //     );
+    //     Assert.True(result.IsSuccess);
+    // }
 
-    [Theory]
-    [InlineData("sub_1Re5P91ULvZc5yjVu8183hND")]
-    public async Task SubscriptionShouldBeCancelled(string subId)
-    {
-        var sub = await factory.StripeSubClient.GetSubscription(subId);
-        Assert.NotNull(sub);
-
-        await factory.StripeSubClient.CancelSubscription(sub.Value.ExternalId, default);
-        var su = await factory.StripeSubClient.GetSubscription(subId);
-        Assert.Equal("sub_1Re5P91ULvZc5yjVu8183hND", su.Value.ExternalId);
-        Assert.Equal("canceled", su.Value.Status);
-    }
-
-    [Theory]
-    [InlineData(3)]
-    public async Task ProductsShouldBeGet(int count)
-    {
-        var prods = await factory.StripeSubClient.GetProducts(count);
-        Assert.NotNull(prods);
-        Assert.Equal(count, prods.Value.Count());
-    }
+    // [Theory]
+    // [InlineData("sub_1Re5P91ULvZc5yjVu8183hND")]
+    // public async Task SubscriptionShouldBeCancelled(string subId)
+    // {
+    //     var sub = await factory.StripeSubClient.GetSubscription(subId);
+    //     Assert.NotNull(sub);
+    //
+    //     await factory.StripeSubClient.CancelSubscription(sub.Value.ExternalId, default);
+    //     var su = await factory.StripeSubClient.GetSubscription(subId);
+    //     Assert.Equal("sub_1Re5P91ULvZc5yjVu8183hND", su.Value.ExternalId);
+    //     Assert.Equal("canceled", su.Value.Status);
+    // }
+    //
+    // [Theory]
+    // [InlineData(3)]
+    // public async Task ProductsShouldBeGet(int count)
+    // {
+    //     var prods = await factory.StripeSubClient.GetProducts(count);
+    //     Assert.NotNull(prods);
+    //     Assert.Equal(count, prods.Value.Count());
+    // }
 }

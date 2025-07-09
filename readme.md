@@ -1948,24 +1948,24 @@ To handle lots of interactions without slowing down:
 ## Comments Plugin
 <details>
 <summary>
-FormCMS's Comments Plugin enables adding a comments feature to any entity, enhancing user interaction.
+FormCMS's Comments Plugin enables adding a comments feature to any entity, enhancing user interaction.  
 </summary>
 
 ### Adding the Comments Component
-1. In the Page Designer, drag the `Comments` component from the `Blocks` toolbox onto your page. Customize its layout as needed.
-2. From the `Layout Manager` toolbox, select the `Comment-form` component and set its `Entity Name` trait.
+1. In the Page Designer, drag the `Comments` component from the `Blocks` toolbox onto your page. Customize its layout as needed.  
+2. From the `Layout Manager` toolbox, select the `Comment-form` component and set its `Entity Name` trait.  
 
-After configuring, click `Save and Publish` to enable the comments feature. The Comments Plugin is designed for `Detail Pages`, where comments are associated with an `Entity Name` and `RecordId` (automatically retrieved from the page URL parameters).
+After configuring, click `Save and Publish` to enable the comments feature. The Comments Plugin is designed for `Detail Pages`, where comments are associated with an `Entity Name` and `RecordId` (automatically retrieved from the page URL parameters).  
 
 ### Comment Interactions
-Authenticated users can add, edit, delete, like, and reply to comments. The Comments Plugin sends events for these actions, which are handled by other plugins. For example:
-- The Notification Plugin processes these events to send notice to the comment's creator.
-- The Engage Activity Plugin uses these events to update the record's engagement score.
+Authenticated users can add, edit, delete, like, and reply to comments. The Comments Plugin sends events for these actions, which are handled by other plugins. For example:  
+- The Notification Plugin processes these events to send notice to the comment's creator.  
+- The Engage Activity Plugin uses these events to update the record's engagement score.  
 
 ### Integrating Comments with GraphQL
-Each `Detail Page` is linked to a FormCMS GraphQL query. To include comments:
-- Add the `Comments` field to your GraphQL query.
-- The Comments Plugin automatically attaches comment data to the query results.
+Each `Detail Page` is linked to a FormCMS GraphQL query. To include comments:  
+- Add the `Comments` field to your GraphQL query.  
+- The Comments Plugin automatically attaches comment data to the query results.  
 
 </details>
 
@@ -1976,21 +1976,65 @@ Each `Detail Page` is linked to a FormCMS GraphQL query. To include comments:
 ## Notification Plugin
 <details>
 <summary>
-FormCMS's Notification Plugin alerts users when their comments are liked or replied to, boosting engagement.
+FormCMS's Notification Plugin alerts users when their comments are liked or replied to, boosting engagement.  
 </summary>
 
-### Adding the Notification Bell
-The Notification Bell displays the number of unread notifications for a user, enhancing their interaction with the platform. To add it:
-- In the Page Designer, drag the `Notification Bell` block from the toolbox onto your page.
+### Adding the Notification Bell  
+The Notification Bell displays the number of unread notifications for a user, enhancing their interaction with the platform. To add it:  
+- In the Page Designer, drag the `Notification Bell` block from the toolbox onto your page.  
 
-### Viewing Notifications in the User Portal
-When a user clicks the Notification Bell, they are directed to the Notification List page in the User Portal. From there, users can:
-- View a list of their notifications.
-- Click any notification to access the associated content, such as the original comment or data.
+### Viewing Notifications in the User Portal  
+When a user clicks the Notification Bell, they are directed to the Notification List page in the User Portal. From there, users can:  
+- View a list of their notifications.  
+- Click any notification to access the associated content, such as the original comment or data.  
 
 </details>
 
 
+
+
+
+---
+## Subscription
+
+<details>
+<summary>
+A website can integrate a subscription feature to generate revenue.
+</summary>
+
+### Overview
+FormCms integrates Stripe to ensure secure payments. FormCms does not store any credit card information; it only uses the Stripe subscription ID to query subscription status.
+Admins and users can visit the Stripe website to view transactions and logs.
+
+### Register Stripe Developer Account and Obtain Keys
+Follow the Stripe documentation to obtain the Stripe Publishable Key and Secret Key.
+Add these keys to the `appSettings.json` file as follows:
+```json
+"Stripe": {
+"SecretKey": "sk_***",
+"PublishableKey": "pk_***"
+}
+```
+
+### Set the Access Level
+For the online course demo system at https://fluent-cms-admin.azurewebsites.net/, each course may include multiple lessons.
+The course video serves as an introduction, and the first lesson of a course is free. When users attempt to access further lessons, they are restricted and prompted by FormCms to subscribe.
+
+To implement this, add an `accessLevel` field to the `lesson` entity.
+Then, include a condition `accessLevel:{lte: $access_level}` in the query to provide data for the Lesson Page:
+```graphql
+query lesson($lesson_id:Int, $access_level:Int){
+lesson(idSet:[$lesson_id],
+accessLevel:{lte: $access_level}
+){
+id, name, description, introduction, accessLevel
+}
+```
+
+### The Subscription Page
+When an unpaid user attempts to access restricted content (requiring a subscription), FormCms redirects them to the Stripe website for payment.
+After payment, users can view their subscription status in the user portal.
+</details>
 
 ---
 ## Optimizing Caching
