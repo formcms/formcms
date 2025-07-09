@@ -14,7 +14,6 @@ public class HookRegistry
         public HookList<QueryPartialArgs>  QueryPartial{ get; } = new();
         public HookList<QueryPostPartialArgs>  QueryPostPartial{ get; } = new();
         public HookList<ListPlugInQueryArgs> ListPlugInQueryArgs { get; } = new();
-        public HookList<SinglePlugInQueryArgs> SinglePlugInQueryArgs { get; } = new();
         public HookList<EntityPreGetSingleArgs> EntityPreGetSingle { get; } = new();
         public HookList<EntityPreGetListArgs> EntityPreGetList { get; } = new();
         public HookList<EntityPreUpdateArgs> EntityPreUpdate { get; } = new();
