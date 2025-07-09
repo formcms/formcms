@@ -80,6 +80,7 @@ public sealed class AuthBuilder<TCmsUser>(ILogger<AuthBuilder<TCmsUser>> logger)
 
     public WebApplication UseCmsAuth(WebApplication app)
     {
+        var settings = app.Services.GetRequiredService<SystemSettings>();
         Print();
         app.UseAuthentication();
         app.UseAuthorization();
@@ -106,6 +107,21 @@ public sealed class AuthBuilder<TCmsUser>(ILogger<AuthBuilder<TCmsUser>> logger)
             SchemaAuthUtil.RegisterHooks(registry);
             EntityAuthUtil.RegisterHooks(registry);
             AssetAuthUtil.RegisterHooks(registry);
+            if (!settings.AllowAnonymousAccessGraphQL)
+            {
+                registry.QueryPreSingle.RegisterDynamic("*", (IProfileService svc,QueryPreSingleArgs args) =>
+                {
+                    if (args.Query.Name == "") svc.MustHasAnyRole([Roles.Sa,Roles.Admin]);
+                    return args;
+                });
+                
+                registry.QueryPreList.RegisterDynamic("*", (IProfileService svc,QueryPreListArgs args) =>
+                {
+                    if (args.Query.Name == "") svc.MustHasAnyRole([Roles.Sa,Roles.Admin]);
+                    return args;
+                });
+            }
+            
         }
     }
 

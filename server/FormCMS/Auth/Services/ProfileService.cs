@@ -29,24 +29,31 @@ public class ProfileService<TUser>(
     {
         //delete old avatar
         var user = await MustGetCurrentUser();
-        if (user.AvatarPath != null)
-        {
-            try
-            {
-                await store.Del(user.AvatarPath, ct);
-            }
-            catch { //ignore
-            }
-        }
-
         if (file.Length ==0)  throw new ResultException($"File [{file.FileName}] is empty");
+        if (!file.IsImage())  throw new ResultException($"File [{file.FileName}] is not an image");
+        
         file = resizer.CompressImage(file);
+
+        var oldPath = user.AvatarPath;
+       
         var path = Path.Join("avatar", Ulid.NewUlid().ToString()) + Path.GetExtension(file.FileName);
         await store.Upload([(path,file)],ct);
 
         user.AvatarPath = path;
         await userManager.UpdateAsync(user);
         await signInManager.RefreshSignInAsync(user);
+
+        if (oldPath != null)
+        {
+            try
+            {
+                await store.Del(oldPath, ct);
+            }
+            catch
+            {
+                //ignore 
+            }
+        }
     }
     
     public AccessLevel MustGetReadWriteLevel(string entityName)

@@ -99,8 +99,9 @@ public sealed class QuerySchemaService(
         
         selection = await LoadAttributes(selection, entity, null, status, ct);
         var sorts = await query.Sorts.ToValidSorts(entity, entitySchemaSvc, status).Ok();
-        var validFilter = await query.Filters.ToValidFilters(entity, status, entitySchemaSvc).Ok();
-        return query.ToLoadedQuery(entity, selection, sorts, validFilter);
+        var (validFilter, plugFilters) =
+            await query.Filters.ToValidFilters(entity, status, registry.PluginVariables, entitySchemaSvc).Ok();
+        return query.ToLoadedQuery(entity, selection, sorts, validFilter, plugFilters);
     }
 
     private async Task VerifyQuery(Query? query, PublicationStatus? status, CancellationToken ct = default)
@@ -111,7 +112,7 @@ public sealed class QuerySchemaService(
         }
 
         var entity = await entitySchemaSvc.LoadEntity(query.EntityName, status, ct).Ok();
-        await query.Filters.ToValidFilters(entity, status, entitySchemaSvc).Ok();
+        await query.Filters.ToValidFilters(entity, status, registry.PluginVariables, entitySchemaSvc).Ok();
 
         var fields = Converter.GetRootGraphQlFields(query.Source).Ok();
         var nodes = ParseGraphNodes(fields, "");
@@ -192,6 +193,8 @@ public sealed class QuerySchemaService(
 
             if (!attr.DataType.IsCompound()) return newNode;
             var desc = attr.GetEntityLinkDesc().Ok();
+            var validFilters = await node.Filters
+                .ToValidFilters(desc.TargetEntity, status, entitySchemaSvc).Ok();
             newNode = newNode with
             {
                 ValidSorts =
@@ -200,7 +203,7 @@ public sealed class QuerySchemaService(
                 ],
                 ValidFilters =
                 [
-                    ..await node.Filters.ToValidFilters(desc.TargetEntity, status, entitySchemaSvc).Ok()
+                    ..validFilters
                 ],
                 Selection = [..await LoadAttributes([..node.Selection], desc.TargetEntity, newNode, status, ct)]
             };

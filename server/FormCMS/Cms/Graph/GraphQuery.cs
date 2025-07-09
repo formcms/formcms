@@ -1,7 +1,8 @@
+using FormCMS.Auth.Models;
+using FormCMS.Auth.Services;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Assets;
 using FormCMS.Core.Descriptors;
-using FormCMS.Core.Identities;
 using FormCMS.Core.Plugins;
 using FormCMS.Utils.DisplayModels;
 using GraphQL.Types;
@@ -13,8 +14,18 @@ public record GraphInfo(Entity Entity, ObjectGraphType SingleType, ListGraphType
 
 public sealed class GraphQuery : ObjectGraphType
 {
-    public GraphQuery(IEntitySchemaService entitySchemaService, IQueryService queryService, PluginRegistry registry)
+    public GraphQuery(
+        SystemSettings systemSettings,
+        IProfileService profileService,
+        IEntitySchemaService entitySchemaService, 
+        IQueryService queryService, 
+        PluginRegistry registry)
     {
+        if (!systemSettings.AllowAnonymousAccessGraphQL)
+        {
+            profileService.MustHasAnyRole([Roles.Admin, Roles.Sa]);
+        }
+        
         var entities = entitySchemaService.AllEntities(CancellationToken.None).GetAwaiter().GetResult().ToList();
         entities.AddRange(registry.PluginEntities.Values);
         for (var i = 0; i < entities.Count; i++)

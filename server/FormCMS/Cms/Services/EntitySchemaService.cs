@@ -144,7 +144,7 @@ public sealed class EntitySchemaService(
         catch(Exception ex )
         {
             tx.Rollback();
-            throw ex is ResultException ? ex: new ResultException(ex.Message,ex);
+            throw ex is ResultException ? ex: new ResultException(ex.Message,inner:ex);
         }
 
         Schema WithDefaultAttr(Schema s)

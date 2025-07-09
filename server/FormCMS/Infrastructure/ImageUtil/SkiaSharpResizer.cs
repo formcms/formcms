@@ -7,7 +7,7 @@ public class SkiaSharpResizer(ResizeOptions opts):IResizer
 {
     public IFormFile CompressImage(IFormFile inputFile)
     {
-        if (!IsImage(inputFile))
+        if (!inputFile.IsImage())
         {
             return inputFile;
         }
@@ -31,13 +31,6 @@ public class SkiaSharpResizer(ResizeOptions opts):IResizer
             Headers = inputFile.Headers, // Preserve original headers if needed
             ContentType = "image/jpeg"   // Set content type to JPEG
         };
-    }
-    
-    private bool IsImage(IFormFile file)
-    {
-        string[] validExtensions = [".jpg", ".jpeg", ".png", ".bmp"];
-        var ext = Path.GetExtension(file.FileName).ToLower();
-        return validExtensions.Contains(ext);
     }
     
     private void Compress(Stream inputStream, Stream outputStream )

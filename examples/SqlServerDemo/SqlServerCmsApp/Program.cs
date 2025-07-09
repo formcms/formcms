@@ -5,6 +5,7 @@ using FormCMS.Activities.Workers;
 using FormCMS.Auth.Models;
 using FormCMS.Core.Auth;
 using FormCMS.Infrastructure.EventStreaming;
+using FormCMS.Subscriptions;
 using FormCMS.Utils.ResultExt;
 using FormCMS.Video.Workers;
 using Microsoft.AspNetCore.Identity;
@@ -30,6 +31,9 @@ webBuilder.Services.AddActivity();
 webBuilder.Services.AddComments();
 webBuilder.Services.AddVideoMessageProducer();
 
+// need to set stripe keys to appsettings.json
+webBuilder.Services.Configure<StripeSettings>(webBuilder.Configuration.GetSection("Stripe"));
+webBuilder.Services.AddSubscriptions();
 
 var webApp = webBuilder.Build();
 

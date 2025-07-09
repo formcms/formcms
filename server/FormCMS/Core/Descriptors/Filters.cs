@@ -6,7 +6,6 @@ using Microsoft.Extensions.Primitives;
 
 namespace FormCMS.Core.Descriptors;
 
-
 public sealed record ValidFilter(AttributeVector Vector, string MatchType, ImmutableArray<ValidConstraint> Constraints);
 
 public static class FilterConstants
@@ -89,27 +88,36 @@ public static class GraphFilterResolver
 
 public static class FilterHelper
 {
-    public static Result<ValidFilter[]> ReplaceVariables(
-        IEnumerable<ValidFilter> filters,
-        StrArgs? args
+    public static async Task<Result<(ValidFilter[] Normal, ValidFilter[] Plugined)>> ToValidFilters(
+        this IEnumerable<Filter> filters,
+        LoadedEntity entity,
+        PublicationStatus? schemaStatus,
+        HashSet<string> plugInVariables,
+        IEntityVectorResolver vectorResolver
     )
     {
-        var ret = new List<ValidFilter>();
-        foreach (var filter in filters)
+        var validFilters = new List<ValidFilter>();
+        var plugFilters = new List<ValidFilter>();
+        var res = await filters.ToValidFilters(entity, schemaStatus, vectorResolver);
+        if (res.IsFailed)
         {
-            if (!filter.Constraints.ReplaceVariables(filter.Vector.Attribute, args)
-                    .Try(out var constraints, out var err))
-            {
-                return Result.Fail(err);
-            }
+            return Result.Fail(res.Errors);
+        }
 
-            if (constraints.Length > 0)
+        foreach (var filter in res.Value)
+        {
+            if (filter.Constraints.Any(
+                    x => x.Values.Any(v => plugInVariables.Contains(v.S ?? ""))))
             {
-                ret.Add(filter with { Constraints = [..constraints] });
+                plugFilters.Add(filter);
+            }
+            else
+            {
+                validFilters.Add(filter);
             }
         }
 
-        return ret.ToArray();
+        return (validFilters.ToArray(), plugFilters.ToArray());
     }
 
     public static async Task<Result<ValidFilter[]>> ToValidFilters(
@@ -119,10 +127,10 @@ public static class FilterHelper
         IEntityVectorResolver vectorResolver
     )
     {
-        var ret = new List<ValidFilter>();
+        var validFilters = new List<ValidFilter>();
         foreach (var filter in filters)
         {
-            if (!(await vectorResolver.ResolveVector(entity, filter.FieldName,schemaStatus))
+            if (!(await vectorResolver.ResolveVector(entity, filter.FieldName, schemaStatus))
                 .Try(out var vector, out var resolveErr))
             {
                 return Result.Fail(resolveErr);
@@ -134,14 +142,12 @@ public static class FilterHelper
                 return Result.Fail(constraintsErr);
             }
 
-            if (constraints.Length > 0)
-            {
-                ret.Add(new ValidFilter(vector, filter.MatchType, [..constraints]));
-            }
+            if (constraints.Length <= 0) continue;
+
+            var validFilter = new ValidFilter(vector, filter.MatchType, [..constraints]);
+            validFilters.Add(validFilter);
         }
 
-        return ret.ToArray();
+        return validFilters.ToArray();
     }
-
-  
 }

@@ -20,7 +20,7 @@ public static class Resolvers
         return new FuncFieldResolver<Record>(async context =>
         {
             var dto = GetRequestDto(context, entityName);
-            return await ResultException.Try(()=>queryService.SingleWithAction(dto));
+            return await ResultExt.Try(()=>queryService.SingleWithAction(dto));
         });
     }
 
@@ -29,7 +29,7 @@ public static class Resolvers
         return new FuncFieldResolver<Record[]>(async context =>
         {
             var dto = GetRequestDto(context, entityName);
-            return await ResultException.Try(() => queryService.ListWithAction(dto));
+            return await ResultExt.Try(() => queryService.ListWithAction(dto));
         });
     }
 

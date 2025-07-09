@@ -1,14 +1,11 @@
 using FormCMS.Activities.Workers;
-using FormCMS.Auth;
-using FormCMS.Auth.Builders;
 using FormCMS.Auth.Models;
-using FormCMS.Cms.Builders;
 using FormCMS.Core.Auth;
 using FormCMS.Infrastructure.Buffers;
-using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Notify.Models;
 using FormCMS.Notify.Workers;
+using FormCMS.Subscriptions;
 using FormCMS.Utils.ResultExt;
 using FormCMS.Video.Workers;
 using Microsoft.AspNetCore.Identity;
@@ -52,6 +49,9 @@ public class WebApp(
         builder.Services.AddActivity(enableActivityBuffer);
         builder.Services.AddComments();
         builder.Services.AddNotify();
+        
+        builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
+        builder.Services.AddSubscriptions();
         
        
         if (azureBlobStoreOptions != null)

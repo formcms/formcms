@@ -2,6 +2,7 @@ using FormCMS;
 using FormCMS.Activities.Workers;
 using FormCMS.Auth.Models;
 using FormCMS.Core.Auth;
+using FormCMS.Subscriptions;
 using FormCMS.Utils.ResultExt;
 using FormCMS.Video.Workers;
 using Microsoft.AspNetCore.Identity;
@@ -33,6 +34,10 @@ webBuilder.Services.AddSingleton(new CmsRestClientSettings( "http://localhost:50
 // For distributed deployments, it's recommended to runEvent Handling services in a separate hosted App.
 // In this case, we register them within the web application to share the in-memory channel bus.
 webBuilder.Services.AddHostedService<FFMpegWorker>();
+
+// need to set stripe keys to appsettings.json
+webBuilder.Services.Configure<StripeSettings>(webBuilder.Configuration.GetSection("Stripe"));
+webBuilder.Services.AddSubscriptions();
 
 var webApp = webBuilder.Build();
 

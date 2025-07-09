@@ -11,6 +11,7 @@ using FormCMS.Video.Builders;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Rewrite;
+using FormCMS.Subscriptions.Builders;
 
 namespace FormCMS;
 
@@ -33,6 +34,7 @@ public static class WebApplicationExt
         app.Services.GetService<AuditLogBuilder>()?.UseAuditLog(app);
         //have to use comments before activity, activity query plugin can add like count
         app.Services.GetService<CommentBuilder>()?.UseComments(app);
+         app.Services.GetService<SubscriptionBuilder>()?.UseStripeSubscriptions(app);
         app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
         app.Services.GetService<NotificationBuilder>()?.UseNotification(app);
         app.Services.GetService<VideoMessageProducerBuilder>()?.UseVideo(app);
@@ -75,7 +77,9 @@ public static class WebApplicationExt
 
     public static IServiceCollection AddComments(this IServiceCollection services, bool enableBuffering=true)
         => CommentBuilder.AddComments(services);
-    
+    public static IServiceCollection AddSubscriptions(this IServiceCollection services, bool enableBuffering = true)
+       => SubscriptionBuilder.AddStripeSubscription(services);
+
     public static IServiceCollection AddNotify(this IServiceCollection services)
         => NotificationBuilder.AddNotify(services);
     public static IServiceCollection AddCrudMessageProducer(
