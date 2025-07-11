@@ -41,16 +41,4 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-06\T7WE5VK9DWC4KTANXV5G.mp4.hls\output.m3u8" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-06\T7WE5VK9DWC4KTANXV5G.mp4.hls\output0.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-06\T7WE5VK9DWC4KTANXV5G.mp4.hls\output1.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-06\T7WE5VK9DWC4KTANXV5G.mp4.hls\output2.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-06\T7WE5VK9DWC4KTANXV5G.mp4.hls\output3.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\var\folders\rd\4g90g0x90lb1w7dkd6zfk1sr0000gn\T\01JYHVXQH84AXSGTQPNFP6V8KV\2025-06\V4YWKH1HWZEJM2X1TYM0.mp4.hls\output.m3u8" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\var\folders\rd\4g90g0x90lb1w7dkd6zfk1sr0000gn\T\01JYHVXQH84AXSGTQPNFP6V8KV\2025-06\V4YWKH1HWZEJM2X1TYM0.mp4.hls\output0.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\var\folders\rd\4g90g0x90lb1w7dkd6zfk1sr0000gn\T\01JYHVXQH84AXSGTQPNFP6V8KV\2025-06\V4YWKH1HWZEJM2X1TYM0.mp4.hls\output1.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\var\folders\rd\4g90g0x90lb1w7dkd6zfk1sr0000gn\T\01JYHVXQH84AXSGTQPNFP6V8KV\2025-06\V4YWKH1HWZEJM2X1TYM0.mp4.hls\output2.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\var\folders\rd\4g90g0x90lb1w7dkd6zfk1sr0000gn\T\01JYHVXQH84AXSGTQPNFP6V8KV\2025-06\V4YWKH1HWZEJM2X1TYM0.mp4.hls\output3.ts" />
-    </ItemGroup>
 </Project>

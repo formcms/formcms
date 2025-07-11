@@ -109,8 +109,10 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 )
             );
             services.AddSingleton<IFileStore, LocalFileStore>();
+            services.AddSingleton<ChunkUploader>();
 
             services.AddScoped<IAssetService, AssetService>();
+            services.AddScoped<IChunkUploadService, ChunkUploadService>();
 
             services.AddScoped<IAdminPanelSchemaService, AdminPanelSchemaService>();
             services.AddScoped<ISchemaService, SchemaService>();
@@ -269,6 +271,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 .MapSchemaBuilderSchemaHandlers()
                 .MapAdminPanelSchemaHandlers();
             apiGroup.MapGroup("/assets").MapAssetHandlers();
+            apiGroup.MapGroup("/chunks").MapChunkUploadHandler();
             apiGroup
                 .MapGroup("/queries")
                 .MapQueryHandlers()
@@ -339,6 +342,8 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
 
             await serviceScope.ServiceProvider.GetRequiredService<ITaskService>().EnsureTable();
             await serviceScope.ServiceProvider.GetRequiredService<IAssetService>().EnsureTable();
+            await serviceScope.ServiceProvider.GetRequiredService<IAssetService>().EnsureTable();
+            await serviceScope.ServiceProvider.GetRequiredService<IChunkUploadService>().EnsureTable();
         }
 
         void UseExceptionHandler()

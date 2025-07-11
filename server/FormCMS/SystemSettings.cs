@@ -11,6 +11,12 @@ public sealed class RouteOptions
     public string PageBaseUrl { get; set; } = "";
 }
 
+public sealed class AssetSettings
+{
+    public long MaxFileSize { get; set; } = 1024 * 1024 * 1024;
+    public long BufferSize { get; set; } = 100 * 1024 * 1024;
+}
+
 public sealed class SystemSettings
 {
     public const string PageCachePolicyName = "CmsPageCachePolicy";
@@ -21,7 +27,6 @@ public sealed class SystemSettings
     public string SchemaRoot { get; set; } = FormCmsContentRoot + "/schema-ui";
     public string PortalRoot { get; set; } = FormCmsContentRoot +"/portal";
     public string TemplatesRoot { get; set; } = FormCmsContentRoot + "/static-assets";
-    
     public bool AllowAnonymousAccessGraphQL { get; set; } = false;
     public bool EnableClient { get; set; } = true;
     public bool MapCmsHomePage { get; set; } = true;

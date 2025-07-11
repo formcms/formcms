@@ -58,7 +58,7 @@ public static class AssetHandler
         app.MapPost(
             "/",
             async (IAssetService svc, HttpContext context, CancellationToken ct) =>
-                string.Join(",", await svc.Add(context.Request.Form.Files.ToArray(), ct))
+                string.Join(",", await svc.BatchUploadAndAdd(context.Request.Form.Files.ToArray(), ct))
         );
 
         app.MapPost(
@@ -90,5 +90,6 @@ public static class AssetHandler
                     AuthenticationSchemes = CmsAuthSchemas.ApiKeyAuth
                 }
             );
+        
     }
 }

@@ -1,4 +1,6 @@
+using System.Text;
 using Azure.Storage.Blobs;
+using Azure.Storage.Blobs.Specialized;
 using Azure.Storage.Blobs.Models;
 using Microsoft.AspNetCore.StaticFiles;
 
@@ -72,9 +74,10 @@ public class AzureBlobStore(AzureBlobStoreOptions options) : IFileStore
         {
             Directory.CreateDirectory(destinationDir);
         }
+
         await blobClient.DownloadToAsync(localPath, ct);
     }
-    
+
     public async Task DownloadFileWithRelated(string path, string localPath, CancellationToken ct)
     {
         await foreach (var blob in _containerClient.GetBlobsAsync(prefix: path, cancellationToken: ct))
@@ -93,7 +96,7 @@ public class AzureBlobStore(AzureBlobStoreOptions options) : IFileStore
         var blobClient = _containerClient.GetBlobClient(file);
         await blobClient.DeleteIfExistsAsync(cancellationToken: ct);
     }
-    
+
     public async Task DelByPrefix(string prefix, CancellationToken ct)
     {
         await foreach (var blob in _containerClient.GetBlobsAsync(prefix: prefix, cancellationToken: ct))
@@ -103,11 +106,42 @@ public class AzureBlobStore(AzureBlobStoreOptions options) : IFileStore
         }
     }
 
-
     private string GetContentTypeFromExtension(string filePath)
     {
         return _contentTypeProvider.TryGetContentType(filePath, out var contentType)
             ? contentType
             : "application/octet-stream";
+    }
+
+    public async Task<string> UploadChunk(string blobName, int chunkNumber, Stream stream, CancellationToken ct)
+    {
+        await _containerClient.CreateIfNotExistsAsync(cancellationToken: ct);
+        var blobClient = _containerClient.GetBlockBlobClient(blobName);
+        var blockId = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{chunkNumber:D6}"));
+        await blobClient.StageBlockAsync(blockId, stream, null, ct);
+        return blockId;
+    }
+
+    public async Task<List<string>> GetUploadedChunks(string blobName, CancellationToken ct)
+    {
+        var blobClient = _containerClient.GetBlockBlobClient(blobName);
+        try
+        {
+            var blockList = await blobClient.GetBlockListAsync(BlockListTypes.Uncommitted, cancellationToken: ct);
+            return blockList.Value.UncommittedBlocks.Select(b => b.Name).ToList();
+        }
+        catch (Azure.RequestFailedException)
+        {
+            return [];
+        }
+    }
+
+    public async Task CommitChunks(string blobName, IEnumerable<string> blockIds, CancellationToken ct)
+    {
+        var blobClient = _containerClient.GetBlockBlobClient(blobName);
+        await blobClient.CommitBlockListAsync(blockIds, new CommitBlockListOptions()
+        {
+            HttpHeaders = new BlobHttpHeaders { ContentType = GetContentTypeFromExtension(blobName) }
+        }, ct);
     }
 }

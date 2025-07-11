@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.AspNetCore.StaticFiles;
 
 namespace FormCMS.Infrastructure.FileStore;
@@ -114,6 +115,59 @@ public class LocalFileStore(
         return Task.CompletedTask;
     }
 
+     public async Task<string> UploadChunk(string blobName, int chunkNumber, Stream stream, CancellationToken ct)
+    {
+        var chunkDir = Path.Join(options.PathPrefix, "chunks", blobName);
+        Directory.CreateDirectory(chunkDir);
+        var chunkPath = Path.Combine(chunkDir, $"{chunkNumber:D6}");
+        var blockId = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{chunkNumber:D6}"));
+
+        await using var fileStream = new FileStream(chunkPath, FileMode.Create, FileAccess.Write);
+        await stream.CopyToAsync(fileStream, ct);
+
+        return blockId;
+    }
+
+    public async Task<List<string>> GetUploadedChunks(string blobName, CancellationToken ct)
+    {
+        var chunkDir = Path.Join(options.PathPrefix, "chunks", blobName);
+        if (!Directory.Exists(chunkDir))
+        {
+            return [];
+        }
+
+        var chunkFiles = Directory.GetFiles(chunkDir, "[0-9][0-9][0-9][0-9][0-9][0-9]")
+            .Select(f => int.Parse(Path.GetFileName(f)))
+            .OrderBy(n => n)
+            .Select(n => Convert.ToBase64String(Encoding.UTF8.GetBytes($"{n:D6}")))
+            .ToList();
+
+        return chunkFiles;
+    }
+
+    public async Task CommitChunks(string blobName, IEnumerable<string> blockIds, CancellationToken ct)
+    {
+        var finalPath = Path.Join(options.PathPrefix, blobName);
+        var chunkDir = Path.Join(options.PathPrefix, "chunks", blobName);
+
+        if (!Directory.Exists(chunkDir)) return;
+
+        Directory.CreateDirectory(Path.GetDirectoryName(finalPath) ?? string.Empty);
+        await using var finalStream = new FileStream(finalPath, FileMode.Create, FileAccess.Write);
+
+        foreach (var blockId in blockIds.OrderBy(id => int.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(id)))))
+        {
+            var chunkNumber = int.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(blockId)));
+            var chunkPath = Path.Combine(chunkDir, $"{chunkNumber:D6}");
+            if (File.Exists(chunkPath))
+            {
+                await using var chunkStream = new FileStream(chunkPath, FileMode.Open, FileAccess.Read);
+                await chunkStream.CopyToAsync(finalStream, ct);
+            }
+        }
+
+        Directory.Delete(chunkDir, recursive: true);
+    }
     private string GetContentType(string filePath)
         => _provider.TryGetContentType(filePath, out var contentType)
             ? contentType
