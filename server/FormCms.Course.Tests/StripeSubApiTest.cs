@@ -1,5 +1,8 @@
 ﻿
+using System;
+using System.Threading.Tasks;
 using FormCMS.Subscriptions.Models;
+using Xunit;
 
 namespace FormCMS.Course.Tests;
 

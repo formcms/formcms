@@ -1,3 +1,7 @@
+using System;
+using System.IO;
+using System.Net.Http;
+using System.Threading.Tasks;
 using Bogus;
 using FormCMS.Activities.ApiClient;
 using FormCMS.AuditLogging.ApiClient;
@@ -6,7 +10,11 @@ using FormCMS.CoreKit.ApiClient;
 using FormCMS.CoreKit.Test;
 using FormCMS.Subscriptions.ApiClient;
 using FormCMS.Utils.EnumExt;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
+using Xunit;
+
 namespace FormCMS.Course.Tests;
 
 public class AppFactory : WebApplicationFactory<Program>
@@ -56,32 +64,6 @@ public class AppFactory : WebApplicationFactory<Program>
         ChunkUploadApiClient = new ChunkUploadApiClient(_httpClient);
     }
 
-    // protected override void ConfigureWebHost(IWebHostBuilder builder)
-    // {
-    //
-    //     builder.ConfigureAppConfiguration((context, configBuilder) =>
-    //     {
-    //         // Add the test-specific appsettings file
-    //         configBuilder.AddJsonFile("appsettings.json", optional: false);
-    //     });
-    //
-    //
-    //
-    //     // Make sure to override the options registration
-    //     builder.ConfigureServices((context, services) =>
-    //     {
-    //         // Bind the StripeSecretOptions section from config
-    //         var stripeSection = context.Configuration.GetSection("StripeSecretOptions");
-    //
-    //         // Override the IOptions<StripeSecretOptions> registration
-    //         services.Configure<StripeSettings>(stripeSection);
-    //
-    //         // Ensure StripeCustomerService is registered as ICustomerService
-    //         // (adjust lifetime and registration if needed)
-    //         services.AddScoped<ICustomerService, StripeCustomerSvcImpl>();
-    //     });
-    // }
-    
     public bool LoginAndInitTestData()
     {
         Do().GetAwaiter().GetResult();
