@@ -113,22 +113,22 @@ public class AzureBlobStore(AzureBlobStoreOptions options) : IFileStore
             : "application/octet-stream";
     }
 
-    public async Task<string> UploadChunk(string blobName, int chunkNumber, Stream stream, CancellationToken ct)
+    public async Task<string> UploadChunk(string path, int chunkNumber, Stream stream, CancellationToken ct)
     {
         await _containerClient.CreateIfNotExistsAsync(cancellationToken: ct);
-        var blobClient = _containerClient.GetBlockBlobClient(blobName);
+        var blobClient = _containerClient.GetBlockBlobClient(path);
         var blockId = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{chunkNumber:D6}"));
         await blobClient.StageBlockAsync(blockId, stream, null, ct);
         return blockId;
     }
 
-    public async Task<List<string>> GetUploadedChunks(string blobName, CancellationToken ct)
+    public async Task<string[]> GetUploadedChunks(string path, CancellationToken ct)
     {
-        var blobClient = _containerClient.GetBlockBlobClient(blobName);
+        var blobClient = _containerClient.GetBlockBlobClient(path);
         try
         {
             var blockList = await blobClient.GetBlockListAsync(BlockListTypes.Uncommitted, cancellationToken: ct);
-            return blockList.Value.UncommittedBlocks.Select(b => b.Name).ToList();
+            return blockList.Value.UncommittedBlocks.Select(b => b.Name).ToArray();
         }
         catch (Azure.RequestFailedException)
         {
@@ -136,12 +136,13 @@ public class AzureBlobStore(AzureBlobStoreOptions options) : IFileStore
         }
     }
 
-    public async Task CommitChunks(string blobName, IEnumerable<string> blockIds, CancellationToken ct)
+    public async Task CommitChunks(string path, CancellationToken ct)
     {
-        var blobClient = _containerClient.GetBlockBlobClient(blobName);
+        var blockIds = await GetUploadedChunks(path, ct);
+        var blobClient = _containerClient.GetBlockBlobClient(path);
         await blobClient.CommitBlockListAsync(blockIds, new CommitBlockListOptions()
         {
-            HttpHeaders = new BlobHttpHeaders { ContentType = GetContentTypeFromExtension(blobName) }
+            HttpHeaders = new BlobHttpHeaders { ContentType = GetContentTypeFromExtension(path) }
         }, ct);
     }
 }

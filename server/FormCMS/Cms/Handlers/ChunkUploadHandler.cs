@@ -15,7 +15,6 @@ public static class ChunkUploadHandler
             ) =>
             {
                 var fileId = context.Request.Form["fileId"].ToString();
-                // var fileName = context.Request.Form["fileName"].ToString();
                 var chunkNumber = int.Parse(context.Request.Form["chunkNumber"]!);
                 var file = context.Request.Form.Files[0];
                 await service.UploadChunk(fileId, chunkNumber, file, ct);

@@ -4,21 +4,13 @@ using FormCMS.AuditLogging.ApiClient;
 using FormCMS.Auth.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.CoreKit.Test;
-using FormCMS.Subscriptions;
 using FormCMS.Subscriptions.ApiClient;
-using FormCMS.Subscriptions.Services;
 using FormCMS.Utils.EnumExt;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.DependencyInjection;
-using Moq;
-using NATS.Client.Core;
-using Microsoft.Extensions.Configuration;
 namespace FormCMS.Course.Tests;
 
 public class AppFactory : WebApplicationFactory<Program>
 {
-    public Mock<INatsConnection> MockNatsConnection { get; } = new();
     private readonly HttpClient _httpClient;
     public AuthApiClient AuthApi {get;}
     public SchemaApiClient SchemaApi {get;}
@@ -31,6 +23,7 @@ public class AppFactory : WebApplicationFactory<Program>
     public PageApiClient PageApi{get;}
     public BookmarkApiClient BookmarkApi{get;}
     public StripeSubsApiClient StripeSubClient {get;}
+    public ChunkUploadApiClient ChunkUploadApiClient { get; }
 
     public  Faker  Faker {get;}
     public HttpClient GetHttpClient()
@@ -41,9 +34,7 @@ public class AppFactory : WebApplicationFactory<Program>
     public AppFactory()
     {
         Environment.SetEnvironmentVariable("EnableActivityBuffer", "false");
-        // SetTestConnectionString();
-
-       
+        SetTestConnectionString();
         _httpClient = CreateClient(new WebApplicationFactoryClientOptions
         {
             BaseAddress = new Uri("http://localhost"),
@@ -62,6 +53,7 @@ public class AppFactory : WebApplicationFactory<Program>
         BookmarkApi = new BookmarkApiClient(_httpClient);
         StripeSubClient = new StripeSubsApiClient(_httpClient);
         Faker = new Faker();
+        ChunkUploadApiClient = new ChunkUploadApiClient(_httpClient);
     }
 
     // protected override void ConfigureWebHost(IWebHostBuilder builder)

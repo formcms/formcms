@@ -73,7 +73,6 @@ public class LocalFileStore(
         var sourceRoot = options.PathPrefix.TrimEnd('/');
         var fullFilePath = Path.Join(sourceRoot, path);
         await Download(path, localPath, ct);
-        
 
         var parentDir = Path.GetDirectoryName(fullFilePath) ?? sourceRoot;
         var filePrefix = Path.GetFileName(path);
@@ -92,9 +91,7 @@ public class LocalFileStore(
                 CreateDirAndCopy(sourceFile, destPath);
             }
         }
-
     }
-
 
     public Task Del(string file, CancellationToken ct)
     {
@@ -115,9 +112,9 @@ public class LocalFileStore(
         return Task.CompletedTask;
     }
 
-     public async Task<string> UploadChunk(string blobName, int chunkNumber, Stream stream, CancellationToken ct)
+     public async Task<string> UploadChunk(string path, int chunkNumber, Stream stream, CancellationToken ct)
     {
-        var chunkDir = Path.Join(options.PathPrefix, "chunks", blobName);
+        var chunkDir = Path.Join(options.PathPrefix, "chunks", path);
         Directory.CreateDirectory(chunkDir);
         var chunkPath = Path.Combine(chunkDir, $"{chunkNumber:D6}");
         var blockId = Convert.ToBase64String(Encoding.UTF8.GetBytes($"{chunkNumber:D6}"));
@@ -128,37 +125,35 @@ public class LocalFileStore(
         return blockId;
     }
 
-    public async Task<List<string>> GetUploadedChunks(string blobName, CancellationToken ct)
+    public async Task<string[]> GetUploadedChunks(string path, CancellationToken ct)
     {
-        var chunkDir = Path.Join(options.PathPrefix, "chunks", blobName);
+        var chunkDir = Path.Join(options.PathPrefix, "chunks", path);
         if (!Directory.Exists(chunkDir))
         {
             return [];
         }
 
-        var chunkFiles = Directory.GetFiles(chunkDir, "[0-9][0-9][0-9][0-9][0-9][0-9]")
-            .Select(f => int.Parse(Path.GetFileName(f)))
-            .OrderBy(n => n)
-            .Select(n => Convert.ToBase64String(Encoding.UTF8.GetBytes($"{n:D6}")))
-            .ToList();
-
-        return chunkFiles;
+        return Directory.GetFiles(chunkDir)
+            .Select(Path.GetFileName)
+            .Select(x=>x!)
+            .OrderBy(x=>x)
+            .ToArray();
     }
 
-    public async Task CommitChunks(string blobName, IEnumerable<string> blockIds, CancellationToken ct)
+    public async Task CommitChunks(string path, CancellationToken ct)
     {
-        var finalPath = Path.Join(options.PathPrefix, blobName);
-        var chunkDir = Path.Join(options.PathPrefix, "chunks", blobName);
+        var blockIds = await GetUploadedChunks(path, ct);
+        var finalPath = Path.Join(options.PathPrefix, path);
+        var chunkDir = Path.Join(options.PathPrefix, "chunks", path);
 
         if (!Directory.Exists(chunkDir)) return;
 
         Directory.CreateDirectory(Path.GetDirectoryName(finalPath) ?? string.Empty);
         await using var finalStream = new FileStream(finalPath, FileMode.Create, FileAccess.Write);
 
-        foreach (var blockId in blockIds.OrderBy(id => int.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(id)))))
+        foreach (var blockId in blockIds)
         {
-            var chunkNumber = int.Parse(Encoding.UTF8.GetString(Convert.FromBase64String(blockId)));
-            var chunkPath = Path.Combine(chunkDir, $"{chunkNumber:D6}");
+            var chunkPath = Path.Combine(chunkDir, blockId);
             if (File.Exists(chunkPath))
             {
                 await using var chunkStream = new FileStream(chunkPath, FileMode.Open, FileAccess.Read);

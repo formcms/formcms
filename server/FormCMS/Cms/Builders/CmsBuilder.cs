@@ -109,7 +109,6 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 )
             );
             services.AddSingleton<IFileStore, LocalFileStore>();
-            services.AddSingleton<ChunkUploader>();
 
             services.AddScoped<IAssetService, AssetService>();
             services.AddScoped<IChunkUploadService, ChunkUploadService>();

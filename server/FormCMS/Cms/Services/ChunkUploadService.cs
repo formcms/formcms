@@ -8,11 +8,11 @@ using Humanizer;
 namespace FormCMS.Cms.Services;
 
 public class ChunkUploadService(
+    IFileStore fileStore,
     IRelationDbDao dao,
     DatabaseMigrator migrator,
     KateQueryExecutor executor,
     IIdentityService identityService,
-    ChunkUploader chunkUploader,
     IAssetService assetService
     ):IChunkUploadService
 {
@@ -34,7 +34,7 @@ public class ChunkUploadService(
     {
         if (identityService.GetUserAccess()?.CanAccessAdmin != true) throw new ResultException("User not found");
         await using var stream = file.OpenReadStream();
-        await chunkUploader.UploadChunk(path, number, stream, ct);
+        await fileStore.UploadChunk(path, number, stream, ct);
     }
 
     public async Task<ChunkStatus> ChunkStatus(string fileName, long fileSize, CancellationToken ct)
@@ -50,14 +50,14 @@ public class ChunkUploadService(
         }
         
         var path = record.StrOrEmpty(nameof(UploadSession.Path).Camelize());
-        var chunks = await chunkUploader.GetUploadedChunks(path,ct);
+        var chunks = await fileStore.GetUploadedChunks(path,ct);
         return new ChunkStatus(path, chunks.Length);
     }
 
     public async Task Commit(string path, string fileName,  CancellationToken ct)
     {
         if (identityService.GetUserAccess()?.CanAccessAdmin != true) throw new ResultException("User not found");
-        await chunkUploader.CommitChunks(path, ct);
+        await fileStore.CommitChunks(path, ct);
         await assetService.AddWithAction(path, fileName, ct);
         await executor.Exec(UploadSessions.Delete(path), false, ct);
     }
