@@ -76,10 +76,10 @@ public class StripeSubsSvcImpl(
             return billing?.Status == SubscriptionStatus.Active;
         }
 
-        async Task<bool> Purchased(CancellationToken ct)
+        Task<bool> Purchased(CancellationToken ct)
         {
             //todo:
-            return false;
+            return Task.FromResult(false);
         }
     }
 
