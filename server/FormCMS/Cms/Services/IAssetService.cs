@@ -18,4 +18,5 @@ public interface IAssetService
     Task Delete(long id, CancellationToken ct);
     Task UpdateHlsProgress(Asset asset, CancellationToken ct);
     Task<string> AddWithAction(string path, string fileName, CancellationToken ct);
+    bool IsValidSignature(IFormFile file);
 }

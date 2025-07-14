@@ -107,7 +107,7 @@ public sealed class AuthBuilder<TCmsUser>(ILogger<AuthBuilder<TCmsUser>> logger)
             SchemaAuthUtil.RegisterHooks(registry);
             EntityAuthUtil.RegisterHooks(registry);
             AssetAuthUtil.RegisterHooks(registry);
-            if (!settings.AllowAnonymousAccessGraphQL)
+            if (!settings.AllowAnonymousAccessGraphQl)
             {
                 registry.QueryPreSingle.RegisterDynamic("*", (IProfileService svc,QueryPreSingleArgs args) =>
                 {

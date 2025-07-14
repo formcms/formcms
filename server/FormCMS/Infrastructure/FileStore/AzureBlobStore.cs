@@ -13,6 +13,11 @@ public class AzureBlobStore(AzureBlobStoreOptions options) : IFileStore
     private readonly BlobContainerClient _containerClient = new(options.ConnectionString, options.ContainerName);
     private readonly FileExtensionContentTypeProvider _contentTypeProvider = new();
 
+    public void Start(WebApplication app)
+    {
+        
+    }
+
     public async Task Upload(IEnumerable<(string, IFormFile)> files, CancellationToken ct)
     {
         await _containerClient.CreateIfNotExistsAsync(cancellationToken: ct);

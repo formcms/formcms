@@ -20,7 +20,7 @@ webBuilder.AddNatsClient(connectionName:"nats");
 webBuilder.Services.AddSingleton<IStringMessageProducer, NatsMessageBus>();
 
 webBuilder.Services.AddOutputCache();
-webBuilder.Services.AddSqlServerCms(dbConn);
+webBuilder.AddSqlServerCms(dbConn);
 //auth
 webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(dbConn));
 webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, AppDbContext>(new AuthConfig(KeyAuthConfig:new KeyAuthConfig(apiKey)));

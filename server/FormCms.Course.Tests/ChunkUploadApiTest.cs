@@ -6,9 +6,9 @@ namespace FormCMS.Course.Tests;
 [Collection("API")]
 public class ChunkUploadApiTest(AppFactory factory)
 {
-    string  fileName = $"{Ulid.NewUlid()}.txt";
-    const int bufferSize = 2;
-    private string data = "1234567";
+    string  fileName = $"{Ulid.NewUlid()}.gif";
+    const int bufferSize = 5;
+    private string data = "GIF8****____123";
     private bool _ = factory.LoginAndInitTestData();
 
     [Fact]
@@ -21,15 +21,16 @@ public class ChunkUploadApiTest(AppFactory factory)
     public async Task ResumeUploadAndCommitChunk()
     {
         var status  = await factory.ChunkUploadApiClient.ChunkStatus(fileName, data.Length).Ok();
-        var bs = Encoding.UTF8.GetBytes("12");
-        await factory.ChunkUploadApiClient.UploadChunk(status.Path, "text/html",0, bs).Ok();
+        var s = data[..bufferSize];
+        var bs = Encoding.UTF8.GetBytes(s);
+        await factory.ChunkUploadApiClient.UploadChunk(status.Path,fileName, "image/gif",0, bs ).Ok();
         
         status  = await factory.ChunkUploadApiClient.ChunkStatus(fileName, data.Length).Ok();
         for (var i = status.Count; i * bufferSize< data.Length; i++)
         {
-            var s = data.Substring(i * bufferSize, Math.Min(bufferSize,data.Length - i * bufferSize));
+            s = data.Substring(i *bufferSize, Math.Min(bufferSize,data.Length - i * bufferSize));
             bs = Encoding.UTF8.GetBytes(s);
-            await factory.ChunkUploadApiClient.UploadChunk(status.Path, "text/html",i, bs).Ok();
+            await factory.ChunkUploadApiClient.UploadChunk(status.Path, fileName,"image/gif",i, bs).Ok();
         }
         
         await factory.ChunkUploadApiClient.Commit(status.Path, fileName).Ok();
@@ -44,9 +45,9 @@ public class ChunkUploadApiTest(AppFactory factory)
 
         for (var i = status.Count; i * bufferSize< data.Length; i++)
         {
-            var s = data.Substring(i * bufferSize, Math.Min(bufferSize,data.Length - i * bufferSize));
+            var s = data.Substring(i *bufferSize, Math.Min(bufferSize,data.Length - i * bufferSize));
             var bs = Encoding.UTF8.GetBytes(s);
-            await factory.ChunkUploadApiClient.UploadChunk(status.Path, "text/html",i, bs).Ok();
+            await factory.ChunkUploadApiClient.UploadChunk(status.Path, fileName, "image/gif",i, bs).Ok();
         }
         
         await factory.ChunkUploadApiClient.Commit(status.Path, fileName).Ok();

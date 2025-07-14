@@ -1,6 +1,6 @@
 
-Welcome to [FormCMS](https://github.com/FormCMS/FormCMS)! 🚀  
-[![GitHub stars](https://img.shields.io/github/stars/FormCMS/FormCMS.svg?style=social&label=Star)](https://github.com/FormCMS/FormCMS/stargazers)
+Welcome to [FormCMS](https://github.com/FormCms/FormCms)! 🚀  
+[![GitHub stars](https://img.shields.io/github/stars/FormCms/FormCms.svg?style=social&label=Star)](https://github.com/FormCMS/FormCMS/stargazers)
 
 Our mission is to make **data modeling**, **backend development**, and **frontend development** as simple and intuitive as filling out a **form** 📋  
 We’d love for you to contribute to FormCMS! Check out our [CONTRIBUTING guide](https://github.com/formcms/formcms/blob/main/CONTRIBUTING.md) to get started.  
@@ -589,6 +589,71 @@ Permissions filter the library dialog and validate actions against ownership and
 - **Tracking**: `LinkCount` and `AssetLink` monitor usage.   
 - **SEO**: `Title` as alt text enhances image discoverability.   
 - **Scalability**: Cloud integration (e.g., Azure) and `IFileStore` support growing storage demands.   
+
+
+
+
+
+
+---
+
+## Asset Security Concern
+
+FormCMS takes measures to reduce security vulnerabilities  
+
+### Large File Limitation
+
+By default, ASP.NET Core buffers uploaded files entirely in memory, which can lead to excessive memory consumption.
+FormCMS restricts individual file uploads to a default size of 10MB. This limit is configurable.
+
+```csharp
+// Set max file size to 15MB  
+builder.AddSqliteCms(databaseConnectionString, settings => settings.MaxRequestBodySize = 1024 * 1024 * 15),  
+```
+
+### Chunked Uploading
+
+For files exceeding the maximum size limit, FormCMS supports chunked uploading.
+The client uploads the file in 1MB chunks.
+
+### Custom File Storage Location
+
+FormCMS supports both local and cloud-based file storage.
+By default, uploaded files are saved to `<app>/wwwroot/files`.
+However, this default setting may present some challenges:
+
+1. It's difficult to retain uploaded files when redeploying the application.
+2. Uploading large files to the system drive can exhaust disk space.
+
+You can configure a different path for file storage as shown below:
+
+```csharp
+builder.AddSqliteCms(databaseConnectionString, settings => settings.LocalFileStoreOptions.PathPrefix = "/data/"),  
+```
+
+### File Type Restrictions and Signature Verification
+
+FormCMS allows uploading only specific file types: `'gif'`, `'png'`, `'jpeg'`, `'jpg'`, `'zip'`, `'mp4'`, `'mpeg'`, `'mpg'`.
+It verifies the binary signature of each file to prevent spoofing.
+You can extend the file signature dictionary as needed.
+
+```csharp
+public Dictionary<string, byte[][]> FileSignature { get; set; } = new()  
+{  
+    {  
+        ".gif", [  
+            "GIF8"u8.ToArray()  
+        ]  
+    },  
+    {  
+        ".png", [  
+            [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]  
+        ]  
+    },  
+```
+
+
+---
 
 
 

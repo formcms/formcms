@@ -51,16 +51,16 @@ public static class WebApplicationExt
         )=>DocumentDbQueryBuilder.AddDocumentDbQuery(services, queryCollectionLinks);
     
     public static IServiceCollection AddPostgresCms(
-        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
-        ) => CmsBuilder.AddCms(services, DatabaseProvider.Postgres, connectionString,action);
+        this WebApplicationBuilder builder, string connectionString, Action<SystemSettings>? action = null
+        ) => CmsBuilder.AddCms(builder, DatabaseProvider.Postgres, connectionString,action);
 
     public static IServiceCollection AddSqliteCms(
-        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
-    ) => CmsBuilder.AddCms(services, DatabaseProvider.Sqlite, connectionString, action);
+        this WebApplicationBuilder builder, string connectionString, Action<SystemSettings>? action = null
+    ) => CmsBuilder.AddCms(builder, DatabaseProvider.Sqlite, connectionString, action);
 
     public static IServiceCollection AddSqlServerCms(
-        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
-    ) => CmsBuilder.AddCms(services, DatabaseProvider.SqlServer, connectionString, action);
+        this WebApplicationBuilder builder, string connectionString, Action<SystemSettings>? action = null
+    ) => CmsBuilder.AddCms(builder, DatabaseProvider.SqlServer, connectionString, action);
 
     public static IServiceCollection AddCmsAuth<TUser, TRole, TContext>(this IServiceCollection services,
         AuthConfig authConfig)

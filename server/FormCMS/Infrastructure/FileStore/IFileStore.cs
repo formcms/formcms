@@ -4,6 +4,7 @@ public record FileMetadata(long Size, string ContentType);
 
 public interface IFileStore
 {
+    void Start(WebApplication app);
     Task Upload(IEnumerable<(string,IFormFile)> files, CancellationToken ct);
     Task Upload(string localPath, string path, CancellationToken ct);
     Task<FileMetadata?> GetMetadata(string filePath, CancellationToken ct);

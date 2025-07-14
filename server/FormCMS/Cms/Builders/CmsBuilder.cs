@@ -36,12 +36,19 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
 {
 
     public static IServiceCollection AddCms(
-        IServiceCollection services,
+        WebApplicationBuilder builder,
         DatabaseProvider databaseProvider,
         string connectionString,
         Action<SystemSettings>? optionsAction = null
     )
     {
+        var systemSettings = new SystemSettings();
+        optionsAction?.Invoke(systemSettings);
+
+        builder.WebHost.ConfigureKestrel(option =>
+            option.Limits.MaxRequestBodySize = systemSettings.MaxRequestBodySize);
+        
+        var services = builder.Services;
         services.AddSingleton<CmsBuilder>();
         
         //only set options to FormCMS enum types.
@@ -50,10 +57,8 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<ListResponseMode>);
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<SchemaType>);
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<PublicationStatus>);
-
-        var systemSettings = new SystemSettings();
-        optionsAction?.Invoke(systemSettings);
         services.AddSingleton(systemSettings);
+
 
         var registry = new PluginRegistry(
             FeatureMenus: [Menus.MenuSchemaBuilder, Menus.MenuTasks],
@@ -102,12 +107,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             );
             services.AddSingleton<IResizer, ImageSharpResizer>();
 
-            services.AddSingleton(
-                new LocalFileStoreOptions(
-                    Path.Join(Directory.GetCurrentDirectory(), "wwwroot/files"),
-                    "/files"
-                )
-            );
+            services.AddSingleton(systemSettings.LocalFileStoreOptions);
             services.AddSingleton<IFileStore, LocalFileStore>();
 
             services.AddScoped<IAssetService, AssetService>();
@@ -238,6 +238,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         UseApiRouters();
         UseGraphql();
         UseExceptionHandler();
+        app.Services.GetRequiredService<IFileStore>().Start(app);
 
         return;
 

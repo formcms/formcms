@@ -6,14 +6,14 @@ namespace FormCMS.CoreKit.ApiClient;
 
 public class ChunkUploadApiClient(HttpClient client)
 {
-    public async Task<Result> UploadChunk(string fileId, string type, int chunkNumber, byte[] bytes)
+    public async Task<Result> UploadChunk(string fileId, string fileName, string type, int chunkNumber, byte[] bytes)
     {
         var url = "/".ToChunkUploadApi();
         using var content = new MultipartFormDataContent();
 
         var fileContent = new ByteArrayContent(bytes);
         fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(type);
-        content.Add(fileContent, "files", "chunk");
+        content.Add(fileContent, "files", fileName);
         content.Add(new StringContent(fileId), "fileId");
         content.Add(new StringContent(chunkNumber.ToString()), "chunkNumber");
         var msg = await client.PostAsync(url,content);

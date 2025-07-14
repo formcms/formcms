@@ -8,7 +8,7 @@ namespace FormCMS.Course.Tests;
 [Collection("API")]
 public class AssetAuthTest
 {
-    private readonly (string File, byte[] Content) _file = ($"{Ulid.NewUlid()}.txt", [1, 2, 3, 4]);
+    private readonly (string File, byte[] Content) _file = ($"{Ulid.NewUlid()}.gif",  "GIF81234"u8.ToArray());
     private readonly string _email = $"aa_{Ulid.NewUlid()}@cms.com";
     private readonly string _role = $"aa_{Ulid.NewUlid()}";
     private const string Pwd = $"Admin1!";

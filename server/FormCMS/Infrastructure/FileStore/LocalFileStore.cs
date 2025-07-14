@@ -1,10 +1,14 @@
 using System.Text;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.FileProviders;
 
 namespace FormCMS.Infrastructure.FileStore;
 
-public record LocalFileStoreOptions(string PathPrefix, string UrlPrefix);
-
+public class LocalFileStoreOptions(string pathPrefix, string urlPrefix)
+{
+    public string PathPrefix { get; set; } = pathPrefix;
+    public string UrlPrefix { get; set; } = urlPrefix;
+}
 public class LocalFileStore(
     LocalFileStoreOptions options
 ) : IFileStore
@@ -21,6 +25,35 @@ public class LocalFileStore(
 
         return Task.CompletedTask;
     }
+
+    public void Start(WebApplication app)
+    {
+        if (!File.Exists(options.PathPrefix))
+        {
+            Directory.CreateDirectory(options.PathPrefix);
+        } 
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            FileProvider = new PhysicalFileProvider(options.PathPrefix),
+            RequestPath = options.UrlPrefix,
+            ContentTypeProvider = new FileExtensionContentTypeProvider
+            {
+                Mappings =
+                {
+                    [".m3u8"] = "application/vnd.apple.mpegurl",
+                    [".ts"] = "video/mp2t" 
+                }
+            }
+        });
+        Console.WriteLine($"""
+                           *********************************************************
+                           Using Local file storage
+                           Path Prefix : {options.PathPrefix}
+                           Url Prefix : {options.UrlPrefix}
+                           *********************************************************
+                           """);
+    }
+    
 
     public async Task Upload(IEnumerable<(string, IFormFile)> files, CancellationToken ct)
     {
@@ -125,19 +158,19 @@ public class LocalFileStore(
         return blockId;
     }
 
-    public async Task<string[]> GetUploadedChunks(string path, CancellationToken ct)
+    public Task<string[]> GetUploadedChunks(string path, CancellationToken ct)
     {
         var chunkDir = Path.Join(options.PathPrefix, "chunks", path);
         if (!Directory.Exists(chunkDir))
         {
-            return [];
+            return Task.FromResult<string[]>([]);
         }
 
-        return Directory.GetFiles(chunkDir)
+        return Task.FromResult(Directory.GetFiles(chunkDir)
             .Select(Path.GetFileName)
             .Select(x=>x!)
             .OrderBy(x=>x)
-            .ToArray();
+            .ToArray());
     }
 
     public async Task CommitChunks(string path, CancellationToken ct)

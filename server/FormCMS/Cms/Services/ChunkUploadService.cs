@@ -33,6 +33,10 @@ public class ChunkUploadService(
     public async Task UploadChunk(string path, int number, IFormFile file, CancellationToken ct)
     {
         if (identityService.GetUserAccess()?.CanAccessAdmin != true) throw new ResultException("User not found");
+        if (number == 0 && !assetService.IsValidSignature(file))
+        {
+            throw new ResultException("Invalid file signature");
+        }
         await using var stream = file.OpenReadStream();
         await fileStore.UploadChunk(path, number, stream, ct);
     }

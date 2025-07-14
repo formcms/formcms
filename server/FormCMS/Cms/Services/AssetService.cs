@@ -23,7 +23,8 @@ public class AssetService(
     IRelationDbDao dao,
     IResizer resizer,
     IServiceProvider provider,
-    HookRegistry hookRegistry
+    HookRegistry hookRegistry,
+    SystemSettings systemSettings
 ) : IAssetService
 {
     public async Task EnsureTable()
@@ -119,9 +120,9 @@ public class AssetService(
     public async Task<string[]> BatchUploadAndAdd(IFormFile[] files, CancellationToken ct)
     {
         var userId= identityService.GetUserAccess()?.Id ?? throw new ResultException("Access denied");
-        foreach (var formFile in files)
+        if (files.Any(formFile => !IsValidSignature(formFile)))
         {
-            if (formFile.Length == 0) throw new ResultException($"File [{formFile.FileName}] is empty");
+            throw new ResultException("Invalid file signature");
         }
 
         files = files.Select(x=>x.IsImage()?resizer.CompressImage(x):x).ToArray();
@@ -279,5 +280,29 @@ public class AssetService(
         await executor.Exec(asset.UpdateHlsProgress(), false, ct);
     }
 
+    public bool IsValidSignature(IFormFile file)
+    {
+        string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+    
+        if (string.IsNullOrEmpty(extension) || !systemSettings.FileSignature.TryGetValue(extension, out var validSignatures))
+        {
+            return false;
+        }
+        if (validSignatures.Length == 0) return true;
+
+        var maxSignatureLength = validSignatures.Max(sig => sig.Length);
+        var fileHeader = new byte[maxSignatureLength];
+
+        using var stream = file.OpenReadStream();
+        var bytesRead = stream.Read(fileHeader, 0, maxSignatureLength);
+        
+        if (bytesRead < validSignatures.Min(sig => sig.Length))
+        {
+            return false;
+        }
+
+        return validSignatures.Any(signature =>
+            bytesRead >= signature.Length && fileHeader.Take(signature.Length).SequenceEqual(signature));
+    }
 
 }
