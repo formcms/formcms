@@ -29,8 +29,8 @@ public class AssetApiTest(AppFactory factory)
     [Fact]
     public async Task ListWithLinkCount()
     {
-        string txtFileName = $"{Ulid.NewUlid()}.txt";
-        var bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
+        string txtFileName = $"{Ulid.NewUlid()}.gif";
+        var bs = System.Text.Encoding.UTF8.GetBytes("GIF8test".ToCharArray());
         await  factory.AssetApi.AddAsset([(txtFileName, bs)]).Ok();
         var res = await  factory.AssetApi.List(true, "").Ok();
         Assert.True(res.Items[0].ContainsKey(nameof(Asset.LinkCount).Camelize()));
@@ -45,8 +45,8 @@ public class AssetApiTest(AppFactory factory)
     [Fact]
     public async Task SingleByPath()
     {
-         var txtFileName = $"{Ulid.NewUlid()}.txt";
-         var bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
+         var txtFileName = $"{Ulid.NewUlid()}.gif";
+         var bs = System.Text.Encoding.UTF8.GetBytes("GIF8test".ToCharArray());
          var path = await  factory.AssetApi.AddAsset([(txtFileName, bs)]).Ok();
          var rec = await  factory.AssetApi.Single(path).Ok();
          Assert.NotNull(rec);
@@ -55,24 +55,24 @@ public class AssetApiTest(AppFactory factory)
     [Fact]
     public async Task Replace()
     {
-        var txtFileName = $"{Ulid.NewUlid()}.txt";
-        var bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
+        var txtFileName = $"{Ulid.NewUlid()}.gif";
+        var bs = System.Text.Encoding.UTF8.GetBytes("GIF8test".ToCharArray());
         await  factory.AssetApi.AddAsset([(txtFileName, bs)]).Ok();
         var id = await  factory.AssetApi.GetAssetIdByName(txtFileName);
       
-        txtFileName = $"{Ulid.NewUlid()}.txt";
-        bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
+        txtFileName = $"{Ulid.NewUlid()}.gif";
+        bs = System.Text.Encoding.UTF8.GetBytes("GIF8test".ToCharArray());
         await  factory.AssetApi.Replace(id, txtFileName, bs).Ok();
         var asset = await  factory.AssetApi.Single(id).Ok();
         Assert.Equal(txtFileName,asset.Name);
-        Assert.Equal(4,asset.Size);
+        Assert.Equal(8,asset.Size);
     }
 
     [Fact]
     public async Task TestMeta()
     {
-        var txtFileName = $"{Ulid.NewUlid()}.txt";
-        var bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
+        var txtFileName = $"{Ulid.NewUlid()}.gif";
+        var bs = System.Text.Encoding.UTF8.GetBytes("GIF8test".ToCharArray());
         await  factory.AssetApi.AddAsset([(txtFileName, bs)]).Ok();
         var id = await  factory.AssetApi.GetAssetIdByName(txtFileName);
         
@@ -93,7 +93,7 @@ public class AssetApiTest(AppFactory factory)
     [Fact]
     public async Task CreateAsset()
     {
-        var path = await  factory.AssetApi.AddAsset([("image.png",Create2048TileImage())]).Ok();
+        var path = await  factory.AssetApi.AddAsset([("image.jpg",Create2048TileImage())]).Ok();
         var res = await  factory.AssetApi.List(false,$"path[equals]={path}").Ok();
         Assert.Single(res.Items); 
     }
@@ -116,12 +116,12 @@ public class AssetApiTest(AppFactory factory)
             new Attribute("images", "Images", DataType.String, DisplayType.Gallery)
         ).Ok();
 
-        string txtFileName = $"{Ulid.NewUlid()}.txt";
-        var bs = System.Text.Encoding.UTF8.GetBytes("test".ToCharArray());
-        var file = await  factory.AssetApi.AddAsset([(txtFileName, bs)]).Ok();
+        string gifFileName = $"{Ulid.NewUlid()}.gif";
+        var bs = System.Text.Encoding.UTF8.GetBytes("GIF8test".ToCharArray());
+        var gifPath = await  factory.AssetApi.AddAsset([(gifFileName, bs)]).Ok();
 
-        var singleImage = $"{Ulid.NewUlid()}.jpg";
-        var path = await  factory.AssetApi.AddAsset([(singleImage, Create2048TileImage())]).Ok();
+        var img = $"{Ulid.NewUlid()}.jpg";
+        var imgPath = await  factory.AssetApi.AddAsset([(img, Create2048TileImage())]).Ok();
 
         var img1 = $"{Ulid.NewUlid()}.jpg";
         var img2 = $"{Ulid.NewUlid()}.jpg";
@@ -131,11 +131,11 @@ public class AssetApiTest(AppFactory factory)
         ]).Ok();
 
         var res = await  factory.EntityApi.Insert(_post, 
-            new { title = "post1", file, image = path, images = imagesPath }).Ok();
+            new { title = "post1", file = gifPath, image = imgPath, images = imagesPath }).Ok();
         var id = res.GetProperty("id").GetInt64();
 
-        Assert.NotNull(await EntityHasAsset(txtFileName, _post, id));
-        Assert.NotNull(await EntityHasAsset(singleImage, _post, id));
+        Assert.NotNull(await EntityHasAsset(gifFileName, _post, id));
+        Assert.NotNull(await EntityHasAsset(img, _post, id));
         Assert.NotNull(await EntityHasAsset(img1, _post, id));
         Assert.NotNull(await EntityHasAsset(img2, _post, id));
 
@@ -149,8 +149,8 @@ public class AssetApiTest(AppFactory factory)
         record["images"] = imagesPath;
         await  factory.EntityApi.Update(_post, record).Ok();
 
-        Assert.NotNull(await EntityHasAsset(txtFileName, _post, id));
-        Assert.NotNull(await EntityHasAsset(singleImage, _post, id));
+        Assert.NotNull(await EntityHasAsset(gifFileName, _post, id));
+        Assert.NotNull(await EntityHasAsset(img, _post, id));
         Assert.NotNull(await EntityHasAsset(updateImage, _post, id));
         Assert.Null(await EntityHasAsset(img1, _post, id));
         Assert.Null(await EntityHasAsset(img2, _post, id));
@@ -158,8 +158,8 @@ public class AssetApiTest(AppFactory factory)
 
         ele = await  factory.EntityApi.Single(_post, id).Ok();
         await  factory.EntityApi.Delete(_post, ele).Ok();
-        Assert.Null(await EntityHasAsset(txtFileName, _post, id));
-        Assert.Null(await EntityHasAsset(singleImage, _post, id));
+        Assert.Null(await EntityHasAsset(gifFileName, _post, id));
+        Assert.Null(await EntityHasAsset(img, _post, id));
         Assert.Null(await EntityHasAsset(updateImage, _post, id));
         Assert.Null(await EntityHasAsset(img1, _post, id));
         Assert.Null(await EntityHasAsset(img2, _post, id));
@@ -171,7 +171,7 @@ public class AssetApiTest(AppFactory factory)
         using var canvas = new SKCanvas(bitmap);
         canvas.Clear(SKColors.Black); // SKColors.Black is (0, 0, 0, 255)
         using var image = SKImage.FromBitmap(bitmap);
-        using var data = image.Encode(SKEncodedImageFormat.Png, 100);
+        using var data = image.Encode(SKEncodedImageFormat.Jpeg, 100);
         return data.ToArray();
     }
 }

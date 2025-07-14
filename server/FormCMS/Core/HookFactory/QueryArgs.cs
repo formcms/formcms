@@ -53,9 +53,3 @@ public record ListPlugInQueryArgs(
     StrArgs Args,
     Record[]? OutRecords = null
 ) : BaseArgs(Name);
-
-public record SinglePlugInQueryArgs(
-    string Name,
-    StrArgs Args,
-    Record? OutRecord = null
-) : BaseArgs(Name);

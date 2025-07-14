@@ -23,7 +23,8 @@ public class AssetService(
     IRelationDbDao dao,
     IResizer resizer,
     IServiceProvider provider,
-    HookRegistry hookRegistry
+    HookRegistry hookRegistry,
+    SystemSettings systemSettings
 ) : IAssetService
 {
     public async Task EnsureTable()
@@ -84,25 +85,56 @@ public class AssetService(
         return new ListResponse(items, count);
     }
 
-    public async Task<string[]> Add(IFormFile[] files, CancellationToken ct)
+    public async Task<string> AddWithAction(string path, string fileName, CancellationToken ct)
     {
-        foreach (var formFile in files)
+        var userId= identityService.GetUserAccess()?.Id ?? throw new ResultException("Access denied");
+        var info = await store.GetMetadata(path, ct)?? throw new ResultException("Metadata not found");
+        
+        var record = await executor.Single(Assets.Single(path), ct);
+        if (record is null)
         {
-            if (formFile.Length == 0) throw new ResultException($"File [{formFile.FileName}] is empty");
+            var asset = new Asset(
+                CreatedBy: userId,
+                Path: path,
+                Url: store.GetUrl(path),
+                Name: fileName,
+                Title: fileName,
+                Size: info.Size,
+                Type: info.ContentType,
+                Metadata: new Dictionary<string, object>()
+            );
+        
+            var res =await hookRegistry.AssetPreAdd.Trigger(provider, new AssetPreAddArgs(asset));
+            asset = res.RefAsset;
+            await executor.BatchInsert(Assets.TableName, Assets.ToInsertRecords([asset]));
+            await hookRegistry.AssetPostAdd.Trigger(provider, new AssetPostAddArgs(asset));
+        }
+        else
+        {
+            var updateQuery = Assets.UpdateFile((long)record[nameof(Asset.Id).Camelize()], fileName, info.Size, info.ContentType);
+            await executor.Exec(updateQuery, false, ct);
+        }
+        return path;
+    }
+    
+    public async Task<string[]> BatchUploadAndAdd(IFormFile[] files, CancellationToken ct)
+    {
+        var userId= identityService.GetUserAccess()?.Id ?? throw new ResultException("Access denied");
+        if (files.Any(formFile => !IsValidSignature(formFile)))
+        {
+            throw new ResultException("Invalid file signature");
         }
 
         files = files.Select(x=>x.IsImage()?resizer.CompressImage(x):x).ToArray();
-        var dir = DateTime.Now.ToString("yyyy-MM");
-        var pairs = files.Select(x => (Path.Join(dir, UniqNameOmitYearAndMonth(x.FileName)), x)).ToArray();
+        var pairs = files.Select(x => (FileUtils.GetFilePath(x.FileName), x)).ToArray();
 
         var assets = new List<Asset>();
-        foreach (var (fileName, file) in pairs)
+        foreach (var (path, file) in pairs)
         {
-         
             var asset = new Asset(
-                    CreatedBy: "",
-                    Path: "/" + fileName,
-                    Url: store.GetUrl(fileName),
+                    CreatedBy: userId,
+                    Path: path,
+                    Url: store.GetUrl(path),
                     Name: file.FileName,
                     Title: file.FileName,
                     Size: file.Length,
@@ -229,9 +261,6 @@ public class AssetService(
         return assetRecords;
     }
 
-    private static string UniqNameOmitYearAndMonth(string fileName)
-        => string.Concat(Ulid.NewUlid().ToString().AsSpan(6, 20), Path.GetExtension(fileName));
-
     private async Task LoadLinkCount(Record[] items, CancellationToken ct)
     {
         var ids = items.Select(x => (long)x[nameof(Asset.Id).Camelize()]);
@@ -250,4 +279,30 @@ public class AssetService(
     {
         await executor.Exec(asset.UpdateHlsProgress(), false, ct);
     }
+
+    public bool IsValidSignature(IFormFile file)
+    {
+        string extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+    
+        if (string.IsNullOrEmpty(extension) || !systemSettings.FileSignature.TryGetValue(extension, out var validSignatures))
+        {
+            return false;
+        }
+        if (validSignatures.Length == 0) return true;
+
+        var maxSignatureLength = validSignatures.Max(sig => sig.Length);
+        var fileHeader = new byte[maxSignatureLength];
+
+        using var stream = file.OpenReadStream();
+        var bytesRead = stream.Read(fileHeader, 0, maxSignatureLength);
+        
+        if (bytesRead < validSignatures.Min(sig => sig.Length))
+        {
+            return false;
+        }
+
+        return validSignatures.Any(signature =>
+            bytesRead >= signature.Length && fileHeader.Take(signature.Length).SequenceEqual(signature));
+    }
+
 }

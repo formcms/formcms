@@ -103,6 +103,11 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-bs-level="2"><a href="#asset-security-concern" class="nav-link">Asset Security Concern</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#date-and-time" class="nav-link">Date and Time</a>
               <ul class="nav flex-column">
               </ul>
@@ -217,8 +222,8 @@
 </div></div>
                     <div class="col-md-9" role="main">
 
-<p>Welcome to <a href="https://github.com/FormCMS/FormCMS">FormCMS</a>! 🚀<br />
-<a href="https://github.com/FormCMS/FormCMS/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/FormCMS/FormCMS.svg?style=social&amp;label=Star" /></a></p>
+<p>Welcome to <a href="https://github.com/FormCms/FormCms">FormCMS</a>! 🚀<br />
+<a href="https://github.com/FormCMS/FormCMS/stargazers"><img alt="GitHub stars" src="https://img.shields.io/github/stars/FormCms/FormCms.svg?style=social&amp;label=Star" /></a></p>
 <p>Our mission is to make <strong>data modeling</strong>, <strong>backend development</strong>, and <strong>frontend development</strong> as simple and intuitive as filling out a <strong>form</strong> 📋<br />
 We’d love for you to contribute to FormCMS! Check out our <a href="https://github.com/formcms/formcms/blob/main/CONTRIBUTING.md">CONTRIBUTING guide</a> to get started.<br />
 Love FormCMS? Show your support by giving us a ⭐ on GitHub and help us grow! 🌟  </p>
@@ -1049,6 +1054,47 @@ public interface IFileStore
 <li><strong>SEO</strong>: <code>Title</code> as alt text enhances image discoverability.   </li>
 <li><strong>Scalability</strong>: Cloud integration (e.g., Azure) and <code>IFileStore</code> support growing storage demands.   </li>
 </ul>
+<hr />
+<h2 id="asset-security-concern">Asset Security Concern</h2>
+<p>FormCMS takes measures to reduce security vulnerabilities  </p>
+<h3 id="large-file-limitation">Large File Limitation</h3>
+<p>By default, ASP.NET Core buffers uploaded files entirely in memory, which can lead to excessive memory consumption.
+FormCMS restricts individual file uploads to a default size of 10MB. This limit is configurable.</p>
+<pre><code class="language-csharp">// Set max file size to 15MB  
+builder.AddSqliteCms(databaseConnectionString, settings =&gt; settings.MaxRequestBodySize = 1024 * 1024 * 15),  
+</code></pre>
+<h3 id="chunked-uploading">Chunked Uploading</h3>
+<p>For files exceeding the maximum size limit, FormCMS supports chunked uploading.
+The client uploads the file in 1MB chunks.</p>
+<h3 id="custom-file-storage-location">Custom File Storage Location</h3>
+<p>FormCMS supports both local and cloud-based file storage.
+By default, uploaded files are saved to <code>&lt;app&gt;/wwwroot/files</code>.
+However, this default setting may present some challenges:</p>
+<ol>
+<li>It's difficult to retain uploaded files when redeploying the application.</li>
+<li>Uploading large files to the system drive can exhaust disk space.</li>
+</ol>
+<p>You can configure a different path for file storage as shown below:</p>
+<pre><code class="language-csharp">builder.AddSqliteCms(databaseConnectionString, settings =&gt; settings.LocalFileStoreOptions.PathPrefix = &quot;/data/&quot;),  
+</code></pre>
+<h3 id="file-type-restrictions-and-signature-verification">File Type Restrictions and Signature Verification</h3>
+<p>FormCMS allows uploading only specific file types: <code>'gif'</code>, <code>'png'</code>, <code>'jpeg'</code>, <code>'jpg'</code>, <code>'zip'</code>, <code>'mp4'</code>, <code>'mpeg'</code>, <code>'mpg'</code>.
+It verifies the binary signature of each file to prevent spoofing.
+You can extend the file signature dictionary as needed.</p>
+<pre><code class="language-csharp">public Dictionary&lt;string, byte[][]&gt; FileSignature { get; set; } = new()  
+{  
+    {  
+        &quot;.gif&quot;, [  
+            &quot;GIF8&quot;u8.ToArray()  
+        ]  
+    },  
+    {  
+        &quot;.png&quot;, [  
+            [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A]  
+        ]  
+    },  
+</code></pre>
+<hr />
 <hr />
 <h2 id="date-and-time">Date and Time</h2>
 <p>The Date and Time system in FormCMS manages how dates and times are displayed and stored, supporting three distinct formats: <code>localDatetime</code>, <code>datetime</code>, and <code>date</code>. It ensures accurate representation across time zones and consistent storage in the database.</p>
@@ -2727,5 +2773,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-07-08 21:40:24.722316+00:00
+Build Date UTC : 2025-07-14 21:23:50.682056+00:00
 -->

@@ -126,11 +126,11 @@ public class WebApp(
     {
         _ = databaseProvider switch
         {
-            Constants.Sqlite => builder.Services
-                .AddSqliteCms(databaseConnectionString),
-            Constants.Postgres => builder.Services
+            Constants.Sqlite => builder
+                .AddSqliteCms(databaseConnectionString ),
+            Constants.Postgres => builder
                 .AddPostgresCms(databaseConnectionString),
-            Constants.SqlServer => builder.Services
+            Constants.SqlServer => builder
                 .AddSqlServerCms(databaseConnectionString),
             _ => throw new Exception("Database provider not found")
         };

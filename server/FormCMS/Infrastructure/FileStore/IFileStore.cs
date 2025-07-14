@@ -4,6 +4,7 @@ public record FileMetadata(long Size, string ContentType);
 
 public interface IFileStore
 {
+    void Start(WebApplication app);
     Task Upload(IEnumerable<(string,IFormFile)> files, CancellationToken ct);
     Task Upload(string localPath, string path, CancellationToken ct);
     Task<FileMetadata?> GetMetadata(string filePath, CancellationToken ct);
@@ -12,6 +13,9 @@ public interface IFileStore
     Task DownloadFileWithRelated(string path, string localPath, CancellationToken ct);
     Task Del(string file, CancellationToken ct);
     Task DelByPrefix(string prefix, CancellationToken ct);
+    Task<string[]> GetUploadedChunks(string path, CancellationToken ct);
+    Task<string> UploadChunk(string path, int chunkNumber, Stream stream, CancellationToken ct);
+    Task CommitChunks(string path, CancellationToken ct);
 }
 
 public static class FileStoreExtensions 

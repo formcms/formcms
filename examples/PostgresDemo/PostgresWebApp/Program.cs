@@ -20,7 +20,7 @@ webBuilder.AddNatsClient(connectionName:"nats");
 webBuilder.Services.AddSingleton<IStringMessageProducer, NatsMessageBus>();
 
 webBuilder.Services.AddOutputCache();
-webBuilder.Services.AddPostgresCms(connectionString);
+webBuilder.AddPostgresCms(connectionString);
 //add permission control service 
 webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, AppDbContext>(new AuthConfig(KeyAuthConfig:new KeyAuthConfig(apiKey)));

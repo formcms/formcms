@@ -14,7 +14,7 @@ var webBuilder = WebApplication.CreateBuilder(args);
 webBuilder.Services.AddOutputCache();
 
 const string connectionString = "Data Source=cms.db";
-webBuilder.Services.AddSqliteCms(connectionString);
+webBuilder.AddSqliteCms(connectionString);
 
 const string apikey = "12345";
 

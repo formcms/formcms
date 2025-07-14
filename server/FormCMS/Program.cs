@@ -30,6 +30,7 @@ foreach (var app in apps)
 //cms
     TsGenerator.GenerateCode<Asset>($"../../../{app}/libs/FormCmsAdminSdk/cms/types/asset.ts");
     TsGenerator.GenerateCode<AssetLink>($"../../../{app}/libs/FormCmsAdminSdk/cms/types/assetLink.ts");
+    TsGenerator.GenerateCode<ChunkStatus>($"../../../{app}/libs/FormCmsAdminSdk/cms/types/chunkStatus.ts");
     TsGenerator.GenerateCode<LookupListResponse>(
         $"../../../{app}/libs/FormCmsAdminSdk/cms/types/lookupListResponse.ts");
     TsGenerator.GenerateCode<DefaultAttributeNames>(

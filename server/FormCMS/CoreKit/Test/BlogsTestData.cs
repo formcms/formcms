@@ -69,7 +69,7 @@ public static class BlogsTestData
         var list = new List<(string,byte[])>();
         for (var i = 0; i < 100; i++)
         {
-            list.Add(($"{i}.txt", [1]));
+            list.Add(($"{i}.gif", "GIF8123"u8.ToArray()));
         }
         var paths = await assetClient.AddAsset(list.ToArray()).Ok();
         

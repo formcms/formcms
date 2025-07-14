@@ -68,15 +68,15 @@ namespace FormCMS.Subscriptions.Builders
 
                     foreach (var queryPluginFilter in args.Query.PluginFilters)
                     {
-                        foreach (var validConstraint in from validConstraint in queryPluginFilter.Constraints
+                        foreach (var unused in from validConstraint in queryPluginFilter.Constraints
                                  from validConstraintValue in validConstraint.Values
                                  where validConstraintValue.S == accessLevel
                                  select validConstraint)
                         {
                             if (!args.RefRecord.ByJsonPath<long>(queryPluginFilter.Vector.FullPath, out var val))
                                 continue;
-                            var targetValue = validConstraint.Match == Matches.Lte ? val : val + 1;
-                            var canAccess = await service.CanAccess("", 0, targetValue, CancellationToken.None);
+                            
+                            var canAccess = await service.CanAccess("", 0, val, CancellationToken.None);
                             if (!canAccess)
                             {
                                 throw new ResultException("Not have enough access level", ErrorCodes.NOT_ENOUGH_ACCESS_LEVEL);

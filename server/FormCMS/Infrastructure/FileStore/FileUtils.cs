@@ -1,3 +1,5 @@
+using NUlid;
+
 namespace FormCMS.Infrastructure.FileStore;
 
 public static class FileUtils
@@ -14,5 +16,12 @@ public static class FileUtils
     {
         var destDir = Path.GetDirectoryName(destPath);
         EnsureFolder(destDir);
+    }
+    
+    public static string GetFilePath(string fileName)
+    {
+        var dir = DateTime.Now.ToString("/yyyy-MM");
+        var file = string.Concat(Ulid.NewUlid().ToString().AsSpan(6, 20), Path.GetExtension(fileName));
+        return Path.Join(dir, file);
     }
 }

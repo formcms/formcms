@@ -88,7 +88,7 @@ public static class HttpClientExt
         return await res.ParseResult();
     }
     
-    private static async Task<Result> ParseResult(this HttpResponseMessage msg)
+    public static async Task<Result> ParseResult(this HttpResponseMessage msg)
     {
         var str = await msg.Content.ReadAsStringAsync();
         if (!msg.IsSuccessStatusCode)
@@ -110,7 +110,7 @@ public static class HttpClientExt
         return Result.Ok(str);
     }
 
-    private static async Task<Result<T>> ParseResult<T>(this HttpResponseMessage msg, JsonSerializerOptions? options)
+    public static async Task<Result<T>> ParseResult<T>(this HttpResponseMessage msg, JsonSerializerOptions? options)
     {
         var str = await msg.Content.ReadAsStringAsync();
         if (!msg.IsSuccessStatusCode)

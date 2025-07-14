@@ -60,13 +60,27 @@ public class StripeSubsSvcImpl(
             case 0:
                 return true;
             case 1:
+                return await Subscribed(ct);
+            case 2:
+                return await Purchased(ct);
+            case 3:
             {
-                var billing = await GetBillingInfo(ct);
-                return billing?.Status == SubscriptionStatus.Active;
+                return await Subscribed(ct) || await Purchased(ct);
             }
-            //todo: check if user has paid
         }
         return false;
+
+        async Task<bool> Subscribed(CancellationToken ct)
+        {
+            var billing = await GetBillingInfo(ct);
+            return billing?.Status == SubscriptionStatus.Active;
+        }
+
+        Task<bool> Purchased(CancellationToken ct)
+        {
+            //todo:
+            return Task.FromResult(false);
+        }
     }
 
     public async Task<Session> CreateSubSession(string priceId, string successUrl, string cancelUrl, CancellationToken ct)
