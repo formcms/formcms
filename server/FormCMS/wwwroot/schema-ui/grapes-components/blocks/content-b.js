@@ -20,7 +20,7 @@ export const contentB = {
             <div class="xl:w-1/4 md:w-1/2 p-4">
                 <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-lg">
                     <a href="/page/{{id}}" title="{{title}}">
-                        <img src="{{image.url}}" alt="" class="h-40 rounded w-full object-cover object-center mb-6 transition-opacity duration-300 ease-in-out hover:opacity-90">
+                        <img data-gjs-type="image" src="{{image.url}}" alt="" class="h-40 rounded w-full object-cover object-center mb-6 transition-opacity duration-300 ease-in-out hover:opacity-90">
                     </a>
                     <h3 class="tracking-widest text-red-500 dark:text-red-400 text-xs font-medium uppercase">{{tag}}</h3>
                     <h2 class="text-lg text-gray-900 dark:text-gray-100 font-medium mb-3">

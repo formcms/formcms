@@ -33,7 +33,7 @@ export const cardA =
     <div class="mt-3 rounded-2xl bg-gray-50 px-8 py-8 text-gray-500 dark:bg-gray-900 dark:text-gray-400">
       <div class="flex flex-wrap items-start sm:flex-nowrap sm:space-x-6">
         <div class="relative mt-1 h-24 w-24 flex-shrink-0 ">
-            <a href="pages/{{page}}"> <img loading="lazy" decoding="async" data-nimg="fill" class="rounded-full object-cover" style="position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent" src="/files/{{image}}"> </a>
+            <a href="pages/{{page}}"> <img data-gjs-type="image" loading="lazy" decoding="async" data-nimg="fill" class="rounded-full object-cover" style="position:absolute;height:100%;width:100%;left:0;top:0;right:0;bottom:0;color:transparent" src="/files/{{image}}"> </a>
         </div>
         <div>
             <div class="mb-3"> <h3 class="text-lg font-medium text-gray-800 dark:text-gray-300">{{title}}</h3> </div>
