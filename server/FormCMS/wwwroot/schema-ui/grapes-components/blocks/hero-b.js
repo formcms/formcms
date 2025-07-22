@@ -46,7 +46,7 @@ export const heroB = {
   </div>
 </div>
 <div class="relative z-0 mx-auto aspect-video max-w-screen-lg overflow-hidden lg:rounded-lg">
-  <img alt="Thumbnail" loading="eager" decoding="async" data-nimg="fill" class="object-cover" src="/files{{image}}"/>
+  <img alt="Thumbnail"  data-gjs-type="image" loading="eager" decoding="async" data-nimg="fill" class="object-cover" src="/files{{image}}"/>
 </div>
 <div class="container px-8 mx-auto xl:px-5 max-w-screen-lg py-5 lg:py-8 bg-white dark:bg-gray-800">
   <article class="mx-auto max-w-screen-md">

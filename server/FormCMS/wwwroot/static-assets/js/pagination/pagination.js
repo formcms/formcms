@@ -35,7 +35,7 @@ export function  setPaginationStatus(list, render) {
             nav.innerHTML = '';
             initObserver();
             break;
-        case 'None':
+        default:
             nav.style.display = 'none';
             break;
     }

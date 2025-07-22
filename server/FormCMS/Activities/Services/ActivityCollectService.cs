@@ -58,7 +58,7 @@ public class ActivityCollectService(
     {
         var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
         var ret = new Dictionary<string, StatusDto>();
-        foreach (var pair in await InternalRecord(cookieUserId,entity,entityName, recordId, settings.CommandAutoRecordActivities.ToArray(), ct))
+        foreach (var pair in await InternalRecord(identityService.GetUserAccess()?.Id ?? cookieUserId,entity,entityName, recordId, settings.CommandAutoRecordActivities.ToArray(), ct))
         {
             ret[pair.Key] = new StatusDto(true, pair.Value);
         }
@@ -107,7 +107,19 @@ public class ActivityCollectService(
     {
         var path = new Uri(url).AbsolutePath.TrimStart('/');
         var page = await pageResolver.GetPage(path, ct);
-        await InternalRecord(cookieUserId, null,Constants.PageEntity, page.Id, [Constants.VisitActivityType], ct);
+        await InternalRecord(identityService.GetUserAccess()?.Id ?? cookieUserId, null,Constants.PageEntity, page.Id, [Constants.VisitActivityType], ct);
+    }
+
+    public async Task RecordMessage(
+        string useId,
+        string entityName,
+        long recordId,
+        string[] activityTypes,
+        CancellationToken ct
+    )
+    {
+        var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
+        await InternalRecord(useId, entity,entityName, recordId, activityTypes, ct);
     }
 
     public async Task<Dictionary<string, long>> Record(
@@ -127,7 +139,7 @@ public class ActivityCollectService(
         }
         var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
 
-        return await InternalRecord(cookieUserId, entity,entityName, recordId, activityTypes, ct);
+        return await InternalRecord(identityService.GetUserAccess()?.Id ?? cookieUserId, entity,entityName, recordId, activityTypes, ct);
     }
 
     public async Task<long> Toggle(
@@ -266,17 +278,14 @@ public class ActivityCollectService(
         }
     }
     private async Task<Dictionary<string, long>> InternalRecord(
-        string cookieUserId,
+        string userId,
         LoadedEntity? entity,
         string entityName,
         long recordId,
         string[] activityTypes,
         CancellationToken ct
     ){
-
-        var userId = identityService.GetUserAccess()?.Id ?? cookieUserId;
         var activities = activityTypes.Select(x => new Activity(entityName, recordId, x, userId)).ToArray();
-
         var counts = activityTypes
             .Select(x => new ActivityCount(entityName, recordId, x))
             .ToArray();
