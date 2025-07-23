@@ -1938,6 +1938,8 @@ The URL <code>/</code> will be resolved to <code>/pages/home</code> unless expli
 </tr>
 </tbody>
 </table>
+<h3 id="copy-component-between-pages">Copy component between Pages</h3>
+<p>You can copy a component to the clipboard on one page and paste it from the clipboard on another page.   </p>
 <hr />
 <h2 id="online-course-system-frontend">Online Course System Frontend</h2>
 <p>Having established our understanding of FormCMS essentials like Entity, Query, and Page, we're ready to build a frontend for an online course website.</p>
@@ -2216,7 +2218,7 @@ export default function () {
 <p>The <strong>Popular Score</strong> is a simple way to measure how engaging content (like posts, videos, or articles) is based on user interactions such as <strong>views</strong>, <strong>likes</strong>, <strong>shares</strong>, and <strong>how long ago the content was posted</strong>. It helps platforms rank and promote content that’s getting attention, making it more visible on homepages, trending sections, or personalized feeds.</p>
 <hr />
 <h3 id="calculation-of-the-popular-score">Calculation of the Popular Score</h3>
-<p>The Popular Score combines views, likes, shares, and time since posting, with each part weighted to reflect its importance. Newer content gets a boost, while older content loses a bit of its score.</p>
+<p>The Popular Score combines views, likes, shares, bookmarks, comments, and time since posting, with each part weighted to reflect its importance. Newer content gets a boost, while older content loses a bit of its score.</p>
 <p>Scores are updated frequently (e.g., every minute) and stored in a fast system like Redis to keep things running smoothly.
 To favor fresh content, the score is slightly reduced for older posts. The older the content, the more its score drops.</p>
 <hr />
@@ -2249,6 +2251,11 @@ To favor fresh content, the score is slightly reduced for older posts. The older
 <p>Each <code>Detail Page</code> is linked to a FormCMS GraphQL query. To include comments:<br />
 - Add the <code>Comments</code> field to your GraphQL query.<br />
 - The Comments Plugin automatically attaches comment data to the query results.  </p>
+<h3 id="update-score-and-daily-activity">Update Score and Daily Activity</h3>
+<ul>
+<li>Each comment contributes to increasing the record's popularity score.</li>
+<li>The admin panel displays the daily comment count.</li>
+</ul>
 <hr />
 <h2 id="notification-plugin">Notification Plugin</h2>
 <p>FormCMS's Notification Plugin alerts users when their comments are liked or replied to, boosting engagement.  </p>
@@ -2773,5 +2780,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-07-14 21:23:50.682056+00:00
+Build Date UTC : 2025-07-22 23:31:28.063519+00:00
 -->

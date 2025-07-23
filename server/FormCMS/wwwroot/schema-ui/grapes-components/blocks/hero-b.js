@@ -28,7 +28,7 @@ export const heroB = {
     <div class="mt-3 flex justify-center space-x-3 text-gray-500 dark:text-gray-400">
       <div class="flex items-center gap-3">
         <div class="relative h-10 w-10 flex-shrink-0">
-          <img alt="Li Bai" loading="lazy" decoding="async" data-nimg="fill" class="rounded-full object-cover" src="/files{{author.image}}" style="position: absolute; height: 100%; width: 100%; inset: 0px; color: transparent;"/>
+          <img data-gjs-type="image" alt="Li Bai" loading="lazy" decoding="async" data-nimg="fill" class="rounded-full object-cover" src="/files{{author.image}}" style="position: absolute; height: 100%; width: 100%; inset: 0px; color: transparent;"/>
         </div>
         <div class="flex items-center space-x-2 text-sm">
           <p class="text-gray-800 dark:text-gray-200">
@@ -46,7 +46,7 @@ export const heroB = {
   </div>
 </div>
 <div class="relative z-0 mx-auto aspect-video max-w-screen-lg overflow-hidden lg:rounded-lg">
-  <img alt="Thumbnail" loading="eager" decoding="async" data-nimg="fill" class="object-cover" src="/files{{image}}"/>
+  <img alt="Thumbnail"  data-gjs-type="image" loading="eager" decoding="async" data-nimg="fill" class="object-cover" src="/files{{image}}"/>
 </div>
 <div class="container px-8 mx-auto xl:px-5 max-w-screen-lg py-5 lg:py-8 bg-white dark:bg-gray-800">
   <article class="mx-auto max-w-screen-md">

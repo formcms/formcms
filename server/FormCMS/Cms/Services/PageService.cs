@@ -79,7 +79,7 @@ public sealed class PageService(
             }
             throw;
         }
-       
+        await LoadData(pageCtx, strArgs, data, ct);
         return RenderPage(pageCtx, data, ct);
     }
 

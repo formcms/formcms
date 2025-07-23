@@ -1,86 +1,9 @@
 import {addCustomTypes} from "./custom-types.js"
 import {addCustomBlocks} from "./custom-blocks.js"
 import {extendDomComponents} from "./domConponents.js";
-
-
-const darkStyles = `[data-theme="dark"] body {
-            background-color: #1a202c;
-            color: #e2e8f0;
-        }
-        [data-theme="dark"] .text-gray-900 {
-            color: #e2e8f0;
-        }
-        [data-theme="dark"] .text-gray-800 {
-            color: #cbd5e1;
-        }
-
-        [data-theme="dark"] .text-gray-700 {
-            color: #94a3b8;
-        }
-
-        [data-theme="dark"] .text-gray-600 {
-            color: #a0aec0;
-        }
-
-        [data-theme="dark"] .text-gray-500 {
-            color: #cbd5e1;
-        }
-
-        [data-theme="dark"] .bg-white {
-            background-color: #2d3748;
-        }
-
-        [data-theme="dark"] .bg-gray-100 {
-            background-color: #4a5568;
-        }
-
-        [data-theme="dark"] .border-gray-200 {
-            border-color: #4a5568;
-        }
-
-        [data-theme="dark"] .hover\\:text-gray-900:hover {
-            color: #e2e8f0;
-        }
-
-        [data-theme="dark"] .hover\\:text-blue-600:hover {
-            color: #63b3ed;
-        }
-
-        [data-theme="dark"] .hover\\:text-blue-500:hover {
-            color: #90cdf4;
-        }
-
-        [data-theme="dark"] .hover\\:text-blue-400:hover {
-            color: #63b3ed;
-        }
-
-        [data-theme="dark"] .bg-indigo-400 {
-            background-color: #5a67d8;
-        }
-
-        [data-theme="dark"] .hover\\:bg-indigo-500:hover {
-            background-color: #667eea;
-        }
-
-        [data-theme="dark"] .text-red-500 {
-            color: #fc8181;
-        }
-
-        [data-theme="dark"] .hover\\:text-indigo-600:hover {
-            color: #7f9cf5;
-        }
-
-        [data-theme="dark"] .hover\\:text-indigo-700:hover {
-            color: #667eea;
-        }
-
-        [data-theme="dark"] .bg-gradient-to-r.from-violet-300.to-indigo-300 {
-            background: linear-gradient(to right, #9f7aea, #5a67d8);
-        }
-        `;
+import {showToast} from "../js/util/toast.js";
 //copy from grapes.js demo
 export function loadEditor(container,  components, styles) {
-    // styles += darkStyles;
     let editor = grapesjs.init({
         storageManager: false,
         container: container,
@@ -88,9 +11,9 @@ export function loadEditor(container,  components, styles) {
             'gjs-blocks-basic',
             'grapesjs-custom-code',
             'grapesjs-preset-webpage'
-       ],
+        ],
         pluginsOpts:{
-            'gjs-blocks-basic': { 
+            'gjs-blocks-basic': {
                 flexGrid: true,
                 blocks: ['column1', 'column2', 'column3', 'column3-7' ,'text', 'link'/*, 'image', 'video', 'map'*/]
             },
@@ -115,11 +38,60 @@ export function loadEditor(container,  components, styles) {
             uploadName: 'files'
 
             // options
+        },
+        commands: {
+            defaults: [
+                {
+                    id: 'copy-component-json',
+                    run:copyComponentJsonToClipboard
+                },
+                {
+                    id: 'paste-component-json',
+                    run: pasteComponentFromClipboard
+                }
+            ]
         }
     });
 
-    var pn = editor.Panels;
+    addCopyPastButton(editor);
+    addTooltips(editor);
+    addCustomTypes(editor);
+    addCustomBlocks(editor);
+    extendDomComponents(editor);
 
+    editor.on('load', function() {
+        // Show borders by default
+        editor.Panels.getButton('options', 'sw-visibility').set({
+            command: 'core:component-outline',
+            'active': true,
+        });
+        editor.setComponents(components);
+        editor.setStyle(styles);
+    });
+
+
+    return editor;
+}
+
+function addCopyPastButton(editor){
+    const pn = editor.Panels;
+
+    pn.addButton('options', {
+        id: 'copy-json',
+        className: 'fa fa-copy',
+        command: 'copy-component-json',
+        attributes: { title: 'Copy Component JSON' }
+    });
+    pn.addButton('options', {
+        id: 'paste-json',
+        className: 'fa fa-paste',
+        command: 'paste-component-json',
+        attributes: { title: 'Paste Component JSON' }
+    });
+}
+
+function addTooltips(editor) {
+    const pn = editor.Panels;
     // Add and beautify tooltips
     [['sw-visibility', 'Show Borders'], ['preview', 'Preview'], ['fullscreen', 'Fullscreen'],
         ['export-template', 'Export'], ['undo', 'Undo'], ['redo', 'Redo'],
@@ -142,23 +114,7 @@ export function loadEditor(container,  components, styles) {
         el.setAttribute('data-tooltip', title);
         el.setAttribute('title', '');
     }
-    // Do stuff on load
-    editor.on('load', function() {
-        // Show borders by default
-        pn.getButton('options', 'sw-visibility').set({
-            command: 'core:component-outline',
-            'active': true,
-        });
-        editor.setComponents(components);
-        editor.setStyle(styles);
-    });
-    
-    addCustomTypes(editor);
-    addCustomBlocks(editor);
-    extendDomComponents(editor);
-    return editor;
 }
-
 function findUniqueImageUrls(components) {
     const imageUrls = new Set(['{{image.url}}']);
 
@@ -181,3 +137,43 @@ function findUniqueImageUrls(components) {
     iterateComponents(components);
     return Array.from(imageUrls);
 }
+
+function copyComponentJsonToClipboard(editor) {
+    const selected = editor.getSelected();
+    if (!selected) {
+        showToast('Please select a component first!');
+        return;
+    }
+
+    const componentJson = selected.toJSON();
+    const jsonString = JSON.stringify(componentJson, null, 2);
+
+    navigator.clipboard.writeText(jsonString).then(() => {
+        showToast('Component JSON copied to clipboard!');
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+        showToast('Failed to copy JSON to clipboard.');
+    });
+}
+
+function pasteComponentFromClipboard(editor) {
+    navigator.clipboard.readText().then(text => {
+        try {
+            const componentJson = JSON.parse(text);
+            const selected = editor.getSelected();
+            const target = selected || editor.getWrapper(); // Append to selected or wrapper
+
+            // Append the component as the last child
+            target.append(componentJson);
+
+            showToast('Component pasted successfully!');
+        } catch (err) {
+            console.error('Invalid JSON or failed to paste: ', err);
+            showToast('Failed to paste: Invalid JSON format.');
+        }
+    }).catch(err => {
+        console.error('Failed to read clipboard: ', err);
+        showToast('Failed to read clipboard content.');
+    });
+}
+

@@ -14,7 +14,7 @@ export const ecommerceA = {
           <div class="p-4 md:w-1/2 lg:w-1/4 w-full">
             <div class="bg-white dark:bg-gray-800 rounded-xl overflow-hidden border border-gray-200 dark:border-gray-600 transition-transform duration-300 ease-in-out hover:-translate-y-1 hover:shadow-xl">
               <a href="/page/{{id}}" title="{{title}}">
-                <img src="{{image.url}}" alt="{{title}}" class="w-full h-56 object-cover rounded-t-xl" />
+                <img data-gjs-type="image" src="{{image.url}}" alt="{{title}}" class="w-full h-56 object-cover rounded-t-xl" />
               </a>
               <div class="p-5">
                 <p class="text-xs font-medium uppercase text-red-500 dark:text-red-400 mb-1">{{tag}}</p>

@@ -1,7 +1,7 @@
 using FormCMS.Activities.Models;
+using FormCMS.Activities.Services;
 using FormCMS.Core.Messaging;
 using FormCMS.Infrastructure.EventStreaming;
-using FormCMS.Infrastructure.RelationDbDao;
 
 namespace FormCMS.Activities.Workers;
 
@@ -24,11 +24,9 @@ public class ActivityEventHandler(
                 if (settings.EventRecordActivities.Contains(message.Activity))
                 {
                     logger.LogInformation("Got an activity message, {msg}", message);
-                    using var scope = scopeFactory.CreateScope();
-                    var dao = scope.ServiceProvider.GetRequiredService<IRelationDbDao>();
                     try
                     {
-                        await HandleMessage(message, dao, ct);
+                        await HandleMessage(message,  ct);
                     }
                     catch (Exception e)
                     {
@@ -40,18 +38,11 @@ public class ActivityEventHandler(
         );
     }
 
-    private static async Task HandleMessage(ActivityMessage message, IRelationDbDao dao, CancellationToken ct)
+    private  async Task HandleMessage(ActivityMessage message,  CancellationToken ct)
     {
         if (message.Operation != CmsOperations.Create && message.Operation != CmsOperations.Delete) return;
-
-        var count = new ActivityCount(message.EntityName, message.RecordId, message.Activity);
-        var delta = message.Operation == CmsOperations.Create ? 1 : -1;
-        await dao.Increase(
-            ActivityCounts.TableName,
-            count.Condition(true),
-            ActivityCounts.CountField,
-            0,
-            delta,
-            ct);
+        using var scope = scopeFactory.CreateScope();
+        var activityCollectService = scope.ServiceProvider.GetRequiredService<IActivityCollectService>();
+        await activityCollectService.RecordMessage(message.UserId,message.EntityName,message.RecordId,[message.Activity],ct);
     }
 }

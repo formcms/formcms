@@ -1,7 +1,5 @@
 using FormCMS.Activities.Services;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.WebUtilities;
-using NUlid;
 
 namespace FormCMS.Activities.Handlers;
 
@@ -68,6 +66,7 @@ public static class ActivityHandler
             IActivityCollectService s,CancellationToken ct
         ) => s.Visit(UserId(context), url, ct));
         
+        
         builder.MapPost("/record/{entityName}/{recordId:long}", async (
             string entityName,
             long recordId,
@@ -102,7 +101,7 @@ public static class ActivityHandler
             }
 
             var ip = context.Connection.RemoteIpAddress?.ToString() ?? "unknown-ip";
-            var userAgent = context.Request.Headers.UserAgent.ToString() ?? "unknown-ua";
+            var userAgent = context.Request.Headers.UserAgent.ToString();
             var rawData = $"{ip}:{userAgent}";
             var bytes = System.Text.Encoding.UTF8.GetBytes(rawData);
             var hash = System.Security.Cryptography.SHA256.HashData(bytes);

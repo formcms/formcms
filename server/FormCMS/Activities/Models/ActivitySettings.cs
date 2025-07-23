@@ -30,6 +30,7 @@ public static class ActivitySettingsExtensions
             { "view", 10 },
             { "like", 20 },
             { "share", 30 },
+            { "comment", 50 },
         },
         EventRecordActivities: ["comment"],
         ReferenceDateTime: new DateTime(2025, 1, 1),

@@ -124,4 +124,6 @@ To bind a `Data List` to a component, follow these steps:
 |               | - **Infinite Scroll**: Automatically loads more content as users scroll. Ideal for a single component at the bottom of the page.                                      |
 |               | - **None**: Displays all available content at once without requiring additional user actions.                                                                          |
 
+### Copy component between Pages   
+You can copy a component to the clipboard on one page and paste it from the clipboard on another page.   
 </details>
