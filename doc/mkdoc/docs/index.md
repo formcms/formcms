@@ -1624,6 +1624,8 @@ To bind a `Data List` to a component, follow these steps:
 |               | - **Infinite Scroll**: Automatically loads more content as users scroll. Ideal for a single component at the bottom of the page.                                      |
 |               | - **None**: Displays all available content at once without requiring additional user actions.                                                                          |
 
+### Copy component between Pages   
+You can copy a component to the clipboard on one page and paste it from the clipboard on another page.   
 
 
 ---
@@ -1929,7 +1931,7 @@ The **Popular Score** is a simple way to measure how engaging content (like post
 ---
 
 ### Calculation of the Popular Score
-The Popular Score combines views, likes, shares, and time since posting, with each part weighted to reflect its importance. Newer content gets a boost, while older content loses a bit of its score.
+The Popular Score combines views, likes, shares, bookmarks, comments, and time since posting, with each part weighted to reflect its importance. Newer content gets a boost, while older content loses a bit of its score.
 
 Scores are updated frequently (e.g., every minute) and stored in a fast system like Redis to keep things running smoothly.
 To favor fresh content, the score is slightly reduced for older posts. The older the content, the more its score drops.
@@ -1972,6 +1974,11 @@ Authenticated users can add, edit, delete, like, and reply to comments. The Comm
 Each `Detail Page` is linked to a FormCMS GraphQL query. To include comments:  
 - Add the `Comments` field to your GraphQL query.  
 - The Comments Plugin automatically attaches comment data to the query results.  
+
+### Update Score and Daily Activity
+
+* Each comment contributes to increasing the record's popularity score.
+* The admin panel displays the daily comment count.
 
 
 

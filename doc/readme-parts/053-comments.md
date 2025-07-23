@@ -23,5 +23,10 @@ Each `Detail Page` is linked to a FormCMS GraphQL query. To include comments:
 - Add the `Comments` field to your GraphQL query.  
 - The Comments Plugin automatically attaches comment data to the query results.  
 
+### Update Score and Daily Activity
+
+* Each comment contributes to increasing the record's popularity score.
+* The admin panel displays the daily comment count.
+
 </details>
 
