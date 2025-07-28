@@ -67,7 +67,7 @@ public class SavedQueryTest(QueryApiClient client, string queryName)
                     {{TestEntityNames.TestPost.Camelize()}}List(idSet:[$id]){id}
                 }
                 """.GraphQlQuery<JsonElement[]>(client).Ok();
-        var items = (await client.Single(queryName, 1)).Ok();
+        var items = (await client.Single(queryName,"id", 1)).Ok();
         SimpleAssert.IsTrue(items.HasId());
     }
 }

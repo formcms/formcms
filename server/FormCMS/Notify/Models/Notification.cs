@@ -75,6 +75,7 @@ public static class Notifications
         query.Limit(limit??DefaultPageSize);
         return query;
     }
+   
     public static Query Count(string userId)
     {
         var query = new Query(TableName)
@@ -82,16 +83,7 @@ public static class Notifications
             .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false);
         return query;
     }
-
-    public static Query UnreadCount(string userId)
-    {
-        var query = new Query(TableName)
-            .Where(nameof(Notification.UserId).Camelize(), userId)
-            .Where(nameof(Notification.IsRead).Camelize(), false)
-            .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false);
-        return query;
-    }
-
+    
     public static Query ReadAll(string userId)
     {
         var query = new Query(TableName)

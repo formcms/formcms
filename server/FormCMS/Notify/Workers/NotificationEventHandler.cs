@@ -1,7 +1,7 @@
 using FormCMS.Core.Messaging;
 using FormCMS.Infrastructure.EventStreaming;
-using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Notify.Models;
+using FormCMS.Notify.Services;
 
 namespace FormCMS.Notify.Workers;
 
@@ -35,10 +35,9 @@ public class NotificationEventHandler(
                         );
 
                         using var scope = scopeFactory.CreateScope();
-                        await scope.ServiceProvider.GetRequiredService<KateQueryExecutor>()
-                            .Exec(notification.Insert(),false,ct);
-                        
-                        
+                        await scope.ServiceProvider
+                            .GetRequiredService<INotificationCollectService>()
+                            .Insert(notification,ct);
                     }
                     catch (Exception e)
                     {

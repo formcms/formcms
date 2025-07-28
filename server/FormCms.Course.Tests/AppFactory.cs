@@ -6,6 +6,7 @@ using Bogus;
 using FormCMS.Activities.ApiClient;
 using FormCMS.AuditLogging.ApiClient;
 using FormCMS.Auth.ApiClient;
+using FormCMS.Comments.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.CoreKit.Test;
 using FormCMS.Subscriptions.ApiClient;
@@ -32,6 +33,8 @@ public class AppFactory : WebApplicationFactory<Program>
     public BookmarkApiClient BookmarkApi{get;}
     public StripeSubsApiClient StripeSubClient {get;}
     public ChunkUploadApiClient ChunkUploadApiClient { get; }
+    
+    public CommentsApiClient CommentsApi { get; }
 
     public  Faker  Faker {get;}
     public HttpClient GetHttpClient()
@@ -60,8 +63,9 @@ public class AppFactory : WebApplicationFactory<Program>
         PageApi = new PageApiClient(_httpClient);
         BookmarkApi = new BookmarkApiClient(_httpClient);
         StripeSubClient = new StripeSubsApiClient(_httpClient);
-        Faker = new Faker();
         ChunkUploadApiClient = new ChunkUploadApiClient(_httpClient);
+        CommentsApi = new CommentsApiClient(_httpClient);
+        Faker = new Faker();
     }
 
     public bool LoginAndInitTestData()

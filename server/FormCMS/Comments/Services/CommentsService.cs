@@ -105,8 +105,6 @@ public class CommentsService(
         var affected = await executor.Exec(comment.Update(),false, ct);
         if (affected == 0) throw new ResultException("Failed to update comment.");
     } 
-    
-
 
     private Comment AssignUser(Comment comment)
     {
