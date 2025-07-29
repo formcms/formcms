@@ -42,7 +42,7 @@ public class NotificationService(
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User not logged in");
         var query = NotificationCountExtensions.UnreadCount(userId);
-        return executor.Exec(query, false,ct);
+        return executor.Exec(query, true,ct);
     }
 
     private async Task LoadSender(Record[] notifications,CancellationToken ct)
