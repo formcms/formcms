@@ -2,6 +2,7 @@ using FormCMS.Activities.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.Messaging;
+using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.RelationDbDao;
@@ -11,6 +12,7 @@ using FormCMS.Utils.ResultExt;
 namespace FormCMS.Activities.Services;
 
 public class ActivityCollectService(
+    PluginRegistry registry,
     ICountBuffer countBuffer,
     IStatusBuffer statusBuffer,
     IStringMessageProducer producer,    
@@ -51,6 +53,7 @@ public class ActivityCollectService(
         //Query title and image 
         var statusList = await statusBuffer.GetAfterLastFlush(lastFlushTime.Value);
         var activities = statusList.Select(pair => Models.Activities.Parse(pair.Key) with { IsActive = pair.Value }).ToArray();
+        
         await UpsertActivities(activities,ct);
     }
     
@@ -157,11 +160,10 @@ public class ActivityCollectService(
 
         var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId, ct).Ok();
  
-
         var activity = new Activity(entityName, recordId, activityType, userId,isActive);
         var count = new ActivityCount(entityName, recordId, activityType);
         var delta = isActive ? 1 : -1;
-
+        
         if (settings.EnableBuffering)
         {
             return await statusBuffer.Toggle(activity.Key(), isActive, GetStatus) switch
@@ -179,7 +181,7 @@ public class ActivityCollectService(
             ct);
         var ret= changed switch
         {
-            true => await UpdateActivityMetaAndIncrease(),
+            true => await UpdateContentTagAndIncrease(),
             false => (await dao.FetchValues<long>(
                     ActivityCounts.TableName,
                     count.Condition(true),
@@ -192,16 +194,17 @@ public class ActivityCollectService(
         await UpdateScore(entity,[count],ct);
         return ret;
 
-        async Task<long> UpdateActivityMetaAndIncrease()
+        async Task<long> UpdateContentTagAndIncrease()
         {
             if (activity.IsActive)
             {
-                var loadedActivities = await LoadMetaData(entity, [activity], ct);
+                var loadedActivities = await LoadContentTags(entity, [activity], ct);
                 if (loadedActivities.Length == 0) throw new ResultException("No activities loaded");
-                await ProduceActivityMessage(entity, loadedActivities[0], ct);
                 
                 await dao.UpdateOnConflict(Models.Activities.TableName,
                     loadedActivities[0].UpsertRecord(true), Models.Activities.KeyFields, ct);
+                
+                await ProduceActivityMessage(entity, loadedActivities[0], ct);
             }
 
             return await dao.Increase(
@@ -311,13 +314,14 @@ public class ActivityCollectService(
             }
         }
 
+
         if (entity is not null)
         {
             await UpdateScore(entity,counts,ct);
         }
         return result;
     }
-    private async Task<Activity[]> LoadMetaData(LoadedEntity entity, Activity[] activities, CancellationToken ct)
+    private async Task<Activity[]> LoadContentTags(LoadedEntity entity, Activity[] activities, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(entity.BookmarkQuery))
         {
@@ -335,15 +339,15 @@ public class ActivityCollectService(
         var dict = tags.ToDictionary(x => x.RecordId);
         return activities.Select(activity=>
         {
-            if (dict.TryGetValue(activity.RecordId.ToString(), out var link))
+            if (dict.TryGetValue(activity.RecordId.ToString(), out var tags))
             {
                 return activity with
                 {
-                    Title = link.Title,
-                    Url = link.Url,
-                    Image = link.Image,
-                    Subtitle = link.Subtitle,
-                    PublishedAt = link.PublishedAt,
+                    Title = tags.Title,
+                    Url = tags.Url,
+                    Image = tags.Image,
+                    Subtitle = tags.Subtitle,
+                    PublishedAt = tags.PublishedAt,
                 };
             }
             return activity;
@@ -353,22 +357,22 @@ public class ActivityCollectService(
 
     private async Task ProduceActivityMessage(LoadedEntity entity, Activity activity, CancellationToken ct)
     {
-        var targetUserId = await 
-            userManager.GetCreatorId(entity.TableName, entity.PrimaryKey, activity.RecordId,ct);
-                    
+        var targetUserId = await
+            userManager.GetCreatorId(entity.TableName, entity.PrimaryKey, activity.RecordId, ct);
+
         var msg = new ActivityMessage(
-            UserId:  activity.UserId,
+            UserId: activity.UserId,
             TargetUserId: targetUserId,
             EntityName: entity.Name,
             RecordId: activity.RecordId,
             Activity: activity.ActivityType,
-            Operation:CmsOperations.Create,
+            Operation: CmsOperations.Create,
             Message: activity.Title,
             Url: activity.Url
         );
-        
-        await producer.Produce(CmsTopics.CmsActivity, msg.ToJson()); 
+        await producer.Produce(CmsTopics.CmsActivity, msg.ToJson());
     }
+
     private async Task UpsertActivities(Activity[] activities,CancellationToken ct)
     {
         var groups = activities.GroupBy(a => a.EntityName);
@@ -383,15 +387,22 @@ public class ActivityCollectService(
             }
             else
             {
-                var entity = entities.FirstOrDefault(x => x.Name == group.Key);
+                var entity = registry.PluginEntities.TryGetValue(group.Key, out var pluginEntity)
+                    ? pluginEntity
+                    : entities.FirstOrDefault(x => x.Name == group.Key);
                 if (entity == null) continue;
+                
                 var loadedEntity = entity.ToLoadedEntity();
-                var loadedActivities = await LoadMetaData(loadedEntity, [..group], ct);
-                foreach (var activity in loadedActivities)
-                {
-                    await ProduceActivityMessage(loadedEntity, activity, ct);
-                }
+                var loadedActivities = await LoadContentTags(loadedEntity, [..group], ct);
                 toUpdate.AddRange(loadedActivities.Select(x => x.UpsertRecord(true)));
+                foreach (var loadedActivity in loadedActivities)
+                {
+                    if (loadedActivity.IsActive &&
+                        settings.CommandToggleActivities.Contains(loadedActivity.ActivityType))
+                    {
+                        await ProduceActivityMessage(loadedEntity, loadedActivity, ct);
+                    }
+                }
             }
         }
         await dao.BatchUpdateOnConflict(

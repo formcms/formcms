@@ -4,7 +4,6 @@ using FormCMS.CoreKit.Test;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
 using Microsoft.Extensions.Primitives;
-using NJsonSchema.Annotations;
 using NUlid;
 
 namespace FormCMS.Course.Tests;
@@ -24,7 +23,7 @@ public class CommentApiTest(AppFactory factory)
             CreatedBy:"",
             Content:"test"
             );
-        await factory.CommentsApi.Add(comment).Ok();
+        await factory.CommentsApiClient.Add(comment).Ok();
         var count = await QueryCommentsCount();
         Assert.True(count > 0);
     }
@@ -40,9 +39,9 @@ public class CommentApiTest(AppFactory factory)
             CreatedBy:"",
             Content:"test"
         );
-        comment = await factory.CommentsApi.Add(comment).Ok();
+        comment = await factory.CommentsApiClient.Add(comment).Ok();
         var count = await QueryCommentsCount();
-        await factory.CommentsApi.Delete(comment.Id).Ok();
+        await factory.CommentsApiClient.Delete(comment.Id).Ok();
         var countAfter = await QueryCommentsCount();
         Assert.NotEqual(count, countAfter);
     }
@@ -56,8 +55,8 @@ public class CommentApiTest(AppFactory factory)
             CreatedBy:"",
             Content:"test"
         );
-        comment = await factory.CommentsApi.Add(comment).Ok();
-        await factory.CommentsApi.Update(comment).Ok();
+        comment = await factory.CommentsApiClient.Add(comment).Ok();
+        await factory.CommentsApiClient.Update(comment).Ok();
     }
     [Fact]
     public async Task ReplyComment()
@@ -68,7 +67,7 @@ public class CommentApiTest(AppFactory factory)
             CreatedBy:"",
             Content:"test"
         );
-        comment = await factory.CommentsApi.Add(comment).Ok();
+        comment = await factory.CommentsApiClient.Add(comment).Ok();
         var reply = new Comment(
             EntityName:TestEntityNames.TestPost.Camelize(),
             RecordId: RecordId,
@@ -76,7 +75,7 @@ public class CommentApiTest(AppFactory factory)
             Content:"test"
         );
             
-        await factory.CommentsApi.Reply(comment.Id, reply).Ok();
+        await factory.CommentsApiClient.Reply(comment.Id, reply).Ok();
         var count = await QueryReplyCount(comment.Id);
         Assert.True(count > 0);
     }

@@ -20,10 +20,10 @@ public class ActivityEventHandler(
             "ActivityEventHandler",
             async s =>
             {
+                logger.LogInformation("Got an activity message, {msg}", s);
                 var message = ActivityMessageExtensions.ParseJson(s);
                 if (settings.EventRecordActivities.Contains(message.Activity))
                 {
-                    logger.LogInformation("Got an activity message, {msg}", message);
                     try
                     {
                         await HandleMessage(message,  ct);

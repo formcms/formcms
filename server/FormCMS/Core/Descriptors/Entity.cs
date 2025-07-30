@@ -61,7 +61,6 @@ public record LoadedEntity(
 
 public static class EntityConstants
 {
-    public const string ContentTagField = "ContentTag";
     public const int DefaultPageSize = 50;
 }
 

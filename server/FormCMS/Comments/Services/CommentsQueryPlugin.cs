@@ -19,6 +19,7 @@ public class CommentsQueryPlugin(
         var query = CommentHelper.Multiple(commentIds);
         var commentRecords = await executor.Many(query);
         if (commentRecords.Length == 0) return commentRecords;
+        var ret = new List<Record>();
 
         var group = commentRecords.GroupBy(x => (string)x[nameof(Comment.EntityName).Camelize()]);
         foreach (var grouping in group)
@@ -27,22 +28,31 @@ public class CommentsQueryPlugin(
                 .LoadEntity(grouping.Key, PublicationStatus.Published, CancellationToken.None).Ok();
 
             var ids = grouping.Select(x => x.StrOrEmpty(nameof(Comment.RecordId).Camelize())).ToArray();
-            var links = await contentTagService.GetContentTags(entity,ids,CancellationToken.None);
-            var map = links.ToDictionary(x => x.RecordId);
+            var tags = await contentTagService.GetContentTags(entity,ids,CancellationToken.None);
+            var map = tags.ToDictionary(x => x.RecordId);
             foreach (var rec in grouping)
             {
                 var recordId = rec.StrOrEmpty(nameof(Comment.RecordId).Camelize());
-                if (map.TryGetValue(recordId, out var link))
+                if (!map.TryGetValue(recordId, out var tag)) continue;
+              
+                var record = new Dictionary<string, object>
                 {
-                    rec[EntityConstants.ContentTagField] = link with
-                    {
-                        RecordId = rec.StrOrEmpty(nameof(Comment.Id).Camelize()),
-                        Title = rec.StrOrEmpty(nameof(Comment.Content).Camelize())
-                    };
+                    [CommentHelper.Entity.PrimaryKey] = rec.StrOrEmpty(nameof(Comment.Id).Camelize()),
+                    [CommentHelper.Entity.BookmarkTitleField] = rec.StrOrEmpty(nameof(Comment.Content).Camelize()),
+                    [CommentHelper.Entity.BookmarkImageField] = tag.Image,
+                    [CommentHelper.Entity.PageUrl] = tag.Url+"?comment_id=",
+                    [CommentHelper.Entity.BookmarkSubtitleField] = tag.Subtitle,
+                };
+
+                if (tag.PublishedAt is not null)
+                {
+                    record[CommentHelper.Entity.BookmarkPublishTimeField] = tag.PublishedAt;
                 }
+                
+                ret.Add(record);
             }
         }
-        return commentRecords;
+        return ret.ToArray();
     }
     
     public async Task<Record[]> GetByFilters(ValidFilter[] filters,ValidSort[] sorts, ValidPagination pagination, ValidSpan span,

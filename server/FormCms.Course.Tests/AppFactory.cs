@@ -9,6 +9,7 @@ using FormCMS.Auth.ApiClient;
 using FormCMS.Comments.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.CoreKit.Test;
+using FormCMS.Notify.ApiClient;
 using FormCMS.Subscriptions.ApiClient;
 using FormCMS.Utils.EnumExt;
 using Microsoft.AspNetCore.Hosting;
@@ -34,7 +35,8 @@ public class AppFactory : WebApplicationFactory<Program>
     public StripeSubsApiClient StripeSubClient {get;}
     public ChunkUploadApiClient ChunkUploadApiClient { get; }
     
-    public CommentsApiClient CommentsApi { get; }
+    public CommentsApiClient CommentsApiClient { get; }
+    public NotifyApiClient NotifyApiClient { get; }
 
     public  Faker  Faker {get;}
     public HttpClient GetHttpClient()
@@ -64,7 +66,8 @@ public class AppFactory : WebApplicationFactory<Program>
         BookmarkApi = new BookmarkApiClient(_httpClient);
         StripeSubClient = new StripeSubsApiClient(_httpClient);
         ChunkUploadApiClient = new ChunkUploadApiClient(_httpClient);
-        CommentsApi = new CommentsApiClient(_httpClient);
+        CommentsApiClient = new CommentsApiClient(_httpClient);
+        NotifyApiClient = new NotifyApiClient(_httpClient);
         Faker = new Faker();
     }
 

@@ -255,7 +255,6 @@ public sealed class EntityService(
 
 
     private async Task<ListResponse?> ListWithAction(
-
         LoadedEntity entity,
         ListResponseMode mode,
         ValidFilter[] filters,

@@ -32,7 +32,6 @@ public static class CommentHelper
     public const string CommentsField = "comments";
     public const string CommentActivity = "comment";
     public const string CommentLinkQuery = "commentLinkQuery";
-    public const string PageUrl = "pageUrl";
 
     public static readonly Column[] Columns = [
         ColumnHelper.CreateCamelColumn<Comment>(x => x.Id, ColumnType.Id),
@@ -65,7 +64,11 @@ public static class CommentHelper
         
         BookmarkQuery:CommentLinkQuery,
         BookmarkQueryParamName: nameof(Comment.Id).Camelize(),
-        PageUrl: PageUrl,
+        BookmarkImageField:"image",
+        BookmarkTitleField:"title",
+        BookmarkPublishTimeField:"publishedAt",
+        BookmarkSubtitleField:"subtitle",
+        PageUrl: "url",
         Name: nameof(Comment).Camelize(),
         DisplayName: "",
         TableName: "__comments",

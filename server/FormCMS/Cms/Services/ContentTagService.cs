@@ -18,15 +18,10 @@ public class ContentTagService(
 
         ContentTag GetLink(Record record)
         {
-            if (record.TryGetValue(EntityConstants.ContentTagField, out var value))
-            {
-                return (ContentTag)value;
-            }
-            
             var id = record.StrOrEmpty(entity.PrimaryKey);
             return new ContentTag(
                 RecordId: id,
-                Url: entity.PageUrl + id,
+                Url: (record.ByJsonPath<string>(entity.PageUrl,out var val)?val!:entity.PageUrl) + id,
                 Title: record.ByJsonPath<string>(entity.BookmarkTitleField, out var title) ? Trim(title!) : "",
                 Image: record.ByJsonPath<string>(entity.BookmarkImageField, out var image) ? Trim(image!) : "",
                 Subtitle: record.ByJsonPath<string>(entity.BookmarkSubtitleField, out var subtitle)
@@ -37,7 +32,6 @@ public class ContentTagService(
                     : null
             );
         }
-
         string Trim(string? s) => s?.Length > 255 ? s[..255] : s ?? "";
     }
 }
