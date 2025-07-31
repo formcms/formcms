@@ -216,7 +216,7 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
         var insertValues = string.Join(", ", keyFields.Select(k => $"s.[{k}]").Concat([$"s.[{valueField}]"]));
 
         var sql = $"""
-                   DECLARE @OutputTable TABLE ([count] BIGINT);
+                   DECLARE @OutputTable TABLE ([{valueField}] BIGINT);
                    MERGE [{tableName}] AS t
                    USING (
                        SELECT {sourceColumns}, @initVal + @delta AS [{valueField}]
