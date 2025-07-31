@@ -91,12 +91,20 @@ public class AppFactory : WebApplicationFactory<Program>
         [
             (
                 "DatabaseProvider",
-                "Sqlite"
+                "SqlServer"
             ),
             (
-                "ConnectionStrings__Sqlite",
-                $"Data Source={Path.Join(Environment.CurrentDirectory, "_cms_unit_tests.db")}"
+                "ConnectionStrings__SqlServer",
+                $"Server=localhost;Database=cms_integration_tests;User Id=sa;Password=Admin12345678!;TrustServerCertificate=True;MultipleActiveResultSets=True;"
             )
+            // (
+            //     "DatabaseProvider",
+            //     "Sqlite"
+            // ),
+            // (
+            //     "ConnectionStrings__Sqlite",
+            //     $"Data Source={Path.Join(Environment.CurrentDirectory, "_cms_unit_tests.db")}"
+            // )
         ];
         foreach (var (k,v) in settings)
         {

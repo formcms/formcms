@@ -21,6 +21,7 @@ public class NotificationApiTest(AppFactory factory)
             Content:"test"
         );
         await factory.CommentsApiClient.Add(comment).Ok();
+        Thread.Sleep(TimeSpan.FromSeconds(1));
         var count =await factory.NotifyApiClient.UnreadCount().Ok();
         Assert.True(count > 0);
 
@@ -29,6 +30,6 @@ public class NotificationApiTest(AppFactory factory)
         
         
         count =await factory.NotifyApiClient.UnreadCount().Ok();
-        Assert.True(count == 0);
+        Assert.Equal(0, count);
     }
 }
