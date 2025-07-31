@@ -34,15 +34,15 @@ public class NotificationService(
         var count = await executor.Count(countQuery,Notifications.Columns,filters,ct);
         
         await executor.Exec(Notifications.ReadAll(userId), false,ct);
+        await executor.Exec(NotificationCountExtensions.ReadAll(userId), false, ct);
         return new ListResponse(items,count); 
     }
     
-    //todo: need another table to save count, to improve performance
-    public  Task<int> UnreadCount(CancellationToken ct)
+    public  Task<long> UnreadCount(CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User not logged in");
-        var query = Notifications.UnreadCount(userId);
-        return executor.Count(query,ct);
+        var query = NotificationCountExtensions.UnreadCount(userId);
+        return executor.Exec(query, true,ct);
     }
 
     private async Task LoadSender(Record[] notifications,CancellationToken ct)

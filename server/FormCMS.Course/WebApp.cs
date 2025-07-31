@@ -4,6 +4,7 @@ using FormCMS.Core.Auth;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Notify.Models;
+using FormCMS.Notify.Services;
 using FormCMS.Notify.Workers;
 using FormCMS.Subscriptions;
 using FormCMS.Utils.ResultExt;
@@ -64,6 +65,7 @@ public class WebApp(
         // In this case, we register them within the web application to share the in-memory channel bus.
         builder.Services.AddHostedService<ActivityEventHandler>();
         builder.Services.AddSingleton(new NotifySettings(["comment","like"]));
+        builder.Services.AddScoped<INotificationCollectService, NotificationCollectService>();
         builder.Services.AddHostedService<NotificationEventHandler>();
 
 

@@ -12,7 +12,7 @@ public record UploadSession(string ClientId, string FileName, long FileSize, str
 
 public static class UploadSessions
 {
-    public const string TableName = "_upload_sessions";
+    public const string TableName = "__upload_sessions";
     public static readonly Column[] Columns =
     [
         ColumnHelper.CreateCamelColumn<UploadSession>(x => x.Id!, ColumnType.Id),

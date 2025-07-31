@@ -5,11 +5,14 @@ namespace FormCMS.Infrastructure.EventStreaming;
 
 public class InMemoryChannelBus : IStringMessageProducer, IStringMessageConsumer
 {
-    private readonly ConcurrentDictionary<string, Channel<string>> _channels = new();
+    // Structure: topic -> group -> channel
+    private readonly ConcurrentDictionary<string, ConcurrentDictionary<string, Channel<string>>> _topicGroups = new();
 
-    private Channel<string> GetOrCreateChannel(string topic)
+    private Channel<string> GetOrCreateChannel(string topic, string group)
     {
-        return _channels.GetOrAdd(topic, _ =>
+        var groupDict = _topicGroups.GetOrAdd(topic, _ => new ConcurrentDictionary<string, Channel<string>>());
+
+        return groupDict.GetOrAdd(group, _ =>
             Channel.CreateUnbounded<string>(new UnboundedChannelOptions
             {
                 SingleReader = false,
@@ -19,14 +22,25 @@ public class InMemoryChannelBus : IStringMessageProducer, IStringMessageConsumer
 
     public Task Produce(string topic, string msg)
     {
-        var channel = GetOrCreateChannel(topic);
-        return channel.Writer.WriteAsync(msg).AsTask();
+        if (_topicGroups.TryGetValue(topic, out var groupDict))
+        {
+            var tasks = new List<Task>();
+
+            foreach (var kvp in groupDict)
+            {
+                var writer = kvp.Value.Writer;
+                tasks.Add(writer.WriteAsync(msg).AsTask());
+            }
+
+            return Task.WhenAll(tasks); // Wait for all writes to complete
+        }
+
+        return Task.CompletedTask;
     }
 
-    //In memory channel won't work for distributed deployment, just ignore group
     public Task Subscribe(string topic, string group, Func<string, Task> handler, CancellationToken ct)
     {
-        var channel = GetOrCreateChannel(topic);
+        var channel = GetOrCreateChannel(topic, group);
 
         // Run handler in background
         return Task.Run(async () =>

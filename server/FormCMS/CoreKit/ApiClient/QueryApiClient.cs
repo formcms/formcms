@@ -33,9 +33,13 @@ public class QueryApiClient(HttpClient client)
         $"/{query}/?{string.Join("&", ids.Select(x => $"id={x}"))}".ToQueryApi());
 
     public Task<Result<JsonElement>> Single(
-        string query, object id
-    ) => client.GetResult<JsonElement>($"/{query}/single?id={id}".ToQueryApi());
+        string query, string idField, object id
+    ) => client.GetResult<JsonElement>($"/{query}/single?{idField}={id}".ToQueryApi());
 
+    public Task<Result<JsonElement>> Single(
+        string query 
+    ) => client.GetResult<JsonElement>($"/{query}/single".ToQueryApi());
+    
 
     public Task<Result<JsonElement[]>> Part(
         string query, string attr, long sourceId,  string? first = null, string? last = null, int limit = 0

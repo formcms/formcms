@@ -187,7 +187,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             services.AddSingleton<KeyValueCache<long>>(p => new KeyValueCache<long>(
                 p,
                 "maxRecordId",
-                systemSettings.EntitySchemaExpiration
+                TimeSpan.FromSeconds(1)
             ));
 
             services.AddSingleton<KeyValueCache<FormCMS.Core.Descriptors.Schema>>(

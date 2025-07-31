@@ -34,12 +34,11 @@ public sealed class EntityService(
         CancellationToken ct
     )
     {
-        if (!pluginRegistry.PluginEntities.TryGetValue(entityName, out var entity))
-        {
-            var entities = await entitySchemaSvc.AllEntities(ct);
-            entity = entities.FirstOrDefault(x => x.Name == entityName);
-            if (entity is null) throw new ResultException("Entity not found");
-        }
+        var entity = pluginRegistry.PluginEntities.TryGetValue(entityName, out var pluginEntity)
+            ? pluginEntity
+            : (await entitySchemaSvc.AllEntities(ct)).FirstOrDefault(x => x.Name == entityName);
+        
+        if (entity is null) throw new ResultException("Entity not found");
 
         var maxId = await maxRecordIdCache.GetOrSet(entityName,
             async _ => await relationDbDao.MaxId(entity.TableName, entity.PrimaryKey, ct), ct);
@@ -255,7 +254,6 @@ public sealed class EntityService(
 
 
     private async Task<ListResponse?> ListWithAction(
-
         LoadedEntity entity,
         ListResponseMode mode,
         ValidFilter[] filters,

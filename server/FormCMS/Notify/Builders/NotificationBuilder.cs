@@ -1,5 +1,8 @@
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Notify.Handlers;
+using FormCMS.Notify.Models;
 using FormCMS.Notify.Services;
+using Humanizer;
 
 namespace FormCMS.Notify.Builders;
 
@@ -22,9 +25,17 @@ public class NotificationBuilder(ILogger<NotificationBuilder> logger)
              """);
 
         using var scope = app.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<INotificationService>()
-            .EnsureNotificationTables();
-        
+        var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
+        await migrator.MigrateTable(Notifications.TableName, Notifications.Columns);
+        await migrator.MigrateTable(NotificationCountExtensions.TableName, NotificationCountExtensions.Columns);
+        var dao = scope.ServiceProvider.GetRequiredService<IRelationDbDao>();
+        await dao.CreateIndex(
+            NotificationCountExtensions.TableName,
+            [nameof(NotificationCount.UserId).Camelize()],
+            true,
+            CancellationToken.None
+        );
+ 
  
         var systemSettings = app.Services.GetRequiredService<SystemSettings>();
         var apiGroup = app.MapGroup(systemSettings.RouteOptions.ApiBaseUrl);

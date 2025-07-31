@@ -7,11 +7,14 @@ namespace FormCMS.Comments.ApiClient;
 public class CommentsApiClient(HttpClient client)
 {
     public Task<Result<Comment>> Add(Comment comment)
-        => client.GetResult<Comment>($"/".Url());
+        => client.PostResult<Comment>($"/".Url(),comment);
     
     public Task<Result> Update(Comment comment)
-        => client.GetResult($"/update".Url());
+        => client.PostResult($"/update".Url(),comment);
     
     public Task<Result> Delete(long id)
-        => client.GetResult($"/delete/{id}".Url());
+        => client.PostResult($"/delete/{id}".Url(),new{});
+
+    public Task<Result> Reply(long id, Comment comment)
+        => client.PostResult($"/reply/{id}".Url(), comment);
 }

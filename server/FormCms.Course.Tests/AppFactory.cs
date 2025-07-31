@@ -6,8 +6,10 @@ using Bogus;
 using FormCMS.Activities.ApiClient;
 using FormCMS.AuditLogging.ApiClient;
 using FormCMS.Auth.ApiClient;
+using FormCMS.Comments.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.CoreKit.Test;
+using FormCMS.Notify.ApiClient;
 using FormCMS.Subscriptions.ApiClient;
 using FormCMS.Utils.EnumExt;
 using Microsoft.AspNetCore.Hosting;
@@ -32,6 +34,9 @@ public class AppFactory : WebApplicationFactory<Program>
     public BookmarkApiClient BookmarkApi{get;}
     public StripeSubsApiClient StripeSubClient {get;}
     public ChunkUploadApiClient ChunkUploadApiClient { get; }
+    
+    public CommentsApiClient CommentsApiClient { get; }
+    public NotifyApiClient NotifyApiClient { get; }
 
     public  Faker  Faker {get;}
     public HttpClient GetHttpClient()
@@ -60,8 +65,10 @@ public class AppFactory : WebApplicationFactory<Program>
         PageApi = new PageApiClient(_httpClient);
         BookmarkApi = new BookmarkApiClient(_httpClient);
         StripeSubClient = new StripeSubsApiClient(_httpClient);
-        Faker = new Faker();
         ChunkUploadApiClient = new ChunkUploadApiClient(_httpClient);
+        CommentsApiClient = new CommentsApiClient(_httpClient);
+        NotifyApiClient = new NotifyApiClient(_httpClient);
+        Faker = new Faker();
     }
 
     public bool LoginAndInitTestData()
@@ -84,12 +91,20 @@ public class AppFactory : WebApplicationFactory<Program>
         [
             (
                 "DatabaseProvider",
-                "Sqlite"
+                "SqlServer"
             ),
             (
-                "ConnectionStrings__Sqlite",
-                $"Data Source={Path.Join(Environment.CurrentDirectory, "_cms_unit_tests.db")}"
+                "ConnectionStrings__SqlServer",
+                $"Server=localhost;Database=cms_integration_tests;User Id=sa;Password=Admin12345678!;TrustServerCertificate=True;MultipleActiveResultSets=True;"
             )
+            // (
+            //     "DatabaseProvider",
+            //     "Sqlite"
+            // ),
+            // (
+            //     "ConnectionStrings__Sqlite",
+            //     $"Data Source={Path.Join(Environment.CurrentDirectory, "_cms_unit_tests.db")}"
+            // )
         ];
         foreach (var (k,v) in settings)
         {

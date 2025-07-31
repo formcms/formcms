@@ -92,9 +92,9 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
    }
 
    public async Task<long> Exec(
-      Query query, bool returnId, CancellationToken ct = default
+      Query query, bool getScalarValue, CancellationToken ct = default
    ) => await provider.ExecuteKateQuery(async (db, tx)
-      => returnId
+      => getScalarValue
          ? await db.ExecuteScalarAsync<long>(
             query: query,
             transaction: tx,
