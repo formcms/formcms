@@ -46,6 +46,14 @@ public class ActivityApiTest(AppFactory factory)
         var pageCount = await factory.ActivityApi.PageCounts().Ok();
         Assert.True(pageCount.Length > 0);
     }
+
+    [Fact]
+    public async Task BatchGetActivityStatusOK()
+    {
+        await factory.ActivityApi.Toggle(TestEntityNames.TestPost.Camelize(), RecordId, "like", true).Ok();
+        var liked = await factory.ActivityApi.BatchGetActivityStatus(TestEntityNames.TestPost.Camelize(), "like",[RecordId]).Ok();
+        Assert.True(liked.Length > 0);
+    }
     
     [Fact]
     public async Task TestListHistoryAndDelete()
