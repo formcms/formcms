@@ -8,6 +8,13 @@ namespace FormCMS.Activities.ApiClient;
 
 public class ActivityApiClient(HttpClient client)
 {
+    public Task <Result<long[]>> BatchGetActivityStatus(string entityName, string activityType, long[] ids)
+    {
+        var param = string.Join("&", ids.Select(id => $"id={id}"));
+        var url = $"/status/{entityName}/{activityType}?{param}".ActivityUrl();
+        return client.GetResult<long[]>(url);
+    }
+    
     public Task<Result<Record[]>> PageCounts()
         => client.GetResult<Record[]>($"/page-counts?n={7}".ActivityUrl());
     
@@ -49,4 +56,5 @@ public class ActivityApiClient(HttpClient client)
         var url = $"/record/{entityName}/{recordId}?type={activityType}".ActivityUrl();
         return client.PostResult<long>(url, new object());
     }
+    
 }

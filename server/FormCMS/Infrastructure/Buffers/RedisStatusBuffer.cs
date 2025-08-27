@@ -40,7 +40,7 @@ public class RedisStatusBuffer(IConnectionMultiplexer redis, BufferSettings sett
         });
     }
 
-    public Task<Dictionary<string,bool>> Get(string[] keys, Func<string,Task<bool>> getStatusAsync)
+    public Task<Dictionary<string,bool>> GetOrSet(string[] keys, Func<string,Task<bool>> getStatusAsync)
     {
         return _buffer.SafeGet(keys,getStatusAsync);
     }
@@ -55,4 +55,10 @@ public class RedisStatusBuffer(IConnectionMultiplexer redis, BufferSettings sett
 
     public Task<Dictionary<string,bool>> GetAfterLastFlush(DateTime lastFlushTime)
         => _buffer.GetAfterLastFlush(lastFlushTime);
+
+    public async Task<Dictionary<string, bool>> BatchGet(string[] keys)
+    {
+        var (hits, _) = await _buffer.GetAndParse(keys);
+        return hits;
+    }
 }

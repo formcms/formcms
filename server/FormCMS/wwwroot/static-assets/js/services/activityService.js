@@ -8,6 +8,12 @@ export async function fetchBookmarkFolders(entity, id) {
     return await getJson(`/bookmarks/folders/${entity}/${id}`)
 }
 
+export async function fetchActivityStatus(entity, activityType, ids) {
+    const param = ids.map(id=>`id=${id}`).join('&');
+    const url = `/activities/status/${entity}/${activityType}?${param}`;
+    return await getJson(url);
+}
+
 export async function recordActivity(entity, id, type) {
     return await postData(`/activities/record/${entity}/${id}?type=${type}`)
 }

@@ -1,4 +1,4 @@
-import {fetchUser, getUser} from "../utils/user.js";
+import {fetchUser} from "../utils/user.js";
 
 export function renderAvatar() {
     document.querySelectorAll('[data-component="user-button"]').forEach(loadNotificationCount);

@@ -14,11 +14,16 @@ public class MemoryStatusBuffer(BufferSettings settings, ILogger<MemoryStatusBuf
         """
     );
 
-    public Task<Dictionary<string,bool>> Get(string[] keys, Func<string, Task<bool>> getStatus)
-        => _buffer.SafeGet(keys, getStatus);
+    public Task<Dictionary<string,bool>> GetOrSet(string[] keys, Func<string, Task<bool>> getStatus)
+        => _buffer.SafeGetOrSet(keys, getStatus);
 
     public Task<Dictionary<string,bool>> GetAfterLastFlush(DateTime lastFlushTime)
         => Task.FromResult(_buffer.GetAfterLastFlush(lastFlushTime));
+
+    public Task<Dictionary<string, bool>> BatchGet(string[] keys)
+        => Task.FromResult(_buffer.BatchGet(keys));
+    
+    
 
     public async Task<bool> Toggle(string key, bool status, Func<string, Task<bool>> getStatus)
     {

@@ -3,7 +3,7 @@ import {showToast} from "../utils/toast.js";
 import {ensureUser, getUser} from "../utils/user.js";
 
 import {
-    fetchActivity,
+    fetchActivity, fetchActivityStatus,
     fetchBookmarkFolders,
     recordActivity,
     saveBookmark,
@@ -28,12 +28,31 @@ export function renderActivityBar(element) {
         document.head.appendChild(style);
     }
     element.querySelectorAll('[data-component="activity-bar"]').forEach(loadActivityBar);
+    element.querySelectorAll('[data-batch-fetch-status-activity]').forEach(loadBatchStatus);
 }
 
+export async function loadBatchStatus(ele){
+    const bars = ele?.querySelectorAll('[data-component="activity-bar"]');
+    const activity = ele.dataset.batchFetchStatusActivity;
+    const entity = ele.dataset.entity;
+    
+    if ( bars.length > 0) {
+        const recordIds = Array.from(bars).map(element => element.getAttribute('data-record-id'));
+        const activeIds = await fetchActivityStatus(entity,activity,recordIds);
+        console.info(entity, activity,recordIds,activeIds);
+        bars.forEach((bar) => {
+            if (activeIds.includes(+bar.dataset.recordId)) {
+                console.log(bar.dataset.recordId);
+                const btn = bar.querySelector(`[data-component="${activity}-button"]`);
+                btn.classList.toggle('active', true);
+            }
+        })
+    }
+}
 export async function loadActivityBar(activityBar) {
     const entityName = activityBar.dataset.entity;
     const recordId = activityBar.dataset.recordId;
-    const fetchCount = activityBar.dataset.fetchCount;
+    const fetchIndividualStatus = activityBar.dataset.fetchIndividualStatus;
 
     const likeButton = activityBar.querySelector('[data-component="like-button"]');
     const saveButton = activityBar.querySelector('[data-component="save-button"]');
@@ -42,12 +61,12 @@ export async function loadActivityBar(activityBar) {
 
     loadActivityListeners(entityName, recordId, likeButton, saveButton, shareButton);
 
-    if (fetchCount === 'yes') {
-        await loadActivityCounts(entityName, recordId, viewButton, likeButton);
+    if (fetchIndividualStatus !== 'no') {
+        await loadActivityStatusAndCounts(entityName, recordId, viewButton, likeButton);
     }
 }
 
-async function loadActivityCounts(entityName, recordId, viewButton, likeButton) {
+async function loadActivityStatusAndCounts(entityName, recordId, viewButton, likeButton) {
     try {
         const data = await fetchActivity(entityName, recordId);
         updateLikeButton(likeButton, data.like);
@@ -93,14 +112,9 @@ async function handleLikeButtonClick(likeButton,entityName, recordId) {
 }
 
 function updateLikeButton(btn, data) {
-    const countSpan = btn.querySelector('[data-component="like-count"]');
-    const iconInactive = btn.querySelector('[data-component="like-icon-inactive"]');
-    const iconActive = btn.querySelector('[data-component="like-icon-active"]');
-
-    if (countSpan) countSpan.textContent = formatCount(data.count);
     btn.classList.toggle('active', data.active);
-    if (iconInactive) iconInactive.classList.toggle('hidden', data.active);
-    if (iconActive) iconActive.classList.toggle('hidden', !data.active);
+    const countSpan = btn.querySelector('[data-component="like-count"]');
+    if (countSpan) countSpan.textContent = formatCount(data.count);
 }
 
 function updateViewButton(btn, data) {

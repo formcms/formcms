@@ -148,6 +148,17 @@ public static class Activities
         return q;
     }
 
+    public static Query ActiveStatus(string entityName,string userId, string activityType, long[] recordIds)
+    {
+        var q = new Query(TableName)
+            .Select(nameof(Activity.RecordId).Camelize(), nameof(Activity.IsActive).Camelize())
+            .Where(nameof(Activity.IsActive).Camelize(), true)
+            .Where(nameof(Activity.EntityName).Camelize(), entityName)
+            .Where(nameof(Activity.ActivityType).Camelize(), activityType)
+            .Where(nameof(Activity.UserId).Camelize(), userId)
+            .WhereIn(nameof(Activity.RecordId).Camelize(), recordIds);
+        return q;       
+    }
     public static Query GetDailyVisitCount(Func<string, string> CastDate, int daysAgo,bool isAuthed)
     {
         var start = DateTime.UtcNow.Date.AddDays(-daysAgo);

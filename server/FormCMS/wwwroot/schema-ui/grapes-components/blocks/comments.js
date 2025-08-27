@@ -24,7 +24,11 @@ export const comments = {
     <div class="mb-6">
         <form data-component="comment-form" data-gjs-type="comment-form" class="flex flex-col gap-4 py-1">
             <div class="flex items-center gap-4">
-                <textarea data-component="comment-text" placeholder="Add a comment..." class="textarea textarea-bordered w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600" rows="3" required></textarea>
+                <textarea 
+                    data-component="comment-text" 
+                    placeholder="Add a comment..." 
+                    class="textarea textarea-bordered w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600" 
+                    rows="3" required></textarea>
             </div>
             <div class="flex justify-end gap-2">
                 <button type="reset" id="cancel-comment" class="btn btn-ghost btn-sm text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">Cancel</button>
@@ -32,7 +36,12 @@ export const comments = {
             </div>
         </form>
     </div>
-    <div class="space-y-4" data-gjs-type="foreach" data-component="foreach">
+    <div class="space-y-4" 
+        data-gjs-type="foreach" 
+        data-component="foreach"  
+        data-entity="comment" 
+        data-batch-fetch-status-activity="like"
+    >
         <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700" data-component='comment-container' data-user-id="{{createdBy.id}}">
              <div class="flex items-start" >
                   <div class="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center mr-3 overflow-hidden">
@@ -44,7 +53,13 @@ export const comments = {
                   </div>
              </div>
                   
-             <div class="flex items-center gap-2 mt-2" data-component="activity-bar" data-gjs-type="activity-bar" data-record-id="{{__record_id}}" data-entity="comment" data-fetch-count="no" >
+             <div class="flex items-center gap-2 mt-2" 
+                data-component="activity-bar" 
+                data-gjs-type="activity-bar" 
+                data-record-id="{{__record_id}}" 
+                data-entity="comment" 
+                data-fetch-individual-status="no" 
+             >
                  <button data-component="like-button" class="btn btn-ghost btn-sm flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                         Like
@@ -72,7 +87,12 @@ export const comments = {
              </div>
              
              <div  data-gjs-type="data-list" data-component="data-list"  query="commentReplies" lazy="true" offset="0" limit="5" pagination="Button">
-                <div class="space-y-4"  data-gjs-type="foreach" data-component="foreach">
+                <div class="space-y-4"  
+                    data-gjs-type="foreach" 
+                    data-component="foreach"
+                    data-entity="comment" 
+                    data-batch-fetch-status-activity="like"
+                >
                     <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700" data-component='comment-container' data-id="{{id}}" data-user-id="{{createdBy.id}}">
                         <div class="flex items-start" >
                             <div class="w-10 h-10 rounded-full bg-gray-300 dark:bg-gray-600 flex items-center justify-center mr-3 overflow-hidden">
@@ -83,7 +103,13 @@ export const comments = {
                                 <p data-component="comment-content" class="text-sm text-gray-600 dark:text-gray-300">{{content}}</p>
                             </div>
                         </div>
-                         <div class="flex items-center gap-2 mt-2" data-component="activity-bar" data-gjs-type="activity-bar" data-record-id="{{__record_id}}" data-entity="comment" data-fetch-count="no" >
+                         <div class="flex items-center gap-2 mt-2" 
+                            data-component="activity-bar" 
+                            data-gjs-type="activity-bar" 
+                            data-record-id="{{__record_id}}" 
+                            data-entity="comment" 
+                            data-fetch-individual-status="no" 
+                          >
                              <button data-component="like-button" class="btn btn-ghost btn-sm flex items-center gap-1 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"></path></svg>
                                     Like
