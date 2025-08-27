@@ -14,7 +14,8 @@ export async function replyComment (commentContainer,id, render) {
     replyForm.className = 'mt-2 p-2 border border-gray-300 rounded-md';
 
     const textarea = document.createElement('textarea');
-    textarea.className = 'w-full p-2 border border-gray-300 rounded-md text-sm text-gray-600';
+    
+    textarea.className = 'textarea textarea-bordered w-full bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 border-gray-300 dark:border-gray-600';
     textarea.placeholder = 'Write your reply...';
 
     const submitButton = document.createElement('button');

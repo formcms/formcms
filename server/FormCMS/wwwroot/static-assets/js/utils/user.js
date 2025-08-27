@@ -31,7 +31,6 @@ export async function fetchUser() {
         user = await currentUserPromise;
         return user;
     } catch (error) {
-        console.error('API call failed:', error);
         return false;
     } finally {
         // Clear the promise after completion

@@ -8,6 +8,7 @@ using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
+using Humanizer;
 
 namespace FormCMS.Activities.Services;
 
@@ -57,7 +58,40 @@ public class ActivityCollectService(
         await UpsertActivities(activities,ct);
     }
     
-    public async Task<Dictionary<string, StatusDto>> Get(string cookieUserId,string entityName, long recordId, CancellationToken ct)
+    public async Task<long[]> BatchGetActiveStatus(string entityName, string activityType, long[] ids, CancellationToken ct)
+    {
+        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
+        var ret = new List<long>();
+        var missed = new List<long>();
+        if (settings.EnableBuffering)
+        {
+            var activities = ids.Select(id => new Activity(entityName, id, activityType, userId)).ToArray();
+            var keys = activities.Select(x=>x.Key()).ToArray();
+            var dict = await statusBuffer.BatchGet(keys);
+            foreach (var activity in activities)
+            {
+                if (dict.TryGetValue(activity.Key(), out var active))
+                {
+                    if (active)
+                    {
+                        ret.Add(activity.RecordId);
+                    }
+                }
+                else
+                {
+                    missed.Add(activity.RecordId);
+                }
+            }
+            ids = missed.ToArray();
+        }
+        
+        var query = Models.Activities.ActiveStatus(entityName, userId,activityType,  ids);
+        var records = await executor.Many(query,ct);
+        ret.AddRange(records.Select(x => (long)x[nameof(Activity.RecordId).Camelize()]));
+        return ret.ToArray();
+    }
+    
+    public async Task<Dictionary<string, StatusDto>> GetAndRecordSingle(string cookieUserId,string entityName, long recordId, CancellationToken ct)
     {
         var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
         var ret = new Dictionary<string, StatusDto>();
@@ -69,9 +103,6 @@ public class ActivityCollectService(
         string[] types = [..settings.CommandToggleActivities, ..settings.CommandRecordActivities];
         var userId = identityService.GetUserAccess()?.Id;
         
-        var counts = types.Select(x => 
-            new ActivityCount(entityName, recordId, x)).ToArray();
-
         Dictionary<string, bool>? statusDict = null;
         if (userId is not null)
         {
@@ -415,7 +446,7 @@ public class ActivityCollectService(
     private async Task<Dictionary<string, bool>> GetBufferStatusDict(Activity[] status)
     {
         var keys = status.Select(Models.Activities.Key).ToArray();
-        var dict = await statusBuffer.Get(keys, GetStatus);
+        var dict = await statusBuffer.GetOrSet(keys, GetStatus);
         var ret = new Dictionary<string, bool>();
         foreach (var (key, value) in dict)
         {
