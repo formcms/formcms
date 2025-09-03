@@ -23,5 +23,8 @@ public static class HostApplicationExt
     public static IServiceCollection AddSqlServerCmsWorker(
         this IServiceCollection services, string connectionString, TaskTimingSeconds? taskTimingSeconds = null
     ) => CmsWorkerBuilder.AddWorker(services, DatabaseProvider.SqlServer,connectionString,taskTimingSeconds);
-
+    
+    public static IServiceCollection AddMySqlCmsWorker(
+        this IServiceCollection services, string connectionString, TaskTimingSeconds? taskTimingSeconds = null
+    ) => CmsWorkerBuilder.AddWorker(services, DatabaseProvider.Mysql,connectionString,taskTimingSeconds);
 }

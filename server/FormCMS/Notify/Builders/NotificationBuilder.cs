@@ -26,9 +26,9 @@ public class NotificationBuilder(ILogger<NotificationBuilder> logger)
 
         using var scope = app.Services.CreateScope();
         var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
+        var dao = scope.ServiceProvider.GetRequiredService<IRelationDbDao>();
         await migrator.MigrateTable(Notifications.TableName, Notifications.Columns);
         await migrator.MigrateTable(NotificationCountExtensions.TableName, NotificationCountExtensions.Columns);
-        var dao = scope.ServiceProvider.GetRequiredService<IRelationDbDao>();
         await dao.CreateIndex(
             NotificationCountExtensions.TableName,
             [nameof(NotificationCount.UserId).Camelize()],

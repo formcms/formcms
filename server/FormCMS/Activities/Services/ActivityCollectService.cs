@@ -25,19 +25,9 @@ public class ActivityCollectService(
     IContentTagService contentTagService,
     KateQueryExecutor executor,
     IRelationDbDao dao,
-    IUserManageService userManager,
-    DatabaseMigrator migrator
+    IUserManageService userManager
 ) : IActivityCollectService
 {
-    public async Task EnsureActivityTables()
-    {
-        await migrator.MigrateTable(Models.Activities.TableName, Models.Activities.Columns);
-        await dao.CreateIndex(Models.Activities.TableName, Models.Activities.KeyFields, true, CancellationToken.None);
-
-        await migrator.MigrateTable(ActivityCounts.TableName, ActivityCounts.Columns);
-        await dao.CreateIndex(ActivityCounts.TableName, ActivityCounts.KeyFields, true, CancellationToken.None);
-    }
-
     public async Task Flush(DateTime? lastFlushTime, CancellationToken ct)
     {
         if (!settings.EnableBuffering)

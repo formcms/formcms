@@ -15,24 +15,10 @@ public class BookmarkService(
     IEntitySchemaService schemaService,
     KeyValueCache<long> maxRecordIdCache,
     IContentTagService contentTagService,
-
-    DatabaseMigrator migrator,
     IRelationDbDao dao,
     KateQueryExecutor executor
 ) : IBookmarkService
 {
-    public async Task EnsureBookmarkTables()
-    {
-        await migrator.MigrateTable(BookmarkFolders.TableName, BookmarkFolders.Columns);
-        await migrator.MigrateTable(Bookmarks.TableName, Bookmarks.Columns);
-
-        await dao.CreateForeignKey(
-            Bookmarks.TableName, nameof(Bookmark.FolderId).Camelize(),
-            BookmarkFolders.TableName, nameof(BookmarkFolder.Id).Camelize(),
-            CancellationToken.None
-        );
-    }
-
     public Task<Record[]> Folders(CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");

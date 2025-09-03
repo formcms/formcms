@@ -5,6 +5,7 @@ using FormCMS.AuditLogging.Models;
 using FormCMS.AuditLogging.Services;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Plugins;
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.RecordExt;
 
 namespace FormCMS.AuditLogging.Builders;
@@ -35,8 +36,9 @@ public sealed class AuditLogBuilder(ILogger<AuditLogBuilder> logger )
         app.Services.GetService<PluginRegistry>()?.FeatureMenus.Add(AuditLoggingConstants.MenuId);
 
         using var scope = app.Services.CreateScope();
-        var auditLogService = scope.ServiceProvider.GetRequiredService<IAuditLogService>();
-        await auditLogService.EnsureAuditLogTable();
+        var migrator = scope.ServiceProvider.GetService<DatabaseMigrator>();
+        await migrator.MigrateTable(AuditLogConstants.TableName,AuditLogHelper.Columns);
+
         
         var options = app.Services.GetRequiredService<SystemSettings>();
         var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);

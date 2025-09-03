@@ -6,7 +6,9 @@ using FormCMS.Core.Plugins;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.Buffers;
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.ResultExt;
+using Humanizer;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 
 namespace FormCMS.Activities.Builders;
@@ -48,8 +50,10 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         }
         
         using var scope = app.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<IActivityCollectService>().EnsureActivityTables();
-        await scope.ServiceProvider.GetRequiredService<IBookmarkService>().EnsureBookmarkTables(); 
+        var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
+        var dao = scope.ServiceProvider.GetRequiredService<IRelationDbDao>();
+        await EnsureActivityTables();
+        await EnsureBookmarkTables();
         
         var systemSettings = app.Services.GetRequiredService<SystemSettings>();
         var apiGroup = app.MapGroup(systemSettings.RouteOptions.ApiBaseUrl);
@@ -73,7 +77,26 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
              *********************************************************
              """);
         return app;
+        
+        async Task EnsureBookmarkTables()
+        {
+            await migrator.MigrateTable(BookmarkFolders.TableName, BookmarkFolders.Columns);
+            await migrator.MigrateTable(Bookmarks.TableName, Bookmarks.Columns);
 
+            await dao.CreateForeignKey(
+                Bookmarks.TableName, nameof(Bookmark.FolderId).Camelize(),
+                BookmarkFolders.TableName, nameof(BookmarkFolder.Id).Camelize(),
+                CancellationToken.None
+            );
+        }
+        async Task EnsureActivityTables()
+        {
+            await migrator.MigrateTable(Models.Activities.TableName, Models.Activities.Columns);
+            await dao.CreateIndex(Models.Activities.TableName, Models.Activities.KeyFields, true, CancellationToken.None);
+
+            await migrator.MigrateTable(ActivityCounts.TableName, ActivityCounts.Columns);
+            await dao.CreateIndex(ActivityCounts.TableName, ActivityCounts.KeyFields, true, CancellationToken.None);
+        }
         void RegisterHooks()
         {
             var hookRegistry = app.Services.GetRequiredService<HookRegistry>();

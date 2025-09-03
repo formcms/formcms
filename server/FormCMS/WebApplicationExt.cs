@@ -54,6 +54,10 @@ public static class WebApplicationExt
         this WebApplicationBuilder builder, string connectionString, Action<SystemSettings>? action = null
         ) => CmsBuilder.AddCms(builder, DatabaseProvider.Postgres, connectionString,action);
 
+    public static IServiceCollection AddMysqlCms(
+        this WebApplicationBuilder builder, string connectionString, Action<SystemSettings>? action = null
+    ) => CmsBuilder.AddCms(builder, DatabaseProvider.Mysql, connectionString,action);
+    
     public static IServiceCollection AddSqliteCms(
         this WebApplicationBuilder builder, string connectionString, Action<SystemSettings>? action = null
     ) => CmsBuilder.AddCms(builder, DatabaseProvider.Sqlite, connectionString, action);

@@ -15,6 +15,7 @@ public  class Worker(string databaseProvider, string databaseConnectionString,
             Constants.Sqlite => builder.Services.AddSqliteCmsWorker(databaseConnectionString,taskTimingSeconds),
             Constants.Postgres => builder.Services.AddPostgresCmsWorker(databaseConnectionString,taskTimingSeconds),
             Constants.SqlServer => builder.Services.AddSqlServerCmsWorker(databaseConnectionString,taskTimingSeconds),
+            Constants.Mysql => builder.Services.AddMySqlCmsWorker(databaseConnectionString,taskTimingSeconds),
             _ => throw new Exception("Database provider not found")
         };
 

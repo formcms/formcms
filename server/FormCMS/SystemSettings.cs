@@ -1,7 +1,21 @@
 using FormCMS.Infrastructure.FileStore;
 
 namespace FormCMS;
+public enum DatabaseProvider
+{
+    Sqlite,
+    Postgres,
+    SqlServer,
+    Mysql,
+}
 
+public enum FtsProvider
+{
+    Mysql,
+    Postgres,
+    Sql,
+    ElasticSearch,
+}
 public class ImageCompressionOptions
 {
     public int MaxWidth { get; set; } = 1200;

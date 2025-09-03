@@ -90,7 +90,7 @@ public class WebApp(
         
         // use formCms 
         await EnsureDbCreatedAsync();
-        await app.UseCmsAsync(true);
+        await app.UseCmsAsync();
         await EnsureUserCreatedAsync();
         
         
@@ -120,6 +120,10 @@ public class WebApp(
                 options.UseNpgsql(databaseConnectionString)),
             Constants.SqlServer => builder.Services.AddDbContext<CmsDbContext>(options =>
                 options.UseSqlServer(databaseConnectionString)),
+            Constants.Mysql => builder.Services.AddDbContext<CmsDbContext>(options =>
+                options.UseMySql(
+                    databaseConnectionString,
+                    ServerVersion.AutoDetect(databaseConnectionString))),
             _ => throw new Exception("Database provider not found")
         };
     }
@@ -134,6 +138,7 @@ public class WebApp(
                 .AddPostgresCms(databaseConnectionString),
             Constants.SqlServer => builder
                 .AddSqlServerCms(databaseConnectionString),
+            Constants.Mysql =>builder.AddMysqlCms(databaseConnectionString),
             _ => throw new Exception("Database provider not found")
         };
     }
