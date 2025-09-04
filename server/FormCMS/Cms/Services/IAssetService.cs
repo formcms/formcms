@@ -5,7 +5,6 @@ namespace FormCMS.Cms.Services;
 
 public interface IAssetService
 {
-    Task EnsureTable();
     XEntity GetEntity(bool withLinkCount);
     string GetBaseUrl();
     Task<ListResponse> List(StrArgs args, int? offset, int? limit, bool withLinkCount, CancellationToken ct);

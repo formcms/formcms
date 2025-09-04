@@ -70,6 +70,7 @@ public static class JunctionHelper
             ImageTagField:"",
             TagsQuery:"",
             TitleTagField:"",
+            ContentTagField:"",
             PublishTimeTagField:"",
             TagsQueryParam:"",
             SubtitleTagField:""

@@ -33,7 +33,6 @@ public interface ISchemaService
     Task Delete(long id, CancellationToken ct);
 
     Task EnsureTopMenuBar(CancellationToken ct);
-    Task EnsureSchemaTable();
 
     Task RemoveEntityInTopMenuBar(Entity entity, CancellationToken ct);
     public Task EnsureEntityInTopMenuBar(Entity entity, CancellationToken ct);

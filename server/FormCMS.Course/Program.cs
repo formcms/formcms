@@ -22,19 +22,18 @@ public class Program
         var taskTimingSeconds = builder.Configuration
             .GetSection(nameof(TaskTimingSeconds)).Get<TaskTimingSeconds>();
 
-        var enableWorker = builder.Configuration.GetValue<bool>("enable-worker");
         var enableActivityBuffer = builder.Configuration.GetValue<bool>("EnableActivityBuffer");
 
-        var webApp = await new WebApp(builder, databaseProvider, databaseConnectionString,enableActivityBuffer, redisConnectionString, azureBlobStoreOptions)
+        var webApp = await new WebApp(builder, databaseProvider, databaseConnectionString,enableActivityBuffer,
+                redisConnectionString, azureBlobStoreOptions, taskTimingSeconds)
             .Build();
 
-        var worker = enableWorker
-            ? new Worker(databaseProvider, databaseConnectionString, azureBlobStoreOptions, taskTimingSeconds).Build()
-            : null;
+        var worker = new Worker(databaseProvider, databaseConnectionString, azureBlobStoreOptions, taskTimingSeconds)
+            .Build();
 
         await Task.WhenAll(
             webApp.RunAsync(),
-            worker?.RunAsync() ?? Task.CompletedTask
+            worker.RunAsync() 
         );
     }
 }

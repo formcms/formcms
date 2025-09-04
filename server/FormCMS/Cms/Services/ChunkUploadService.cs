@@ -18,16 +18,7 @@ public class ChunkUploadService(
 {
     public async Task EnsureTable()
     {
-        await migrator.MigrateTable(UploadSessions.TableName, UploadSessions.Columns);
-        await dao.CreateIndex(
-            UploadSessions.TableName, 
-            [
-                nameof(UploadSession.ClientId).Camelize(),
-                nameof(UploadSession.FileName).Camelize(),
-                nameof(UploadSession.FileSize).Camelize()
-            ], 
-            false, 
-            CancellationToken.None);
+      
     }
     
     public async Task UploadChunk(string path, int number, IFormFile file, CancellationToken ct)

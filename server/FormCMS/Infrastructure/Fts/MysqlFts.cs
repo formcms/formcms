@@ -1,9 +1,8 @@
-using System.Text.Json;
 using MySqlConnector;
 
 namespace FormCMS.Infrastructure.Fts;
 
-public class MysqlFts(ILogger<MysqlFts> logger, MySqlConnection conn) : IFullTextSearch
+public class MysqlFts(MySqlConnection conn) : IFullTextSearch
 {
     public async Task CreateFtsIndex(string table, string[] fields, CancellationToken ct)
     {
@@ -16,15 +15,37 @@ public class MysqlFts(ILogger<MysqlFts> logger, MySqlConnection conn) : IFullTex
         // Build index name (avoid exceeding name length limit in MySQL: 64 chars)
         var indexName = "idx_fts_" + string.Join("_", fields);
         if (indexName.Length > 64)
-            indexName = "idx_fts_" + Guid.NewGuid().ToString("N").Substring(0, 8);
+            indexName = "idx_fts_" + Guid.NewGuid().ToString("N")[..8];
 
-        var sql = $@"
-ALTER TABLE {table}
-ADD FULLTEXT {indexName} ({string.Join(", ", fields)});
-";
+        // Check if index exists
+        const string checkSql = """
+                                SELECT COUNT(*)
+                                FROM information_schema.statistics
+                                WHERE table_schema = DATABASE()
+                                  AND table_name = @table
+                                  AND index_name = @index;
+                                """;
+
+        await using (var checkCmd = new MySqlCommand(checkSql, conn))
+        {
+            checkCmd.Parameters.AddWithValue("@table", table);
+            checkCmd.Parameters.AddWithValue("@index", indexName);
+
+            var exists = Convert.ToInt32(await checkCmd.ExecuteScalarAsync(ct)) > 0;
+            if (exists)
+                return; // Index already exists, nothing to do
+        }
+
+        // Create full-text index
+        var sql = $"""
+                   ALTER TABLE `{table}`
+                   ADD FULLTEXT `{indexName}` ({string.Join(", ", fields.Select(f => $"`{f}`"))});
+                   """;
+
         await using var cmd = new MySqlCommand(sql, conn);
         await cmd.ExecuteNonQueryAsync(ct);
     }
+
     
     public async Task IndexAsync(string tableName, string[] keys, Record item)
     {
@@ -42,10 +63,11 @@ ADD FULLTEXT {indexName} ({string.Join(", ", fields)});
                 .Select(k => $"{k}=@{k}")
         );
 
-        var sql = $@"
-INSERT INTO {tableName} ({columns})
-VALUES ({parameters})
-ON DUPLICATE KEY UPDATE {updates}";
+        var sql = $"""
+                   INSERT INTO {tableName} ({columns})
+                   VALUES ({parameters})
+                   ON DUPLICATE KEY UPDATE {updates}
+                   """;
 
         await using var cmd = new MySqlCommand(sql, conn);
 
@@ -118,13 +140,15 @@ ON DUPLICATE KEY UPDATE {updates}";
             }.Where(s => !string.IsNullOrEmpty(s))
         );
 
-        var sql = $@"
-SELECT {string.Join(", ", selectingFields)}, 
-       ({scoreExpression}) AS score
-FROM {tableName}
-WHERE {whereClause}
-ORDER BY score DESC
-LIMIT @limit;";
+        var sql = $"""
+
+                   SELECT {string.Join(", ", selectingFields)}, 
+                          ({scoreExpression}) AS score
+                   FROM {tableName}
+                   WHERE {whereClause}
+                   ORDER BY score DESC
+                   LIMIT @limit;
+                   """;
 
         await using var cmd = new MySqlCommand(sql, conn);
 

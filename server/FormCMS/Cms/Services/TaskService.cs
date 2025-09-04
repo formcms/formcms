@@ -14,11 +14,17 @@ namespace FormCMS.Cms.Services;
 public class TaskService(
     IIdentityService identityService,
     KateQueryExecutor executor,
-    DatabaseMigrator migrator,
     IFileStore store,
     HttpClient httpClient
 ) : ITaskService
-{
+{ 
+    public XEntity GetEntity()
+    {
+        EnsureHasPermission();
+        return TaskHelper.Entity;
+    }
+
+
     public async Task DeleteTaskFile(long id,CancellationToken ct)
     {
         EnsureHasPermission();
@@ -29,7 +35,9 @@ public class TaskService(
         var query = TaskHelper.UpdateTaskStatus(new SystemTask(Id: id, TaskStatus: TaskStatus.Archived));
         await executor.Exec(query,false,ct);
     }
-    
+
+   
+
     public async Task<string> GetTaskFileUrl(long id, CancellationToken ct)
     {
         EnsureHasPermission();
@@ -38,15 +46,15 @@ public class TaskService(
         return store.GetUrl(task.GetPaths().Zip);
     }
 
-    public XEntity GetEntity()
+    public Task<long> AddEmitMessageTask(EmitMessageSetting setting)
     {
         EnsureHasPermission();
-        return TaskHelper.Entity;
+        var task = TaskHelper.InitTask(TaskType.EmitMessage, identityService.GetUserAccess()?.Name ?? "");
+        task = task with { TaskSettings = setting.ToJson() };
+        var query = TaskHelper.AddTask(task);
+        return executor.Exec(query,true);
     }
-
-    public Task EnsureTable()
-        =>migrator.MigrateTable(TaskHelper.TableName,TaskHelper.Columns);
-
+   
     public async Task<long> AddImportTask(IFormFile file)
     {
         EnsureHasPermission();

@@ -29,17 +29,7 @@ public class AssetService(
 {
     public async Task EnsureTable()
     {
-        await migrator.MigrateTable(Assets.TableName, Assets.Columns);
-        await migrator.MigrateTable(AssetLinks.TableName, AssetLinks.Columns);
-        await dao.CreateIndex(
-            Assets.TableName, 
-            [nameof(Asset.Path).Camelize()], 
-            true, 
-            CancellationToken.None);
-        await dao.CreateForeignKey(
-            AssetLinks.TableName, nameof(AssetLink.AssetId).Camelize(),
-            Assets.TableName, nameof(Asset.Id).Camelize(),
-            CancellationToken.None);
+        
 
     }
 

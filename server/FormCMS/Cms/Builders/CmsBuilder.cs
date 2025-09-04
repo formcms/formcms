@@ -10,6 +10,7 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Identities;
 using FormCMS.Core.Plugins;
+using FormCMS.Core.Tasks;
 using FormCMS.Infrastructure.Cache;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
@@ -20,9 +21,12 @@ using FormCMS.Utils.PageRender;
 using FormCMS.Utils.ResultExt;
 using FormCMS.Utils.ServiceCollectionExt;
 using GraphQL;
+using Humanizer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Migrations.Internal;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Schema = FormCMS.Cms.Graph.Schema;
 
@@ -213,8 +217,11 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
     public async Task UseCmsAsync(WebApplication app)
     {
         var settings = app.Services.GetRequiredService<SystemSettings>();
+        using var serviceScope = app.Services.CreateScope();
+        await InitTables(serviceScope);
+        await Seed(serviceScope);
+        
         PrintVersion();
-        await InitTables();
         if (settings.EnableClient)
         {
             app.UseStaticFiles(
@@ -332,18 +339,38 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             );
         }
 
-        async Task InitTables()
+        async Task InitTables(IServiceScope scope)
         {
-            using var serviceScope = app.Services.CreateScope();
+            var migrator  = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
+            var dao = scope.ServiceProvider.GetRequiredService<IRelationDbDao>();
+            
+            await migrator.MigrateTable(SchemaHelper.TableName, SchemaHelper.Columns);
+            await migrator.MigrateTable(TaskHelper.TableName,TaskHelper.Columns);
+            
+            await migrator.MigrateTable(Assets.TableName, Assets.Columns);
+            await migrator.MigrateTable(AssetLinks.TableName, AssetLinks.Columns);
+            await dao.CreateIndex( Assets.TableName, [nameof(Asset.Path).Camelize()], true, CancellationToken.None);
+            await dao.CreateForeignKey(
+                AssetLinks.TableName, nameof(AssetLink.AssetId).Camelize(),
+                Assets.TableName, nameof(Asset.Id).Camelize(),
+                CancellationToken.None);
+            
+            await migrator.MigrateTable(UploadSessions.TableName, UploadSessions.Columns);
+            await dao.CreateIndex(
+                UploadSessions.TableName, 
+                [
+                    nameof(UploadSession.ClientId).Camelize(),
+                    nameof(UploadSession.FileName).Camelize(),
+                    nameof(UploadSession.FileSize).Camelize()
+                ], 
+                false, 
+                CancellationToken.None);
+        }
 
-            var schemaService = serviceScope.ServiceProvider.GetRequiredService<ISchemaService>();
-            await schemaService.EnsureSchemaTable();
+        async Task Seed(IServiceScope scope)
+        {
+            var schemaService = scope.ServiceProvider.GetRequiredService<ISchemaService>();
             await schemaService.EnsureTopMenuBar(CancellationToken.None);
-
-            await serviceScope.ServiceProvider.GetRequiredService<ITaskService>().EnsureTable();
-            await serviceScope.ServiceProvider.GetRequiredService<IAssetService>().EnsureTable();
-            await serviceScope.ServiceProvider.GetRequiredService<IAssetService>().EnsureTable();
-            await serviceScope.ServiceProvider.GetRequiredService<IChunkUploadService>().EnsureTable();
         }
 
         void UseExceptionHandler()

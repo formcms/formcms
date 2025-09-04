@@ -1,5 +1,7 @@
 using FormCMS.Activities.Workers;
 using FormCMS.Auth.Models;
+using FormCMS.Cms.Builders;
+using FormCMS.Cms.Workers;
 using FormCMS.Core.Auth;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.FileStore;
@@ -23,7 +25,8 @@ public class WebApp(
     string databaseConnectionString,
     bool enableActivityBuffer,
     string? redisConnectionString,
-    AzureBlobStoreOptions? azureBlobStoreOptions
+    AzureBlobStoreOptions? azureBlobStoreOptions,
+    TaskTimingSeconds taskTimingSeconds
 )
 {
     private const string Cors = "cors";
@@ -78,6 +81,9 @@ public class WebApp(
         builder.Services.AddSingleton(new FtsIndexingSettings(FtsEntities));
         builder.Services.AddHostedService<FtsIndexingMessageHandler>();
 
+        builder.Services.AddSingleton(new EmitMessageWorkerOptions(taskTimingSeconds.EmitMessageDelay));
+        builder.Services.AddHostedService<EmitMessageWorker>();
+        
         if (apiBaseUrl is not null && apiKey is not null)
         {
             builder.Services.AddVideoMessageProducer();
