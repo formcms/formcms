@@ -33,9 +33,9 @@ public class ActivityQueryPlugin(
         
         var strAgs = new StrArgs
         {
-            [entity.BookmarkQueryParamName] = ids
+            [entity.TagsQueryParam] = ids
         };
-        var records = await queryService.ListWithAction(entity.BookmarkQuery, new Span(),new Pagination(),strAgs,ct);
+        var records = await queryService.ListWithAction(entity.TagsQuery, new Span(),new Pagination(),strAgs,ct);
         var dict = records.ToDictionary(x => x[entity.PrimaryKey].ToString()!);
         string[] types = [..settings.CommandToggleActivities, ..settings.CommandRecordActivities];
 

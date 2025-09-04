@@ -65,7 +65,6 @@
       <Folder Include="Search\ApiClient\" />
       <Folder Include="Search\Handlers\" />
       <Folder Include="Search\Services\" />
-      <Folder Include="Search\Workers\" />
       <Folder Include="wwwroot\static-assets\imgs\" />
     </ItemGroup>
 

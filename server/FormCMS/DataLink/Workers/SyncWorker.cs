@@ -1,60 +1,54 @@
 using System.Text.Json;
-using FormCMS.Utils.HttpClientExt;
-using FormCMS.Utils.jsonElementExt;
 using FormCMS.Utils.ResultExt;
-using FluentResults;
+using FormCMS.Cms.Services;
+using FormCMS.Core.Descriptors;
 using FormCMS.Core.Messaging;
-using FormCMS.DataLink.Types;
-using FormCMS.Infrastructure.DocumentDbDao;
 using FormCMS.Infrastructure.EventStreaming;
 
 namespace FormCMS.DataLink.Workers;
 
-public sealed class SyncWorker(
-    IServiceScopeFactory serviceScopeFactory,
+public  abstract class SyncWorker(
+    IServiceScopeFactory scopeFactory,
     IStringMessageConsumer consumer,
     ILogger<SyncWorker> logger,
-    ApiLinks[] links
+    HashSet<string> entities
     ) : BackgroundService
 {
-    private readonly Dictionary<string, ApiLinks> _dict = links.ToDictionary(x => x.Entity, x => x);
+    protected abstract string GetTaskName();
+    protected abstract Task Upsert(IServiceScope scope, LoadedEntity entity, ContentTag tags, CancellationToken ct);
+    protected abstract Task Delete(IServiceScope scope, string entityName, string id, CancellationToken ct);
 
-    private readonly HttpClient _httpClient = new();
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
         await consumer.Subscribe(CmsTopics.CmsCrud,
-            "SyncWorker"
-            ,async s =>
+            GetTaskName() ,async s =>
         {
-            using var scope = serviceScopeFactory.CreateScope();
-            var dao = scope.ServiceProvider.GetRequiredService<IDocumentDbDao>();
-            
             try
             {
                 var message = JsonSerializer.Deserialize<RecordMessage>(s);
                 if (message is null)
                 {
-                    logger.LogWarning("Could not deserialize message");
+                    logger.LogWarning("{task}:Could not deserialize message", GetTaskName());
                     return;
                 }
 
-                if (!_dict.TryGetValue(message.EntityName, out var apiLinks))
+                if (!entities.Contains(message.EntityName))
                 {
-                    logger.LogWarning("entity [{message.EntityName}] is not in Feed Dictionary, ignore the message",
+                    logger.LogWarning("{task}:entity [{message.EntityName}] is not in Feed Dictionary, ignore the message",
+                        GetTaskName(),
                         message.EntityName);
                 }
 
+                using var scope = scopeFactory.CreateScope();
+                
                 switch (message.Operation)
                 {
                     case CmsOperations.Create:
                     case CmsOperations.Update:
-                        if (!(await FetchSaveSingle(apiLinks!, message.Id, dao)).Try(out var err))
-                        {
-                            logger.LogWarning("failed to fetch and save single item, err ={err}", err);
-                        }
+                        await FetchSave(scope,message.EntityName, message.RecordId,ct);
                         break;
                     case CmsOperations.Delete:
-                        await dao.Delete(apiLinks!.Collection, message.Id);
+                        await Delete(scope,message.EntityName, message.RecordId, ct);
                         break;
                     default:
                         logger.LogWarning("unknown operation {message.Operation}, ignore the message",
@@ -64,7 +58,7 @@ public sealed class SyncWorker(
 
                 logger.LogInformation(
                     "consumed message successfully, entity={message.EntityName}, operation={message.Operation}, id = {message.Id}",
-                    message.EntityName, message.Operation, message.Id);
+                    message.EntityName, message.Operation, message.RecordId);
             }
             catch (Exception e)
             {
@@ -73,14 +67,17 @@ public sealed class SyncWorker(
 
         }, ct);
     }
-
-    private async Task<Result> FetchSaveSingle(ApiLinks links, string id, IDocumentDbDao dao )
+    
+    private async Task FetchSave(IServiceScope scope, string entityName, string id, CancellationToken ct)
     {
-        if (!(await _httpClient.GetResult<JsonElement>($"{links.Api}/single?{links.PrimaryKey}={id}"))
-            .Try(out var s, out var e))
+        var entityService = scope.ServiceProvider.GetRequiredService<IEntityService>();
+        var contentTagService = scope.ServiceProvider.GetRequiredService<IContentTagService>();
+        
+        var loadedEntity = await entityService.GetEntityAndValidateRecordId(entityName, int.Parse(id), ct).Ok();
+        var tags = await contentTagService.GetContentTags(loadedEntity, [id], ct);
+        if (tags.Length > 0)
         {
-            return Result.Fail(e).WithError("Failed to fetch single data");
-        } 
-        return await Result.Try(() => dao.Upsert(links.Collection, links.PrimaryKey, s.ToDictionary()));
+            await Upsert(scope,loadedEntity, tags.First(), ct);
+        }
     }
 }

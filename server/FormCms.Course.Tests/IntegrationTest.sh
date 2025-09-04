@@ -30,7 +30,7 @@ test_postgres_container() {
   export ConnectionStrings__Postgres="Host=localhost;Database=cms_integration_tests;Username=postgres;Password=mysecretpassword"
   Logging__LogLevel__Default=None\
   Logging__LogLevel__Microsoft_AspNetCore=None\
-  dotnet test #--filter  FullyQualifiedName~FormCMS.Course.Tests.ActivityTest
+  dotnet test 
 }
 
 test_sqlserver_container(){
@@ -50,12 +50,44 @@ test_sqlserver_container(){
   dotnet test  
 }
 
+test_mysql_container(){
+  local container_name="integration-test-mysql"
+  local password="mysecretpassword"
+  local db_name="cms_integration_tests"
+
+  remove_container $container_name
+
+  docker run -d --name $container_name \
+    -e MYSQL_ROOT_PASSWORD=$password \
+    -e MYSQL_DATABASE=$db_name \
+    -e MYSQL_USER=myuser \
+    -e MYSQL_PASSWORD=$password \
+    -p 3306:3306 \
+    mysql:8.0 \
+    --default-authentication-plugin=mysql_native_password \
+    --log-bin-trust-function-creators=1
+  # Wait for MySQL to be ready
+  echo "Waiting for MySQL to be ready..."
+  until docker exec $container_name mysql -h localhost -u myuser -p$password -e "SELECT 1;" $db_name >/dev/null 2>&1; do
+    sleep 2
+  done
+
+  export DatabaseProvider=Mysql
+  export ConnectionStrings__Mysql="Server=localhost;Database=$db_name;User=myuser;Password=$password;"
+
+  Logging__LogLevel__Default=None\
+  Logging__LogLevel__Microsoft__AspNetCore=None\
+  Logging__LogLevel__Microsoft__AspNetCore__Diagnostics__ExceptionHandlerMiddleware=None\
+  dotnet test
+}
+
 # Exit immediately if a command exits with a non-zero status
 set -e
 
-db_path=$(pwd)/_cms_temp_integration_tests.db.db && rm -f "$db_path" && test_sqlite "$db_path"
+#db_path=$(pwd)/_cms_temp_integration_tests.db.db && rm -f "$db_path" && test_sqlite "$db_path"
 
-test_postgres_container 
+#test_postgres_container 
 
 #test_sqlserver_container
 
+test_mysql_container

@@ -241,7 +241,7 @@ public class ActivityCollectService(
 
     private async Task UpdateScore(LoadedEntity entity,ActivityCount[] counts, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(entity.BookmarkQuery)) return;
+        if (string.IsNullOrWhiteSpace(entity.TagsQuery)) return;
         
         foreach (var a in counts)
         {
@@ -344,7 +344,7 @@ public class ActivityCollectService(
     }
     private async Task<Activity[]> LoadContentTags(LoadedEntity entity, Activity[] activities, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(entity.BookmarkQuery))
+        if (string.IsNullOrWhiteSpace(entity.TagsQuery))
         {
             return activities;
         }

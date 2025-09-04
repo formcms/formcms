@@ -62,12 +62,12 @@ public static class CommentHelper
             new Attribute(DefaultAttributeNames.PublicationStatus.Camelize())
         ],
         
-        BookmarkQuery:CommentLinkQuery,
-        BookmarkQueryParamName: nameof(Comment.Id).Camelize(),
-        BookmarkImageField:"image",
-        BookmarkTitleField:"title",
-        BookmarkPublishTimeField:"publishedAt",
-        BookmarkSubtitleField:"subtitle",
+        TagsQuery:CommentLinkQuery,
+        TagsQueryParam: nameof(Comment.Id).Camelize(),
+        ImageTagField:"image",
+        TitleTagField:"title",
+        PublishTimeTagField:"publishedAt",
+        SubtitleTagField:"subtitle",
         PageUrl: "url",
         Name: nameof(Comment).Camelize(),
         DisplayName: "",

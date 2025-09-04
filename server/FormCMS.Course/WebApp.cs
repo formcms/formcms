@@ -3,9 +3,11 @@ using FormCMS.Auth.Models;
 using FormCMS.Core.Auth;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.FileStore;
+using FormCMS.Infrastructure.Fts;
 using FormCMS.Notify.Models;
 using FormCMS.Notify.Services;
 using FormCMS.Notify.Workers;
+using FormCMS.Search.Workers;
 using FormCMS.Subscriptions;
 using FormCMS.Utils.ResultExt;
 using FormCMS.Video.Workers;
@@ -25,6 +27,7 @@ public class WebApp(
 )
 {
     private const string Cors = "cors";
+    private static HashSet<string> FtsEntities = ["course","lesson","author"]; 
 
     public async Task<WebApplication> Build()
     {
@@ -45,11 +48,15 @@ public class WebApp(
         var apiBaseUrl = builder.Configuration.GetValue<string>("ApiInfo:Url"); 
 
         AddCms();
+        builder.Services.AddCrudMessageProducer([..FtsEntities]);
         builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(GetAuthConfig(apiKey));
         builder.Services.AddAuditLog();
         builder.Services.AddActivity(enableActivityBuffer);
         builder.Services.AddComments();
         builder.Services.AddNotify();
+
+        builder.Services.AddScoped<IFullTextSearch, MysqlFts>();
+        builder.Services.AddSearch();
         
         builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
         builder.Services.AddSubscriptions();
@@ -68,6 +75,8 @@ public class WebApp(
         builder.Services.AddScoped<INotificationCollectService, NotificationCollectService>();
         builder.Services.AddHostedService<NotificationEventHandler>();
 
+        builder.Services.AddSingleton(new FtsIndexingSettings(FtsEntities));
+        builder.Services.AddHostedService<FtsIndexingMessageHandler>();
 
         if (apiBaseUrl is not null && apiKey is not null)
         {

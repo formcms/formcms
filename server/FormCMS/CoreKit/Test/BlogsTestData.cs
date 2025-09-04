@@ -312,12 +312,12 @@ public static class BlogsTestData
             DefaultPublicationStatus: PublicationStatus.Published,
 
             PageUrl: "/" + TestEntityNames.TestPost.Camelize() + "/",
-            BookmarkQuery: TestEntityNames.TestPost.Camelize() + "QueryActivityBookmark",
-            BookmarkQueryParamName: TestFieldNames.Id.Camelize(),
-            BookmarkTitleField: TestFieldNames.Title.Camelize(),
-            BookmarkImageField: TestFieldNames.Image.Camelize(),
-            BookmarkSubtitleField: TestFieldNames.Abstract.Camelize(),
-            BookmarkPublishTimeField: DefaultAttributeNames.PublishedAt.Camelize()
+            TagsQuery: TestEntityNames.TestPost.Camelize() + "QueryActivityBookmark",
+            TagsQueryParam: TestFieldNames.Id.Camelize(),
+            TitleTagField: TestFieldNames.Title.Camelize(),
+            ImageTagField: TestFieldNames.Image.Camelize(),
+            SubtitleTagField: TestFieldNames.Abstract.Camelize(),
+            PublishTimeTagField: DefaultAttributeNames.PublishedAt.Camelize()
         )
     ];
 }

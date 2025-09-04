@@ -16,9 +16,11 @@ public class SearchBuilder
     {
         var scope = app.Services.CreateScope();
         var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
-        var dao = scope.ServiceProvider.GetRequiredService<IFullTextSearch>();
+        var fts = scope.ServiceProvider.GetRequiredService<IFullTextSearch>();
+        var dao = scope.ServiceProvider.GetRequiredService<IRelationDbDao>();
         await migrator.MigrateTable(SearchConstant.TableName, SearchDocumentHelper.Columns);
-        await dao.CreateFtsIndex(SearchConstant.TableName, SearchDocumentHelper.FtsFields,CancellationToken.None);
+        await fts.CreateFtsIndex(SearchConstant.TableName, SearchDocumentHelper.FtsFields,CancellationToken.None);
+        await dao.CreateIndex(SearchConstant.TableName, SearchDocumentHelper.UniqKeyFields,true,CancellationToken.None);
         
         return app;
     }

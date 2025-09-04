@@ -1,6 +1,6 @@
 namespace FormCMS.Core.Messaging;
 
-public record RecordMessage(string Operation, string EntityName,  string Id, Record Data)
+public record RecordMessage(string Operation, string EntityName,  string RecordId, Record Data)
 {
-    public string Key => $"{EntityName}_{Id}";
+    public string Key => $"{EntityName}_{RecordId}";
 }

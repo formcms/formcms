@@ -27,11 +27,17 @@ public static class SearchConstant
 
 public static class SearchDocumentHelper
 {
+    public static readonly string[] UniqKeyFields = [
+        nameof(SearchDocument.EntityName).Camelize(),
+        nameof(SearchDocument.RecordId).Camelize(),
+    ];
+
     public static readonly string[] FtsFields = [
         nameof(SearchDocument.Title).Camelize(),
         nameof(SearchDocument.Subtitle).Camelize(),
         nameof(SearchDocument.Content).Camelize()
     ];
+
     
     public static readonly Column[] Columns =
     [

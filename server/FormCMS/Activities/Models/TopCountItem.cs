@@ -23,17 +23,17 @@ public static class TopCountItemHelper
     {
         item[nameof(TopCountItem.Url).Camelize()] = entity.PageUrl  + item[nameof(TopCountItem.RecordId).Camelize()];
         if (queryResult == null) return;
-        if (queryResult.ByJsonPath<string>(entity.BookmarkTitleField, out var title) && title is not null)
+        if (queryResult.ByJsonPath<string>(entity.TitleTagField, out var title) && title is not null)
         {
             item[nameof(TopCountItem.Title).Camelize()] = title;
         }
 
-        if (queryResult.ByJsonPath<Asset>(entity.BookmarkImageField, out var asset) && asset is not null)
+        if (queryResult.ByJsonPath<Asset>(entity.ImageTagField, out var asset) && asset is not null)
         {
             item[nameof(TopCountItem.Image).Camelize()] = asset.Url;
         }
 
-        if (queryResult.ByJsonPath<DateTime>(entity.BookmarkPublishTimeField, out var publishTime))
+        if (queryResult.ByJsonPath<DateTime>(entity.PublishTimeTagField, out var publishTime))
         {
             item[nameof(TopCountItem.PublishedAt).Camelize()] = publishTime;
         }

@@ -13,4 +13,8 @@ public static class Util
             _ => throw new ArgumentOutOfRangeException()
         };
     }
+
+    private static int _cursor = (int)DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+    internal static string UniqStr()=>_cursor++.ToString();
+    
 }

@@ -11,23 +11,25 @@ public class ContentTagService(
     {
         var strAgs = new StrArgs
         {
-            [entity.BookmarkQueryParamName] = ids.Select(x => x.ToString()).ToArray()
+            [entity.TagsQueryParam] = ids.Select(x => x.ToString()).ToArray()
         };
-        var records = await queryService.ListWithAction(entity.BookmarkQuery, new Span(), new Pagination(), strAgs, ct);
+        var records = await queryService.ListWithAction(entity.TagsQuery, new Span(), new Pagination(), strAgs, ct);
         return records.Select(GetLink).ToArray();
 
         ContentTag GetLink(Record record)
         {
             var id = record.StrOrEmpty(entity.PrimaryKey);
             return new ContentTag(
+                Data:record,
                 RecordId: id,
                 Url: (record.ByJsonPath<string>(entity.PageUrl,out var val)?val!:entity.PageUrl) + id,
-                Title: record.ByJsonPath<string>(entity.BookmarkTitleField, out var title) ? Trim(title!) : "",
-                Image: record.ByJsonPath<string>(entity.BookmarkImageField, out var image) ? Trim(image!) : "",
-                Subtitle: record.ByJsonPath<string>(entity.BookmarkSubtitleField, out var subtitle)
+                Content: record.ByJsonPath<string>(entity.ContentTagField, out var content) ?content! : "",
+                Title: record.ByJsonPath<string>(entity.TitleTagField, out var title) ? Trim(title!) : "",
+                Image: record.ByJsonPath<string>(entity.ImageTagField, out var image) ? Trim(image!) : "",
+                Subtitle: record.ByJsonPath<string>(entity.SubtitleTagField, out var subtitle)
                     ? Trim(subtitle!)
                     : "",
-                PublishedAt: record.ByJsonPath<DateTime>(entity.BookmarkPublishTimeField, out var publishTime)
+                PublishedAt: record.ByJsonPath<DateTime>(entity.PublishTimeTagField, out var publishTime)
                     ? publishTime
                     : null
             );

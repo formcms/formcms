@@ -6,7 +6,7 @@ using FormCMS.AuditLogging.Builders;
 using FormCMS.Auth.Models;
 using FormCMS.Comments.Builders;
 using FormCMS.Notify.Builders;
-using FormCMS.Utils.ServiceCollectionExt;
+using FormCMS.Search.Builders;
 using FormCMS.Video.Builders;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
@@ -38,6 +38,7 @@ public static class WebApplicationExt
         app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
         app.Services.GetService<NotificationBuilder>()?.UseNotification(app);
         app.Services.GetService<VideoMessageProducerBuilder>()?.UseVideo(app);
+        app.Services.GetService<SearchBuilder>()?.UseSearch(app);
         
         app.UseRewriter(app.Services.GetRequiredService<RewriteOptions>());
     }
@@ -86,6 +87,9 @@ public static class WebApplicationExt
 
     public static IServiceCollection AddNotify(this IServiceCollection services)
         => NotificationBuilder.AddNotify(services);
+    
+    public static IServiceCollection AddSearch(this IServiceCollection services)
+        => SearchBuilder.AddSearch(services);
     public static IServiceCollection AddCrudMessageProducer(
         this IServiceCollection services, string[] entities
     ) => CmsCrudMessageProduceBuilder.AddCrudMessageProducer(services, entities);
