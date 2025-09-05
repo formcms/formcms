@@ -14,9 +14,9 @@ public class ContentTagService(
             [entity.TagsQueryParam] = ids.Select(x => x.ToString()).ToArray()
         };
         var records = await queryService.ListWithAction(entity.TagsQuery, new Span(), new Pagination(), strAgs, ct);
-        return records.Select(GetLink).ToArray();
+        return records.Select(GetTags).ToArray();
 
-        ContentTag GetLink(Record record)
+        ContentTag GetTags(Record record)
         {
             var id = record.StrOrEmpty(entity.PrimaryKey);
             return new ContentTag(

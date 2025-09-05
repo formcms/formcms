@@ -22,7 +22,7 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
     public async Task<WebApplication> UseComments(WebApplication app)
     {
         var pluginRegistry = app.Services.GetRequiredService<PluginRegistry>();
-        pluginRegistry.PluginQueries.Add(CommentHelper.CommentLinkQuery);
+        pluginRegistry.PluginQueries.Add(CommentHelper.CommentContentTagQuery);
         pluginRegistry.PluginEntities.Add(CommentHelper.Entity.Name,CommentHelper.Entity);
         pluginRegistry.PluginAttributes.Add(CommentHelper.CommentsField, new Attribute(
             Field: CommentHelper.CommentsField,
@@ -50,7 +50,8 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
         void RegisterHooks()
         {
             var registry = app.Services.GetRequiredService<HookRegistry>();
-            registry.ListPlugInQueryArgs.RegisterDynamic(CommentHelper.CommentLinkQuery, async (ICommentsQueryPlugin s,ListPlugInQueryArgs args) =>
+            registry.ListPlugInQueryArgs.RegisterDynamic(CommentHelper.CommentContentTagQuery,
+                async (ICommentsQueryPlugin s,ListPlugInQueryArgs args) =>
             {
                 var ids = args.Args[nameof(Comment.Id).Camelize()]
                     .Where(x => x is not null).Select(x => x!).Select(long.Parse).ToArray();

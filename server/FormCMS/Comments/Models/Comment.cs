@@ -31,7 +31,7 @@ public static class CommentHelper
     public const int DefaultPageSize = 20;
     public const string CommentsField = "comments";
     public const string CommentActivity = "comment";
-    public const string CommentLinkQuery = "commentLinkQuery";
+    public const string CommentContentTagQuery = "commentContentTagQuery";
 
     public static readonly Column[] Columns = [
         ColumnHelper.CreateCamelColumn<Comment>(x => x.Id, ColumnType.Id),
@@ -62,7 +62,7 @@ public static class CommentHelper
             new Attribute(DefaultAttributeNames.PublicationStatus.Camelize())
         ],
         
-        TagsQuery:CommentLinkQuery,
+        TagsQuery:CommentContentTagQuery,
         TagsQueryParam: nameof(Comment.Id).Camelize(),
         ImageTagField:"image",
         TitleTagField:"title",

@@ -4,7 +4,7 @@ namespace FormCMS.Infrastructure.Fts;
 public record SearchHit(Record Document, double Score);
 
 // A field query with weight
-public record SearchField(string Name, string Query, int Weight);
+public record FtsField(string Name, string Query, int Weight);
 
 // Full-text search abstraction
 public interface IFullTextSearch
@@ -24,10 +24,11 @@ public interface IFullTextSearch
     /// </summary>
     Task<SearchHit[]> SearchAsync(
         string tableName,
-        SearchField[] ftsFields,
+        FtsField[] ftsFields,
         string? boostTimeField,
         Record? exactFields,
         string[] selectingFields,
+        int offset = 0,
         int limit = 10
     );
 

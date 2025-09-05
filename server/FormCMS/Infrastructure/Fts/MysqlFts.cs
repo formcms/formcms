@@ -1,9 +1,22 @@
+using System.Data;
 using MySqlConnector;
 
 namespace FormCMS.Infrastructure.Fts;
 
 public class MysqlFts(MySqlConnection conn) : IFullTextSearch
 {
+    private MySqlConnection GetConnection()
+    {
+        if (conn.State != ConnectionState.Open)
+        {
+            if (conn.State == ConnectionState.Broken)
+            {
+                conn.Close();
+            }
+            conn.Open();
+        }
+        return conn;
+    }
     public async Task CreateFtsIndex(string table, string[] fields, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(table))
@@ -26,7 +39,7 @@ public class MysqlFts(MySqlConnection conn) : IFullTextSearch
                                   AND index_name = @index;
                                 """;
 
-        await using (var checkCmd = new MySqlCommand(checkSql, conn))
+        await using (var checkCmd = new MySqlCommand(checkSql, GetConnection()))
         {
             checkCmd.Parameters.AddWithValue("@table", table);
             checkCmd.Parameters.AddWithValue("@index", indexName);
@@ -42,7 +55,7 @@ public class MysqlFts(MySqlConnection conn) : IFullTextSearch
                    ADD FULLTEXT `{indexName}` ({string.Join(", ", fields.Select(f => $"`{f}`"))});
                    """;
 
-        await using var cmd = new MySqlCommand(sql, conn);
+        await using var cmd = new MySqlCommand(sql, GetConnection());
         await cmd.ExecuteNonQueryAsync(ct);
     }
 
@@ -69,7 +82,7 @@ public class MysqlFts(MySqlConnection conn) : IFullTextSearch
                    ON DUPLICATE KEY UPDATE {updates}
                    """;
 
-        await using var cmd = new MySqlCommand(sql, conn);
+        await using var cmd = new MySqlCommand(sql, GetConnection());
 
         foreach (var kv in item)
         {
@@ -90,7 +103,7 @@ public class MysqlFts(MySqlConnection conn) : IFullTextSearch
         var where = string.Join(" AND ", keyValues.Keys.Select(k => $"{k}=@{k}"));
         var sql = $"DELETE FROM {tableName} WHERE {where}";
 
-        await using var cmd = new MySqlCommand(sql, conn);
+        await using var cmd = new MySqlCommand(sql, GetConnection());
 
         foreach (var kv in keyValues)
         {
@@ -103,14 +116,15 @@ public class MysqlFts(MySqlConnection conn) : IFullTextSearch
 
     public async Task<SearchHit[]> SearchAsync(
         string tableName,
-        SearchField[] ftsFields,
+        FtsField[] ftsFields,
         string? boostTimeField,
         Record? exactFields,
         string[] selectingFields,
+        int offset = 0,
         int limit = 10)
     {
         if (ftsFields == null || ftsFields.Length == 0)
-            return Array.Empty<SearchHit>();
+            return [];
 
 
         // Build score expression (FTS weighted fields)
@@ -147,10 +161,11 @@ public class MysqlFts(MySqlConnection conn) : IFullTextSearch
                    FROM {tableName}
                    WHERE {whereClause}
                    ORDER BY score DESC
-                   LIMIT @limit;
+                   LIMIT @limit
+                   OFFSET @offset;
                    """;
 
-        await using var cmd = new MySqlCommand(sql, conn);
+        await using var cmd = new MySqlCommand(sql, GetConnection());
 
         // Bind FTS parameters
         foreach (var f in ftsFields)
@@ -167,6 +182,7 @@ public class MysqlFts(MySqlConnection conn) : IFullTextSearch
             }
         }
 
+        cmd.Parameters.AddWithValue("@offset", offset);
         cmd.Parameters.AddWithValue("@limit", limit);
 
         var results = new List<SearchHit>();

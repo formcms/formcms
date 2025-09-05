@@ -20,10 +20,7 @@ public record SearchDocument(
     long?Id = 0
 );
 
-public static class SearchConstant
-{
-    public const string TableName = "__search";
-}
+
 
 public static class SearchDocumentHelper
 {
@@ -38,6 +35,16 @@ public static class SearchDocumentHelper
         nameof(SearchDocument.Content).Camelize()
     ];
 
+    public static readonly string[] SelectFields = [
+        nameof(SearchDocument.EntityName).Camelize(),
+        nameof(SearchDocument.RecordId).Camelize(),
+        nameof(SearchDocument.Title).Camelize(),
+        nameof(SearchDocument.Subtitle).Camelize(),
+        nameof(SearchDocument.Url).Camelize(),
+        nameof(SearchDocument.Image).Camelize(),
+        nameof(SearchDocument.PublishedAt).Camelize(),
+    ];
+
     
     public static readonly Column[] Columns =
     [
@@ -47,7 +54,7 @@ public static class SearchDocumentHelper
         
         ColumnHelper.CreateCamelColumn<SearchDocument, string>(x => x.Title),
         ColumnHelper.CreateCamelColumn<SearchDocument, string>(x => x.Subtitle),
-        ColumnHelper.CreateCamelColumn<SearchDocument, string>(x => x.Content),
+        ColumnHelper.CreateCamelColumn<SearchDocument>(x => x.Content,ColumnType.Text),
         
         ColumnHelper.CreateCamelColumn<SearchDocument, string>(x => x.Url),
         ColumnHelper.CreateCamelColumn<SearchDocument, string>(x => x.Image),

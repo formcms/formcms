@@ -32,6 +32,17 @@ export function addCustomTypes(editor){
 }
 export const customTypes = [
     {
+        name: "form",
+        traits: [
+            { type: 'text', name: 'action', label: 'Form Action', placeholder: 'Enter form action URL' },
+            { type: 'select', name: 'method', label: 'Method', options: [
+                    { value: 'get', name: 'GET' },
+                    { value: 'post', name: 'POST' }
+                ]},
+            { type: 'text', name: 'target', label: 'Target' }
+        ] 
+    },
+    {
         //just need generate unique id
         name:'foreach',
         openTm:false,

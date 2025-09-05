@@ -35,7 +35,7 @@ public class FtsIndexingMessageHandler(
             [nameof(SearchDocument.Content).Camelize()] = tag.Content,
         };
         return scope.ServiceProvider.GetRequiredService<IFullTextSearch>()
-            .IndexAsync(SearchConstant.TableName, SearchDocumentHelper.UniqKeyFields, record);
+            .IndexAsync(SearchConstants.TableName, SearchDocumentHelper.UniqKeyFields, record);
     }
 
     protected override Task Delete(IServiceScope scope,string entityName,  string recordId, CancellationToken ct)
@@ -45,6 +45,6 @@ public class FtsIndexingMessageHandler(
             [nameof(SearchDocument.EntityName).Camelize()] = entityName,
             [nameof(SearchDocument.RecordId).Camelize()] = recordId
         };
-        return  scope.ServiceProvider.GetRequiredService<IFullTextSearch>().RemoveAsync(SearchConstant.TableName, record);
+        return  scope.ServiceProvider.GetRequiredService<IFullTextSearch>().RemoveAsync(SearchConstants.TableName, record);
     }
 }
