@@ -1,3 +1,4 @@
+using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.Fts;
 using FormCMS.Search.Models;
 using Humanizer;
@@ -19,7 +20,23 @@ public class SearchService( IFullTextSearch fts ):ISearchService
             FtsFields(query),
             null, null, 
             SearchDocumentHelper.SelectFields,
-            offset,limit);
-        return res.Select(x => x.Document).ToArray();
+            offset,limit + 1);
+        var records = res.Select(x => x.Document).ToList();
+        if (records.Count == 0) return [..records]; 
+
+        if (offset > 0)
+        {
+            records[0][SpanConstants.HasPreviousPage]= true;
+            records[0][SpanConstants.Cursor]= offset;
+        }
+
+        if (records.Count <= limit) return records.ToArray();
+        
+        records.RemoveAt(records.Count - 1);
+        var last = records.Last();
+        last[SpanConstants.HasNextPage]= true;
+        last[SpanConstants.Cursor]= offset + limit -1;
+        
+        return records.ToArray();
     }
 }

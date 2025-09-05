@@ -43,10 +43,10 @@ public class SearchBuilder
                     var offset = 0;
                     if (!string.IsNullOrEmpty(args.Span.First))
                     {
-                        offset = int.Parse(args.Span.First) - 1- limit;
+                        offset = int.Parse(args.Span.First) - limit;
                     }else if (!string.IsNullOrEmpty(args.Span.Last))
                     {
-                        offset = int.Parse(args.Span.Last) + 1 + limit;
+                        offset = int.Parse(args.Span.Last) + 1 ;
                     }
                     var records =await service.Search(query, offset, limit);
                     args = args with { OutRecords = records };
