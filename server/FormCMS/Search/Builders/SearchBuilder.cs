@@ -60,10 +60,7 @@ public class SearchBuilder
         {
             var fts = scope.ServiceProvider.GetRequiredService<IFullTextSearch>();
             await migrator.MigrateTable(SearchConstants.TableName, SearchDocumentHelper.Columns);
-            foreach (var ftsField in SearchDocumentHelper.FtsFields)
-            {
-                await fts.CreateFtsIndex(SearchConstants.TableName, [ftsField],CancellationToken.None);
-            }
+            await fts.CreateFtsIndex(SearchConstants.TableName, SearchDocumentHelper.FtsFields,CancellationToken.None);
             await dao.CreateIndex(SearchConstants.TableName, SearchDocumentHelper.UniqKeyFields,true,CancellationToken.None);
         }
     }

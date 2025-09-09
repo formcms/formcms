@@ -9,19 +9,13 @@ public record FtsField(string Name, string Query, int Weight);
 // Full-text search abstraction
 public interface IFullTextSearch
 {
-    /// <summary>
-    /// Insert or update a record in the search index.
-    /// </summary>
-    Task IndexAsync(string tableName, string[] keyColumns, Record record);
+    Task IndexAsync(string tableName, string[] keyColumns,string[] ftsColumns, Record record);
 
-    /// <summary>
-    /// Remove a record from the search index by key(s).
-    /// </summary>
     Task RemoveAsync(string tableName, Record keyValues);
 
-    /// <summary>
-    /// Perform a search across one or more fields.
-    /// </summary>
+    /*
+     * ftsFields order has to be the same as CreateFtsIndex.ftsFields's order
+     */
     Task<SearchHit[]> SearchAsync(
         string tableName,
         FtsField[] ftsFields,
@@ -32,5 +26,5 @@ public interface IFullTextSearch
         int limit = 10
     );
 
-    Task CreateFtsIndex(string table, string[] fields, CancellationToken ct);
+    Task CreateFtsIndex(string table, string[] ftsFields, CancellationToken ct);
 }

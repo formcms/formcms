@@ -35,6 +35,8 @@ public class ActivityQueryPlugin(
         {
             [entity.TagsQueryParam] = ids
         };
+        if (string.IsNullOrWhiteSpace(entity.TagsQuery)) throw new Exception($"Tags query of [{entityName}] should not be empty");
+        
         var records = await queryService.ListWithAction(entity.TagsQuery, new Span(),new Pagination(),strAgs,ct);
         var dict = records.ToDictionary(x => x[entity.PrimaryKey].ToString()!);
         string[] types = [..settings.CommandToggleActivities, ..settings.CommandRecordActivities];

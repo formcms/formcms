@@ -25,42 +25,50 @@ public class MysqlFts(MySqlConnection conn) : IFullTextSearch
         if (fields == null || fields.Length == 0)
             throw new ArgumentException("At least one field must be specified", nameof(fields));
 
-        // Build index name (avoid exceeding name length limit in MySQL: 64 chars)
-        var indexName = "idx_fts_" + string.Join("_", fields);
-        if (indexName.Length > 64)
-            indexName = "idx_fts_" + Guid.NewGuid().ToString("N")[..8];
-
-        // Check if index exists
-        const string checkSql = """
-                                SELECT COUNT(*)
-                                FROM information_schema.statistics
-                                WHERE table_schema = DATABASE()
-                                  AND table_name = @table
-                                  AND index_name = @index;
-                                """;
-
-        await using (var checkCmd = new MySqlCommand(checkSql, GetConnection()))
+        foreach (var field in fields)
         {
-            checkCmd.Parameters.AddWithValue("@table", table);
-            checkCmd.Parameters.AddWithValue("@index", indexName);
-
-            var exists = Convert.ToInt32(await checkCmd.ExecuteScalarAsync(ct)) > 0;
-            if (exists)
-                return; // Index already exists, nothing to do
+            await CreateFtsIndex(field);
         }
 
-        // Create full-text index
-        var sql = $"""
-                   ALTER TABLE `{table}`
-                   ADD FULLTEXT `{indexName}` ({string.Join(", ", fields.Select(f => $"`{f}`"))});
-                   """;
+        async Task CreateFtsIndex(string field)
+        {
+            // Build index name (avoid exceeding name length limit in MySQL: 64 chars)
+            var indexName = "idx_fts_" + field;
+            if (indexName.Length > 64)
+                indexName = "idx_fts_" + Guid.NewGuid().ToString("N")[..8];
 
-        await using var cmd = new MySqlCommand(sql, GetConnection());
-        await cmd.ExecuteNonQueryAsync(ct);
+            // Check if index exists
+            const string checkSql = """
+                                    SELECT COUNT(*)
+                                    FROM information_schema.statistics
+                                    WHERE table_schema = DATABASE()
+                                      AND table_name = @table
+                                      AND index_name = @index;
+                                    """;
+
+            await using (var checkCmd = new MySqlCommand(checkSql, GetConnection()))
+            {
+                checkCmd.Parameters.AddWithValue("@table", table);
+                checkCmd.Parameters.AddWithValue("@index", indexName);
+
+                var exists = Convert.ToInt32(await checkCmd.ExecuteScalarAsync(ct)) > 0;
+                if (exists)
+                    return; // Index already exists, nothing to do
+            }
+
+            // Create full-text index
+            var sql = $"""
+                       ALTER TABLE `{table}`
+                       ADD FULLTEXT `{indexName}` ({field});
+                       """;
+
+            await using var cmd = new MySqlCommand(sql, GetConnection());
+            await cmd.ExecuteNonQueryAsync(ct);           
+        }
     }
 
     
-    public async Task IndexAsync(string tableName, string[] keys, Record item)
+    public async Task IndexAsync(string tableName, string[] keys, string[]_, Record item)
     {
         if (keys == null || keys.Length == 0)
             throw new ArgumentException("At least one key must be provided", nameof(keys));

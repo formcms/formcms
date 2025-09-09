@@ -7,14 +7,14 @@ using Humanizer;
 
 namespace FormCMS.Search.Workers;
 
-public record FtsIndexingSettings(HashSet<string> FtsEntities);
+public record FtsSettings(HashSet<string> FtsEntities);
 public class FtsIndexingMessageHandler(
     IServiceScopeFactory scopeFactory,
     IStringMessageConsumer consumer, 
     ILogger<SyncWorker> logger, 
-    FtsIndexingSettings indexingSettings
+    FtsSettings settings
     ) : 
-    SyncWorker(scopeFactory, consumer, logger, indexingSettings.FtsEntities)
+    SyncWorker(scopeFactory, consumer, logger, settings.FtsEntities)
 {
     protected override string GetTaskName()
     {
@@ -35,7 +35,7 @@ public class FtsIndexingMessageHandler(
             [nameof(SearchDocument.Content).Camelize()] = tag.Content,
         };
         return scope.ServiceProvider.GetRequiredService<IFullTextSearch>()
-            .IndexAsync(SearchConstants.TableName, SearchDocumentHelper.UniqKeyFields, record);
+            .IndexAsync(SearchConstants.TableName, SearchDocumentHelper.UniqKeyFields, SearchDocumentHelper.FtsFields,record);
     }
 
     protected override Task Delete(IServiceScope scope,string entityName,  string recordId, CancellationToken ct)

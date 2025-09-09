@@ -48,13 +48,6 @@ await webApp.UseCmsAsync();
 await webApp.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]).Ok();
 await webApp.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
 
-// =====================
-// Worker Service Setup
-// =====================
-
-// For distributed deployment, background processing (e.g., activity tracking)
-// can be moved to a separate worker service. This section runs in the same process
-// for convenience but can be split into its own deployment.
 var workerBuilder = Host.CreateApplicationBuilder(args);
 
 // communication between web app and worker app
