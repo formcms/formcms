@@ -8,7 +8,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using Npgsql;
 
-
 // PostgreSQL FTS Implementation
 public class PostgresFts(NpgsqlConnection conn) : IFullTextSearch
 {
@@ -39,12 +38,12 @@ public class PostgresFts(NpgsqlConnection conn) : IFullTextSearch
 
         // Check if index exists
         const string checkSql = """
-            SELECT COUNT(*) 
-            FROM pg_indexes 
-            WHERE schemaname = current_schema() 
-            AND tablename = @table 
-            AND indexname = @index;
-        """;
+                                    SELECT COUNT(*) 
+                                    FROM pg_indexes 
+                                    WHERE schemaname = current_schema() 
+                                    AND tablename = @table 
+                                    AND indexname = @index;
+                                """;
 
         await using var checkCmd = new NpgsqlCommand(checkSql, GetConnection());
         checkCmd.Parameters.AddWithValue("table", table);
@@ -58,40 +57,58 @@ public class PostgresFts(NpgsqlConnection conn) : IFullTextSearch
         var tsvectorColumn = $"tsv_{table}";
         var columns = string.Join(" || ' ' || ", fields.Select(f => $"coalesce(\"{f}\", '')"));
         var sql = $"""
-            ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "{tsvectorColumn}" tsvector;
-            UPDATE "{table}" SET "{tsvectorColumn}" = to_tsvector('english', {columns});
-            CREATE INDEX "{indexName}" ON "{table}" USING GIN("{tsvectorColumn}");
-        """;
+                       ALTER TABLE "{table}" ADD COLUMN IF NOT EXISTS "{tsvectorColumn}" tsvector;
+                       UPDATE "{table}" SET "{tsvectorColumn}" = to_tsvector('english', {columns});
+                       CREATE INDEX "{indexName}" ON "{table}" USING GIN("{tsvectorColumn}");
+                   """;
 
         await using var cmd = new NpgsqlCommand(sql, GetConnection());
         await cmd.ExecuteNonQueryAsync(ct);
     }
 
-    public async Task IndexAsync(string tableName, string[] keys,string[] _, Record item)
+    public async Task IndexAsync(string tableName, string[] keys, string[] ftsFields, Record item)
     {
+        // Build insert columns and parameters
         var columns = string.Join(", ", item.Keys.Select(k => $"\"{k}\""));
         var parameters = string.Join(", ", item.Keys.Select(k => $"@{k}"));
-        var updates = string.Join(", ", 
+
+        // Build update set clause for non-key fields
+        var updates = string.Join(", ",
             item.Keys
                 .Where(k => !keys.Contains(k, StringComparer.OrdinalIgnoreCase))
-                .Select(k => $"\"{k}\"=@{k}")
+                .Select(k => $"\"{k}\" = EXCLUDED.\"{k}\"")
         );
 
+        // Handle full-text search vector column
         var tsvectorColumn = $"tsv_{tableName}";
-        var textColumns = item.Keys
-            .Where(k => !keys.Contains(k, StringComparer.OrdinalIgnoreCase))
-            .Select(k => $"coalesce(\"{k}\", '')");
-        var tsvectorUpdate = textColumns.Any() 
-            ? $", \"{tsvectorColumn}\" = to_tsvector('english', {string.Join(" || ' ' || ", textColumns)})"
-            : "";
 
+        if (ftsFields != null && ftsFields.Length > 0)
+        {
+            // Insert expression using parameters
+            var ftsInsertCols = ftsFields.Select(k => $"coalesce(@{k}, '')");
+            var ftsExprInsert = $"to_tsvector('english', {string.Join(" || ' ' || ", ftsInsertCols)})";
+
+            // Update expression using EXCLUDED
+            var ftsUpdateCols = ftsFields.Select(k => $"coalesce(EXCLUDED.\"{k}\", '')");
+            var ftsExprUpdate = $"to_tsvector('english', {string.Join(" || ' ' || ", ftsUpdateCols)})";
+
+            // Add to INSERT
+            columns += $", \"{tsvectorColumn}\"";
+            parameters += $", {ftsExprInsert}";
+
+            // Add to UPDATE
+            updates += $", \"{tsvectorColumn}\" = {ftsExprUpdate}";
+        }
+
+        // Build final SQL
         var sql = $"""
-            INSERT INTO "{tableName}" ({columns})
-            VALUES ({parameters})
-            ON CONFLICT ({string.Join(", ", keys.Select(k => $"\"{k}\""))})
-            DO UPDATE SET {updates}{tsvectorUpdate}
-        """;
+                   INSERT INTO "{tableName}" ({columns})
+                   VALUES ({parameters})
+                   ON CONFLICT ({string.Join(", ", keys.Select(k => $"\"{k}\""))})
+                   DO UPDATE SET {updates}
+                   """;
 
+        // Execute command
         await using var cmd = new NpgsqlCommand(sql, GetConnection());
         foreach (var kv in item)
         {
@@ -128,44 +145,74 @@ public class PostgresFts(NpgsqlConnection conn) : IFullTextSearch
         int limit = 10)
     {
         if (ftsFields == null || ftsFields.Length == 0)
-            return [];
+            return Array.Empty<SearchHit>();
 
         var tsvectorColumn = $"tsv_{tableName}";
-        var tsQueries = ftsFields.Select(f => 
-            $"setweight(to_tsvector('english', coalesce(\"{f.Name}\", '')), '{(char)('A' + f.Weight - 1)}')");
-        var tsQuery = string.Join(" || ", tsQueries);
-        
-        var searchConditions = ftsFields.Select(f => 
-            $"to_tsquery('english', @q_{f.Name})");
-        var whereClause = string.Join(" AND ", new[]
-        {
-            $"({tsvectorColumn} @@ ({string.Join(" || ", searchConditions)}))",
-            exactFields?.Keys.Any() == true 
-                ? string.Join(" AND ", exactFields.Keys.Select(k => $"\"{k}\"=@e_{k}"))
-                : null
-        }.Where(s => !string.IsNullOrEmpty(s)));
 
-        var scoreExpression = $"ts_rank({tsvectorColumn}, {tsQuery})";
+        // Map integer weight to PostgreSQL letters A/B/C/D
+        string WeightToLetter(int w) => w switch
+        {
+            1 => "A",
+            2 => "B",
+            3 => "C",
+            _ => "D"
+        };
+
+        // Build weighted tsvector expression for ranking
+        var weightedTsvectorExprs = ftsFields.Select(f =>
+            $"setweight(to_tsvector('english', coalesce(\"{f.Name}\", '')), '{WeightToLetter(f.Weight)}')"
+        );
+        var weightedTsvector = string.Join(" || ", weightedTsvectorExprs);
+
+        // Build tsquery expressions for filtering
+        var tsQueryExprs = ftsFields.Select(f =>
+            $"to_tsquery('english', @q_{f.Name})"
+        );
+        var tsQuery = string.Join(" || ", tsQueryExprs); // OR across fields
+
+        // Build WHERE clause
+        var whereClauseParts = new List<string>
+        {
+            $"{tsvectorColumn} @@ ({tsQuery})"
+        };
+
+        if (exactFields?.Keys.Any() == true)
+        {
+            whereClauseParts.AddRange(
+                exactFields.Keys.Select(k => $"\"{k}\" = @e_{k}")
+            );
+        }
+
+        var whereClause = string.Join(" AND ", whereClauseParts);
+
+        // Build score expression with optional time boost
+        var scoreExpression = $"ts_rank({weightedTsvector}, {tsQuery})";
         if (!string.IsNullOrEmpty(boostTimeField))
         {
             scoreExpression += $"+ (EXTRACT(EPOCH FROM \"{boostTimeField}\") / 1000000000)";
         }
 
+        // Build SQL
         var sql = $"""
-            SELECT {string.Join(", ", selectingFields.Select(f => $"\"{f}\""))}, 
-                   ({scoreExpression}) AS score
-            FROM "{tableName}"
-            WHERE {whereClause}
-            ORDER BY score DESC
-            LIMIT @limit
-            OFFSET @offset;
-        """;
+                       SELECT {string.Join(", ", selectingFields.Select(f => $"\"{f}\""))}, 
+                              ({scoreExpression}) AS score
+                       FROM "{tableName}"
+                       WHERE {whereClause}
+                       ORDER BY score DESC
+                       LIMIT @limit
+                       OFFSET @offset;
+                   """;
 
+        // Execute command
         await using var cmd = new NpgsqlCommand(sql, GetConnection());
+
+        // Add FTS query parameters
         foreach (var f in ftsFields)
         {
             cmd.Parameters.AddWithValue($"q_{f.Name}", f.Query.Replace(" ", " & "));
         }
+
+        // Add exact match parameters
         if (exactFields != null)
         {
             foreach (var kv in exactFields)
@@ -173,9 +220,11 @@ public class PostgresFts(NpgsqlConnection conn) : IFullTextSearch
                 cmd.Parameters.AddWithValue($"e_{kv.Key}", kv.Value ?? DBNull.Value);
             }
         }
+
         cmd.Parameters.AddWithValue("offset", offset);
         cmd.Parameters.AddWithValue("limit", limit);
 
+        // Read results
         var results = new List<SearchHit>();
         await using var reader = await cmd.ExecuteReaderAsync();
         while (await reader.ReadAsync())
@@ -185,10 +234,10 @@ public class PostgresFts(NpgsqlConnection conn) : IFullTextSearch
             {
                 doc[field] = reader[field];
             }
+
             results.Add(new SearchHit(doc, reader.GetDouble("score")));
         }
 
         return results.ToArray();
     }
 }
-

@@ -34,7 +34,7 @@ public sealed class SystemSettings
     public const string QueryCachePolicyName = "CmsQueryCachePolicy";
     public const string FormCmsContentRoot = "/_content/FormCMS";
 
-    public int MaxRequestBodySize { get; set; } = 1024 * 1024 * 5;
+    public int MaxRequestBodySize { get; set; } = 1024 * 1024 * 15;
 
     public string AdminRoot { get; set; } = FormCmsContentRoot + "/admin";
     public string SchemaRoot { get; set; } = FormCmsContentRoot + "/schema-ui";

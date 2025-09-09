@@ -26,7 +26,7 @@ public class FtsIndexingMessageHandler(
         var record = new Dictionary<string, object>
         {
             [nameof(SearchDocument.EntityName).Camelize()] = entity.Name,
-            [nameof(SearchDocument.RecordId).Camelize()] = tag.RecordId,
+            [nameof(SearchDocument.RecordId).Camelize()] = long.Parse(tag.RecordId),
             [nameof(SearchDocument.Image).Camelize()] = tag.Image,
             [nameof(SearchDocument.Url).Camelize()] = tag.Url,
             [nameof(SearchDocument.PublishedAt).Camelize()] = tag.PublishedAt ?? DateTime.Now,
