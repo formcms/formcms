@@ -26,17 +26,20 @@ public class Program
     public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
-        var dbProvider = builder.Configuration.GetValue<string>(Constants.DatabaseProvider) ??
-                               throw new Exception("DatabaseProvider not found");
+        var dbProvider = builder.Configuration.GetValue<string>(Constants.DatabaseProvider)
+                         ?? throw new Exception("DatabaseProvider not found");
 
-        var dbConnStr = builder.Configuration.GetConnectionString(dbProvider) ??
-                                       throw new Exception($"Connection string {dbProvider} not found");
+        var dbConnStr = builder.Configuration.GetConnectionString(dbProvider)
+                        ?? throw new Exception($"Connection string {dbProvider} not found");
 
-        var apiKey = builder.Configuration.GetValue<string>("Authentication:ApiKey");
-        var apiBaseUrl = builder.Configuration.GetValue<string>("ApiInfo:Url");
+        var apiKey = builder.Configuration.GetValue<string>("Authentication:ApiKey")
+                     ?? throw new Exception("Authentication:ApiKey not found");
+
+        var apiBaseUrl = builder.Configuration.GetValue<string>("ApiInfo:Url")
+                         ?? throw new Exception("ApiInfo:Url not found");
 
         var ftsSettings = builder.Configuration.GetSection(nameof(FtsSettings)).Get<FtsSettings>();
-        
+
         builder.AddServiceDefaults();
         AddDbContext();
         AddOutputCachePolicy();
@@ -64,28 +67,28 @@ public class Program
         }
 
         // use formCms 
-        await EnsureDbCreatedAsync(app);
+        await EnsureDbCreatedAsync();
         await app.UseCmsAsync();
-        await EnsureUserCreatedAsync(app);
+        await EnsureUserCreatedAsync();
 
         await app.RunAsync();
         return;
 
         void AddCmsFeatures()
         {
-            builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(GetAuthConfig(apiKey));
+            builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(GetAuthConfig());
             builder.Services.AddAuditLog();
-            
+
             var enableActivityBuffer = builder.Configuration.GetValue<bool>("EnableActivityBuffer");
             builder.Services.AddActivity(enableActivityBuffer);
-            
+
             builder.Services.AddComments();
             builder.Services.AddNotify();
             builder.Services.AddSearch();
 
             builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
             builder.Services.AddSubscriptions();
-            
+
             var ftsProvider = builder.Configuration.GetValue<string>(Constants.FtsProvider) ?? dbProvider;
             _ = ftsProvider switch
             {
@@ -105,10 +108,9 @@ public class Program
 
         void AddHostedServices()
         {
-            
             var taskTimingSeconds = builder.Configuration
                 .GetSection(nameof(TaskTimingSeconds)).Get<TaskTimingSeconds>();
-            
+
             // For distributed deployments, it's recommended to runEvent Handling services in a separate hosted App.
             // In this case, we register them within the web application to share the in-memory channel bus.
             builder.Services.AddHostedService<ActivityEventHandler>();
@@ -137,14 +139,14 @@ public class Program
             };
         }
 
-        async Task EnsureDbCreatedAsync(WebApplication app)
+        async Task EnsureDbCreatedAsync()
         {
             using var scope = app.Services.CreateScope();
             var ctx = scope.ServiceProvider.GetRequiredService<CmsDbContext>();
             await ctx.Database.EnsureCreatedAsync();
         }
 
-        async Task EnsureUserCreatedAsync(WebApplication app)
+        async Task EnsureUserCreatedAsync()
         {
             await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]).Ok();
             await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
@@ -161,9 +163,7 @@ public class Program
                 Constants.SqlServer => builder.Services.AddDbContext<CmsDbContext>(options =>
                     options.UseSqlServer(dbConnStr)),
                 Constants.Mysql => builder.Services.AddDbContext<CmsDbContext>(options =>
-                    options.UseMySql(
-                        dbConnStr,
-                        ServerVersion.AutoDetect(dbConnStr))),
+                    options.UseMySql( dbConnStr, ServerVersion.AutoDetect(dbConnStr))),
                 _ => throw new Exception("Database provider not found")
             };
         }
@@ -193,7 +193,7 @@ public class Program
             builder.Services.AddSingleton<IFileStore, AzureBlobStore>();
         }
 
-        AuthConfig GetAuthConfig(string? apiKey)
+        AuthConfig GetAuthConfig()
         {
             var clientId = builder.Configuration.GetValue<string>("Authentication:GitHub:ClientId");
             var clientSecrets = builder.Configuration.GetValue<string>("Authentication:GitHub:ClientSecret");
@@ -202,7 +202,7 @@ public class Program
                 ? new OAuthCredential(clientId, clientSecrets)
                 : null;
 
-            var keyConfig = apiKey is not null ? new KeyAuthConfig(apiKey) : null;
+            var keyConfig =  new KeyAuthConfig(apiKey);
             return new AuthConfig(gitHubOAuthConfig, keyConfig);
         }
 

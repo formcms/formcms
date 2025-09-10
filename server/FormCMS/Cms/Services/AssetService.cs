@@ -1,6 +1,5 @@
 using FormCMS.Core.Assets;
 using FormCMS.Core.HookFactory;
-using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
@@ -9,15 +8,11 @@ using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
-using NUlid;
-using System.Text.Json;
-using static Confluent.Kafka.ConfigPropertyNames;
 
 namespace FormCMS.Cms.Services;
 
 public class AssetService(
     IFileStore store,
-    DatabaseMigrator migrator,
     KateQueryExecutor executor,
     IIdentityService identityService,
     IRelationDbDao dao,
@@ -27,12 +22,6 @@ public class AssetService(
     SystemSettings systemSettings
 ) : IAssetService
 {
-    public async Task EnsureTable()
-    {
-        
-
-    }
-
     public XEntity GetEntity(bool withLinkCount)
     {
         if (identityService.GetUserAccess()?.CanAccessAdmin != true)

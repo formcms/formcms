@@ -20,7 +20,7 @@ public class EmitMessageHandler(
         IServiceScope serviceScope, KateQueryExecutor executor,
         SystemTask task, CancellationToken ct)
     {
-        var setting = JsonSerializer.Deserialize<EmitMessageSetting>(task.TaskSettings);
+        var setting = JsonSerializer.Deserialize<EmitMessageSetting>(task.TaskSettings)!;
         var entityName = setting.EntityName;
         
         var record = await executor.Single(SchemaHelper.ByNameAndType(SchemaType.Entity, [entityName], null),ct);
@@ -29,7 +29,7 @@ public class EmitMessageHandler(
         {
             foreach (var record in records)
             {
-                var id = record[entity.PrimaryKey].ToString();
+                var id = record[entity.PrimaryKey].ToString()!;
                 var msg = new RecordMessage(CmsOperations.Update, entityName, id, record);
                 var payload = JsonSerializer.Serialize(msg);
                 await producer.Produce(CmsTopics.CmsCrud, payload);

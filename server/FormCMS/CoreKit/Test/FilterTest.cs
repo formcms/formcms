@@ -40,7 +40,7 @@ public class FilterTest(QueryApiClient client, string queryName)
                         query {{queryName}}{
                            {{TestEntityNames.TestPost.Camelize()}}List(
                               sort:id,
-                              title: [{matchType: matchAny}, {startsWith:"title-99"}, {startsWith:"title-98"}]
+                              title: [{matchType: matchAny}, {startsWith:"title -99"}, {startsWith:"title -98"}]
                             ){
                               id,title
                             }

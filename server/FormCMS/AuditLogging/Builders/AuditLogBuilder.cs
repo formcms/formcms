@@ -36,7 +36,7 @@ public sealed class AuditLogBuilder(ILogger<AuditLogBuilder> logger )
         app.Services.GetService<PluginRegistry>()?.FeatureMenus.Add(AuditLoggingConstants.MenuId);
 
         using var scope = app.Services.CreateScope();
-        var migrator = scope.ServiceProvider.GetService<DatabaseMigrator>();
+        var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
         await migrator.MigrateTable(AuditLogConstants.TableName,AuditLogHelper.Columns);
 
         
