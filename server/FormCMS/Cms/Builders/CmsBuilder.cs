@@ -40,7 +40,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
 {
 
     public static IServiceCollection AddCms(
-        WebApplicationBuilder builder,
+        IServiceCollection services,
         DatabaseProvider databaseProvider,
         string connectionString,
         Action<SystemSettings>? optionsAction = null
@@ -49,10 +49,6 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         var systemSettings = new SystemSettings();
         optionsAction?.Invoke(systemSettings);
 
-        builder.WebHost.ConfigureKestrel(option =>
-            option.Limits.MaxRequestBodySize = systemSettings.MaxRequestBodySize);
-        
-        var services = builder.Services;
         services.AddSingleton<CmsBuilder>();
         
         //only set options to FormCMS enum types.

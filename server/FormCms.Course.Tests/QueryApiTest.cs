@@ -90,7 +90,7 @@ public class QueryApiTest
         var items =
             await $$$"""
                      query {
-                          {{{TestEntityNames.TestPost.Camelize()}}}List(filterExpr:{field:"tags.name",clause:{startsWith:"Name-1"}} ){
+                          {{{TestEntityNames.TestPost.Camelize()}}}List(filterExpr:{field:"tags.name",clause:{startsWith:"Name -1"}} ){
                               id, title
                           }
                      }
@@ -99,7 +99,7 @@ public class QueryApiTest
         items =
             await $$$"""
                      query {
-                          {{{TestEntityNames.TestPost.Camelize()}}}List(distinct:true, filterExpr:{field:"tags.name",clause:{startsWith:"Name-1"}} ){
+                          {{{TestEntityNames.TestPost.Camelize()}}}List(distinct:true, filterExpr:{field:"tags.name",clause:{startsWith:"Name -1"}} ){
                               id, title
                           }
                      }

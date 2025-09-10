@@ -41,6 +41,8 @@ public class Program
         var ftsSettings = builder.Configuration.GetSection(nameof(FtsSettings)).Get<FtsSettings>();
 
         builder.AddServiceDefaults();
+        builder.WebHost.ConfigureKestrel(option => option.Limits.MaxRequestBodySize = 15 * 1024 * 1024);
+        
         AddDbContext();
         AddOutputCachePolicy();
         TryUserRedis();
@@ -173,13 +175,10 @@ public class Program
         {
             _ = dbProvider switch
             {
-                Constants.Sqlite => builder
-                    .AddSqliteCms(dbConnStr),
-                Constants.Postgres => builder
-                    .AddPostgresCms(dbConnStr),
-                Constants.SqlServer => builder
-                    .AddSqlServerCms(dbConnStr),
-                Constants.Mysql => builder.AddMysqlCms(dbConnStr),
+                Constants.Sqlite => builder.Services.AddSqliteCms(dbConnStr),
+                Constants.Postgres => builder.Services.AddPostgresCms(dbConnStr),
+                Constants.SqlServer => builder.Services.AddSqlServerCms(dbConnStr),
+                Constants.Mysql => builder.Services.AddMysqlCms(dbConnStr),
                 _ => throw new Exception("Database provider not found")
             };
         }
