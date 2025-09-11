@@ -253,14 +253,21 @@ public class SqlServerFts(SqlConnection conn) : IFullTextSearch
 
         var results = new List<SearchHit>();
         await using var reader = await cmd.ExecuteReaderAsync();
-        while (await reader.ReadAsync())
+        if (reader is not null)
         {
-            var doc = new Dictionary<string, object>();
-            foreach (var field in selectingFields)
+            while (await reader.ReadAsync())
             {
-                doc[field] = reader[field] is DBNull ? null : reader[field];
+                var doc = new Dictionary<string, object>();
+                foreach (var field in selectingFields)
+                {
+                    if (!reader.IsDBNull(reader.GetOrdinal(field)))
+                    {
+                        doc[field] = reader[field];
+                    }
+                }
+
+                results.Add(new SearchHit(doc, reader.GetInt32("score")));
             }
-            results.Add(new SearchHit(doc, reader.GetInt32("score")));
         }
 
         return results.ToArray();
@@ -347,7 +354,10 @@ public class SqlServerFts(SqlConnection conn) : IFullTextSearch
                 var doc = new Dictionary<string, object>();
                 foreach (var field in selectingFields)
                 {
-                    doc[field] = reader[field] is DBNull ? null : reader[field];
+                    if (!reader.IsDBNull(reader.GetOrdinal(field)))
+                    {
+                        doc[field] = reader[field];
+                    }
                 }
 
                 results.Add(new SearchHit(doc, reader.GetInt32("score")));

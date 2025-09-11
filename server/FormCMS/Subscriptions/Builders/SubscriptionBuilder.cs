@@ -39,71 +39,24 @@ namespace FormCMS.Subscriptions.Builders
 
         public async Task<WebApplication> UseStripeSubscriptions(WebApplication app)
         {
+            //handler
+            var options = app.Services.GetRequiredService<SystemSettings>();
+            var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
+            apiGroup.MapGroup("/subscriptions").MapSubscriptionHandlers();
+          
+            app.Services.GetRequiredService<HookRegistry>().RegisterSubscriptionsHooks();
+            app.Services.GetRequiredService<PluginRegistry>().RegisterSubscriptionPlugin();
+            
+            
+            var scope = app.Services.CreateScope();
+            await scope.ServiceProvider.GetRequiredService<DatabaseMigrator>().EnsureSubscriptionTables();
+
             logger.LogInformation("""
                                   *********************************************************
                                   Using Subscription  Services
                                   *********************************************************
                                   """);
-            RegisterHooks();
-            await MigrateTables();
-            MapApis();
-
-
             return app;
-
-            void RegisterHooks()
-            {
-                const string accessLevel = "$access_level";
-                var pluginRegistry = app.Services.GetRequiredService<PluginRegistry>();
-                pluginRegistry.PluginVariables.Add(accessLevel);
-
-                var hookRegistry = app.Services.GetRequiredService<HookRegistry>();
-                hookRegistry.QueryPostSingle.RegisterDynamic("*", async (
-                    QueryPostSingleArgs args,
-                    ISubscriptionService service,
-                    IProfileService profile
-                ) =>
-                {
-                    if (profile.HasRole(Roles.Admin) || profile.HasRole(Roles.Sa)) return args;
-
-                    foreach (var queryPluginFilter in args.Query.PluginFilters)
-                    {
-                        foreach (var unused in from validConstraint in queryPluginFilter.Constraints
-                                 from validConstraintValue in validConstraint.Values
-                                 where validConstraintValue.S == accessLevel
-                                 select validConstraint)
-                        {
-                            if (!args.RefRecord.ByJsonPath<long>(queryPluginFilter.Vector.FullPath, out var val))
-                                continue;
-                            
-                            var canAccess = await service.CanAccess("", 0, val, CancellationToken.None);
-                            if (!canAccess)
-                            {
-                                throw new ResultException("Not have enough access level", ErrorCodes.NOT_ENOUGH_ACCESS_LEVEL);
-                            }
-                        }
-                    }
-                    return args;
-                });
-            }
-
-            void MapApis()
-            {
-                var options = app.Services.GetRequiredService<SystemSettings>();
-                var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
-                apiGroup.MapGroup("/subscriptions").MapSubscriptionHandlers();
-            }
-
-            async Task MigrateTables()
-            {
-                await using var scope = app.Services.CreateAsyncScope();
-                var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
-                await migrator.MigrateTable(Billings.TableName, Billings.Columns);
-
-                var dao = scope.ServiceProvider.GetRequiredService<IRelationDbDao>();
-                await dao.CreateIndex(Billings.TableName, [nameof(Billing.UserId).Camelize()], true,
-                    CancellationToken.None);
-            }
         }
     }
 }

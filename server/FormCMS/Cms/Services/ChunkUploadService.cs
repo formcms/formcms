@@ -9,17 +9,11 @@ namespace FormCMS.Cms.Services;
 
 public class ChunkUploadService(
     IFileStore fileStore,
-    IRelationDbDao dao,
-    DatabaseMigrator migrator,
     KateQueryExecutor executor,
     IIdentityService identityService,
     IAssetService assetService
     ):IChunkUploadService
 {
-    public async Task EnsureTable()
-    {
-      
-    }
     
     public async Task UploadChunk(string path, int number, IFormFile file, CancellationToken ct)
     {

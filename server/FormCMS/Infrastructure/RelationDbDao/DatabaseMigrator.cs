@@ -21,4 +21,10 @@ public class DatabaseMigrator(IRelationDbDao dao)
             }
         }
     }
+
+    public Task CreateIndex(string table, string[] fields, bool isUniq, CancellationToken ct)
+        => dao.CreateIndex(table, fields, isUniq, ct);
+
+    public Task CreateForeignKey(string table, string col, string refTable, string refCol, CancellationToken ct)
+        => dao.CreateForeignKey(table, col, refTable, refCol, ct);
 }

@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Rewrite;
 using FormCMS.Subscriptions.Builders;
+using HookRegistryExtensions = FormCMS.Video.Builders.HookRegistryExtensions;
 
 namespace FormCMS;
 
@@ -37,7 +38,7 @@ public static class WebApplicationExt
         app.Services.GetService<SubscriptionBuilder>()?.UseStripeSubscriptions(app);
         app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
         app.Services.GetService<NotificationBuilder>()?.UseNotification(app);
-        app.Services.GetService<VideoMessageProducerBuilder>()?.UseVideo(app);
+        app.Services.GetService<VideoBuilder>()?.UseVideo(app);
         app.Services.GetService<SearchBuilder>()?.UseSearch(app);
 
         app.UseRewriter(app.Services.GetRequiredService<RewriteOptions>());
@@ -96,6 +97,6 @@ public static class WebApplicationExt
         this IServiceCollection services, string[] entities
     ) => CmsCrudMessageProduceBuilder.AddCrudMessageProducer(services, entities);
 
-    public static IServiceCollection AddVideoMessageProducer(this IServiceCollection services)
-        => VideoMessageProducerBuilder.AddVideoMessageProducer(services);
+    public static IServiceCollection AddVideo(this IServiceCollection services)
+        => VideoBuilder.AddVideo(services);
 }

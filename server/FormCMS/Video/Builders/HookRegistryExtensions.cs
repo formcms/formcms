@@ -1,22 +1,14 @@
 using System.Text.Json;
 using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.EventStreaming;
-using FormCMS.Infrastructure.FileStore;
 using FormCMS.Video.Models;
 
 namespace FormCMS.Video.Builders;
 
-public class VideoMessageProducerBuilder
+public static class HookRegistryExtensions
 {
-    public static IServiceCollection AddVideoMessageProducer(IServiceCollection services)
+    public static void RegisterVideoMessageProducerPlugIn(this HookRegistry registry)
     {
-        services.AddSingleton(new VideoMessageProducerBuilder());
-        return services;
-    }
-    
-    public WebApplication UseVideo(WebApplication app)
-    {
-        var registry = app.Services.GetRequiredService<HookRegistry>();
         registry.AssetPostAdd.RegisterDynamic("*", async (AssetPostAddArgs args, IStringMessageProducer producer) =>
         {
             if (args.Asset.Type.Contains("video/"))
@@ -36,6 +28,5 @@ public class VideoMessageProducerBuilder
             }
             return args;
         });
-        return app;
     }
 }

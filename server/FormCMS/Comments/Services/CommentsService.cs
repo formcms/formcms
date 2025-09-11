@@ -20,10 +20,7 @@ public class CommentsService(
     KateQueryExecutor executor
     ):ICommentsService
 {
-    public async Task EnsureTable()
-    {
-        await migrator.MigrateTable(CommentHelper.Entity.TableName, CommentHelper.Columns);
-    }
+    
 
     public async Task<Comment> Add(Comment comment, CancellationToken ct)
     {

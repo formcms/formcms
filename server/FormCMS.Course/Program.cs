@@ -90,6 +90,7 @@ public class Program
 
             builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
             builder.Services.AddSubscriptions();
+            builder.Services.AddVideo();
 
             var ftsProvider = builder.Configuration.GetValue<string>(Constants.FtsProvider) ?? dbProvider;
             _ = ftsProvider switch
@@ -105,7 +106,6 @@ public class Program
         void AddMessageProducer()
         {
             builder.Services.AddCrudMessageProducer([..ftsSettings.FtsEntities]);
-            builder.Services.AddVideoMessageProducer();
         }
 
         void AddHostedServices()

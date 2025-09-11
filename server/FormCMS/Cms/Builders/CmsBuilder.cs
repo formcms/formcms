@@ -125,6 +125,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             services.AddScoped<IPageService, PageService>();
 
             services.AddScoped<IIdentityService, DummyIdentityService>();
+            services.AddScoped<IUserManageService, DummyUserManageService>();
 
             services.AddHttpClient(); //needed by task service
             services.AddScoped<ITaskService, TaskService>();
@@ -214,7 +215,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
     {
         var settings = app.Services.GetRequiredService<SystemSettings>();
         using var serviceScope = app.Services.CreateScope();
-        await InitTables(serviceScope);
+        await serviceScope.ServiceProvider.GetRequiredService<DatabaseMigrator>().EnsureCmsTables(); 
         await Seed(serviceScope);
         
         PrintVersion();
@@ -333,34 +334,6 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                     });
                 }
             );
-        }
-
-        async Task InitTables(IServiceScope scope)
-        {
-            var migrator  = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
-            var dao = scope.ServiceProvider.GetRequiredService<IRelationDbDao>();
-            
-            await migrator.MigrateTable(SchemaHelper.TableName, SchemaHelper.Columns);
-            await migrator.MigrateTable(TaskHelper.TableName,TaskHelper.Columns);
-            
-            await migrator.MigrateTable(Assets.TableName, Assets.Columns);
-            await migrator.MigrateTable(AssetLinks.TableName, AssetLinks.Columns);
-            await dao.CreateIndex( Assets.TableName, [nameof(Asset.Path).Camelize()], true, CancellationToken.None);
-            await dao.CreateForeignKey(
-                AssetLinks.TableName, nameof(AssetLink.AssetId).Camelize(),
-                Assets.TableName, nameof(Asset.Id).Camelize(),
-                CancellationToken.None);
-            
-            await migrator.MigrateTable(UploadSessions.TableName, UploadSessions.Columns);
-            await dao.CreateIndex(
-                UploadSessions.TableName, 
-                [
-                    nameof(UploadSession.ClientId).Camelize(),
-                    nameof(UploadSession.FileName).Camelize(),
-                    nameof(UploadSession.FileSize).Camelize()
-                ], 
-                false, 
-                CancellationToken.None);
         }
 
         async Task Seed(IServiceScope scope)

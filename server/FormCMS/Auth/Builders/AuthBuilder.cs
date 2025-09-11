@@ -84,45 +84,16 @@ public sealed class AuthBuilder<TCmsUser>(ILogger<AuthBuilder<TCmsUser>> logger)
         Print();
         app.UseAuthentication();
         app.UseAuthorization();
+        var options = app.Services.GetRequiredService<SystemSettings>();
+        var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
+        apiGroup.MapLoginHandlers();
+        apiGroup.MapGroup("/accounts").MapAccountHandlers();
+        apiGroup.MapGroup("/profile").MapProfileHandlers();
         
-        app.Services.GetService<PluginRegistry>()?.FeatureMenus.Add(AuthManageMenus.MenuRoles);
-        app.Services.GetService<PluginRegistry>()?.FeatureMenus.Add(AuthManageMenus.MenuUsers);
         
-        MapEndpoints();
-        RegisterHooks();
+        app.Services.GetRequiredService<HookRegistry>().RegisterAuthHooks(settings);
+        app.Services.GetRequiredService<PluginRegistry>().RegisterAuditLogPlugins();
         return app;
-
-        void MapEndpoints()
-        {
-            var options = app.Services.GetRequiredService<SystemSettings>();
-            var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
-            apiGroup.MapLoginHandlers();
-            apiGroup.MapGroup("/accounts").MapAccountHandlers();
-            apiGroup.MapGroup("/profile").MapProfileHandlers();
-        }
-
-        void RegisterHooks()
-        {
-            var registry = app.Services.GetRequiredService<HookRegistry>();
-            SchemaAuthUtil.RegisterHooks(registry);
-            EntityAuthUtil.RegisterHooks(registry);
-            AssetAuthUtil.RegisterHooks(registry);
-            if (!settings.AllowAnonymousAccessGraphQl)
-            {
-                registry.QueryPreSingle.RegisterDynamic("*", (IProfileService svc,QueryPreSingleArgs args) =>
-                {
-                    if (args.Query.Name == "") svc.MustHasAnyRole([Roles.Sa,Roles.Admin]);
-                    return args;
-                });
-                
-                registry.QueryPreList.RegisterDynamic("*", (IProfileService svc,QueryPreListArgs args) =>
-                {
-                    if (args.Query.Name == "") svc.MustHasAnyRole([Roles.Sa,Roles.Admin]);
-                    return args;
-                });
-            }
-            
-        }
     }
 
     public async Task<Result> EnsureCmsUser(

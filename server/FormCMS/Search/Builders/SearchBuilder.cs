@@ -2,7 +2,6 @@ using FormCMS.Core.HookFactory;
 using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.Fts;
 using FormCMS.Infrastructure.RelationDbDao;
-using FormCMS.Search.Models;
 using FormCMS.Search.Services;
 
 namespace FormCMS.Search.Builders;
@@ -18,50 +17,12 @@ public class SearchBuilder
 
     public async Task<WebApplication> UseSearch(WebApplication app)
     {
+        app.Services.GetRequiredService<HookRegistry>().RegisterFtsHooks();
+        app.Services.GetRequiredService<PluginRegistry>().RegisterFtsPlugin();
+        
         var scope = app.Services.CreateScope();
-        var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
-        var dao = scope.ServiceProvider.GetRequiredService<IRelationDbDao>();
-        var pluginRegistry = app.Services.GetRequiredService<PluginRegistry>();
-        var hookRegistry = app.Services.GetRequiredService<HookRegistry>();
-
-        RegisterHooks();
-        await MigrateTables();
-        
-        
-       
+        await scope.ServiceProvider.GetRequiredService<DatabaseMigrator>().EnsureFtsTables();
+        await scope.ServiceProvider.GetRequiredService<IFullTextSearch>().EnsureFtsIndex();
         return app;
-
-        void RegisterHooks()
-        {
-            pluginRegistry.PluginQueries.Add(SearchConstants.SearchQueryName);
-            hookRegistry.ListPlugInQueryArgs.RegisterDynamic(SearchConstants.SearchQueryName, 
-                async (ListPlugInQueryArgs args, ISearchService service ) =>
-            {
-                if (args.Args.TryGetValue(SearchConstants.Query, out var query))
-                {
-                    var limit = int.Parse(args.Pagination.Limit ?? "10");
-                    var offset = 0;
-                    if (!string.IsNullOrEmpty(args.Span.First))
-                    {
-                        offset = int.Parse(args.Span.First) - limit;
-                    }else if (!string.IsNullOrEmpty(args.Span.Last))
-                    {
-                        offset = int.Parse(args.Span.Last) + 1 ;
-                    }
-                    var records =await service.Search(query, offset, limit);
-                    args = args with { OutRecords = records };
-                }
-                return args;
-            });
-            
-        }
-        
-        async Task MigrateTables()
-        {
-            var fts = scope.ServiceProvider.GetRequiredService<IFullTextSearch>();
-            await migrator.MigrateTable(SearchConstants.TableName, SearchDocumentHelper.Columns);
-            await fts.CreateFtsIndex(SearchConstants.TableName, SearchDocumentHelper.FtsFields,CancellationToken.None);
-            await dao.CreateIndex(SearchConstants.TableName, SearchDocumentHelper.UniqKeyFields,true,CancellationToken.None);
-        }
     }
 }
