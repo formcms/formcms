@@ -22,7 +22,7 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
         var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
         apiGroup.MapGroup("comments").MapCommentHandlers();
         
-        app.Services.GetRequiredService<PluginRegistry>().ExtendCommentPlugins();
+        app.Services.GetRequiredService<PluginRegistry>().RegisterCommentPlugins();
         app.Services.GetRequiredService<HookRegistry>().RegisterCommentsHooks();
         
         var scope = app.Services.CreateScope();

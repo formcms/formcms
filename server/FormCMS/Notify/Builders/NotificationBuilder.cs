@@ -22,7 +22,7 @@ public class NotificationBuilder(ILogger<NotificationBuilder> logger)
         
         //db
         using var scope = app.Services.CreateScope();
-        scope.ServiceProvider.GetRequiredService<DatabaseMigrator>().EnsureNotifyTable();
+        await scope.ServiceProvider.GetRequiredService<DatabaseMigrator>().EnsureNotifyTable();
      
         logger.LogInformation(
             $"""

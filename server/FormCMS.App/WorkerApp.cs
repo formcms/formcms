@@ -1,4 +1,3 @@
-using FormCMS.DataLink.Builders;
 
 namespace FormCMS.App;
 
@@ -21,9 +20,6 @@ public static class WorkerApp
                           """);
         builder.AddNatsClient(AppConstants.Nats);
         builder.AddMongoDBClient(AppConstants.MongoCms);
-        
-        var apiLinksArray = builder.Configuration.GetRequiredSection("ApiLinksArray").Get<string[]>()!;
-        builder.Services.AddNatsMongoLink(apiLinksArray);
         return builder.Build();
     }
 }

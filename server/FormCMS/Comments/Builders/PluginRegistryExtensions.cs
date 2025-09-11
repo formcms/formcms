@@ -8,7 +8,7 @@ namespace FormCMS.Comments.Builders;
 
 public static class PluginRegistryExtensions
 {
-    public static void ExtendCommentPlugins(this PluginRegistry pluginRegistry)
+    public static void RegisterCommentPlugins(this PluginRegistry pluginRegistry)
     {
         pluginRegistry.PluginQueries.Add(CommentHelper.CommentContentTagQuery);
         pluginRegistry.PluginEntities.Add(CommentHelper.Entity.Name,CommentHelper.Entity);

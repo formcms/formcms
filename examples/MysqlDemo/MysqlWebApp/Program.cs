@@ -16,21 +16,25 @@ using FormCMS.Utils.ResultExt;
 using FormCMS.Video.Workers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using PostgresWebApp;
+
+using MysqlWebApp;
 
 const string apiKey = "12345";
 var webBuilder = WebApplication.CreateBuilder(args);
 webBuilder.WebHost.ConfigureKestrel(option => option.Limits.MaxRequestBodySize = 15 * 1024 * 1024);
-var connectionString = webBuilder.Configuration.GetConnectionString("postgres")!;
-
+var connectionString = webBuilder.Configuration.GetConnectionString("mysql")!;
+if (connectionString.IndexOf("Database") <0 )
+{
+    connectionString += ";Database=cms;";
+}
 // communication between web app and worker app
 webBuilder.AddNatsClient(connectionName:"nats");
 webBuilder.Services.AddSingleton<IStringMessageProducer, NatsMessageBus>();
 
 webBuilder.Services.AddOutputCache();
-webBuilder.Services.AddPostgresCms(connectionString);
+webBuilder.Services.AddMysqlCms(connectionString);
 //add permission control service 
-webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)));
 webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, AppDbContext>(new AuthConfig(KeyAuthConfig:new KeyAuthConfig(apiKey)));
 
 webBuilder.Services.AddAuditLog();
@@ -39,7 +43,7 @@ webBuilder.Services.AddComments();
 webBuilder.Services.AddVideo();
 webBuilder.Services.AddCrudMessageProducer(["course"]);
 
-webBuilder.Services.AddScoped<IFullTextSearch, PostgresFts>();
+webBuilder.Services.AddScoped<IFullTextSearch, MysqlFts>();
 webBuilder.Services.AddSearch();
 
 // need to set stripe keys to appsettings.json
@@ -61,10 +65,10 @@ await webApp.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]).Ok();
 await webApp.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
 
 var workerBuilder = Host.CreateApplicationBuilder(args);
-workerBuilder.Services.AddScoped<IFullTextSearch,PostgresFts>();
+workerBuilder.Services.AddScoped<IFullTextSearch,MysqlFts>();
 
 //worker and web are two independent instances, still need to add cms services
-workerBuilder.Services.AddPostgresCms(connectionString);
+workerBuilder.Services.AddMysqlCms(connectionString);
 workerBuilder.Services.AddActivity();
 workerBuilder.Services.AddComments();
 workerBuilder.Services.AddSearch();
@@ -74,7 +78,7 @@ workerBuilder.Services.AddSearch();
 workerBuilder.AddNatsClient(connectionName:"nats");
 workerBuilder.Services.AddSingleton<IStringMessageConsumer, NatsMessageBus>();
 // worker call rest api to notify web
-workerBuilder.Services.AddSingleton(new CmsRestClientSettings( "http://localhost:5119", apiKey));
+workerBuilder.Services.AddSingleton(new CmsRestClientSettings( "http://localhost:5257", apiKey));
 
 workerBuilder.Services.AddSingleton(ActivitySettingsExtensions.DefaultActivitySettings);
 workerBuilder.Services.AddHostedService<ActivityEventHandler>();

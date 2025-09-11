@@ -73,7 +73,14 @@ public class TaskService(
         
         var assembly = Assembly.GetExecutingAssembly();
         var title = assembly.GetCustomAttribute<AssemblyTitleAttribute>()?.Title;
-        var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split("+").First();
+        var version = assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion.Split("+").First()??"";
+        var parts = version.Split('.');
+        if (parts.Length > 3)
+        {
+            parts = parts[..3];
+        }
+        version = string.Join(".", parts);
+        
         var url = $"https://github.com/FormCMS/FormCMS/raw/refs/heads/doc/etc/{title}-demo-data-{version}.zip";
         var task = TaskHelper.InitTask(TaskType.Import, identityService.GetUserAccess()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
