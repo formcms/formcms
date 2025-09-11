@@ -11,7 +11,6 @@ namespace FormCMS.AuditLogging.Services;
 public class AuditLogService(
     IIdentityService identityService,
     KateQueryExecutor executor,
-    DatabaseMigrator migrator,
     IRelationDbDao dao
     ):IAuditLogService
 {
@@ -55,9 +54,7 @@ public class AuditLogService(
         return executor.Exec(log.Insert(),true);
     }
 
-    public  Task EnsureAuditLogTable()
-        =>migrator.MigrateTable(AuditLogConstants.TableName,AuditLogHelper.Columns);
-
+   
     public XEntity GetAuditLogEntity() => AuditLogHelper.Entity;
 
     private void EnsureHasPermission()

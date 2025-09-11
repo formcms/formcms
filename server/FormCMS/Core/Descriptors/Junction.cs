@@ -67,12 +67,13 @@ public static class JunctionHelper
             PublicationStatusAttribute: publicationStatusAttr,
             UpdatedAtAttribute:updatedAtAttr,
             PageUrl:"",
-            BookmarkImageField:"",
-            BookmarkQuery:"",
-            BookmarkTitleField:"",
-            BookmarkPublishTimeField:"",
-            BookmarkQueryParamName:"",
-            BookmarkSubtitleField:""
+            ImageTagField:"",
+            TagsQuery:"",
+            TitleTagField:"",
+            ContentTagField:"",
+            PublishTimeTagField:"",
+            TagsQueryParam:"",
+            SubtitleTagField:""
         );
         
         return new Junction(

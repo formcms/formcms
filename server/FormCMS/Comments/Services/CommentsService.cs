@@ -6,7 +6,6 @@ using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
-using Humanizer;
 
 namespace FormCMS.Comments.Services;
 
@@ -15,15 +14,11 @@ public class CommentsService(
     IStringMessageProducer producer,
     IEntityService entityService,
     IContentTagService contentTagService,
-    DatabaseMigrator migrator,
     IIdentityService identityService,
     KateQueryExecutor executor
     ):ICommentsService
 {
-    public async Task EnsureTable()
-    {
-        await migrator.MigrateTable(CommentHelper.Entity.TableName, CommentHelper.Columns);
-    }
+    
 
     public async Task<Comment> Add(Comment comment, CancellationToken ct)
     {

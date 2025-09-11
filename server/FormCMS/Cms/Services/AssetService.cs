@@ -1,6 +1,5 @@
 using FormCMS.Core.Assets;
 using FormCMS.Core.HookFactory;
-using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
@@ -9,15 +8,11 @@ using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
-using NUlid;
-using System.Text.Json;
-using static Confluent.Kafka.ConfigPropertyNames;
 
 namespace FormCMS.Cms.Services;
 
 public class AssetService(
     IFileStore store,
-    DatabaseMigrator migrator,
     KateQueryExecutor executor,
     IIdentityService identityService,
     IRelationDbDao dao,
@@ -27,22 +22,6 @@ public class AssetService(
     SystemSettings systemSettings
 ) : IAssetService
 {
-    public async Task EnsureTable()
-    {
-        await migrator.MigrateTable(Assets.TableName, Assets.Columns);
-        await migrator.MigrateTable(AssetLinks.TableName, AssetLinks.Columns);
-        await dao.CreateIndex(
-            Assets.TableName, 
-            [nameof(Asset.Path).Camelize()], 
-            true, 
-            CancellationToken.None);
-        await dao.CreateForeignKey(
-            AssetLinks.TableName, nameof(AssetLink.AssetId).Camelize(),
-            Assets.TableName, nameof(Asset.Id).Camelize(),
-            CancellationToken.None);
-
-    }
-
     public XEntity GetEntity(bool withLinkCount)
     {
         if (identityService.GetUserAccess()?.CanAccessAdmin != true)

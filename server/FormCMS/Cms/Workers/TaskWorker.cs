@@ -15,6 +15,9 @@ public abstract class TaskWorker(
 {
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
+        logger.LogInformation("-----------------------------" +
+                              "Starting {type}task worker,  " +
+                              "-------------------------------", GetTaskType());
         while (!ct.IsCancellationRequested)
         {
             try

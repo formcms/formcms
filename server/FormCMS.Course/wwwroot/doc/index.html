@@ -183,6 +183,11 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-bs-level="2"><a href="#fulltext-search" class="nav-link">Fulltext search</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#optimizing-caching" class="nav-link">Optimizing Caching</a>
               <ul class="nav flex-column">
               </ul>
@@ -320,6 +325,7 @@ By combining robust CMS functionality with a strong emphasis on social engagemen
 <li>for Sqlite: run the SqliteDemo project</li>
 <li>for SqlServer: run the SqlServerDemo/SqlServerAppHost project</li>
 <li>for PostgreSQL : run the PostgresDemo/PostgresAppHost project</li>
+<li>for Mysql : run the MysqlDemo/MysqlAppHost project</li>
 </ul>
 <p>Defult login:<br />
   - Eamil : <code>samdmin@cms.com</code><br />
@@ -2295,6 +2301,15 @@ id, name, description, introduction, accessLevel
 <h3 id="the-subscription-page">The Subscription Page</h3>
 <p>When an unpaid user attempts to access restricted content (requiring a subscription), FormCms redirects them to the Stripe website for payment.
 After payment, users can view their subscription status in the user portal.</p>
+<h2 id="fulltext-search">Fulltext search</h2>
+<p>FormCMS's Full-Text Search feature allows users to search for keywords in titles, content, and other fields.</p>
+<h3 id="adding-the-comments-component_1">Adding the Comments Component</h3>
+<ol>
+<li>In the Page Designer, drag the <code>Search Bar</code> component from the <code>Blocks</code> toolbox onto your page.</li>
+<li>Create a new <code>Search</code> page, drag a component from the <code>Data List</code> catalog, and bind its query to the <code>search</code> query.</li>
+</ol>
+<h3 id="how-full-text-search-calculates-scores">How Full-Text Search Calculates Scores</h3>
+<p>FormCMS searches for the query keyword in the <code>title</code>, <code>subtitle</code>, and <code>content</code> fields, with keywords in the title receiving the highest score.</p>
 <hr />
 <h2 id="optimizing-caching">Optimizing Caching</h2>
 <p>FormCMS employs advanced caching strategies to boost performance.  </p>
@@ -2780,5 +2795,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-07-22 23:31:28.063519+00:00
+Build Date UTC : 2025-09-10 17:19:11.265633+00:00
 -->

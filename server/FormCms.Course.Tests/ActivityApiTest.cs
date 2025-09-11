@@ -11,7 +11,7 @@ public class ActivityApiTest(AppFactory factory)
 {
     private bool _ = factory.LoginAndInitTestData();
     private const long RecordId = 21;
-    private readonly string _queryName = "qry_query_" + Ulid.NewUlid();
+    private readonly string _queryName = "qry_query_" + Util.UniqStr();
 
     [Fact]
     public async Task ActivityCountNotEmpty()

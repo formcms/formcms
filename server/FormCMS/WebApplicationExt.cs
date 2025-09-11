@@ -6,12 +6,13 @@ using FormCMS.AuditLogging.Builders;
 using FormCMS.Auth.Models;
 using FormCMS.Comments.Builders;
 using FormCMS.Notify.Builders;
-using FormCMS.Utils.ServiceCollectionExt;
+using FormCMS.Search.Builders;
 using FormCMS.Video.Builders;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.Rewrite;
 using FormCMS.Subscriptions.Builders;
+using HookRegistryExtensions = FormCMS.Video.Builders.HookRegistryExtensions;
 
 namespace FormCMS;
 
@@ -27,18 +28,19 @@ public static class WebApplicationExt
     {
         app.Services.GetService<IAuthBuilder>()?.UseCmsAuth(app);
         if (useOutputCache) app.UseOutputCache();
-        
+
         await app.Services.GetRequiredService<CmsBuilder>().UseCmsAsync(app);
         app.Services.GetService<DocumentDbQueryBuilder>()?.UseDocumentDbQuery(app);
         app.Services.GetService<CmsCrudMessageProduceBuilder>()?.UseEventProducer(app);
         app.Services.GetService<AuditLogBuilder>()?.UseAuditLog(app);
         //have to use comments before activity, activity query plugin can add like count
         app.Services.GetService<CommentBuilder>()?.UseComments(app);
-         app.Services.GetService<SubscriptionBuilder>()?.UseStripeSubscriptions(app);
+        app.Services.GetService<SubscriptionBuilder>()?.UseStripeSubscriptions(app);
         app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
         app.Services.GetService<NotificationBuilder>()?.UseNotification(app);
-        app.Services.GetService<VideoMessageProducerBuilder>()?.UseVideo(app);
-        
+        app.Services.GetService<VideoBuilder>()?.UseVideo(app);
+        app.Services.GetService<SearchBuilder>()?.UseSearch(app);
+
         app.UseRewriter(app.Services.GetRequiredService<RewriteOptions>());
     }
 
@@ -48,44 +50,53 @@ public static class WebApplicationExt
 
     public static IServiceCollection AddDocumentDbQuery(
         this IServiceCollection services, IEnumerable<QueryCollectionLinks> queryCollectionLinks
-        )=>DocumentDbQueryBuilder.AddDocumentDbQuery(services, queryCollectionLinks);
-    
+    ) => DocumentDbQueryBuilder.AddDocumentDbQuery(services, queryCollectionLinks);
+
     public static IServiceCollection AddPostgresCms(
-        this WebApplicationBuilder builder, string connectionString, Action<SystemSettings>? action = null
-        ) => CmsBuilder.AddCms(builder, DatabaseProvider.Postgres, connectionString,action);
+        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
+    ) => CmsBuilder.AddCms(services, DatabaseProvider.Postgres, connectionString, action);
+
+    public static IServiceCollection AddMysqlCms(
+        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
+    ) => CmsBuilder.AddCms(services, DatabaseProvider.Mysql, connectionString, action);
 
     public static IServiceCollection AddSqliteCms(
-        this WebApplicationBuilder builder, string connectionString, Action<SystemSettings>? action = null
-    ) => CmsBuilder.AddCms(builder, DatabaseProvider.Sqlite, connectionString, action);
+        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
+    ) => CmsBuilder.AddCms(services, DatabaseProvider.Sqlite, connectionString, action);
 
     public static IServiceCollection AddSqlServerCms(
-        this WebApplicationBuilder builder, string connectionString, Action<SystemSettings>? action = null
-    ) => CmsBuilder.AddCms(builder, DatabaseProvider.SqlServer, connectionString, action);
+        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
+    ) => CmsBuilder.AddCms(services, DatabaseProvider.SqlServer, connectionString, action);
 
     public static IServiceCollection AddCmsAuth<TUser, TRole, TContext>(this IServiceCollection services,
         AuthConfig authConfig)
         where TUser : CmsUser, new()
         where TRole : IdentityRole, new()
         where TContext : IdentityDbContext<TUser>
-        => AuthBuilder<TUser>.AddCmsAuth<TUser, TRole, TContext>(services,authConfig);
+        => AuthBuilder<TUser>.AddCmsAuth<TUser, TRole, TContext>(services, authConfig);
 
     public static IServiceCollection AddAuditLog(this IServiceCollection services)
         => AuditLogBuilder.AddAuditLog(services);
 
-    public static IServiceCollection AddActivity(this IServiceCollection services, bool enableBuffering=true)
-        => ActivityBuilder.AddActivity(services,enableBuffering);
+    public static IServiceCollection AddActivity(this IServiceCollection services, bool enableBuffering = true)
+        => ActivityBuilder.AddActivity(services, enableBuffering);
 
-    public static IServiceCollection AddComments(this IServiceCollection services, bool enableBuffering=true)
+    public static IServiceCollection AddComments(this IServiceCollection services, bool enableBuffering = true)
         => CommentBuilder.AddComments(services);
+
     public static IServiceCollection AddSubscriptions(this IServiceCollection services, bool enableBuffering = true)
-       => SubscriptionBuilder.AddStripeSubscription(services);
+        => SubscriptionBuilder.AddStripeSubscription(services);
 
     public static IServiceCollection AddNotify(this IServiceCollection services)
         => NotificationBuilder.AddNotify(services);
+
+    public static IServiceCollection AddSearch(this IServiceCollection services)
+        => SearchBuilder.AddSearch(services);
+
     public static IServiceCollection AddCrudMessageProducer(
         this IServiceCollection services, string[] entities
     ) => CmsCrudMessageProduceBuilder.AddCrudMessageProducer(services, entities);
 
-    public static IServiceCollection AddVideoMessageProducer(this IServiceCollection services)
-        => VideoMessageProducerBuilder.AddVideoMessageProducer(services);
+    public static IServiceCollection AddVideo(this IServiceCollection services)
+        => VideoBuilder.AddVideo(services);
 }

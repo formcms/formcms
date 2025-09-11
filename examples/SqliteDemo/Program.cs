@@ -1,7 +1,10 @@
 using FormCMS;
 using FormCMS.Activities.Workers;
 using FormCMS.Auth.Models;
+using FormCMS.Cms.Workers;
 using FormCMS.Core.Auth;
+using FormCMS.Infrastructure.Fts;
+using FormCMS.Search.Workers;
 using FormCMS.Subscriptions;
 using FormCMS.Utils.ResultExt;
 using FormCMS.Video.Workers;
@@ -14,7 +17,7 @@ var webBuilder = WebApplication.CreateBuilder(args);
 webBuilder.Services.AddOutputCache();
 
 const string connectionString = "Data Source=cms.db";
-webBuilder.AddSqliteCms(connectionString);
+webBuilder.Services.AddSqliteCms(connectionString);
 
 const string apikey = "12345";
 
@@ -24,20 +27,42 @@ webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, AppDbContext>(new AuthConf
 webBuilder.Services.AddAuditLog();
 webBuilder.Services.AddActivity();
 webBuilder.Services.AddComments();
+webBuilder.Services.AddVideo();
+
+webBuilder.Services.AddSingleton(new CmsRestClientSettings( "http://localhost:5072", apikey));
+// need to set stripe keys to appsettings.json
+webBuilder.Services.Configure<StripeSettings>(webBuilder.Configuration.GetSection("Stripe"));
+webBuilder.Services.AddSubscriptions();
+
+webBuilder.Services.AddCrudMessageProducer(["course"]);
+
+webBuilder.Services.AddScoped<IFullTextSearch, SqliteFts>();
+webBuilder.Services.AddSearch();
+
 
 // For distributed deployments, it's recommended to run ActivityEventHandler in a separate hosted service.
 // In this case, we register ActivityEventHandler within the web application to share the in-memory channel bus.
 webBuilder.Services.AddHostedService<ActivityEventHandler>();
 
-webBuilder.Services.AddVideoMessageProducer();
-webBuilder.Services.AddSingleton(new CmsRestClientSettings( "http://localhost:5072", apikey));
-// For distributed deployments, it's recommended to runEvent Handling services in a separate hosted App.
-// In this case, we register them within the web application to share the in-memory channel bus.
+webBuilder.Services.AddHostedService<ActivityEventHandler>();
 webBuilder.Services.AddHostedService<FFMpegWorker>();
 
-// need to set stripe keys to appsettings.json
-webBuilder.Services.Configure<StripeSettings>(webBuilder.Configuration.GetSection("Stripe"));
-webBuilder.Services.AddSubscriptions();
+webBuilder.Services.AddSingleton( new FtsSettings(["course"]));
+webBuilder.Services.AddHostedService<FtsIndexingMessageHandler>();
+
+webBuilder.Services.AddSingleton(new EmitMessageWorkerOptions(30));
+webBuilder.Services.AddHostedService<EmitMessageHandler>();
+
+webBuilder.Services.AddSingleton(new ExportWorkerOptions(30));
+webBuilder.Services.AddHostedService<ExportWorker>();
+
+webBuilder.Services.AddSingleton(new ImportWorkerOptions(30));
+webBuilder.Services.AddHostedService<ImportWorker>();
+
+webBuilder.Services.AddSingleton(new DataPublishingWorkerOptions(30));
+webBuilder.Services.AddHostedService<DataPublishingWorker>();
+
+webBuilder.Services.AddHostedService<FFMpegWorker>();
 
 var webApp = webBuilder.Build();
 
@@ -53,11 +78,4 @@ await webApp.UseCmsAsync();
 await webApp.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]).Ok();
 await webApp.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
 
-//worker run in the background do Cron jobs
-var workerBuilder = Host.CreateApplicationBuilder(args);
-workerBuilder.Services.AddSqliteCmsWorker(connectionString);
-
-await Task.WhenAll(
-    webApp.RunAsync(),
-    workerBuilder.Build().RunAsync()
-);
+await webApp.RunAsync();

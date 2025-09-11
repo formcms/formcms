@@ -53,8 +53,10 @@ export function  setPaginationStatus(list, render) {
                     if (!res || res.error) {
                         console.log(res);
                     }else {
-                        each.insertAdjacentHTML('beforeend', res);
-                        render(list)
+                        const element = document.createElement("div"); 
+                        element.innerHTML = res;                       
+                        render(element);
+                        each.insertAdjacentHTML('beforeend', element.innerHTML);
                     }
                 }
             }

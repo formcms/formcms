@@ -1,4 +1,5 @@
 using FormCMS.Cms.Services;
+using FormCMS.Core.Tasks;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace FormCMS.Cms.Handlers;
@@ -17,6 +18,7 @@ public static class TaskHandler
 
         builder.MapGet("/entity", (ITaskService s) => s.GetEntity());    
         
+        //export
         builder.MapPost("/export", (ITaskService s) => s.AddExportTask());
         
         builder.MapGet("/export/download/{id:int}", async (
@@ -32,6 +34,7 @@ public static class TaskHandler
             CancellationToken ct
         ) => s.DeleteTaskFile(id,ct));
 
+        //import
         builder.MapPost($"/import/", (
             HttpContext context,
             ITaskService s
@@ -41,5 +44,12 @@ public static class TaskHandler
             HttpContext context,
             ITaskService s
         ) => s.ImportDemoData());
+        
+        //emit 
+        builder.MapPost($"/emit/", (
+            ITaskService s,
+            EmitMessageSetting setting
+        ) =>s.AddEmitMessageTask(setting));
+       
     }
 }

@@ -12,7 +12,8 @@ public enum TaskType
 {
     Default,
     Export,
-    Import
+    Import,
+    EmitMessage
 }
 
 public enum TaskStatus
@@ -27,6 +28,7 @@ public enum TaskStatus
 public record SystemTask(
     TaskStatus TaskStatus,
     TaskType Type = TaskType.Default, 
+    string TaskSettings = "",
     string CreatedBy = "",
     
     long Id = 0,
@@ -61,6 +63,7 @@ public static class TaskHelper
             XAttrExtensions.CreateAttr<SystemTask, string>(x => x.TaskId, inList: false,isDefault:true),
             XAttrExtensions.CreateAttr<SystemTask, string>(x => x.CreatedBy,inList:false,isDefault:true),
             XAttrExtensions.CreateAttr<SystemTask, int>(x => x.Progress),
+            XAttrExtensions.CreateAttr<SystemTask, string>(x => x.TaskSettings),
             XAttrExtensions.CreateAttr<SystemTask, string>(x => x.Error),
             XAttrExtensions.CreateAttr<SystemTask, DateTime>(x => x.CreatedAt, isDefault: true),
             XAttrExtensions.CreateAttr<SystemTask, DateTime>(x => x.UpdatedAt, isDefault: true,inList:false),
@@ -72,6 +75,7 @@ public static class TaskHelper
         ColumnHelper.CreateCamelColumn<SystemTask>(x => x.Error, ColumnType.Text),
         ColumnHelper.CreateCamelColumn<SystemTask,Enum>(x => x.Type),
         ColumnHelper.CreateCamelColumn<SystemTask,Enum>(x => x.TaskStatus),
+        ColumnHelper.CreateCamelColumn<SystemTask, string>(x => x.TaskSettings),
         ColumnHelper.CreateCamelColumn<SystemTask, string>(x => x.TaskId),
         ColumnHelper.CreateCamelColumn<SystemTask, string>(x => x.CreatedBy),
         ColumnHelper.CreateCamelColumn<SystemTask, int>(x => x.Progress),
@@ -97,7 +101,8 @@ public static class TaskHelper
                 nameof(SystemTask.TaskId), 
                 nameof(SystemTask.CreatedBy), 
                 nameof(SystemTask.Progress),
-                nameof(SystemTask.TaskStatus)
+                nameof(SystemTask.TaskStatus),
+                nameof(SystemTask.TaskSettings)
             ]);
         return new SqlKata.Query(TableName).AsInsert(record,true);
     }

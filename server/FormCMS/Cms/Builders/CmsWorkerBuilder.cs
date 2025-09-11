@@ -1,4 +1,5 @@
 using FormCMS.Cms.Workers;
+using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
@@ -10,7 +11,8 @@ public record TaskTimingSeconds(
     int QueryTimeout,
     int ExportDelay,
     int ImportDelay,
-    int PublishDelay
+    int PublishDelay,
+    int EmitMessageDelay
 );
 
 public static class CmsWorkerBuilder
@@ -22,7 +24,7 @@ public static class CmsWorkerBuilder
         TaskTimingSeconds? taskTimingSeconds
     )
     {
-        taskTimingSeconds ??= new TaskTimingSeconds(60, 30, 30, 30);
+        taskTimingSeconds ??= new TaskTimingSeconds(60, 30, 30, 30, 30);
         var parts = connectionString.Split(";").Where(x => !x.StartsWith("Password"));
 
         services.AddSingleton(new ResizeOptions(1200, 90));
@@ -48,6 +50,8 @@ public static class CmsWorkerBuilder
         services.AddSingleton(new ImportWorkerOptions(taskTimingSeconds.ImportDelay));
         services.AddHostedService<ImportWorker>();
 
+      
+        
         services.AddSingleton(new DataPublishingWorkerOptions(taskTimingSeconds.PublishDelay));
         services.AddHostedService<DataPublishingWorker>();
        

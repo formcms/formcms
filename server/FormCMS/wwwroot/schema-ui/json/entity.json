@@ -58,30 +58,33 @@
       "type": "string",
       "title": "Page URL"
     },
-    
-    "bookmarkQuery": {
+    "tagsQuery": {
       "type": "string",
-      "title": "Bookmark Query"
+      "title": "Query to load content tags"
     },
-    "bookmarkQueryParamName": {
+    "tagsQueryParam": {
       "type": "string",
-      "title": "Bookmark Query Parameter Name"
+      "title": "Parameter Name of tags query"
     },
-    "bookmarkTitleField": {
+    "titleTagField": {
       "type": "string",
-      "title": "Bookmark Title Field"
+      "title": "Title Tag Field"
     },
-    "bookmarkSubtitleField": {
+    "subtitleTagField": {
       "type": "string",
-      "title": "Bookmark Subtitle Field"
+      "title": "Subtitle Tag Field"
     },
-    "bookmarkImageField": {
+    "contentTagField": {
       "type": "string",
-      "title": "Bookmark Image Field"
+      "title": "Content Tag Field"
     },
-    "bookmarkPublishTimeField": {
+    "imageTagField": {
       "type": "string",
-      "title": "Bookmark Publish Time Field"
+      "title": "Image Tag Field"
+    },
+    "publishTimeTagField": {
+      "type": "string",
+      "title": "PublishTime Tag Field"
     },
     "attributes": {
       "title": "Attributes",

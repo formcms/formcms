@@ -5,7 +5,6 @@ namespace FormCMS.Activities.Services;
 
 public interface IBookmarkService
 {
-    Task EnsureBookmarkTables();
     Task<Record[]> Folders(CancellationToken ct);
     Task<Record[]> FolderWithRecordStatus(string entityName, long recordId, CancellationToken ct);
     Task UpdateFolder(long id, BookmarkFolder folder, CancellationToken ct);

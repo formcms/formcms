@@ -43,7 +43,7 @@ public static class WebApp
         builder.Services.AddMongoDbQuery(queryLinksArray);
         */
 
-        builder.AddPostgresCms(builder.Configuration.GetConnectionString(AppConstants.PostgresCms)!);
+        builder.Services.AddPostgresCms(builder.Configuration.GetConnectionString(AppConstants.PostgresCms)!);
         builder.Services.AddActivity(false);
 
         var app = builder.Build();

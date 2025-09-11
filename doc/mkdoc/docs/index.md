@@ -119,6 +119,7 @@ example code can be found at /formCMS/examples
 - for Sqlite: run the SqliteDemo project
 - for SqlServer: run the SqlServerDemo/SqlServerAppHost project
 - for PostgreSQL : run the PostgresDemo/PostgresAppHost project
+- for Mysql : run the MysqlDemo/MysqlAppHost project
 
 Defult login:  
   - Eamil : `samdmin@cms.com`  
@@ -2039,6 +2040,20 @@ id, name, description, introduction, accessLevel
 ### The Subscription Page
 When an unpaid user attempts to access restricted content (requiring a subscription), FormCms redirects them to the Stripe website for payment.
 After payment, users can view their subscription status in the user portal.
+
+
+
+
+## Fulltext search
+FormCMS's Full-Text Search feature allows users to search for keywords in titles, content, and other fields.
+
+### Adding the Comments Component
+1. In the Page Designer, drag the `Search Bar` component from the `Blocks` toolbox onto your page.
+2. Create a new `Search` page, drag a component from the `Data List` catalog, and bind its query to the `search` query.
+
+### How Full-Text Search Calculates Scores
+FormCMS searches for the query keyword in the `title`, `subtitle`, and `content` fields, with keywords in the title receiving the highest score.
+
 
 
 ---

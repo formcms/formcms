@@ -4,7 +4,6 @@ namespace FormCMS.Activities.Services;
 public interface IActivityCollectService
 {
     Task Flush(DateTime? lastFlushTime, CancellationToken ct);
-    Task EnsureActivityTables();
     Task<long> Toggle(string entityName, long recordId, string activityType, bool isActive, CancellationToken ct);
     Task RecordMessage(string useId, string entityName, long recordId, string[] activityTypes, CancellationToken ct);
     Task<Dictionary<string,long>> Record(string cookieUserId,string entityName, long recordId, string[] activityType, CancellationToken ct);
