@@ -1,3 +1,5 @@
+using FormCMS.Infrastructure.RelationDbDao;
+
 namespace FormCMS.Activities.Models;
 
 public record ActivitySettings(
@@ -11,6 +13,8 @@ public record ActivitySettings(
     long HourBoostWeight
 );
 
+public record ActivityContext(ShardManager ShardManager);
+
 public static class ActivitySettingsExtensions
 {
     public static HashSet<string> AllCountTypes(this ActivitySettings activitySettings)
@@ -20,7 +24,7 @@ public static class ActivitySettingsExtensions
             .Concat(activitySettings.EventRecordActivities)
             .ToHashSet();
 
-    public static readonly ActivitySettings DefaultActivitySettings = new ActivitySettings(
+    public static readonly ActivitySettings DefaultActivitySettings = new (
         EnableBuffering: true,
         CommandToggleActivities: ["like"],
         CommandRecordActivities: ["share"],

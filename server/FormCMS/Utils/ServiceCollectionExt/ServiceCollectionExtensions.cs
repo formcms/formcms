@@ -1,6 +1,5 @@
 using FormCMS.Infrastructure.RelationDbDao;
 using Microsoft.Data.Sqlite;
-using NATS.Client.Core;
 using Npgsql;
 using Microsoft.Data.SqlClient;
 using MySqlConnector;
@@ -10,6 +9,8 @@ namespace FormCMS.Utils.ServiceCollectionExt;
 
 public static class ServiceCollectionExtensions
 {
+
+
     public  static IServiceCollection  AddDao(this IServiceCollection services, DatabaseProvider databaseProvider, string connectionString)
     {
         _ = databaseProvider switch

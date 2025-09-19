@@ -6,6 +6,7 @@ using FormCMS.Core.Auth;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.Fts;
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Notify.Models;
 using FormCMS.Notify.Services;
 using FormCMS.Notify.Workers;
@@ -82,7 +83,8 @@ public class Program
             builder.Services.AddAuditLog();
 
             var enableActivityBuffer = builder.Configuration.GetValue<bool>("EnableActivityBuffer");
-            builder.Services.AddActivity(enableActivityBuffer);
+            var shardConfig = builder.Configuration.GetSection("ActivityShardManagerConfig").Get<ShardManagerConfig>();
+            builder.Services.AddActivity(enableActivityBuffer,shardConfig);
 
             builder.Services.AddComments();
             builder.Services.AddNotify();

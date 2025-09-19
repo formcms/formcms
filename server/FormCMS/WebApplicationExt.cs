@@ -5,6 +5,7 @@ using FormCMS.Activities.Builders;
 using FormCMS.AuditLogging.Builders;
 using FormCMS.Auth.Models;
 using FormCMS.Comments.Builders;
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Notify.Builders;
 using FormCMS.Search.Builders;
 using FormCMS.Video.Builders;
@@ -78,8 +79,8 @@ public static class WebApplicationExt
     public static IServiceCollection AddAuditLog(this IServiceCollection services)
         => AuditLogBuilder.AddAuditLog(services);
 
-    public static IServiceCollection AddActivity(this IServiceCollection services, bool enableBuffering = true)
-        => ActivityBuilder.AddActivity(services, enableBuffering);
+    public static IServiceCollection AddActivity(this IServiceCollection services, bool enableBuffering = true,ShardManagerConfig? shardConfig = null)
+        => ActivityBuilder.AddActivity(services, enableBuffering,shardConfig);
 
     public static IServiceCollection AddComments(this IServiceCollection services, bool enableBuffering = true)
         => CommentBuilder.AddComments(services);

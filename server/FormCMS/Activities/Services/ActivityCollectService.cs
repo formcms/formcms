@@ -23,8 +23,10 @@ public class ActivityCollectService(
     IEntityService entityService,
     IPageResolver pageResolver,
     IContentTagService contentTagService,
+    KateQueryExecutorOption kateQueryExecutorOption,
     KateQueryExecutor executor,
-    IRelationDbDao dao,
+    IRelationDbDao defaultDao,
+    ActivityContext activityContext,
     IUserManageService userManager
 ) : IActivityCollectService
 {
@@ -39,7 +41,7 @@ public class ActivityCollectService(
         var countRecords = counts.Select(pair =>
             (ActivityCounts.Parse(pair.Key) with { Count = pair.Value }).UpsertRecord()).ToArray();
         
-        await dao.BatchUpdateOnConflict(ActivityCounts.TableName,  countRecords, ActivityCounts.KeyFields,ct);
+        await defaultDao.BatchUpdateOnConflict(ActivityCounts.TableName,  countRecords, ActivityCounts.KeyFields,ct);
         
         //Query title and image 
         var statusList = await statusBuffer.GetAfterLastFlush(lastFlushTime.Value);
@@ -48,14 +50,14 @@ public class ActivityCollectService(
         await UpsertActivities(activities,ct);
     }
     
-    public async Task<long[]> BatchGetActiveStatus(string entityName, string activityType, long[] ids, CancellationToken ct)
+    public async Task<long[]> GetCurrentUserActiveStatus(string entityName, string activityType, long[] recordIds, CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
         var ret = new List<long>();
         var missed = new List<long>();
         if (settings.EnableBuffering)
         {
-            var activities = ids.Select(id => new Activity(entityName, id, activityType, userId)).ToArray();
+            var activities = recordIds.Select(id => new Activity(entityName, id, activityType, userId)).ToArray();
             var keys = activities.Select(x=>x.Key()).ToArray();
             var dict = await statusBuffer.BatchGet(keys);
             foreach (var activity in activities)
@@ -72,48 +74,76 @@ public class ActivityCollectService(
                     missed.Add(activity.RecordId);
                 }
             }
-            ids = missed.ToArray();
+            recordIds = missed.ToArray();
         }
-        
-        var query = Models.Activities.ActiveStatus(entityName, userId,activityType,  ids);
-        var records = await executor.Many(query,ct);
+
+        var query = Models.Activities.ActiveStatus(entityName, userId,activityType,  recordIds);
+        var userShardExecutor = activityContext.ShardManager.FollowExecutor(userId, kateQueryExecutorOption);
+        var records = await userShardExecutor.Many(query,ct);
         ret.AddRange(records.Select(x => (long)x[nameof(Activity.RecordId).Camelize()]));
         return ret.ToArray();
     }
     
-    public async Task<Dictionary<string, StatusDto>> GetAndRecordSingle(string cookieUserId,string entityName, long recordId, CancellationToken ct)
+    public async Task<Dictionary<string, ActiveCount>> GetSetActiveCount(
+        string cookieUserId,string entityName, long recordId, CancellationToken ct
+        )
     {
         var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
-        var ret = new Dictionary<string, StatusDto>();
-        foreach (var pair in await InternalRecord(identityService.GetUserAccess()?.Id ?? cookieUserId,entity,entityName, recordId, settings.CommandAutoRecordActivities.ToArray(), ct))
+        var ret = new Dictionary<string, ActiveCount>();
+        foreach (var pair in await SetStatusCount(identityService.GetUserAccess()?.Id ?? cookieUserId,entity,entityName,
+                     recordId, settings.CommandAutoRecordActivities.ToArray(), ct))
         {
-            ret[pair.Key] = new StatusDto(true, pair.Value);
+            ret[pair.Key] = new ActiveCount(true, pair.Value);
         }
 
         string[] types = [..settings.CommandToggleActivities, ..settings.CommandRecordActivities];
         var userId = identityService.GetUserAccess()?.Id;
         
-        Dictionary<string, bool>? statusDict = null;
+        Dictionary<string, bool>? activeDict = null;
         if (userId is not null)
         {
             var activities = types.Select(x 
                 => new Activity(entityName, recordId, x, userId)
             ).ToArray();
-            statusDict = settings.EnableBuffering 
-                ? await GetBufferStatusDict(activities) 
-                : await GetDbStatusDict(activities, ct);
+            activeDict = settings.EnableBuffering 
+                ? await GetActiveDictFromBuffer(activities) 
+                : await GetActiveDictFromDb();
         }
 
         var countDict = await GetCountDict(entityName,recordId, types,ct);
 
         foreach (var t in types)
         {
-            var isActive = statusDict is not null && statusDict.TryGetValue(t, out var b) && b;
+            var isActive = activeDict is not null && activeDict.TryGetValue(t, out var b) && b;
             var count = countDict.TryGetValue(t, out var l) ? l : 0;
-            ret[t] = new StatusDto(isActive, count);
+            ret[t] = new ActiveCount(isActive, count);
         }
 
         return ret;
+        
+        async Task<Dictionary<string, bool>> GetActiveDictFromBuffer(Activity[] status)
+        {
+            var keys = status.Select(Models.Activities.Key).ToArray();
+            var dict = await statusBuffer.GetOrSet(keys, GetActiveFromDb);
+            var ret = new Dictionary<string, bool>();
+            foreach (var (key, value) in dict)
+            {
+                var activity = Models.Activities.Parse(key);
+                ret[activity.ActivityType] = value;
+            }
+            return ret;
+        }
+        async Task<Dictionary<string,bool>> GetActiveDictFromDb()
+        {
+            var dao = activityContext.ShardManager.Leader(userId).Dao;
+            return await dao.FetchValues<bool>(
+                Models.Activities.TableName, 
+                Models.Activities.Condition(entityName,recordId,userId),
+                Models.Activities.TypeField,
+                types,
+                Models.Activities.ActiveField,
+                ct);
+        }
     }
 
     public async Task<Dictionary<string,long>> GetCountDict(string entityName, long recordId,string[] types, CancellationToken ct)
@@ -122,8 +152,20 @@ public class ActivityCollectService(
             new ActivityCount(entityName, recordId, x)).ToArray();
  
         return settings.EnableBuffering
-            ? await GetBufferCountDict(counts)
-            : await GetDbCountDict(counts, ct); 
+            ? await GetBufferCountDict()
+            : await GetCountsByTypes(entityName, recordId, types, ct); 
+        
+        async Task<Dictionary<string, long>> GetBufferCountDict()
+        {
+            var dict = await countBuffer.Get(counts.Select(ActivityCounts.Key).ToArray(), GetCountFromDb);
+            var ret = new Dictionary<string, long>();
+            foreach (var (key, value) in dict)
+            {
+                var ct = ActivityCounts.Parse(key);
+                ret[ct.ActivityType] = value;
+            }
+            return ret;
+        }
     }
 
     //why not log visit at page service directly?page service might cache result
@@ -131,7 +173,7 @@ public class ActivityCollectService(
     {
         var path = new Uri(url).AbsolutePath.TrimStart('/');
         var page = await pageResolver.GetPage(path, ct);
-        await InternalRecord(identityService.GetUserAccess()?.Id ?? cookieUserId, null,Constants.PageEntity, page.Id, [Constants.VisitActivityType], ct);
+        await SetStatusCount(identityService.GetUserAccess()?.Id ?? cookieUserId, null,Constants.PageEntity, page.Id, [Constants.VisitActivityType], ct);
     }
 
     public async Task RecordMessage(
@@ -143,7 +185,7 @@ public class ActivityCollectService(
     )
     {
         var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
-        await InternalRecord(useId, entity,entityName, recordId, activityTypes, ct);
+        await SetStatusCount(useId, entity,entityName, recordId, activityTypes, ct);
     }
 
     public async Task<Dictionary<string, long>> Record(
@@ -163,7 +205,7 @@ public class ActivityCollectService(
         }
         var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
 
-        return await InternalRecord(identityService.GetUserAccess()?.Id ?? cookieUserId, entity,entityName, recordId, activityTypes, ct);
+        return await SetStatusCount(identityService.GetUserAccess()?.Id ?? cookieUserId, entity,entityName, recordId, activityTypes, ct);
     }
 
     public async Task<long> Toggle(
@@ -187,15 +229,16 @@ public class ActivityCollectService(
         
         if (settings.EnableBuffering)
         {
-            return await statusBuffer.Toggle(activity.Key(), isActive, GetStatus) switch
+            return await statusBuffer.Toggle(activity.Key(), isActive, GetActiveFromDb) switch
             {
-                true => await countBuffer.Increase(count.Key(), delta, GetCount),
-                false => (await countBuffer.Get([count.Key()], GetCount)).FirstOrDefault().Value
+                true => await countBuffer.Increase(count.Key(), delta, GetCountFromDb),
+                false => (await countBuffer.Get([count.Key()], GetCountFromDb)).FirstOrDefault().Value
             };
         }
 
         //only update is Active field, to determine if you should increase count
-        var changed = await dao.UpdateOnConflict(
+        var userShardDao = activityContext.ShardManager.Leader(userId).Dao;
+        var changed = await userShardDao.UpdateOnConflict(
             Models.Activities.TableName,
             activity.UpsertRecord(false), 
             Models.Activities.KeyFields, 
@@ -203,9 +246,9 @@ public class ActivityCollectService(
         var ret= changed switch
         {
             true => await UpdateContentTagAndIncrease(),
-            false => (await dao.FetchValues<long>(
+            false => (await defaultDao.FetchValues<long>(
                     ActivityCounts.TableName,
-                    count.Condition(true),
+                    ActivityCounts.Condition(count.EntityName,count.RecordId,count.ActivityType),
                     null, null,
                     ActivityCounts.CountField,
                     ct))
@@ -222,15 +265,15 @@ public class ActivityCollectService(
                 var loadedActivities = await LoadContentTags(entity, [activity], ct);
                 if (loadedActivities.Length == 0) throw new ResultException("No activities loaded");
                 
-                await dao.UpdateOnConflict(Models.Activities.TableName,
+                await userShardDao.UpdateOnConflict(Models.Activities.TableName,
                     loadedActivities[0].UpsertRecord(true), Models.Activities.KeyFields, ct);
                 
                 await ProduceActivityMessage(entity, loadedActivities[0], ct);
             }
 
-            return await dao.Increase(
+            return await defaultDao.Increase(
                 ActivityCounts.TableName,
-                count.Condition(true),
+                ActivityCounts.Condition(count.EntityName,count.RecordId,count.ActivityType),
                 ActivityCounts.CountField,
                 0,
                 delta,
@@ -265,8 +308,9 @@ public class ActivityCollectService(
             else
             {
                 var timeScore = await GetInitialScoreByPublishedAt();
-                await dao.Increase(
-                    ActivityCounts.TableName, count.Condition(true),
+                await defaultDao.Increase(
+                    ActivityCounts.TableName, 
+                    ActivityCounts.Condition(count.EntityName,count.RecordId,count.ActivityType),
                     ActivityCounts.CountField,timeScore, weight, ct);
             }
 
@@ -274,7 +318,7 @@ public class ActivityCollectService(
 
             async Task<long> GetItemScore(string _)
             {
-                var dict = await GetDbCountDict([count], ct);
+                var dict = await GetCountsByTypes(count.EntityName,count.RecordId,[count.ActivityType], ct);
                 if (dict.Count > 0)
                 {
                     return dict.First().Value;
@@ -301,7 +345,7 @@ public class ActivityCollectService(
             }
         }
     }
-    private async Task<Dictionary<string, long>> InternalRecord(
+    private async Task<Dictionary<string, long>> SetStatusCount(
         string userId,
         LoadedEntity? entity,
         string entityName,
@@ -321,7 +365,7 @@ public class ActivityCollectService(
             await statusBuffer.Set( activities.Select(a => a.Key()).ToArray());
             foreach (var count in counts)
             {
-                result[count.ActivityType] = await countBuffer.Increase(count.Key(), 1, GetCount);
+                result[count.ActivityType] = await countBuffer.Increase(count.Key(), 1, GetCountFromDb);
             }
         }
         else
@@ -329,8 +373,9 @@ public class ActivityCollectService(
             await UpsertActivities(activities,ct);
             foreach (var count in counts)
             {
-                result[count.ActivityType] = await dao.Increase(
-                    ActivityCounts.TableName, count.Condition(true),
+                result[count.ActivityType] = await defaultDao.Increase(
+                    ActivityCounts.TableName, 
+                    ActivityCounts.Condition(count.EntityName,count.RecordId,count.ActivityType),
                     ActivityCounts.CountField, 0,1, ct);
             }
         }
@@ -426,81 +471,48 @@ public class ActivityCollectService(
                 }
             }
         }
-        await dao.BatchUpdateOnConflict(
-            Models.Activities.TableName,
-            toUpdate.ToArray(),
-            Models.Activities.KeyFields,
-            ct);
+
+        await activityContext.ShardManager.Execute(
+            toUpdate,
+            rec => rec[nameof(Activity.UserId).Camelize()].ToString()!,
+            (dao, records) => dao.BatchUpdateOnConflict(
+                Models.Activities.TableName,
+                records,
+                Models.Activities.KeyFields,
+                ct));
     }
 
-    private async Task<Dictionary<string, bool>> GetBufferStatusDict(Activity[] status)
+    private async Task<Dictionary<string, long>> GetCountsByTypes(string entityName, long recordId, 
+        string[] types, CancellationToken ct)
     {
-        var keys = status.Select(Models.Activities.Key).ToArray();
-        var dict = await statusBuffer.GetOrSet(keys, GetStatus);
-        var ret = new Dictionary<string, bool>();
-        foreach (var (key, value) in dict)
-        {
-            var activity = Models.Activities.Parse(key);
-            ret[activity.ActivityType] = value;
-        }
-        return ret;
-    }
-    
-    private  async Task<Dictionary<string,bool>> GetDbStatusDict(Activity[] activities, CancellationToken ct)
-    {
-        var userId = identityService.GetUserAccess()?.Id;
-        if (activities.Length == 0 || userId is null) return [];
-        
-        return await dao.FetchValues<bool>(
-            Models.Activities.TableName, 
-            activities.First().Condition(false), 
-            Models.Activities.TypeField,
-            activities.Select(x=>x.ActivityType), 
-            Models.Activities.ActiveField,
-            ct);
-    }
+        if (types.Length == 0 ) return [];
 
-    private async Task<Dictionary<string, long>> GetBufferCountDict(ActivityCount[] counts)
-    {
-        var dict = await countBuffer.Get(counts.Select(ActivityCounts.Key).ToArray(), GetCount);
-        var ret = new Dictionary<string, long>();
-        foreach (var (key, value) in dict)
-        {
-            var ct = ActivityCounts.Parse(key);
-            ret[ct.ActivityType] = value;
-        }
-        return ret;
-    }
-    
-    private async Task<Dictionary<string, long>> GetDbCountDict(ActivityCount[] counts, CancellationToken ct)
-    {
-        if (counts.Length == 0 ) return [];
-
-        return await dao.FetchValues<long>(
+        return await defaultDao.FetchValues<long>(
             ActivityCounts.TableName,
-            counts.First().Condition(false),
+            ActivityCounts.Condition(entityName, recordId),
             ActivityCounts.TypeField,
-            counts.Select(x => x.ActivityType),
+            types,
             ActivityCounts.CountField,
             ct);
     }
 
-    private async Task<bool> GetStatus(string key)
+    private async Task<bool> GetActiveFromDb(string key)
     {
         var activity = Models.Activities.Parse(key);
+        var dao =activityContext.ShardManager.Follower(activity.UserId).Dao ?? defaultDao;
         var res = await dao.FetchValues<bool>(
             Models.Activities.TableName, 
-            activity.Condition(true), 
+            Models.Activities.Condition(activity.EntityName, activity.RecordId,activity.UserId,activity.ActivityType),
             null,null,Models.Activities.ActiveField);
         return res.Count > 0 && res.First().Value;
     }
 
-    private async Task<long> GetCount(string key)
+    private async Task<long> GetCountFromDb(string key)
     {
         var count = ActivityCounts.Parse(key);
-        var res = await dao.FetchValues<long>(
+        var res = await defaultDao.FetchValues<long>(
             ActivityCounts.TableName, 
-            count.Condition(true), 
+            ActivityCounts.Condition(count.EntityName, count.RecordId,count.ActivityType),
             null,null,
             ActivityCounts.CountField);
         return res.Count > 0 ? res.First().Value:0;

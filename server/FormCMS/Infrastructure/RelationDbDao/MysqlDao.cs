@@ -6,7 +6,7 @@ using SqlKata.Execution;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public class MySqlDao(ILogger<MySqlDao> logger, MySqlConnection connection) : IRelationDbDao
+public class MySqlDao( MySqlConnection connection,ILogger<MySqlDao> logger) : IRelationDbDao
 {
     private TransactionManager? _transactionManager;
     private readonly MySqlCompiler _compiler = new ();

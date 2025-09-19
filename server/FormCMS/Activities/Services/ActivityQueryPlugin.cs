@@ -18,8 +18,6 @@ public class ActivityQueryPlugin(
     private readonly Dictionary<string,string> _countFieldToCountType = settings
         .AllCountTypes().ToDictionary(ActivityCounts.ActivityCountField,x=> x);
 
-    
-    
     public async Task<Record[]> GetTopList(string entityName, int offset, int limit, CancellationToken ct)
     {
         if (limit > 30 || offset > 30) throw new Exception("Can't access top items");

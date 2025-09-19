@@ -96,22 +96,24 @@ public static class Activities
         }
         return RecordExtensions.FormObject(activityApi, [..whitList]);
     }
-    
-    public static Record Condition(this Activity activityApi,bool includeType)
-    {
-        var ret = new Dictionary<string, object>
+
+    public static Record Condition(string entityName, long recordId, string userId)
+        => new Dictionary<string, object>
         {
-            {nameof(Activity.EntityName).Camelize(),activityApi.EntityName},
-            {nameof(Activity.RecordId).Camelize(),activityApi.RecordId},
-            {nameof(Activity.UserId).Camelize(),activityApi.UserId}
+            { nameof(Activity.EntityName).Camelize(), entityName },
+            { nameof(Activity.RecordId).Camelize(), recordId },
+            { nameof(Activity.UserId).Camelize(), userId }
         };
-        if (includeType)
+
+    public static Record Condition(string entityName, long recordId, string userId, string activityType)
+        => new Dictionary<string, object>
         {
-            ret[nameof(Activity.ActivityType).Camelize()] = activityApi.ActivityType;
-        }
-        return ret;
-    }
-    
+            { nameof(Activity.EntityName).Camelize(), entityName },
+            { nameof(Activity.RecordId).Camelize(), recordId },
+            { nameof(Activity.UserId).Camelize(), userId },
+            { nameof(Activity.ActivityType).Camelize(), activityType },
+        };
+   
     public static Query Delete(string userId, long id)
         => new Query(TableName)
             .Where(nameof(Activity.UserId).Camelize(), userId)

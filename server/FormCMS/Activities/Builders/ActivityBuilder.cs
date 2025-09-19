@@ -3,17 +3,16 @@ using FormCMS.Activities.Models;
 using FormCMS.Activities.Services;
 using FormCMS.Activities.Workers;
 using FormCMS.Core.Plugins;
-using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.RelationDbDao;
-using Attribute = FormCMS.Core.Descriptors.Attribute;
+using FormCMS.Utils.ServiceCollectionExt;
 
 namespace FormCMS.Activities.Builders;
 
 public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 {
-    public static IServiceCollection AddActivity(IServiceCollection services, bool enableBuffering)
+    public static IServiceCollection AddActivity(IServiceCollection services, bool enableBuffering, ShardManagerConfig? shardConfig = null)
     {
         services.AddSingleton(ActivitySettingsExtensions.DefaultActivitySettings with
         {
@@ -29,6 +28,7 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         services.AddScoped<IActivityQueryPlugin, ActivityQueryPlugin>();
         services.AddScoped<IBookmarkService, BookmarkService>();
 
+        services.AddScoped<ActivityContext>(sp => new ActivityContext(sp.CreateShardManager(shardConfig)));
         services.AddHostedService<BufferFlushWorker>();
         return services;
     }
@@ -49,6 +49,14 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
         await migrator.EnsureActivityTables();
         await migrator.EnsureBookmarkTables();
+        
+        var context =scope.ServiceProvider.GetRequiredService<ActivityContext>();
+        await context.ShardManager.Execute(async dao =>
+        {
+            var mig = new DatabaseMigrator(dao);
+            await mig.EnsureActivityTables();
+            await mig.EnsureBookmarkTables();
+        });
 
         logger.LogInformation(
             $"""
@@ -61,7 +69,5 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
              *********************************************************
              """);
         return app;
-
-       
     }
 }
