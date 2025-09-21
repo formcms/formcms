@@ -19,6 +19,7 @@ example code can be found at /formCMS/examples
 - for Sqlite: run the SqliteDemo project
 - for SqlServer: run the SqlServerDemo/SqlServerAppHost project
 - for PostgreSQL : run the PostgresDemo/PostgresAppHost project
+- for Mysql : run the MysqlDemo/MysqlAppHost project
 
 Defult login:  
   - Eamil : `samdmin@cms.com`  

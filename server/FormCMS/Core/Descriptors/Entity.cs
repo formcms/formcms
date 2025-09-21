@@ -27,12 +27,13 @@ public record Entity(
     PublicationStatus DefaultPublicationStatus = PublicationStatus.Published,
     
     string PageUrl = "",
-    string BookmarkQuery = "",
-    string BookmarkQueryParamName = "",
-    string BookmarkTitleField = "",
-    string BookmarkSubtitleField ="",
-    string BookmarkImageField="",
-    string BookmarkPublishTimeField =""
+    string TagsQuery = "",
+    string TagsQueryParam = "",
+    string TitleTagField = "",
+    string SubtitleTagField ="",
+    string ContentTagField ="",
+    string ImageTagField="",
+    string PublishTimeTagField =""
 );
 
 public record LoadedEntity(
@@ -51,12 +52,13 @@ public record LoadedEntity(
     int DefaultPageSize,
     PublicationStatus DefaultPublicationStatus,
     string PageUrl,
-    string BookmarkQuery ,
-    string BookmarkQueryParamName ,
-    string BookmarkTitleField ,
-    string BookmarkSubtitleField,
-    string BookmarkImageField,
-    string BookmarkPublishTimeField
+    string TagsQuery,
+    string TagsQueryParam ,
+    string TitleTagField ,
+    string SubtitleTagField,
+    string ContentTagField,
+    string ImageTagField,
+    string PublishTimeTagField
 ); 
 
 public static class EntityConstants
@@ -91,13 +93,14 @@ public static class EntityHelper
             DefaultPublicationStatus:entity.DefaultPublicationStatus,
             UpdatedAtAttribute:updatedAtAttribute,
             PublicationStatusAttribute:publicationStatusAttribute,
+            ContentTagField:entity.ContentTagField,
             PageUrl:entity.PageUrl,
-            BookmarkQuery:entity.BookmarkQuery,
-            BookmarkQueryParamName:entity.BookmarkQueryParamName,
-            BookmarkTitleField:entity.BookmarkTitleField,
-            BookmarkSubtitleField:entity.BookmarkSubtitleField,
-            BookmarkImageField:entity.BookmarkImageField,
-            BookmarkPublishTimeField:entity.BookmarkPublishTimeField
+            TagsQuery:entity.TagsQuery,
+            TagsQueryParam:entity.TagsQueryParam,
+            TitleTagField:entity.TitleTagField,
+            SubtitleTagField:entity.SubtitleTagField,
+            ImageTagField:entity.ImageTagField,
+            PublishTimeTagField:entity.PublishTimeTagField
         );
     }
     public static string[] GetAssets(this LoadedEntity entity, Record record)

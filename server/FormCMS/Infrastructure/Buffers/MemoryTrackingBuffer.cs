@@ -34,7 +34,7 @@ public class MemoryTrackingBuffer<T>(BufferSettings settings) where T : struct
         return ret;
     }
     
-    internal async Task<Dictionary<string,T>> SafeGet(string[] keys, Func<string,Task<T>> getAsync)
+    internal async Task<Dictionary<string,T>> SafeGetOrSet(string[] keys, Func<string,Task<T>> getAsync)
     {
         var ret = new Dictionary<string, T>();
         foreach (var key in keys)
@@ -88,6 +88,19 @@ public class MemoryTrackingBuffer<T>(BufferSettings settings) where T : struct
         return value;
     }
 
+    public  Dictionary<string,T> BatchGet(string[] keys )
+    {
+        var ret = new Dictionary<string,T>();
+        foreach (var key in keys)
+        {
+            if (_cache.TryGetValue(key, out var cachedValue) && cachedValue is T v)
+            {
+                ret[key] = v;
+            }
+        }
+        return ret;
+    }
+    
     private static string GetNextFlushTimeKey(DateTime now)
     {
         var currentMinute = now.TruncateToMinute();

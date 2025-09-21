@@ -12,27 +12,12 @@ namespace FormCMS.Activities.Services;
 
 public class BookmarkService(
     IIdentityService identityService,
-    IEntitySchemaService schemaService,
-    KeyValueCache<long> maxRecordIdCache,
+    IEntityService entityService,
     IContentTagService contentTagService,
-
-    DatabaseMigrator migrator,
     IRelationDbDao dao,
     KateQueryExecutor executor
 ) : IBookmarkService
 {
-    public async Task EnsureBookmarkTables()
-    {
-        await migrator.MigrateTable(BookmarkFolders.TableName, BookmarkFolders.Columns);
-        await migrator.MigrateTable(Bookmarks.TableName, Bookmarks.Columns);
-
-        await dao.CreateForeignKey(
-            Bookmarks.TableName, nameof(Bookmark.FolderId).Camelize(),
-            BookmarkFolders.TableName, nameof(BookmarkFolder.Id).Camelize(),
-            CancellationToken.None
-        );
-    }
-
     public Task<Record[]> Folders(CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
@@ -98,8 +83,7 @@ public class BookmarkService(
                       adding bookmark {entityName} to {newFolderName}""
                       """);
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
-        var entity =
-            await Utils.EnsureEntityRecordExists(schemaService, dao, maxRecordIdCache, entityName, recordId, ct);
+        var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId, ct).Ok();
         var existingFolderIds = await GetFolderIdsByUserAndRecord(userId, entityName, recordId, ct);
 
         var toAdd = newFolderIds.Except(existingFolderIds).ToArray();
@@ -129,8 +113,12 @@ public class BookmarkService(
 
         var count = new ActivityCount(entityName, recordId, Bookmarks.ActivityType, 1);
         await dao.Increase(
-            ActivityCounts.TableName, count.Condition(true),
-            ActivityCounts.CountField, 0,1, ct);
+            ActivityCounts.TableName, 
+            ActivityCounts.Condition(count.EntityName, count.RecordId, count.ActivityType),
+            ActivityCounts.CountField, 
+            0,
+            1, 
+            ct);
     }
 
     public Task DeleteBookmark(long bookmarkId, CancellationToken ct)
@@ -139,14 +127,14 @@ public class BookmarkService(
         return executor.Exec(Bookmarks.Delete(userId, bookmarkId), false, ct);
     }
 
-    private async Task<Bookmark[]> LoadMetaData(Entity entity, Bookmark[] bookmarks, CancellationToken ct)
+    private async Task<Bookmark[]> LoadMetaData(LoadedEntity entity, Bookmark[] bookmarks, CancellationToken ct)
     {
         var ids = bookmarks
             .Select(x => x.RecordId.ToString())
             .ToArray();
         if (ids.Length == 0) return bookmarks;
 
-        var links = await contentTagService.GetContentTags(entity.ToLoadedEntity() , ids, ct);
+        var links = await contentTagService.GetContentTags(entity , ids, ct);
         
         var dict = links.ToDictionary(x => x.RecordId);
         return bookmarks.Select(activity=>

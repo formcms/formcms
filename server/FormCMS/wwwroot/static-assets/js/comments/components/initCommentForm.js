@@ -19,6 +19,7 @@ export function initCommentForm(dataList, render) {
     commentForm.addEventListener('submit', async function (e) {
         e.preventDefault();
         const entityName = commentForm.dataset.entity;
+        console.log({entityName});
         const each = dataList.querySelector('[data-component="foreach"]');
         const recordId = each.getAttribute('__record_id');
         

@@ -58,20 +58,23 @@ public static class ActivityCounts
             nameof(ActivityCount.ActivityType),
             nameof(ActivityCount.Count)
         ]);
-    
-    public static Record Condition(this ActivityCount count,bool includeType)
-    {
-        var ret= new Dictionary<string, object>
+
+    public static Record Condition(string entityName, long recordId)
+        => new Dictionary<string, object>
         {
-            { nameof(ActivityCount.EntityName).Camelize(), count.EntityName },
-            { nameof(ActivityCount.RecordId).Camelize(), count.RecordId }
+            { nameof(ActivityCount.EntityName).Camelize(), entityName },
+            { nameof(ActivityCount.RecordId).Camelize(), recordId }
         };
-        if (includeType)
+
+    public static Record Condition(string entityName, long recordId, string activityType)
+        => new Dictionary<string, object>
         {
-            ret.Add(nameof(ActivityCount.ActivityType).Camelize(), count.ActivityType);
-        }
-        return ret;
-    }
+
+            { nameof(ActivityCount.EntityName).Camelize(), entityName },
+            { nameof(ActivityCount.RecordId).Camelize(), recordId },
+            { nameof(ActivityCount.ActivityType).Camelize(), activityType }
+        };
+
 
     public static Query TopCountItems(string entityName, int offset, int limit)
         => new Query(TableName)

@@ -18,7 +18,7 @@ public class MemoryCountBuffer(BufferSettings settings,ILogger<MemoryCountBuffer
         => Task.FromResult(_buffer.GetAfterLastFlush(lastFlushTime));
 
     public Task<Dictionary<string,long>> Get(string[] keys, Func<string, Task<long>> getCountAsync)
-        => _buffer.SafeGet(keys, getCountAsync);
+        => _buffer.SafeGetOrSet(keys, getCountAsync);
 
     public async Task<long> Increase(string key, long delta, Func<string,Task<long>> getCountAsync)
     {

@@ -19,13 +19,7 @@ public static class SpanConstants
 
 public static class SpanHelper
 {
-    public static void RemoveCursorTags(Record item)
-    {
-        item.Remove(SpanConstants.HasNextPage);
-        item.Remove(SpanConstants.HasPreviousPage);
-        item.Remove(SpanConstants.Cursor);
-    }
-
+   
     private static bool HasNext(Record item)
         => item.TryGetValue(SpanConstants.HasNextPage, out var v) && v is true;
 

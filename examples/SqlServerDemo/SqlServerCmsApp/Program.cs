@@ -1,10 +1,17 @@
 using CmsApp;
 using FormCMS;
+using FormCMS.Activities.Builders;
 using FormCMS.Activities.Models;
 using FormCMS.Activities.Workers;
 using FormCMS.Auth.Models;
+using FormCMS.Cms.Workers;
+using FormCMS.Comments.Builders;
 using FormCMS.Core.Auth;
+using FormCMS.Core.HookFactory;
+using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.EventStreaming;
+using FormCMS.Infrastructure.Fts;
+using FormCMS.Search.Workers;
 using FormCMS.Subscriptions;
 using FormCMS.Utils.ResultExt;
 using FormCMS.Video.Workers;
@@ -14,22 +21,30 @@ using Microsoft.EntityFrameworkCore;
 const string apiKey = "12345";
 var webBuilder = WebApplication.CreateBuilder(args);
 var dbConn = webBuilder.Configuration.GetConnectionString("sqlserver")!;
+if (dbConn.IndexOf("Database") <0 )
+{
+    dbConn += ";Database=cms;";
+}
+webBuilder.WebHost.ConfigureKestrel(option => option.Limits.MaxRequestBodySize = 15 * 1024 * 1024);
 
 // communication between web app and worker app
 webBuilder.AddNatsClient(connectionName:"nats");
 webBuilder.Services.AddSingleton<IStringMessageProducer, NatsMessageBus>();
 
 webBuilder.Services.AddOutputCache();
-webBuilder.AddSqlServerCms(dbConn);
+webBuilder.Services.AddSqlServerCms(dbConn);
 //auth
 webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(dbConn));
 webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, AppDbContext>(new AuthConfig(KeyAuthConfig:new KeyAuthConfig(apiKey)));
 
-// Add built-in CMS features: audit log, activity tracking, comment system
 webBuilder.Services.AddAuditLog();
 webBuilder.Services.AddActivity();
 webBuilder.Services.AddComments();
-webBuilder.Services.AddVideoMessageProducer();
+webBuilder.Services.AddVideo();
+webBuilder.Services.AddCrudMessageProducer(["course"]);
+
+webBuilder.Services.AddScoped<IFullTextSearch, SqlServerFts>();
+webBuilder.Services.AddSearch();
 
 // need to set stripe keys to appsettings.json
 webBuilder.Services.Configure<StripeSettings>(webBuilder.Configuration.GetSection("Stripe"));
@@ -49,14 +64,15 @@ await webApp.UseCmsAsync();
 await webApp.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]).Ok();
 await webApp.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
 
-// =====================
-// Worker Service Setup
-// =====================
 
-// For distributed deployment, background processing (e.g., activity tracking)
-// can be moved to a separate worker service. This section runs in the same process
-// for convenience but can be split into its own deployment.
 var workerBuilder = Host.CreateApplicationBuilder(args);
+workerBuilder.Services.AddScoped<IFullTextSearch,SqlServerFts>();
+
+//worker and web are two independent instances, still need to add cms services
+workerBuilder.Services.AddSqlServerCms(dbConn);
+workerBuilder.Services.AddActivity();
+workerBuilder.Services.AddComments();
+workerBuilder.Services.AddSearch();
 
 // communication between web app and worker app
 // web app-> worker app
@@ -71,8 +87,35 @@ workerBuilder.Services.AddSingleton(ActivitySettingsExtensions.DefaultActivitySe
 workerBuilder.Services.AddHostedService<ActivityEventHandler>();
 workerBuilder.Services.AddHostedService<FFMpegWorker>();
 
+
+workerBuilder.Services.AddSingleton( new FtsSettings(["course"]));
+workerBuilder.Services.AddHostedService<FtsIndexingMessageHandler>();
+
+workerBuilder.Services.AddSingleton(new EmitMessageWorkerOptions(30));
+workerBuilder.Services.AddHostedService<EmitMessageHandler>();
+
+workerBuilder.Services.AddSingleton(new ExportWorkerOptions(30));
+workerBuilder.Services.AddHostedService<ExportWorker>();
+
+workerBuilder.Services.AddSingleton(new ImportWorkerOptions(30));
+workerBuilder.Services.AddHostedService<ImportWorker>();
+
+workerBuilder.Services.AddSingleton(new DataPublishingWorkerOptions(30));
+workerBuilder.Services.AddHostedService<DataPublishingWorker>();
+
+workerBuilder.Services.AddSingleton<IStringMessageProducer, NatsMessageBus>();
+var workerApp = workerBuilder.Build();
+var hookRegistry = workerApp.Services.GetRequiredService<HookRegistry>();
+var pluginRegistry = workerApp.Services.GetRequiredService<PluginRegistry>();
+var activitySettings = workerApp.Services.GetRequiredService<ActivitySettings>();
+hookRegistry.RegisterActivityHooks();
+hookRegistry.RegisterCommentsHooks();
+
+pluginRegistry.RegisterActivityPlugins(activitySettings);
+pluginRegistry.RegisterCommentPlugins();
+
 // Run both the web application and the background worker concurrently
 await Task.WhenAll(
     webApp.RunAsync(),
-    workerBuilder.Build().RunAsync()
+    workerApp.RunAsync()
 );

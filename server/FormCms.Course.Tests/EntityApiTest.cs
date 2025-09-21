@@ -16,11 +16,11 @@ namespace FormCMS.Course.Tests;
 public class EntityApiTest(AppFactory factory)
 {
     private const string Name = "name";
-    private readonly string _post = "post_" + Ulid.NewUlid();
-    private readonly string _author = "author_" + Ulid.NewUlid();
-    private readonly string _tag = "tag_" + Ulid.NewUlid();
-    private readonly string _attachment = "att_" + Ulid.NewUlid();
-    private readonly string _category = "cat_" + Ulid.NewUlid();
+    private readonly string _post = "post_" + Util.UniqStr();
+    private readonly string _author = "author_" + Util.UniqStr();
+    private readonly string _tag = "tag_" + Util.UniqStr();
+    private readonly string _attachment = "att_" + Util.UniqStr();
+    private readonly string _category = "cat_" + Util.UniqStr();
 
     private static readonly string[] Payload = ["a", "b", "c"];
     private bool _ = factory.LoginAndInitTestData();

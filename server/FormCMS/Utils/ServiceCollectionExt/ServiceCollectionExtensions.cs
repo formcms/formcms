@@ -1,23 +1,16 @@
 using FormCMS.Infrastructure.RelationDbDao;
 using Microsoft.Data.Sqlite;
-using NATS.Client.Core;
 using Npgsql;
 using Microsoft.Data.SqlClient;
+using MySqlConnector;
 
 namespace FormCMS.Utils.ServiceCollectionExt;
-public enum DatabaseProvider
-{
-    Sqlite,
-    Postgres,
-    SqlServer,
-}
-public enum MessagingProvider
-{
-    Nats,
-    Kafka,
-}
+
+
 public static class ServiceCollectionExtensions
 {
+
+
     public  static IServiceCollection  AddDao(this IServiceCollection services, DatabaseProvider databaseProvider, string connectionString)
     {
         _ = databaseProvider switch
@@ -25,6 +18,7 @@ public static class ServiceCollectionExtensions
             DatabaseProvider.Sqlite => AddSqliteDbServices(),
             DatabaseProvider.Postgres => AddPostgresDbServices(),
             DatabaseProvider.SqlServer => AddSqlServerDbServices(),
+            DatabaseProvider.Mysql => AddMysqlDbServices(),
             _ => throw new Exception("unsupported database provider")
         };
 
@@ -48,6 +42,14 @@ public static class ServiceCollectionExtensions
             services.AddScoped<IRelationDbDao, PostgresDao>();
             return services;
         }
+        
+        IServiceCollection AddMysqlDbServices()
+        {
+            services.AddScoped(_ => new MySqlConnection(connectionString));
+            services.AddScoped<IRelationDbDao, MySqlDao>();
+            return services;
+        }
+
         return services;
     }
 }

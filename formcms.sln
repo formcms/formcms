@@ -33,6 +33,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostgresAppHost", "examples
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PostgresWebApp", "examples\PostgresDemo\PostgresWebApp\PostgresWebApp.csproj", "{C8BB873C-C0D9-467C-92A2-5353EED97BF5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MysqlAppHost", "examples\MysqlDemo\MysqlAppHost\MysqlAppHost.csproj", "{F5382A1D-4C8E-4028-8756-558E029ED158}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MysqlWebApp", "examples\MysqlDemo\MysqlWebApp\MysqlWebApp.csproj", "{314DEA26-288C-48D5-A5EF-C8005394248B}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,6 +103,14 @@ Global
 		{C8BB873C-C0D9-467C-92A2-5353EED97BF5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C8BB873C-C0D9-467C-92A2-5353EED97BF5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C8BB873C-C0D9-467C-92A2-5353EED97BF5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F5382A1D-4C8E-4028-8756-558E029ED158}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F5382A1D-4C8E-4028-8756-558E029ED158}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F5382A1D-4C8E-4028-8756-558E029ED158}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F5382A1D-4C8E-4028-8756-558E029ED158}.Release|Any CPU.Build.0 = Release|Any CPU
+		{314DEA26-288C-48D5-A5EF-C8005394248B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{314DEA26-288C-48D5-A5EF-C8005394248B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{314DEA26-288C-48D5-A5EF-C8005394248B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{314DEA26-288C-48D5-A5EF-C8005394248B}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

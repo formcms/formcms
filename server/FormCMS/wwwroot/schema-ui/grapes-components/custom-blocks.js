@@ -19,6 +19,7 @@ import {comments} from "./blocks/comments.js";
 import {video} from "./blocks/video.js";
 import {notificationBell} from "./blocks/notification-bell.js";
 import {userAvatar} from "./blocks/user-avatar.js";
+import {searchBar} from "./blocks/search-bar.js";
 
 export function addCustomBlocks(editor){
     for (const {name, label, media, content, category} of customBlocks){
@@ -35,6 +36,7 @@ export const customBlocks = [
     contentB,
     ecommerceA,
     headerB,
+    searchBar,
     heroB,
     listA,
     threeLayerMenu,

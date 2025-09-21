@@ -45,7 +45,7 @@ public class VariableTest(QueryApiClient client, string queryName)
                                id,title
                            }
                         }
-                        """.GraphQlQuery<JsonElement>(client, new { title = "title-11" }).Ok();
+                        """.GraphQlQuery<JsonElement>(client, new { title = "title -11" }).Ok();
         SimpleAssert.AreEqual(11, e.Id());
     }
 
@@ -57,7 +57,7 @@ public class VariableTest(QueryApiClient client, string queryName)
                                id,title
                            }
                         }
-                        """.GraphQlQuery<JsonElement>(client, new { title = "Title-11" }).Ok();
+                        """.GraphQlQuery<JsonElement>(client, new { title = "Title -11" }).Ok();
         SimpleAssert.AreEqual(11, e.Id());
     }
     public async Task Sort()

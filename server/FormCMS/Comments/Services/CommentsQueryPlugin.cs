@@ -38,15 +38,15 @@ public class CommentsQueryPlugin(
                 var record = new Dictionary<string, object>
                 {
                     [CommentHelper.Entity.PrimaryKey] = rec.StrOrEmpty(nameof(Comment.Id).Camelize()),
-                    [CommentHelper.Entity.BookmarkTitleField] = rec.StrOrEmpty(nameof(Comment.Content).Camelize()),
-                    [CommentHelper.Entity.BookmarkImageField] = tag.Image,
+                    [CommentHelper.Entity.TitleTagField] = rec.StrOrEmpty(nameof(Comment.Content).Camelize()),
+                    [CommentHelper.Entity.ImageTagField] = tag.Image,
                     [CommentHelper.Entity.PageUrl] = tag.Url+"?comment_id=",
-                    [CommentHelper.Entity.BookmarkSubtitleField] = tag.Subtitle,
+                    [CommentHelper.Entity.SubtitleTagField] = tag.Subtitle,
                 };
 
                 if (tag.PublishedAt is not null)
                 {
-                    record[CommentHelper.Entity.BookmarkPublishTimeField] = tag.PublishedAt;
+                    record[CommentHelper.Entity.PublishTimeTagField] = tag.PublishedAt;
                 }
                 
                 ret.Add(record);

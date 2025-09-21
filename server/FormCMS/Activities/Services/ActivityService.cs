@@ -4,6 +4,7 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
 
@@ -69,4 +70,5 @@ public class ActivityService(
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
         return executor.Exec(Models.Activities.Delete(userId, id), false,ct);
     }
+
 }

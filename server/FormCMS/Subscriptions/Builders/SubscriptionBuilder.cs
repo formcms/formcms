@@ -44,16 +44,15 @@ namespace FormCMS.Subscriptions.Builders
 
         public async Task<WebApplication> UseStripeSubscriptions(WebApplication app)
         {
-            logger.LogInformation(
-                """
-                *********************************************************
-                Using Subscription  Services
-                *********************************************************
-                """
-            );
+            logger.LogInformation("""
+                                  *********************************************************
+                                  Using Subscription  Services
+                                  *********************************************************
+                                  """);
             RegisterHooks();
             await MigrateTables();
             MapApis();
+
 
             return app;
 

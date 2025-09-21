@@ -13,7 +13,6 @@ async function loadNotificationCount(button) {
     const user = await fetchUser();
     if (!user) {
         button.style.display = 'none';
-        console.log("not logged in");
         return;
     }
     try {

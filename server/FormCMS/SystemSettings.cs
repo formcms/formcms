@@ -1,7 +1,21 @@
 using FormCMS.Infrastructure.FileStore;
 
 namespace FormCMS;
+public enum DatabaseProvider
+{
+    Sqlite,
+    Postgres,
+    SqlServer,
+    Mysql,
+}
 
+public enum FtsProvider
+{
+    Mysql,
+    Postgres,
+    Sql,
+    ElasticSearch,
+}
 public class ImageCompressionOptions
 {
     public int MaxWidth { get; set; } = 1200;
@@ -19,8 +33,6 @@ public sealed class SystemSettings
     public const string PageCachePolicyName = "CmsPageCachePolicy";
     public const string QueryCachePolicyName = "CmsQueryCachePolicy";
     public const string FormCmsContentRoot = "/_content/FormCMS";
-
-    public int MaxRequestBodySize { get; set; } = 1024 * 1024 * 5;
 
     public string AdminRoot { get; set; } = FormCmsContentRoot + "/admin";
     public string SchemaRoot { get; set; } = FormCmsContentRoot + "/schema-ui";

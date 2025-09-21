@@ -1,7 +1,3 @@
-using System;
-using System.IO;
-using System.Net.Http;
-using System.Threading.Tasks;
 using Bogus;
 using FormCMS.Activities.ApiClient;
 using FormCMS.AuditLogging.ApiClient;
@@ -12,10 +8,7 @@ using FormCMS.CoreKit.Test;
 using FormCMS.Notify.ApiClient;
 using FormCMS.Subscriptions.ApiClient;
 using FormCMS.Utils.EnumExt;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Extensions.Configuration;
-using Xunit;
 
 namespace FormCMS.Course.Tests;
 
@@ -47,6 +40,8 @@ public class AppFactory : WebApplicationFactory<Program>
     public AppFactory()
     {
         Environment.SetEnvironmentVariable("EnableActivityBuffer", "false");
+        Environment.SetEnvironmentVariable("FtsSettings__FtsEntities__0", TestEntityNames.TestPost.Camelize());
+
         SetTestConnectionString();
         _httpClient = CreateClient(new WebApplicationFactoryClientOptions
         {
@@ -89,14 +84,14 @@ public class AppFactory : WebApplicationFactory<Program>
     {
         (string, string)[] settings =
         [
-            (
-                "DatabaseProvider",
-                "SqlServer"
-            ),
-            (
-                "ConnectionStrings__SqlServer",
-                $"Server=localhost;Database=cms_integration_tests;User Id=sa;Password=Admin12345678!;TrustServerCertificate=True;MultipleActiveResultSets=True;"
-            )
+            // (
+            //     "DatabaseProvider",
+            //     "SqlServer"
+            // ),
+            // (
+            //     "ConnectionStrings__SqlServer",
+            //     $"Server=localhost;Database=cms_integration_tests;User Id=sa;Password=Admin12345678!;TrustServerCertificate=True;MultipleActiveResultSets=True;"
+            // )
             // (
             //     "DatabaseProvider",
             //     "Sqlite"

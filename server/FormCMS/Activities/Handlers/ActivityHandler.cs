@@ -43,13 +43,21 @@ public static class ActivityHandler
             IActivityService s
         ) => s.Delete(id, ct));
 
+        builder.MapGet("/status/{entityName}/{activity}", (
+            string entityName,
+            string activity,
+            long[] id,
+            IActivityCollectService s,
+            CancellationToken ct
+        ) => s.GetCurrentUserActiveStatus(entityName,activity,id, ct));
+        
         builder.MapGet("/{entityName}/{recordId:long}", (
             string entityName,
             long recordId,
             IActivityCollectService s,
             HttpContext http, // Inject HttpContext
             CancellationToken ct
-        ) => s.Get(UserId(http), entityName, recordId, ct));
+        ) => s.GetSetActiveCount(UserId(http), entityName, recordId, ct));
 
         builder.MapPost("/toggle/{entityName}/{recordId:long}", (
             string entityName,

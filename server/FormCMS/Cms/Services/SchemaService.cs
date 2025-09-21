@@ -8,7 +8,6 @@ using Humanizer;
 namespace FormCMS.Cms.Services;
 
 public sealed class SchemaService(
-    DatabaseMigrator migrator,
     KateQueryExecutor queryExecutor,
     HookRegistry hook,
     IServiceProvider provider
@@ -170,7 +169,6 @@ public sealed class SchemaService(
         await Save(menuBarSchema, true, ct);
     }
 
-    public Task EnsureSchemaTable() => migrator.MigrateTable(SchemaHelper.TableName, SchemaHelper.Columns);
 
     public async Task RemoveEntityInTopMenuBar(Entity entity, CancellationToken ct)
     {

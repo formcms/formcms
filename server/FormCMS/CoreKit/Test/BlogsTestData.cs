@@ -66,6 +66,21 @@ public static class BlogsTestData
 
     public static async Task PopulateData(EntityApiClient client, AssetApiClient assetClient, QueryApiClient queryClient)
     {
+        //populate query first, crud message handler might use this query 
+        await $$$"""
+                 query {{{TestEntityNames.TestPost.Camelize()}}}TagsQuery (${{{TestFieldNames.Id.Camelize()}}}:Int){
+                      {{{TestEntityNames.TestPost.Camelize()}}}List({{{TestFieldNames.Id.Camelize()}}}Set: [${{{TestFieldNames.Id.Camelize()}}}] ){
+                          {{{TestFieldNames.Id.Camelize()}}}, 
+                          {{{TestFieldNames.Title.Camelize()}}}, 
+                          {{{TestFieldNames.Abstract.Camelize()}}},
+                          {{{TestFieldNames.Body.Camelize()}}},
+                          {{{TestFieldNames.Abstract.Camelize()}}},
+                          {{{TestFieldNames.Image.Camelize()}}}{url},
+                          {{{DefaultAttributeNames.PublishedAt.Camelize()}}}
+                      }
+                 }
+                 """.GraphQlQuery(queryClient).Ok();
+        
         var list = new List<(string,byte[])>();
         for (var i = 0; i < 100; i++)
         {
@@ -81,24 +96,13 @@ public static class BlogsTestData
             }
         }, async data =>
         {
-            //var items = data.TargetIds.Select(x => new { id = x });
             foreach (var dataTargetId in data.TargetIds)
             {
                 await client.JunctionAdd(data.EntityName, data.Attribute, data.SourceId, dataTargetId).Ok();
             }
         });
 
-        await $$"""
-                query {{TestEntityNames.TestPost.Camelize()}}QueryActivityBookmark (${{TestFieldNames.Id.Camelize()}}:Int){
-                     {{TestEntityNames.TestPost.Camelize()}}List({{TestFieldNames.Id.Camelize()}}Set: [${{TestFieldNames.Id.Camelize()}}] ){
-                         {{TestFieldNames.Id.Camelize()}}, 
-                         {{TestFieldNames.Title.Camelize()}}, 
-                         {{TestFieldNames.Abstract.Camelize()}},
-                         {{TestFieldNames.Image.Camelize()}}{url},
-                         {{DefaultAttributeNames.PublishedAt.Camelize()}}
-                     }
-                }
-                """.GraphQlQuery(queryClient).Ok();
+       
     }
 
     public static async Task PopulateData(int startId, int count, string[]assetPaths, 
@@ -189,7 +193,7 @@ public static class BlogsTestData
         var returnValue = new Dictionary<string, object>();
         foreach (var field in fields)
         {
-            returnValue.Add(field.Camelize(), $"{field}-{i}");
+            returnValue.Add(field.Camelize(), $"{field} -{i}");
         }
         returnValue[DefaultAttributeNames.PublicationStatus.Camelize()] =PublicationStatus.Published.Camelize();
         returnValue[DefaultAttributeNames.PublishedAt.Camelize()] = DateTime.UtcNow;
@@ -312,12 +316,13 @@ public static class BlogsTestData
             DefaultPublicationStatus: PublicationStatus.Published,
 
             PageUrl: "/" + TestEntityNames.TestPost.Camelize() + "/",
-            BookmarkQuery: TestEntityNames.TestPost.Camelize() + "QueryActivityBookmark",
-            BookmarkQueryParamName: TestFieldNames.Id.Camelize(),
-            BookmarkTitleField: TestFieldNames.Title.Camelize(),
-            BookmarkImageField: TestFieldNames.Image.Camelize(),
-            BookmarkSubtitleField: TestFieldNames.Abstract.Camelize(),
-            BookmarkPublishTimeField: DefaultAttributeNames.PublishedAt.Camelize()
+            TagsQuery: TestEntityNames.TestPost.Camelize() + "TagsQuery",
+            TagsQueryParam: TestFieldNames.Id.Camelize(),
+            TitleTagField: TestFieldNames.Title.Camelize(),
+            ImageTagField: TestFieldNames.Image.Camelize(),
+            SubtitleTagField: TestFieldNames.Abstract.Camelize(),
+            ContentTagField: TestFieldNames.Body.Camelize(),
+            PublishTimeTagField: DefaultAttributeNames.PublishedAt.Camelize()
         )
     ];
 }

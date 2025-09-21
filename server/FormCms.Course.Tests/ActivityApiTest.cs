@@ -11,7 +11,7 @@ public class ActivityApiTest(AppFactory factory)
 {
     private bool _ = factory.LoginAndInitTestData();
     private const long RecordId = 21;
-    private readonly string _queryName = "qry_query_" + Ulid.NewUlid();
+    private readonly string _queryName = "qry_query_" + Util.UniqStr();
 
     [Fact]
     public async Task ActivityCountNotEmpty()
@@ -45,6 +45,14 @@ public class ActivityApiTest(AppFactory factory)
         //page count
         var pageCount = await factory.ActivityApi.PageCounts().Ok();
         Assert.True(pageCount.Length > 0);
+    }
+
+    [Fact]
+    public async Task BatchGetActivityStatusOK()
+    {
+        await factory.ActivityApi.Toggle(TestEntityNames.TestPost.Camelize(), RecordId, "like", true).Ok();
+        var liked = await factory.ActivityApi.BatchGetActivityStatus(TestEntityNames.TestPost.Camelize(), "like",[RecordId]).Ok();
+        Assert.True(liked.Length > 0);
     }
     
     [Fact]

@@ -10,6 +10,7 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Identities;
 using FormCMS.Core.Plugins;
+using FormCMS.Core.Tasks;
 using FormCMS.Infrastructure.Cache;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
@@ -20,9 +21,12 @@ using FormCMS.Utils.PageRender;
 using FormCMS.Utils.ResultExt;
 using FormCMS.Utils.ServiceCollectionExt;
 using GraphQL;
+using Humanizer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Migrations.Internal;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Schema = FormCMS.Cms.Graph.Schema;
 
@@ -36,7 +40,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
 {
 
     public static IServiceCollection AddCms(
-        WebApplicationBuilder builder,
+        IServiceCollection services,
         DatabaseProvider databaseProvider,
         string connectionString,
         Action<SystemSettings>? optionsAction = null
@@ -45,10 +49,6 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         var systemSettings = new SystemSettings();
         optionsAction?.Invoke(systemSettings);
 
-        builder.WebHost.ConfigureKestrel(option =>
-            option.Limits.MaxRequestBodySize = systemSettings.MaxRequestBodySize);
-        
-        var services = builder.Services;
         services.AddSingleton<CmsBuilder>();
         
         //only set options to FormCMS enum types.
@@ -125,6 +125,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             services.AddScoped<IPageService, PageService>();
 
             services.AddScoped<IIdentityService, DummyIdentityService>();
+            services.AddScoped<IUserManageService, DummyUserManageService>();
 
             services.AddHttpClient(); //needed by task service
             services.AddScoped<ITaskService, TaskService>();
@@ -213,8 +214,11 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
     public async Task UseCmsAsync(WebApplication app)
     {
         var settings = app.Services.GetRequiredService<SystemSettings>();
+        using var serviceScope = app.Services.CreateScope();
+        await serviceScope.ServiceProvider.GetRequiredService<DatabaseMigrator>().EnsureCmsTables(); 
+        await Seed(serviceScope);
+        
         PrintVersion();
-        await InitTables();
         if (settings.EnableClient)
         {
             app.UseStaticFiles(
@@ -332,18 +336,10 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             );
         }
 
-        async Task InitTables()
+        async Task Seed(IServiceScope scope)
         {
-            using var serviceScope = app.Services.CreateScope();
-
-            var schemaService = serviceScope.ServiceProvider.GetRequiredService<ISchemaService>();
-            await schemaService.EnsureSchemaTable();
+            var schemaService = scope.ServiceProvider.GetRequiredService<ISchemaService>();
             await schemaService.EnsureTopMenuBar(CancellationToken.None);
-
-            await serviceScope.ServiceProvider.GetRequiredService<ITaskService>().EnsureTable();
-            await serviceScope.ServiceProvider.GetRequiredService<IAssetService>().EnsureTable();
-            await serviceScope.ServiceProvider.GetRequiredService<IAssetService>().EnsureTable();
-            await serviceScope.ServiceProvider.GetRequiredService<IChunkUploadService>().EnsureTable();
         }
 
         void UseExceptionHandler()
