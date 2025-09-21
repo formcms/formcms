@@ -12,6 +12,7 @@ where TArgs: BaseArgs
     public async Task<TArgs> Trigger(IServiceProvider provider, TArgs hookArgs)
     {
         var (method, args) = PrepareArgument(provider, t =>
+        
         {
             return t switch
             {

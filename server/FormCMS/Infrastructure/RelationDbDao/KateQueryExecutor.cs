@@ -91,6 +91,15 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
       return Exec(query,false);
    }
 
+    public Task Update(long id, string tableName, Record record)
+    {
+        if(record == null) return Task.CompletedTask;
+        var cols = record.Select(x=> x.Key);
+        var values = record.Select(kv => kv.Value);
+        var query = new Query(tableName).Where("id",id).AsUpdate(cols, values);
+        return Exec(query,false);
+    }
+
    public async Task<long> Exec(
       Query query, bool getScalarValue, CancellationToken ct = default
    ) => await provider.ExecuteKateQuery(async (db, tx)
