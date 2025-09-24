@@ -91,7 +91,7 @@ public class ActivityCollectService(
         var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
         var ret = new Dictionary<string, ActiveCount>();
         foreach (var pair in await SetStatusCount(identityService.GetUserAccess()?.Id ?? cookieUserId,entity,entityName,
-                     recordId, settings.CommandAutoRecordActivities.ToArray(), ct))
+                     recordId, [..settings.CommandAutoRecordActivities], ct))
         {
             ret[pair.Key] = new ActiveCount(true, pair.Value);
         }

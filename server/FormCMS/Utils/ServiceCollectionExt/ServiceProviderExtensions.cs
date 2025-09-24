@@ -9,7 +9,7 @@ namespace FormCMS.Utils.ServiceCollectionExt;
 public static class ServiceProviderExtensions
 {
    
-    public static ShardManager CreateShardManager(this IServiceProvider? sp, ShardManagerConfig? shardConfig)
+    public static ShardManager CreateShardManager(this IServiceProvider sp, ShardManagerConfig? shardConfig)
     {
         if (shardConfig == null)
         {
