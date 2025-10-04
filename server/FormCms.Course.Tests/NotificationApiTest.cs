@@ -9,14 +9,13 @@ namespace FormCMS.Course.Tests;
 public class NotificationApiTest(AppFactory factory)
 {
     private bool _ = factory.LoginAndInitTestData();
-    private const long RecordId = 31;
 
     [Fact]
     public async Task ListNotification()
     {
         var comment = new Comment(
             EntityName:TestEntityNames.TestPost.Camelize(),
-            RecordId: RecordId,
+            RecordId: BlogsTestData.NotificationTestPostId,
             CreatedBy:"",
             Content:"test"
         );

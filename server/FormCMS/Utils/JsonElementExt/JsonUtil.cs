@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace FormCMS.Utils.jsonElementExt;
 
-public static class JasonElementExtensions
+public static class JsonElementExtensions
 {
    public static Dictionary<string, object> ToDictionary(this JsonElement element)
    {

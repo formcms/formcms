@@ -23,9 +23,4 @@ public class DummyIdentityService(PluginRegistry registry): IIdentityService
             RestrictedReadWriteEntities:[]
         );
     }
-
-    public Task<PublicUserInfo[]> GetPublicUserInfos(IEnumerable<string> userIds, CancellationToken ct)
-    {
-        throw new NotImplementedException();
-    }
 }
