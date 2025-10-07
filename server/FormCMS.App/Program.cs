@@ -14,7 +14,8 @@ builder.Services.AddOutputCache(cacheOption =>
     cacheOption.AddPolicy(SystemSettings.QueryCachePolicyName,
         b => b.NoCache());
 });
-builder.Services.AddPostgresCms("Host=localhost;Database=formcms;Username=cmsuser;Password=Admin12345678!;");
+// builder.Services.AddPostgresCms("Host=localhost;Database=formcms;Username=cmsuser;Password=Admin12345678!;");
+builder.Services.AddPostgresCms("Host=host.docker.internal;Database=formcms;Username=cmsuser;Password=Admin12345678!;");
 var app = builder.Build();
 await app.UseCmsAsync();
 
@@ -44,7 +45,7 @@ async Task CreateContentType()
 
 async Task SeedData()
 {
-    for (var i = 0; i < 1; i++)
+    for (var i = 0; i < 1000; i++)
     {
         var cats = await SeedItems("category",i* 1000, 10);
         var tags = await SeedItems("tag",i* 1000, 100);
@@ -83,6 +84,6 @@ async Task SeedPost(int start, int count, long[]tags, long[] categories)
             .Select(x => new Dictionary<string, object> { { "id", x } }.ToJsonElement())
             .ToArray();
         
-        await entityService.JunctionSave("post",rec["id"].ToString(),"tag",tagElements,CancellationToken.None);
+        await entityService.JunctionSave("post",rec["id"].ToString(),"category",categoryElements,CancellationToken.None);
     }   
 }

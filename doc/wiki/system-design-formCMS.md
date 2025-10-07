@@ -2,8 +2,8 @@
 # Problem and Scope: (5 min)
 New website, course, repetitive work
 Design a CMS related backend framework, (add number)
-- high performance, 
-- scalable 
+- high performance :latency of complex query(5 tables join), p95:within 100 ms, though put: 1000 qps with 100 vu
+- scalable: 
 - extendable 
 
 # High level (20)
@@ -47,8 +47,9 @@ extend the system:
 - Overwrite interface implementation in container
 
 # Wrap up (5)
-strapi vs formCMS
-formCMS vs Hasura
-formCms vs orchard
-
+formCMS vs Hasura vs orchard
+            query 10 page(p95)  query 10 page(100vu)  filter by tagId(p95)  filter by tagId(100vu)
+formCms     58.37ms              1904.453386           39.61ms                  2854.416212/s
+hasura      51.5ms               2148.805369           47.58ms                  2544.196201/s
+orchard     2.3s                 30.158167
 

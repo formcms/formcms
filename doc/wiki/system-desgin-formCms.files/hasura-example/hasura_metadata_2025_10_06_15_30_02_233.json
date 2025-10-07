@@ -1,0 +1,278 @@
+{
+  "resource_version": 16,
+  "metadata": {
+    "version": 3,
+    "sources": [
+      {
+        "name": "default",
+        "kind": "postgres",
+        "tables": [
+          {
+            "table": {
+              "name": "__assetLinks",
+              "schema": "public"
+            }
+          },
+          {
+            "table": {
+              "name": "__assets",
+              "schema": "public"
+            }
+          },
+          {
+            "table": {
+              "name": "__schemas",
+              "schema": "public"
+            }
+          },
+          {
+            "table": {
+              "name": "__tasks",
+              "schema": "public"
+            }
+          },
+          {
+            "table": {
+              "name": "__upload_sessions",
+              "schema": "public"
+            }
+          },
+          {
+            "table": {
+              "name": "category",
+              "schema": "public"
+            },
+            "array_relationships": [
+              {
+                "name": "category_posts",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "categoryId",
+                    "table": {
+                      "name": "category_post",
+                      "schema": "public"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "name": "category_post",
+              "schema": "public"
+            },
+            "object_relationships": [
+              {
+                "name": "category",
+                "using": {
+                  "foreign_key_constraint_on": "categoryId"
+                }
+              },
+              {
+                "name": "post",
+                "using": {
+                  "foreign_key_constraint_on": "postId"
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "name": "post",
+              "schema": "public"
+            },
+            "array_relationships": [
+              {
+                "name": "category_posts",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "postId",
+                    "table": {
+                      "name": "category_post",
+                      "schema": "public"
+                    }
+                  }
+                }
+              },
+              {
+                "name": "post_tags",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "postId",
+                    "table": {
+                      "name": "post_tag",
+                      "schema": "public"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "name": "post_tag",
+              "schema": "public"
+            },
+            "object_relationships": [
+              {
+                "name": "post",
+                "using": {
+                  "foreign_key_constraint_on": "postId"
+                }
+              },
+              {
+                "name": "tag",
+                "using": {
+                  "foreign_key_constraint_on": "tagId"
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "name": "tag",
+              "schema": "public"
+            },
+            "array_relationships": [
+              {
+                "name": "post_tags",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "tagId",
+                    "table": {
+                      "name": "post_tag",
+                      "schema": "public"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "name": "testAttachments",
+              "schema": "public"
+            }
+          },
+          {
+            "table": {
+              "name": "testAuthor_testPost",
+              "schema": "public"
+            }
+          },
+          {
+            "table": {
+              "name": "testAuthors",
+              "schema": "public"
+            }
+          },
+          {
+            "table": {
+              "name": "testCategories",
+              "schema": "public"
+            }
+          },
+          {
+            "table": {
+              "name": "testPost_testTag",
+              "schema": "public"
+            },
+            "object_relationships": [
+              {
+                "name": "testPost",
+                "using": {
+                  "foreign_key_constraint_on": "testPostId"
+                }
+              },
+              {
+                "name": "testTag",
+                "using": {
+                  "foreign_key_constraint_on": "testTagId"
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "name": "testPosts",
+              "schema": "public"
+            },
+            "array_relationships": [
+              {
+                "name": "testPost_testTags",
+                "using": {
+                  "foreign_key_constraint_on": {
+                    "column": "testPostId",
+                    "table": {
+                      "name": "testPost_testTag",
+                      "schema": "public"
+                    }
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "table": {
+              "name": "testTags",
+              "schema": "public"
+            }
+          }
+        ],
+        "configuration": {
+          "connection_info": {
+            "database_url": {
+              "from_env": "HASURA_GRAPHQL_DATABASE_URL"
+            },
+            "isolation_level": "read-committed",
+            "pool_settings": {
+              "connection_lifetime": 600,
+              "idle_timeout": 180,
+              "max_connections": 50,
+              "retries": 1
+            },
+            "use_prepared_statements": true
+          }
+        }
+      }
+    ],
+    "query_collections": [
+      {
+        "name": "allowed-queries",
+        "definition": {
+          "queries": [
+            {
+              "name": "query_by_tag",
+              "query": "query query1 {\n  post(limit: 20, order_by: {id: desc}, where: {post_tags: {tag: {id: {_eq: 100247}}}}) {\n    id\n    name\n    post_tags {\n      tag {\n        id\n        name\n      }\n    }\n    category_posts {\n      category {\n        id\n        name\n      }\n    }\n  }\n}"
+            }
+          ]
+        }
+      }
+    ],
+    "allowlist": [
+      {
+        "collection": "allowed-queries",
+        "scope": {
+          "global": true
+        }
+      }
+    ],
+    "rest_endpoints": [
+      {
+        "comment": "",
+        "definition": {
+          "query": {
+            "collection_name": "allowed-queries",
+            "query_name": "query_by_tag"
+          }
+        },
+        "methods": [
+          "GET"
+        ],
+        "name": "query_by_tag",
+        "url": "query1"
+      }
+    ]
+  }
+}
