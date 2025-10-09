@@ -1,11 +1,17 @@
 using FormCMS;
+using FormCMS.Auth.Models;
+using FormCMS.Auth.Services;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+var connectionString = "Host=host.docker.internal;Database=formcmssocial;Username=cmsuser;Password=Admin12345678!;";
+
 builder.Services.AddOutputCache(cacheOption =>
 {
     cacheOption.AddBasePolicy(policyBuilder => policyBuilder.NoCache());
@@ -14,76 +20,58 @@ builder.Services.AddOutputCache(cacheOption =>
     cacheOption.AddPolicy(SystemSettings.QueryCachePolicyName,
         b => b.NoCache());
 });
-// builder.Services.AddPostgresCms("Host=localhost;Database=formcms;Username=cmsuser;Password=Admin12345678!;");
-builder.Services.AddPostgresCms("Host=host.docker.internal;Database=formcms;Username=cmsuser;Password=Admin12345678!;");
+builder.Services.AddPostgresCms(connectionString);
+builder.Services.AddDbContext<CmsDbContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(new AuthConfig());
+builder.Services.AddActivity();
 var app = builder.Build();
+
 await app.UseCmsAsync();
 
-
-using var scope = app.Services.CreateScope();
-var entitySchemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
-var entityService = scope.ServiceProvider.GetRequiredService<IEntityService>();
-
-// await CreateContentType();
-// await SeedData();
+// await app.EnsureCmsUser("sa@cms.com", "Admin1!", [Roles.Sa]).Ok();
+// app.EnsureCmsUser("admin")
+// for (var i = 0; i < 1000; i++)
+// {
+//     await SeedArticles(i * 1000, 1000);
+// }
 app.Run();
-return ;
+return;
 
-async Task CreateContentType()
+
+
+
+async Task SeedUsers(int count)
 {
-    var cat = EntityHelper.CreateSimpleEntity("category", "title", false);
-    await entitySchemaService.AddOrUpdateByName(cat,true,CancellationToken.None);
+    var indices = Enumerable.Range(1, count);
+    await Parallel.ForEachAsync(
+        indices,
+        new ParallelOptions { MaxDegreeOfParallelism = 100 },
+        async (i, ct) =>
+        {
+            // Each worker creates its own scope
+            using var scope = app.Services.CreateScope();
+            var accountService = scope.ServiceProvider.GetRequiredService<IAccountService>();
+
+            await accountService.EnsureUser($"cmsuser{i}@cms121.com", "User1234!", [], false).Ok();
+        });
+}
+
+async Task SeedArticles(int start, int count)
+{
     
-    var t = EntityHelper.CreateSimpleEntity("tag", "title", false);
-    await entitySchemaService.AddOrUpdateByName(t,true,CancellationToken.None);
+    var records = new List<IDictionary<string, object>>();
+    for (var i = 0; i < count; i++)
+    {
+        var rec = new Dictionary<string, object>
+        {
+            { "title", "title " + (start + i + 1) },
+            { "subtitle", "sub title " + (start + i + 1) },
+            { "image", "https://placehold.co/600x400" }
+        };
+        records.Add(rec);
+    }
     
-    var p = EntityHelper.CreateSimpleEntity("post", "title", false)
-        .AddJunction("tag")
-        .AddJunction("category");
-    await entitySchemaService.AddOrUpdateByName(p,true,CancellationToken.None);
-}
-
-async Task SeedData()
-{
-    for (var i = 0; i < 1000; i++)
-    {
-        var cats = await SeedItems("category",i* 1000, 10);
-        var tags = await SeedItems("tag",i* 1000, 100);
-        await SeedPost(i * 1000, 1000, tags, cats);
-    }
-}
-
-async Task<long[]> SeedItems(string entity, int start, int count)
-{
-    var list = new List<long>();
-    for (var i = start; i < start+count; i++)
-    {
-        var payload = new Dictionary<string, object> { { "name", entity + (i + 1) } }.ToJsonElement();
-        var rec = await entityService.InsertWithAction(entity,payload ,CancellationToken.None);
-        list.Add((long)rec["id"]);
-    }
-    return list.ToArray();
-}
-
-async Task SeedPost(int start, int count, long[]tags, long[] categories)
-{
-    var random = new Random();
-
-    for (var i = start; i < start+count; i++)
-    {
-        var payload = new Dictionary<string, object> { { "name", "Post " + (i + 1) } }.ToJsonElement();
-        var rec = await entityService.InsertWithAction("post",payload ,CancellationToken.None);
-        var tagElements = tags.OrderBy(_ => random.Next())
-            .Take(Math.Min(3, tags.Length))
-            .Select(x => new Dictionary<string, object> { { "id", x } }.ToJsonElement())
-            .ToArray();
-        await entityService.JunctionSave("post",rec["id"].ToString(),"tag",tagElements,CancellationToken.None);
-        
-        var categoryElements = categories.OrderBy(_ => random.Next())
-            .Take(Math.Min(2, categories.Length))
-            .Select(x => new Dictionary<string, object> { { "id", x } }.ToJsonElement())
-            .ToArray();
-        
-        await entityService.JunctionSave("post",rec["id"].ToString(),"category",categoryElements,CancellationToken.None);
-    }   
+    using var scope = app.Services.CreateScope();
+    var exe = scope.ServiceProvider.GetRequiredService<KateQueryExecutor>();
+    await exe.BatchInsert("article",records.ToArray());
 }

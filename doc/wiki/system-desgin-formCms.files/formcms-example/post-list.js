@@ -21,11 +21,16 @@ export let options = {
     },
 };
 
-
-let baseUrl = 'http://localhost:8080/api/queries/posts'
+let baseUrl = 'http://localhost:8080/api/queries/posts?lastId='
 export default function () {
-    // Initial request to get the `last` parameter
-    let initialRes = http.get(baseUrl);
+    const min = 100000;
+    const max = 1001211;
+
+    // get random integer between min and max, inclusive
+    const id = Math.floor(Math.random() * (max - min + 1)) + min;
+    const url = `${baseUrl}${id}`;
+    console.log(url);
+    let initialRes = http.get(url);
 
     check(initialRes, {
         'initial request status is 200': (r) => r.status === 200,
@@ -35,31 +40,11 @@ export default function () {
         errorCount.add(1);
         return;
     }
-
-    let initialResponse = JSON.parse(initialRes.body);
-
-    let lastParam = initialResponse.at(-1).cursor;
-
-    // Loop to make subsequent requests 10 times
-    for (let i = 0; i < 9; i++) {
-        let subsequentRes = http.get(baseUrl + `?last=${lastParam}`);
-
-        check(subsequentRes, {
-            'subsequent request status is 200': (r) => r.status === 200,
-        });
-
-        if (subsequentRes.status !== 200) {
-            errorCount.add(1);
-        } else {
-            let subsequentResponse = JSON.parse(subsequentRes.body);
-            lastParam = subsequentResponse.at(-1).cursor; // Update lastParam for the next request
-        }
-    }
 }
 /* 
 10/6
-Db: 4cpu, 4GB
-App: 4cpu 4,GB
+Db: 4cpu, 4GB mem
+App: 4cpu 4GB mem
 
 post, post_tag, tag, post_category, category
 
@@ -97,28 +82,23 @@ SELECT "tag"."id", "tag"."name", "tag"."publishedAt", "post_tag"."postId" FROM "
      scenarios: (100.00%) 1 scenario, 100 max VUs, 3m30s max duration (incl. graceful stop):
               * default: Up to 100 looping VUs for 3m0s over 5 stages (gracefulRampDown: 30s, gracefulStop: 30s)
 
-
      ✓ initial request status is 200
-     ✓ subsequent request status is 200
 
-     checks.........................: 100.00% 342860 out of 342860
-     data_received..................: 4.7 GB  26 MB/s
-     data_sent......................: 41 MB   228 kB/s
-     http_req_blocked...............: avg=2.08µs   min=0s      med=1µs      max=8.56ms   p(90)=3µs      p(95)=3µs
-     http_req_connecting............: avg=105ns    min=0s      med=0s       max=5.39ms   p(90)=0s       p(95)=0s
-   ✓ http_req_duration..............: avg=38.5ms   min=2.53ms  med=40.56ms  max=293.51ms p(90)=54.11ms  p(95)=58.37ms
-       { expected_response:true }...: avg=38.5ms   min=2.53ms  med=40.56ms  max=293.51ms p(90)=54.11ms  p(95)=58.37ms
-   ✓ http_req_failed................: 0.00%   0 out of 342860
-     http_req_receiving.............: avg=112.55µs min=9µs     med=32µs     max=25.36ms  p(90)=122µs    p(95)=229µs
-     http_req_sending...............: avg=12.85µs  min=1µs     med=4µs      max=18.31ms  p(90)=10µs     p(95)=13µs
-     http_req_tls_handshaking.......: avg=0s       min=0s      med=0s       max=0s       p(90)=0s       p(95)=0s
-     http_req_waiting...............: avg=38.37ms  min=2.48ms  med=40.44ms  max=291.36ms p(90)=53.93ms  p(95)=58.13ms
-     http_reqs......................: 342860  1904.453386/s
-     iteration_duration.............: avg=394.13ms min=33.61ms med=452.32ms max=865.85ms p(90)=501.85ms p(95)=582.1ms
-     iterations.....................: 34286   190.445339/s
+     checks.........................: 100.00% 435568 out of 435568
+     data_received..................: 3.8 GB  21 MB/s
+     data_sent......................: 48 MB   269 kB/s
+     http_req_blocked...............: avg=2.44µs  min=0s     med=2µs     max=5.64ms   p(90)=3µs     p(95)=5µs
+     http_req_connecting............: avg=65ns    min=0s     med=0s      max=4.34ms   p(90)=0s      p(95)=0s
+   ✓ http_req_duration..............: avg=30.87ms min=2.42ms med=31.59ms max=317.11ms p(90)=43.55ms p(95)=47.81ms
+       { expected_response:true }...: avg=30.87ms min=2.42ms med=31.59ms max=317.11ms p(90)=43.55ms p(95)=47.81ms
+   ✓ http_req_failed................: 0.00%   0 out of 435568
+     http_req_receiving.............: avg=44.39µs min=8µs    med=33µs    max=16.97ms  p(90)=59µs    p(95)=84µs
+     http_req_sending...............: avg=7.16µs  min=1µs    med=6µs     max=6.67ms   p(90)=10µs    p(95)=13µs
+     http_req_tls_handshaking.......: avg=0s      min=0s     med=0s      max=0s       p(90)=0s      p(95)=0s
+     http_req_waiting...............: avg=30.82ms min=2.38ms med=31.54ms max=317.08ms p(90)=43.5ms  p(95)=47.75ms
+     http_reqs......................: 435568  2419.79547/s
+     iteration_duration.............: avg=30.98ms min=2.48ms med=31.69ms max=317.16ms p(90)=43.67ms p(95)=47.95ms
+     iterations.....................: 435568  2419.79547/s
      vus............................: 1       min=1                max=100
      vus_max........................: 100     min=100              max=100
-
-
-running (3m00.0s), 000/100 VUs, 34286 complete and 0 interrupted iterations
 */

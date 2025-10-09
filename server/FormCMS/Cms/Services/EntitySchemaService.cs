@@ -106,11 +106,6 @@ public sealed class EntitySchemaService(
             );
     }
 
-    public async Task SaveTableDefine(Entity entity, bool asPublished, CancellationToken token = default)
-    {
-        await SaveTableDefine(ToSchema(entity), asPublished,token);
-    }
-
     public async Task<Schema> SaveTableDefine(Schema schema, bool asPublished, CancellationToken ct = default)
     {
         schema = schema with { Name = schema.Settings.Entity!.Name };

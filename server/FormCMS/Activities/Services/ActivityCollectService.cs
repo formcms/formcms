@@ -41,7 +41,7 @@ public class ActivityCollectService(
         var countRecords = counts.Select(pair =>
             (ActivityCounts.Parse(pair.Key) with { Count = pair.Value }).UpsertRecord()).ToArray();
         
-        await defaultDao.BatchUpdateOnConflict(ActivityCounts.TableName,  countRecords, ActivityCounts.KeyFields,ct);
+        await defaultDao.ChunkUpdateOnConflict(1000,ActivityCounts.TableName,  countRecords, ActivityCounts.KeyFields,ct);
         
         //Query title and image 
         var statusList = await statusBuffer.GetAfterLastFlush(lastFlushTime.Value);
@@ -90,29 +90,34 @@ public class ActivityCollectService(
     {
         var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
         var ret = new Dictionary<string, ActiveCount>();
-        foreach (var pair in await SetStatusCount(identityService.GetUserAccess()?.Id ?? cookieUserId,entity,entityName,
-                     recordId, [..settings.CommandAutoRecordActivities], ct))
+
+        var userOrCookieId = identityService.GetUserAccess()?.Id ?? cookieUserId;
+        var autoRecordCounts = await SetStatusCount(
+            userOrCookieId, entity, entityName,
+            recordId, [..settings.CommandAutoRecordActivities], ct);
+        foreach (var pair in autoRecordCounts)
         {
             ret[pair.Key] = new ActiveCount(true, pair.Value);
         }
 
-        string[] types = [..settings.CommandToggleActivities, ..settings.CommandRecordActivities];
+        string[] manualRecordTypes = [..settings.CommandToggleActivities, ..settings.CommandRecordActivities];
         var userId = identityService.GetUserAccess()?.Id;
         
         Dictionary<string, bool>? activeDict = null;
         if (userId is not null)
         {
-            var activities = types.Select(x 
+            var activities = manualRecordTypes.Select(x 
                 => new Activity(entityName, recordId, x, userId)
             ).ToArray();
+            
             activeDict = settings.EnableBuffering 
                 ? await GetActiveDictFromBuffer(activities) 
                 : await GetActiveDictFromDb();
         }
 
-        var countDict = await GetCountDict(entityName,recordId, types,ct);
+        var countDict = await GetCountDict(entityName,recordId, manualRecordTypes,ct);
 
-        foreach (var t in types)
+        foreach (var t in manualRecordTypes)
         {
             var isActive = activeDict is not null && activeDict.TryGetValue(t, out var b) && b;
             var count = countDict.TryGetValue(t, out var l) ? l : 0;
@@ -140,7 +145,7 @@ public class ActivityCollectService(
                 Models.Activities.TableName, 
                 Models.Activities.Condition(entityName,recordId,userId),
                 Models.Activities.TypeField,
-                types,
+                manualRecordTypes,
                 Models.Activities.ActiveField,
                 ct);
         }
@@ -204,8 +209,9 @@ public class ActivityCollectService(
             throw new ResultException("One or more activity types are not supported.");
         }
         var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
+        var userOrCookieId = identityService.GetUserAccess()?.Id ?? cookieUserId;
 
-        return await SetStatusCount(identityService.GetUserAccess()?.Id ?? cookieUserId, entity,entityName, recordId, activityTypes, ct);
+        return await SetStatusCount(userOrCookieId, entity,entityName, recordId, activityTypes, ct);
     }
 
     public async Task<long> Toggle(
@@ -475,7 +481,8 @@ public class ActivityCollectService(
         await activityContext.ShardManager.Execute(
             toUpdate,
             rec => rec[nameof(Activity.UserId).Camelize()].ToString()!,
-            (dao, records) => dao.BatchUpdateOnConflict(
+            (dao, records) => dao.ChunkUpdateOnConflict(
+                1000,
                 Models.Activities.TableName,
                 records,
                 Models.Activities.KeyFields,

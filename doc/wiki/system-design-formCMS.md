@@ -48,8 +48,15 @@ extend the system:
 
 # Wrap up (5)
 formCMS vs Hasura vs orchard
-            query 10 page(p95)  query 10 page(100vu)  filter by tagId(p95)  filter by tagId(100vu)
-formCms     58.37ms              1904.453386           39.61ms                  2854.416212/s
-hasura      51.5ms               2148.805369           47.58ms                  2544.196201/s
-orchard     2.3s                 30.158167
+            list20 p95     list20(100vu)                        filter by tagId(p95)  filter by tagId(100vu)
+formCms     48ms            2400                                55ms                  2165/s
+hasura      48ms            2458                                53ms                  2056/s
+orchard     2.3s            30
 
+formCMS Social (20M user-article viewed status, 1M article count)      
+
+write user view article, article count, article score: 
+buffer and batch write: p(95)=19.71ms   4242.63603/s 
+without buffer : p(95)=24.06ms 2481.70787/s
+
+user view article history:  p(95)=43.25ms  3089.233231/s

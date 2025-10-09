@@ -98,6 +98,33 @@ public static class EntityHelper
         );
         return entity with { Attributes = entity.Attributes.Add(attr) };
     }
+    
+    public static Entity AddStr(this Entity entity, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(fieldName)) return entity;
+        var attr = new Attribute
+        (
+            Field: fieldName,
+            DataType: DataType.String,
+            DisplayType: DisplayType.Text,
+            InDetail: true,
+            InList: true
+        );
+        return entity with { Attributes = entity.Attributes.Add(attr) };
+    }
+    public static Entity AddImage(this Entity entity, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(fieldName)) return entity;
+        var attr = new Attribute
+        (
+            Field: fieldName,
+            DataType: DataType.String,
+            DisplayType: DisplayType.Image,
+            InDetail: true,
+            InList: true
+        );
+        return entity with { Attributes = entity.Attributes.Add(attr) };
+    }
 
     public static Entity AddCollection(this Entity entity, string collection, string linkAttribute)
     {
@@ -114,6 +141,7 @@ public static class EntityHelper
         return entity with { Attributes = entity.Attributes.Add(attr) };
     }
 
+    
     public static Entity CreateSimpleEntity( string entityName, string field, bool needPublish)
     {
         var attr = new List<Attribute>([

@@ -22,10 +22,15 @@ export let options = {
 };
 
 
-let baseUrl = 'http://localhost:8080/api/rest/tagpost'
+let baseUrl = 'http://localhost:8080/api/rest/tagpost?tagId='
 export default function () {
     // Initial request to get the `last` parameter
-    let initialRes = http.get(baseUrl);
+    const min = 1000;
+    const max = 100300;
+    const id = Math.floor(Math.random() * (max - min + 1)) + min;
+    const url = baseUrl + id; 
+    console.log(`url: ${url}`);
+    let initialRes = http.get(url);
 
     check(initialRes, {
         'initial request status is 200': (r) => r.status === 200,
@@ -60,25 +65,25 @@ create index post_tag_tagid_index
      scenarios: (100.00%) 1 scenario, 100 max VUs, 3m30s max duration (incl. graceful stop):
               * default: Up to 100 looping VUs for 3m0s over 5 stages (gracefulRampDown: 30s, gracefulStop: 30s)
 
+    ✓ initial request status is 200
 
-     ✓ initial request status is 200
-
-     checks.........................: 100.00% 457960 out of 457960
-     data_received..................: 1.2 GB  6.4 MB/s
-     data_sent......................: 44 MB   244 kB/s
-     http_req_blocked...............: avg=2.6µs   min=0s     med=2µs     max=8.88ms   p(90)=3µs     p(95)=4µs
-     http_req_connecting............: avg=110ns   min=0s     med=0s      max=7.88ms   p(90)=0s      p(95)=0s
-   ✓ http_req_duration..............: avg=29.4ms  min=1ms    med=37.8ms  max=135.38ms p(90)=45.11ms p(95)=47.58ms
-       { expected_response:true }...: avg=29.4ms  min=1ms    med=37.8ms  max=135.38ms p(90)=45.11ms p(95)=47.58ms
-   ✓ http_req_failed................: 0.00%   0 out of 457960
-     http_req_receiving.............: avg=28.35µs min=5µs    med=21µs    max=18.37ms  p(90)=39µs    p(95)=56µs
-     http_req_sending...............: avg=9.23µs  min=1µs    med=5µs     max=18.55ms  p(90)=9µs     p(95)=11µs
+     checks.........................: 100.00% 370162 out of 370162
+     data_received..................: 2.2 GB  12 MB/s
+     data_sent......................: 40 MB   222 kB/s
+     http_req_blocked...............: avg=1.63µs  min=0s     med=1µs     max=1.2ms    p(90)=2µs     p(95)=3µs
+     http_req_connecting............: avg=53ns    min=0s     med=0s      max=286µs    p(90)=0s      p(95)=0s
+   ✓ http_req_duration..............: avg=36.39ms min=1.39ms med=45.85ms max=376.13ms p(90)=51.22ms p(95)=53.22ms
+       { expected_response:true }...: avg=36.39ms min=1.39ms med=45.85ms max=376.13ms p(90)=51.22ms p(95)=53.22ms
+   ✓ http_req_failed................: 0.00%   0 out of 370162
+     http_req_receiving.............: avg=27.99µs min=7µs    med=24µs    max=1.96ms   p(90)=41µs    p(95)=53µs
+     http_req_sending...............: avg=5.92µs  min=1µs    med=5µs     max=599µs    p(90)=10µs    p(95)=11µs
      http_req_tls_handshaking.......: avg=0s      min=0s     med=0s      max=0s       p(90)=0s      p(95)=0s
-     http_req_waiting...............: avg=29.37ms min=977µs  med=37.76ms max=131.92ms p(90)=45.07ms p(95)=47.54ms
-     http_reqs......................: 457960  2544.196201/s
-     iteration_duration.............: avg=29.47ms min=1.02ms med=37.87ms max=135.46ms p(90)=45.17ms p(95)=47.64ms
-     iterations.....................: 457960  2544.196201/s
+     http_req_waiting...............: avg=36.36ms min=1.36ms med=45.82ms max=376.1ms  p(90)=51.19ms p(95)=53.19ms
+     http_reqs......................: 370162  2056.439732/s
+     iteration_duration.............: avg=36.46ms min=1.48ms med=45.92ms max=376.26ms p(90)=51.3ms  p(95)=53.3ms
+     iterations.....................: 370162  2056.439732/s
      vus............................: 1       min=1                max=100
      vus_max........................: 100     min=100              max=100
+   
 
 */
