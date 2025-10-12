@@ -17,12 +17,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS.Course", "server\Fo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS.Course.DistributeTest", "server\FormCMS.Course.DistributeTest\FormCMS.Course.DistributeTest.csproj", "{40C9B759-4740-4C44-84D1-C3971519DF7E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS.App.ServiceDefaults", "server\FormCMS.App.ServiceDefaults\FormCMS.App.ServiceDefaults.csproj", "{A6B3EC23-06E9-422F-BD43-20A098102D25}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS.App.AppHost", "server\FormCMS.App.AppHost\FormCMS.App.AppHost.csproj", "{D19697EB-85DB-47CE-AEB2-0A5B1D3A6D1D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS.App.Tests", "server\FormCMS.App.Tests\FormCMS.App.Tests.csproj", "{9BD38EDA-5C4E-4C6D-96CA-C8955DB35C57}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqliteDemo", "examples\SqliteDemo\SqliteDemo.csproj", "{1A868F91-5908-4693-9A1A-5C37ECD6D834}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlServerCmsApp", "examples\SqlServerDemo\SqlServerCmsApp\SqlServerCmsApp.csproj", "{FEDF81EF-08D1-44C4-9CF5-43D6C0FD8C05}"
@@ -71,18 +65,6 @@ Global
 		{40C9B759-4740-4C44-84D1-C3971519DF7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{40C9B759-4740-4C44-84D1-C3971519DF7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{40C9B759-4740-4C44-84D1-C3971519DF7E}.Release|Any CPU.Build.0 = Release|Any CPU
-		{A6B3EC23-06E9-422F-BD43-20A098102D25}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{A6B3EC23-06E9-422F-BD43-20A098102D25}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{A6B3EC23-06E9-422F-BD43-20A098102D25}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{A6B3EC23-06E9-422F-BD43-20A098102D25}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D19697EB-85DB-47CE-AEB2-0A5B1D3A6D1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D19697EB-85DB-47CE-AEB2-0A5B1D3A6D1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D19697EB-85DB-47CE-AEB2-0A5B1D3A6D1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D19697EB-85DB-47CE-AEB2-0A5B1D3A6D1D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{9BD38EDA-5C4E-4C6D-96CA-C8955DB35C57}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{9BD38EDA-5C4E-4C6D-96CA-C8955DB35C57}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{9BD38EDA-5C4E-4C6D-96CA-C8955DB35C57}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{9BD38EDA-5C4E-4C6D-96CA-C8955DB35C57}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1A868F91-5908-4693-9A1A-5C37ECD6D834}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1A868F91-5908-4693-9A1A-5C37ECD6D834}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1A868F91-5908-4693-9A1A-5C37ECD6D834}.Release|Any CPU.ActiveCfg = Release|Any CPU

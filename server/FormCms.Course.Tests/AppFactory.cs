@@ -42,7 +42,6 @@ public class AppFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable("EnableActivityBuffer", "false");
         Environment.SetEnvironmentVariable("FtsSettings__FtsEntities__0", TestEntityNames.TestPost.Camelize());
 
-        SetTestConnectionString();
         _httpClient = CreateClient(new WebApplicationFactoryClientOptions
         {
             BaseAddress = new Uri("http://localhost"),
@@ -77,36 +76,6 @@ public class AppFactory : WebApplicationFactory<Program>
             if (await SchemaApi.ExistsEntity(TestEntityNames.TestPost.Camelize())) return;
             await BlogsTestData.EnsureBlogEntities(SchemaApi);
             await BlogsTestData.PopulateData(EntityApi, AssetApi, QueryApi);
-        }
-    }
-    
-    private static void SetTestConnectionString()
-    {
-        (string, string)[] settings =
-        [
-            // (
-            //     "DatabaseProvider",
-            //     "SqlServer"
-            // ),
-            // (
-            //     "ConnectionStrings__SqlServer",
-            //     $"Server=localhost;Database=cms_integration_tests;User Id=sa;Password=Admin12345678!;TrustServerCertificate=True;MultipleActiveResultSets=True;"
-            // )
-            // (
-            //     "DatabaseProvider",
-            //     "Sqlite"
-            // ),
-            // (
-            //     "ConnectionStrings__Sqlite",
-            //     $"Data Source={Path.Join(Environment.CurrentDirectory, "_cms_unit_tests.db")}"
-            // )
-        ];
-        foreach (var (k,v) in settings)
-        {
-            if (string.IsNullOrEmpty(Environment.GetEnvironmentVariable(k)))
-            {
-                Environment.SetEnvironmentVariable(k, v);
-            }
         }
     }
 }

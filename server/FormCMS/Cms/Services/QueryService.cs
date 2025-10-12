@@ -370,6 +370,8 @@ public sealed class QueryService(
     private async Task LoadAssets(LoadedEntity entity, GraphNode[] nodes, Record[] records)
     {
         var paths = GetAllAssetPaths();
+        if (paths.Length == 0) return;
+        
         var assetRecords = await executor.Many(Assets.GetAssetsByPaths(paths));
         var assets = assetRecords.ToDictionary(x => x.StrOrEmpty(nameof(Asset.Path).Camelize()));
         ReplaceAssets();

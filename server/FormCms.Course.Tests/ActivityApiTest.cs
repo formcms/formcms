@@ -3,20 +3,18 @@ using FormCMS.Core.Descriptors;
 using FormCMS.CoreKit.Test;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
-using NUlid;
 
 namespace FormCMS.Course.Tests;
 [Collection("API")]
 public class ActivityApiTest(AppFactory factory)
 {
     private bool _ = factory.LoginAndInitTestData();
-    private const long RecordId = 21;
     private readonly string _queryName = "qry_query_" + Util.UniqStr();
 
     [Fact]
     public async Task ActivityCountNotEmpty()
     {
-        await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), BlogsTestData.ActivityTestPostId).Ok();
         var counts = await factory.ActivityApi.ActivityCounts().Ok();
         Assert.True(counts.Length > 0);
     }
@@ -48,17 +46,17 @@ public class ActivityApiTest(AppFactory factory)
     }
 
     [Fact]
-    public async Task BatchGetActivityStatusOK()
+    public async Task BatchGetActivityStatus()
     {
-        await factory.ActivityApi.Toggle(TestEntityNames.TestPost.Camelize(), RecordId, "like", true).Ok();
-        var liked = await factory.ActivityApi.BatchGetActivityStatus(TestEntityNames.TestPost.Camelize(), "like",[RecordId]).Ok();
+        await factory.ActivityApi.Toggle(TestEntityNames.TestPost.Camelize(), BlogsTestData.LikeTestPostId, "like", true).Ok();
+        var liked = await factory.ActivityApi.BatchGetActivityStatus(TestEntityNames.TestPost.Camelize(), "like",[BlogsTestData.LikeTestPostId]).Ok();
         Assert.True(liked.Length > 0);
     }
     
     [Fact]
-    public async Task TestListHistoryAndDelete()
+    public async Task ListHistoryAndDelete()
     {
-        await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), BlogsTestData.ActivityTestPostId).Ok();
         var res = await factory.ActivityApi.List("view", "sort[id]=-1").Ok();
         Assert.True(res.TotalRecords >= 1);
         var totalRecords = res.TotalRecords;
@@ -74,10 +72,10 @@ public class ActivityApiTest(AppFactory factory)
     [Fact]
     public async Task QueryWithViewCount()
     {
-        await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), BlogsTestData.ActivityTestPostId).Ok();
         await $$"""
                 query {{_queryName}}{
-                   {{TestEntityNames.TestPost.Camelize()}}(idSet:{{RecordId}})
+                   {{TestEntityNames.TestPost.Camelize()}}(idSet:{{BlogsTestData.ActivityTestPostId}})
                    {
                      id, viewCount 
                    }
@@ -92,7 +90,7 @@ public class ActivityApiTest(AppFactory factory)
     private async Task ViewShareLike()
     {
         //get
-        var rootElement = await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        var rootElement = await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), BlogsTestData.ActivityTestPostId).Ok();
 
         //view count increase automatically
         var viewElement = rootElement.GetProperty("view");
@@ -105,26 +103,26 @@ public class ActivityApiTest(AppFactory factory)
         Assert.Equal(0, likeElement.GetProperty("count").GetInt64());
 
         //record share 
-        var count = await factory.ActivityApi.Record(TestEntityNames.TestPost.Camelize(), RecordId, "share").Ok();
+        var count = await factory.ActivityApi.Record(TestEntityNames.TestPost.Camelize(), BlogsTestData.ActivityTestPostId, "share").Ok();
         Assert.True(count>0);
-        await factory.ActivityApi.Record(TestEntityNames.TestPost.Camelize(), RecordId, "share").Ok();
-        rootElement = await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        await factory.ActivityApi.Record(TestEntityNames.TestPost.Camelize(), BlogsTestData.ActivityTestPostId, "share").Ok();
+        rootElement = await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), BlogsTestData.ActivityTestPostId).Ok();
         var shareElement = rootElement.GetProperty("share");
         Assert.True(shareElement.GetProperty("active").GetBoolean());
         Assert.True(2 <= shareElement.GetProperty("count").GetInt64());
 
         //toggle like
-        count = await factory.ActivityApi.Toggle(TestEntityNames.TestPost.Camelize(), RecordId, "like", true).Ok();
+        count = await factory.ActivityApi.Toggle(TestEntityNames.TestPost.Camelize(), BlogsTestData.ActivityTestPostId, "like", true).Ok();
         Assert.Equal(1, count);
-        rootElement = await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        rootElement = await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), BlogsTestData.ActivityTestPostId).Ok();
         likeElement = rootElement.GetProperty("like");
         Assert.True(likeElement.GetProperty("active").GetBoolean());
         Assert.Equal(1, likeElement.GetProperty("count").GetInt64());
 
         //cancel like
-        count = await factory.ActivityApi.Toggle(TestEntityNames.TestPost.Camelize(), RecordId, "like", false).Ok();
+        count = await factory.ActivityApi.Toggle(TestEntityNames.TestPost.Camelize(), BlogsTestData.ActivityTestPostId, "like", false).Ok();
         Assert.Equal(0, count);
-        rootElement = await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        rootElement = await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), BlogsTestData.ActivityTestPostId).Ok();
         likeElement = rootElement.GetProperty("like");
         Assert.False(likeElement.GetProperty("active").GetBoolean());
         Assert.Equal(0, likeElement.GetProperty("count").GetInt64());

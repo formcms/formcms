@@ -79,9 +79,6 @@ public class BookmarkService(
     public async Task AddBookmark(string entityName, long recordId, string newFolderName, long[] newFolderIds,
         CancellationToken ct)
     {
-        Console.Write($"""
-                      adding bookmark {entityName} to {newFolderName}""
-                      """);
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
         var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId, ct).Ok();
         var existingFolderIds = await GetFolderIdsByUserAndRecord(userId, entityName, recordId, ct);

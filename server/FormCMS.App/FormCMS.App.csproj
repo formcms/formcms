@@ -18,7 +18,6 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\FormCMS.App.ServiceDefaults\FormCMS.App.ServiceDefaults.csproj" />
       <ProjectReference Include="..\FormCMS\FormCMS.csproj" />
     </ItemGroup>
     <ItemGroup>

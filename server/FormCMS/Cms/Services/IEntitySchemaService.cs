@@ -15,5 +15,4 @@ public interface IEntitySchemaService: IEntityVectorResolver
     ValueTask<ImmutableArray<Entity>> AllEntities(CancellationToken ct );
     Task Delete(Schema schema, CancellationToken ct);
     Task<Schema> Save(Schema schema, bool asPublished, CancellationToken ct);
-    Task SaveTableDefine(Entity entity,bool asPublished, CancellationToken ct);
 }

@@ -170,4 +170,15 @@ public static class RecordExtensions
         return roots.ToArray();
     }
 
+    public static JsonElement ToJsonElement(this Record r)
+    {
+        if (r == null) throw new ArgumentNullException(nameof(r));
+
+        // Serialize the record to JSON string
+        var json = JsonSerializer.Serialize(r, JsonSerializerOptions);
+
+        // Parse into JsonDocument and return the root JsonElement
+        using var doc = JsonDocument.Parse(json);
+        return doc.RootElement.Clone(); // Clone so element outlives the JsonDocument
+    }
 }

@@ -36,6 +36,8 @@ public enum TestEntityNames
     TestAttachment
 }
 
+
+
 public enum TestTableNames
 {
     TestPosts,
@@ -51,6 +53,11 @@ public record JunctionData(string EntityName,  string Attribute,string JunctionT
 /// a set of blog entities to test queries
 public static class BlogsTestData
 {
+    public const long BookmarkTestPostId = 9;
+    public const long NotificationTestPostId = 10;
+    public const long CommentTestPostId = 11;
+    public const long ActivityTestPostId = 12;
+    public const long LikeTestPostId = 13;
     private static Attribute CreateAttr(this TestFieldNames fieldName) => new (fieldName.Camelize(), fieldName.Camelize());
     public static async Task EnsureBlogEntities(SchemaApiClient client)
     {

@@ -11,7 +11,6 @@ namespace FormCMS.Course.Tests;
 public class CommentApiTest(AppFactory factory)
 {
     private bool _ = factory.LoginAndInitTestData();
-    private const long RecordId = 31;
     private readonly string _queryName = "qry_query_" + Ulid.NewUlid();
 
     [Fact]
@@ -19,7 +18,7 @@ public class CommentApiTest(AppFactory factory)
     {
         var comment = new Comment(
             EntityName:TestEntityNames.TestPost.Camelize(),
-            RecordId: RecordId,
+            RecordId: BlogsTestData.CommentTestPostId,
             CreatedBy:"",
             Content:"test"
             );
@@ -35,7 +34,7 @@ public class CommentApiTest(AppFactory factory)
     {
         var comment = new Comment(
             EntityName:TestEntityNames.TestPost.Camelize(),
-            RecordId: RecordId,
+            RecordId: BlogsTestData.CommentTestPostId,
             CreatedBy:"",
             Content:"test"
         );
@@ -51,7 +50,7 @@ public class CommentApiTest(AppFactory factory)
     {
         var comment = new Comment(
             EntityName:TestEntityNames.TestPost.Camelize(),
-            RecordId: RecordId,
+            RecordId: BlogsTestData.CommentTestPostId,
             CreatedBy:"",
             Content:"test"
         );
@@ -63,14 +62,14 @@ public class CommentApiTest(AppFactory factory)
     {
         var comment = new Comment(
             EntityName:TestEntityNames.TestPost.Camelize(),
-            RecordId: RecordId,
+            RecordId: BlogsTestData.CommentTestPostId,
             CreatedBy:"",
             Content:"test"
         );
         comment = await factory.CommentsApiClient.Add(comment).Ok();
         var reply = new Comment(
             EntityName:TestEntityNames.TestPost.Camelize(),
-            RecordId: RecordId,
+            RecordId: BlogsTestData.CommentTestPostId,
             CreatedBy:"",
             Content:"test"
         );
@@ -99,10 +98,10 @@ public class CommentApiTest(AppFactory factory)
     }
     private async Task<int> QueryCommentsCount()
     {
-        await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), BlogsTestData.CommentTestPostId).Ok();
         await $$"""
                 query {{_queryName}}{
-                   {{TestEntityNames.TestPost.Camelize()}}(idSet:{{RecordId}})
+                   {{TestEntityNames.TestPost.Camelize()}}(idSet:{{BlogsTestData.CommentTestPostId}})
                    {
                         id,  
                         comments(sort:createdAtDesc){

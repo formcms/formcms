@@ -45,7 +45,7 @@ public sealed class EntityService(
 
         if (recordId < 1 || recordId > maxId)
         {
-            return Result.Fail("Record id is out of range");
+            return Result.Fail($"Record id is out of range, {new {entityName, tableName= entity.TableName,recordId, maxId}}");
         }
         return entity.ToLoadedEntity();
     }

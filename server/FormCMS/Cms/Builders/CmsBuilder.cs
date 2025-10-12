@@ -2,6 +2,7 @@ using System.Collections.Immutable;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FormCMS.Auth.Services;
 using FormCMS.Cms.Graph;
 using FormCMS.Cms.Handlers;
 using FormCMS.Cms.Services;
@@ -126,6 +127,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
 
             services.AddScoped<IIdentityService, DummyIdentityService>();
             services.AddScoped<IUserManageService, DummyUserManageService>();
+            services.AddScoped<IProfileService, DummyProfileService>();
 
             services.AddHttpClient(); //needed by task service
             services.AddScoped<ITaskService, TaskService>();
