@@ -100,31 +100,40 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
         return Exec(query, false);
     }
 
-    public async Task<long> Exec(
-        Query query, bool getScalarValue, CancellationToken ct = default
-    ) => await provider.ExecuteKateQuery(async (db, tx)
-        => getScalarValue
-            ? await db.ExecuteScalarAsync<long>(
-                query: query,
-                transaction: tx,
-                timeout: option.TimeoutSeconds,
-                cancellationToken: ct)
-            : await db.ExecuteAsync(
-                query: query,
-                transaction: tx,
-                timeout: option.TimeoutSeconds,
-                cancellationToken: ct)
-    );
-
-    public async Task<long[]> ExecBatch(
-        IEnumerable<(Query, bool)> queries, CancellationToken ct = default
-    )
+    public Task Update(long id, string tableName, Record record)
     {
-        //already in transaction, let outer code handle transaction 
-        if (provider.InTransaction())
-        {
-            return await ExecAll();
-        }
+        if(record == null) return Task.CompletedTask;
+        var cols = record.Select(x=> x.Key);
+        var values = record.Select(kv => kv.Value);
+        var query = new Query(tableName).Where("id",id).AsUpdate(cols, values);
+        return Exec(query,false);
+    }
+
+   public async Task<long> Exec(
+      Query query, bool getScalarValue, CancellationToken ct = default
+   ) => await provider.ExecuteKateQuery(async (db, tx)
+      => getScalarValue
+         ? await db.ExecuteScalarAsync<long>(
+            query: query,
+            transaction: tx,
+            timeout: option.TimeoutSeconds,
+            cancellationToken: ct)
+         : await db.ExecuteAsync(
+            query: query,
+            transaction: tx,
+            timeout: option.TimeoutSeconds,
+            cancellationToken: ct)
+   );
+   
+   public async Task<long[]> ExecBatch(
+      IEnumerable<(Query,bool)> queries, CancellationToken ct = default
+   )
+   {
+      //already in transaction, let outer code handle transaction 
+      if (provider.InTransaction())
+      {
+         return await ExecAll();
+      }
 
         var tx = await provider.BeginTransaction();
         try

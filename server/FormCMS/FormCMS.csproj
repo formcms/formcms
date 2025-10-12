@@ -62,6 +62,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Infrastructure\Payment\" />
       <Folder Include="wwwroot\static-assets\imgs\" />
     </ItemGroup>
 
