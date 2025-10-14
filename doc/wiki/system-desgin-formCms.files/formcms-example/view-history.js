@@ -45,9 +45,15 @@ export default function () {
     }
 }
 /*
+cpu 8:
+mem: 8G
+create index __activities_activitytype_userid_index
+    on public.__activities ("activityType", "userId") include (id, title, subtitle, url, image, "updatedAt", "publishedAt")
+    where ("isActive" = true);
 
 
-         /\      Grafana   /‾‾/
+
+       /\      Grafana   /‾‾/
     /\  /  \     |\  __   /  /
    /  \/    \    | |/ /  /   ‾‾\
   /          \   |   (  |  (‾)  |
@@ -64,25 +70,25 @@ export default function () {
      ✓ login succeeded
      ✓ article request succeeded
 
-     checks.........................: 100.00% 556106 out of 556106
-     data_received..................: 418 MB  2.3 MB/s
-     data_sent......................: 532 MB  3.0 MB/s
-     http_req_blocked...............: avg=2.48µs  min=0s       med=2µs     max=15.59ms  p(90)=3µs     p(95)=4µs
-     http_req_connecting............: avg=46ns    min=0s       med=0s      max=1.42ms   p(90)=0s      p(95)=0s
-   ✓ http_req_duration..............: avg=19.43ms min=1.08ms   med=16.87ms max=683.11ms p(90)=34.25ms p(95)=43.25ms
-       { expected_response:true }...: avg=19.43ms min=1.08ms   med=16.87ms max=683.11ms p(90)=34.25ms p(95)=43.25ms
-   ✓ http_req_failed................: 0.00%   0 out of 556106
-     http_req_receiving.............: avg=29.61µs min=5µs      med=18µs    max=45.44ms  p(90)=33µs    p(95)=50µs
-     http_req_sending...............: avg=10.83µs min=2µs      med=7µs     max=16.45ms  p(90)=11µs    p(95)=13µs
-     http_req_tls_handshaking.......: avg=0s      min=0s       med=0s      max=0s       p(90)=0s      p(95)=0s
-     http_req_waiting...............: avg=19.39ms min=1.05ms   med=16.83ms max=682.79ms p(90)=34.21ms p(95)=43.19ms
-     http_reqs......................: 556106  3089.233231/s
-     iteration_duration.............: avg=1.97s   min=228.53ms med=2.15s   max=4.3s     p(90)=3.26s   p(95)=3.37s
-     iterations.....................: 5506    30.586468/s
+     checks.........................: 100.00% 181038 out of 181038
+     data_received..................: 149 MB  827 kB/s
+     data_sent......................: 162 MB  900 kB/s
+     http_req_blocked...............: avg=2.92µs   min=0s      med=2µs      max=3.37ms   p(90)=4µs      p(95)=4µs
+     http_req_connecting............: avg=156ns    min=0s      med=0s       max=1.15ms   p(90)=0s       p(95)=0s
+   ✓ http_req_duration..............: avg=59.61ms  min=1.19ms  med=40.69ms  max=672.23ms p(90)=132.57ms p(95)=187.27ms
+       { expected_response:true }...: avg=59.61ms  min=1.19ms  med=40.69ms  max=672.23ms p(90)=132.57ms p(95)=187.27ms
+   ✓ http_req_failed................: 0.00%   0 out of 181038
+     http_req_receiving.............: avg=36.7µs   min=5µs     med=21µs     max=23.95ms  p(90)=60µs     p(95)=88µs
+     http_req_sending...............: avg=12.98µs  min=2µs     med=7µs      max=9.04ms   p(90)=14µs     p(95)=22µs
+     http_req_tls_handshaking.......: avg=0s       min=0s      med=0s       max=0s       p(90)=0s       p(95)=0s
+     http_req_waiting...............: avg=59.56ms  min=1.16ms  med=40.64ms  max=672.05ms p(90)=132.51ms p(95)=187.21ms
+     http_reqs......................: 181038  1005.642593/s
+     iteration_duration.............: avg=656.88ms min=80.91ms med=750.15ms max=1.45s    p(90)=1.04s    p(95)=1.1s
+     iterations.....................: 16458   91.422054/s
      vus............................: 1       min=1                max=100
      vus_max........................: 100     min=100              max=100
 
 
-running (3m00.0s), 000/100 VUs, 5506 complete and 0 interrupted iterations
+running (3m00.0s), 000/100 VUs, 16458 complete and 0 interrupted iterations
 default ✓ [======================================] 000/100 VUs  3m0s
-* */
+*/
