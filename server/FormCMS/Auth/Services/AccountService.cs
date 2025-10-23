@@ -18,7 +18,7 @@ public class AccountService<TUser, TRole,TCtx>(
     RoleManager<TRole> roleManager,
     IProfileService profileService,
     TCtx context,
-    KateQueryExecutor queryExecutor
+    ShardGroup shardGroup
 ) : IAccountService
     where TUser : IdentityUser, new()
     where TRole : IdentityRole, new()
@@ -28,7 +28,7 @@ public class AccountService<TUser, TRole,TCtx>(
     public async Task<string[]> GetEntities(CancellationToken ct)
     {
         var query = SchemaHelper.ByNameAndType(SchemaType.Entity, null, null);
-        var records= await queryExecutor.Many(query,ct);
+        var records= await shardGroup.PrimaryDao.Many(query,ct);
         var entityName = records.Select(x => (string)x[nameof(Entity.Name).Camelize()]).ToArray();
         return [..entityName, Assets.XEntity.Name];
     }

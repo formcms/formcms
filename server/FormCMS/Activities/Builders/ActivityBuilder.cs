@@ -12,7 +12,11 @@ namespace FormCMS.Activities.Builders;
 
 public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 {
-    public static IServiceCollection AddActivity(IServiceCollection services, bool enableBuffering, ShardManagerConfig? shardConfig = null)
+    public static IServiceCollection AddActivity(IServiceCollection services, bool enableBuffering, 
+        ShardRouterConfig? shardManagerConfig = null,
+        DatabaseProvider? defaultDatabaseProvider = null,
+        ShardConfig? defaultShardConfig = null
+        )
     {
         services.AddSingleton(ActivitySettingsExtensions.DefaultActivitySettings with
         {
@@ -28,7 +32,9 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         services.AddScoped<IActivityQueryPlugin, ActivityQueryPlugin>();
         services.AddScoped<IBookmarkService, BookmarkService>();
 
-        services.AddScoped<ActivityContext>(sp => new ActivityContext(sp.CreateShardManager(shardConfig)));
+        services.AddScoped(sp => new ActivityContext(
+            sp.CreateShardManager(shardManagerConfig), sp.CreateShard(defaultDatabaseProvider, defaultShardConfig)));
+        
         services.AddHostedService<BufferFlushWorker>();
         return services;
     }
@@ -46,16 +52,16 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         app.Services.GetRequiredService<PluginRegistry>().RegisterActivityPlugins(activitySettings);
         
         using var scope = app.Services.CreateScope();
-        var migrator = scope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
-        await migrator.EnsureActivityTables();
-        await migrator.EnsureBookmarkTables();
         
         var context =scope.ServiceProvider.GetRequiredService<ActivityContext>();
-        await context.ShardManager.Execute(async dao =>
+        
+        await context.DefaultShardGroup.PrimaryDao.EnsureActivityTables();
+        await context.DefaultShardGroup.PrimaryDao.EnsureBookmarkTables();
+        
+        await context.ShardRouter.ExecuteAll(async dao =>
         {
-            var mig = new DatabaseMigrator(dao);
-            await mig.EnsureActivityTables();
-            await mig.EnsureBookmarkTables();
+            await dao.EnsureActivityTables();
+            await dao.EnsureBookmarkTables();
         });
 
         logger.LogInformation(

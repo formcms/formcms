@@ -16,14 +16,25 @@ using SchemaType = FormCMS.Core.Descriptors.SchemaType;
 namespace FormCMS.Cms.Services;
 
 public sealed class EntitySchemaService(
-    ISchemaService schemaSvc,
-    IRelationDbDao dao,
-    KeyValueCache<ImmutableArray<Entity>> entityCache,
+    PluginRegistry registry,
     HookRegistry hook,
-    IServiceProvider provider,
-    PluginRegistry registry
+    ShardGroup shardGroup,
+    
+    ISchemaService schemaSvc,
+    KeyValueCache<ImmutableArray<Entity>> entityCache,
+    
+    IServiceProvider provider
 ) : IEntitySchemaService
 {
+    public async Task<Result<LoadedEntity>> ValidateEntity( string entityName, CancellationToken ct )
+    {
+        var entity = registry.PluginEntities.TryGetValue(entityName, out var pluginEntity)
+            ? pluginEntity
+            : (await AllEntities(ct)).FirstOrDefault(x => x.Name == entityName);
+        
+        if (entity is null) throw new ResultException("Entity not found");
+        return entity.ToLoadedEntity();
+    }
     public ValueTask<ImmutableArray<Entity>> AllEntities(CancellationToken ct)
     {
         return entityCache.GetOrSet("", async token =>
@@ -88,7 +99,7 @@ public sealed class EntitySchemaService(
 
     public async Task<Entity?> GetTableDefine(string table, CancellationToken ct)
     {
-        var cols = await dao.GetColumnDefinitions(table, ct);
+        var cols = await shardGroup.PrimaryDao.GetColumnDefinitions(table, ct);
         return new Entity
         (
             PrimaryKey: "", Name: "", DisplayName: "", TableName: "", LabelAttributeName: "",
@@ -116,10 +127,10 @@ public sealed class EntitySchemaService(
         VerifyEntity(schema.Settings.Entity!);
         
         await schemaSvc.NameNotTakenByOther(schema, ct).Ok();
-        var cols = await dao.GetColumnDefinitions(schema.Settings.Entity!.TableName, ct);
+        var cols = await shardGroup.PrimaryDao.GetColumnDefinitions(schema.Settings.Entity!.TableName, ct);
         ResultExt.Ensure(EnsureTableNotExist(schema, cols));
 
-        using var tx = await dao.BeginTransaction();
+        using var tx = await  shardGroup.PrimaryDao.BeginTransaction();
         
         try
         {
@@ -233,13 +244,13 @@ public sealed class EntitySchemaService(
             if (missing.Length > 0)
             {
                 var missingCols = missing.ToColumns(dict);
-                await dao.AddColumns(entity.TableName, missingCols, ct);
+                await  shardGroup.PrimaryDao.AddColumns(entity.TableName, missingCols, ct);
             }
         }
         else
         {
             var newColumns = entity.Attributes.Where(x=>x.DataType.IsLocal()).ToColumns(dict);
-            await dao.CreateTable(entity.TableName, newColumns.EnsureColumn(DefaultColumnNames.Deleted,ColumnType.Boolean), ct);
+            await  shardGroup.PrimaryDao.CreateTable(entity.TableName, newColumns.EnsureColumn(DefaultColumnNames.Deleted,ColumnType.Boolean), ct);
         }
     }
 
@@ -248,7 +259,7 @@ public sealed class EntitySchemaService(
         foreach (var attr in entity.Attributes.Where(attr=>attr.DataType == DataType.Lookup))
         {
             var targetEntity = attr.Lookup!.TargetEntity;
-            await dao.CreateForeignKey(entity.TableName, attr.Field, targetEntity.TableName, targetEntity.PrimaryKey, ct);
+            await  shardGroup.PrimaryDao.CreateForeignKey(entity.TableName, attr.Field, targetEntity.TableName, targetEntity.PrimaryKey, ct);
         }
     }
     private async Task CreateCollectionForeignKey(LoadedEntity entity,CancellationToken ct)
@@ -256,7 +267,7 @@ public sealed class EntitySchemaService(
         foreach (var attr in entity.Attributes.Where(attr=>attr.DataType == DataType.Collection))
         {
             var collection = attr.Collection!;
-            await dao.CreateForeignKey(collection.TargetEntity.TableName, collection.LinkAttribute.Field, entity.TableName, entity.PrimaryKey, ct);
+            await  shardGroup.PrimaryDao.CreateForeignKey(collection.TargetEntity.TableName, collection.LinkAttribute.Field, entity.TableName, entity.PrimaryKey, ct);
         }
     }
 
@@ -266,19 +277,19 @@ public sealed class EntitySchemaService(
         foreach (var attribute in entity.Attributes.Where(x => x.DataType == DataType.Junction))
         {
             var junction = attribute.Junction!;
-            var columns = await dao.GetColumnDefinitions(junction.JunctionEntity.TableName, ct);
+            var columns = await  shardGroup.PrimaryDao.GetColumnDefinitions(junction.JunctionEntity.TableName, ct);
             if (columns.Length == 0)
             {
                 var cols =  junction.JunctionEntity.Attributes.ToColumns(dict);
-                await dao.CreateTable(junction.JunctionEntity.TableName, cols.EnsureColumn(DefaultColumnNames.Deleted,ColumnType.Boolean), ct);
-                await dao.CreateForeignKey(
+                await  shardGroup.PrimaryDao.CreateTable(junction.JunctionEntity.TableName, cols.EnsureColumn(DefaultColumnNames.Deleted,ColumnType.Boolean), ct);
+                await  shardGroup.PrimaryDao.CreateForeignKey(
                     table: junction.JunctionEntity.TableName,
                     col: junction.SourceAttribute.Field,
                     refTable: junction.SourceEntity.TableName,
                     refCol: junction.SourceEntity.PrimaryKey,
                     ct);
 
-                await dao.CreateForeignKey(
+                await  shardGroup.PrimaryDao.CreateForeignKey(
                     table: junction.JunctionEntity.TableName,
                     col: junction.TargetAttribute.Field,
                     refTable: junction.TargetEntity.TableName,

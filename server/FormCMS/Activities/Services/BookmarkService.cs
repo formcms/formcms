@@ -12,10 +12,9 @@ namespace FormCMS.Activities.Services;
 
 public class BookmarkService(
     IIdentityService identityService,
-    IEntityService entityService,
+    IEntitySchemaService entityService,
     IContentTagService contentTagService,
-    IRelationDbDao dao,
-    KateQueryExecutor executor
+    ActivityContext ctx
 ) : IBookmarkService
 {
     public Task<Record[]> Folders(CancellationToken ct)
@@ -43,13 +42,17 @@ public class BookmarkService(
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
         folder = folder with { UserId = userId, Id=id};
             
-        var affected = await executor.Exec(folder.Update(),false, ct);
+        var affected = await ctx.ShardRouter.PrimaryDao(userId).Exec(folder.Update(),false, ct);
         if (affected == 0) throw new ResultException("Failed to update folder.");
     }
 
     public async Task DeleteFolder(long folderId, CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
+        
+        var dao = ctx.ShardRouter.PrimaryDao(userId);
+        var executor = ctx.ShardRouter.PrimaryDao(userId);
+
         using var trans = await dao.BeginTransaction();
         try
         {
@@ -68,6 +71,7 @@ public class BookmarkService(
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
         var (filters, sorts) = QueryStringParser.Parse(args); 
+        var executor = ctx.ShardRouter.ReplicaDao(userId);
         var listQuery = Bookmarks.List(userId, folderId, offset, limit);
         var items = await executor.Many(listQuery, Models.Bookmarks.Columns,filters,sorts,ct);
         var countQuery = Bookmarks.Count(userId, folderId);
@@ -80,11 +84,13 @@ public class BookmarkService(
         CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
-        var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId, ct).Ok();
+        var entity = await entityService.ValidateEntity(entityName, ct).Ok();
         var existingFolderIds = await GetFolderIdsByUserAndRecord(userId, entityName, recordId, ct);
 
         var toAdd = newFolderIds.Except(existingFolderIds).ToArray();
         var toDelete = existingFolderIds.Except(newFolderIds).ToArray();
+
+        var executor = ctx.ShardRouter.PrimaryDao(userId);
 
         foreach (var l in toDelete)
         {
@@ -108,8 +114,8 @@ public class BookmarkService(
             await executor.BatchInsert(Bookmarks.TableName,records);
         }
 
-        var count = new ActivityCount(entityName, recordId, Bookmarks.ActivityType, 1);
-        await dao.Increase(
+        var count = new ActivityCount(entityName, recordId.ToString(), Bookmarks.ActivityType, 1);
+        await ctx.ShardRouter.PrimaryDao(userId).Increase(
             ActivityCounts.TableName, 
             ActivityCounts.Condition(count.EntityName, count.RecordId, count.ActivityType),
             ActivityCounts.CountField, 
@@ -121,7 +127,8 @@ public class BookmarkService(
     public Task DeleteBookmark(long bookmarkId, CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
-        return executor.Exec(Bookmarks.Delete(userId, bookmarkId), false, ct);
+        var query = Bookmarks.Delete(userId, bookmarkId);
+        return ctx.ShardRouter.PrimaryDao(userId).Exec(query, false, ct);
     }
 
     private async Task<Bookmark[]> LoadMetaData(LoadedEntity entity, Bookmark[] bookmarks, CancellationToken ct)
@@ -156,14 +163,14 @@ public class BookmarkService(
     {
          folder = folder with { UserId = userId };
          var query = folder.Insert();
-         var id = await executor.Exec(query, true, ct);
+         var id = await ctx.ShardRouter.PrimaryDao(userId).Exec(query, true, ct);
          folder = folder with { Id = id };
          return folder;       
     }
 
     private async Task<Record[]> GetFoldersByUserId(string userId, CancellationToken ct)
     {
-        var records = await executor.Many(BookmarkFolders.All(userId), ct);
+        var records = await ctx.ShardRouter.ReplicaDao(userId).Many(BookmarkFolders.All(userId), ct);
         records = [new BookmarkFolder("", "", "", Id: 0).ToRecord(), ..records];
         return records;
     }
@@ -172,7 +179,7 @@ public class BookmarkService(
         CancellationToken ct)
     {
         var getExistingQuery = Bookmarks.FolderIdByUserIdRecordId(userId, entityName, recordId);
-        var existing = await executor.Many(getExistingQuery, ct);
+        var existing = await ctx.ShardRouter.ReplicaDao(userId).Many(getExistingQuery, ct);
         return existing.Select(x =>
         {
             var val = x[nameof(Bookmark.FolderId).Camelize()];

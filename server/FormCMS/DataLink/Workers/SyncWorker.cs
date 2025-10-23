@@ -70,10 +70,10 @@ public  abstract class SyncWorker(
     
     private async Task FetchSave(IServiceScope scope, string entityName, string id, CancellationToken ct)
     {
-        var entityService = scope.ServiceProvider.GetRequiredService<IEntityService>();
+        var entityService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
         var contentTagService = scope.ServiceProvider.GetRequiredService<IContentTagService>();
         
-        var loadedEntity = await entityService.GetEntityAndValidateRecordId(entityName, int.Parse(id), ct).Ok();
+        var loadedEntity = await entityService.ValidateEntity(entityName, ct).Ok();
         var tags = await contentTagService.GetContentTags(loadedEntity, [id], ct);
         if (tags.Length > 0)
         {

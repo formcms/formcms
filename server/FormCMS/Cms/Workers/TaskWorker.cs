@@ -39,8 +39,8 @@ public abstract class TaskWorker(
         logger.LogInformation("Checking {t} tasks...", taskType);
         
         using var scope = serviceScopeFactory.CreateScope();
-        var executor = scope.ServiceProvider.GetRequiredService<KateQueryExecutor>();
-        var record = await executor.Single(TaskHelper.GetNewTask(taskType), ct);
+        var dao = scope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao;
+        var record = await dao.Single(TaskHelper.GetNewTask(taskType), ct);
         if (record == null)
         {
             return;
@@ -49,24 +49,24 @@ public abstract class TaskWorker(
         var task = record.ToObject<SystemTask>().Ok();
         try
         {
-            await executor.Exec(
+            await dao.Exec(
                 TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.InProgress, Progress = 50 }),false,
                 ct
             );
             logger.LogInformation("Got {taskType} task, id = {id}", task.Type, task.Id);
-            await DoTask(scope, executor, task,ct);
-            await executor.Exec(
+            await DoTask(scope, dao, task,ct);
+            await dao.Exec(
                 TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.Finished, Progress = 100 }),false,
                 ct);
         }
         catch (Exception e)
         {
             logger.LogError("{error}", e);
-            await executor.Exec(
+            await dao.Exec(
                 TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.Failed, Progress = 0, Error = e.ToString()}), false,ct);
         }
     }
 
     protected abstract TaskType GetTaskType();
-    protected abstract Task DoTask(IServiceScope serviceScope, KateQueryExecutor executor, SystemTask task, CancellationToken ct);
+    protected abstract Task DoTask(IServiceScope serviceScope, IRelationDbDao sourceDao, SystemTask task, CancellationToken ct);
 }

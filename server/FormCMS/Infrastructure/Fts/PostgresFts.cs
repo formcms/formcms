@@ -1,3 +1,5 @@
+using FormCMS.Utils.LoadBalancing;
+
 namespace FormCMS.Infrastructure.Fts;
 
 using System;
@@ -9,9 +11,11 @@ using System.Threading.Tasks;
 using Npgsql;
 
 // PostgreSQL FTS Implementation
-public class PostgresFts(NpgsqlConnection conn) : IFullTextSearch
+public class PostgresFts(NpgsqlConnection primary, NpgsqlConnection[] replicas) : IFullTextSearch
 {
-    private NpgsqlConnection GetConnection()
+    private readonly RoundRobinBalancer<NpgsqlConnection> _balancer = new (primary, replicas);
+
+    private NpgsqlConnection GetConnection(NpgsqlConnection conn)
     {
         if (conn.State != ConnectionState.Open)
         {
@@ -45,7 +49,7 @@ public class PostgresFts(NpgsqlConnection conn) : IFullTextSearch
                                     AND indexname = @index;
                                 """;
 
-        await using var checkCmd = new NpgsqlCommand(checkSql, GetConnection());
+        await using var checkCmd = new NpgsqlCommand(checkSql, GetConnection(primary));
         checkCmd.Parameters.AddWithValue("table", table);
         checkCmd.Parameters.AddWithValue("index", indexName);
 
@@ -62,7 +66,7 @@ public class PostgresFts(NpgsqlConnection conn) : IFullTextSearch
                        CREATE INDEX "{indexName}" ON "{table}" USING GIN("{tsvectorColumn}");
                    """;
 
-        await using var cmd = new NpgsqlCommand(sql, GetConnection());
+        await using var cmd = new NpgsqlCommand(sql, GetConnection(primary));
         await cmd.ExecuteNonQueryAsync(ct);
     }
 
@@ -109,7 +113,7 @@ public class PostgresFts(NpgsqlConnection conn) : IFullTextSearch
                    """;
 
         // Execute command
-        await using var cmd = new NpgsqlCommand(sql, GetConnection());
+        await using var cmd = new NpgsqlCommand(sql, GetConnection(primary));
         foreach (var kv in item)
         {
             cmd.Parameters.AddWithValue(kv.Key, kv.Value ?? DBNull.Value);
@@ -126,7 +130,7 @@ public class PostgresFts(NpgsqlConnection conn) : IFullTextSearch
         var where = string.Join(" AND ", keyValues.Keys.Select(k => $"\"{k}\"=@{k}"));
         var sql = $"DELETE FROM \"{tableName}\" WHERE {where}";
 
-        await using var cmd = new NpgsqlCommand(sql, GetConnection());
+        await using var cmd = new NpgsqlCommand(sql, GetConnection(primary));
         foreach (var kv in keyValues)
         {
             cmd.Parameters.AddWithValue(kv.Key, kv.Value ?? DBNull.Value);
@@ -204,7 +208,7 @@ public class PostgresFts(NpgsqlConnection conn) : IFullTextSearch
                    """;
 
         // Execute command
-        await using var cmd = new NpgsqlCommand(sql, GetConnection());
+        await using var cmd = new NpgsqlCommand(sql, GetConnection(_balancer.Next));
 
         // Add FTS query parameters
         foreach (var f in ftsFields)

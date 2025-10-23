@@ -7,11 +7,10 @@ using Column = FormCMS.Utils.DataModels.Column;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public record KateQueryExecutorOption(int? TimeoutSeconds);
-
-public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutorOption option)
+public static class KateQueryExtensions
 {
-    public  async Task HandlePageData(
+    public static async Task HandlePageData(
+        this IRelationDbDao dao,
         string tableName, string primaryKey, IEnumerable<string> fields,
         Func<Record[], Task>? recordsHandlerFunc, CancellationToken ct)
     {
@@ -20,18 +19,18 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
             .Where(DefaultColumnNames.Deleted.Camelize(), false)
             .OrderBy(primaryKey)
             .Select(fields).Limit(limit);
-        var records = await Many(query, ct);
+        var records = await dao.Many(query, ct);
         while (true)
         {
             if (recordsHandlerFunc != null) await recordsHandlerFunc(records);
             if (records.Length < limit) break;
             var lastId = records.Last()[primaryKey];
-            records = await Many(query.Clone().Where(primaryKey, ">", lastId), ct);
+            records = await dao.Many(query.Clone().Where(primaryKey, ">", lastId), ct);
         }
     }
 
     public static Task GetPageDataAndInsert(
-        KateQueryExecutor sourceExecutor, KateQueryExecutor destExecutor,
+        this IRelationDbDao sourceExecutor, IRelationDbDao destExecutor,
         string tableName, string primaryKey, IEnumerable<string> fields,
         Func<Record[], Task>? recordsHandlerFunc, CancellationToken ct)
         => sourceExecutor.HandlePageData( tableName, primaryKey, fields, async records =>
@@ -40,21 +39,25 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
             await destExecutor.BatchInsert(tableName, records);
         }, ct);
     
-    public async Task<Dictionary<string, object>> LoadDict(Query query, string keyField, string valueField,
+    public static async Task<Dictionary<string, object>> LoadDict(
+        this IRelationDbDao dao,
+        Query query, string keyField, string valueField,
         CancellationToken ct)
     {
-        var records = await Many(query, ct);
+        var records = await dao.Many(query, ct);
         return records.ToDictionary(
             x => x.StrOrEmpty(keyField),
             x => x[valueField]
         );
     }
 
-    public async Task Upsert(string tableName, string importKey, Record[] records)
+    public static async Task Upsert(
+        this IRelationDbDao dao,
+        string tableName, string importKey, Record[] records)
     {
         var ids = records.Select(x => x.StrOrEmpty(importKey)).ToArray();
 
-        var existingRecords = await Many(new Query(tableName).WhereIn(importKey, ids));
+        var existingRecords = await dao.Many(new Query(tableName).WhereIn(importKey, ids));
 
         //convert to string, avoid source records and dest records has different data type, e.g. int vs long
         var existingIds = existingRecords.Select(x => x.StrOrEmpty(importKey)).ToArray();
@@ -82,51 +85,53 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
             var q = new Query(tableName)
                 .Where(importKey, k)
                 .AsUpdate(record);
-            await Exec(q, false);
+            await dao.Exec(q, false);
         }
 
         if (recordsToInsert.Count != 0)
         {
-            await BatchInsert(tableName, recordsToInsert.ToArray());
+            await dao.BatchInsert(tableName, recordsToInsert.ToArray());
         }
     }
 
-    public Task BatchInsert(string tableName, Record[] records)
+    public static Task BatchInsert(
+        this  IRelationDbDao dao,
+        string tableName, Record[] records)
     {
         if (records.Length == 0) return Task.CompletedTask;
         var cols = records[0].Select(x => x.Key);
         var values = records.Select(item => item.Select(kv => kv.Value));
         var query = new Query(tableName).AsInsert(cols, values);
-        return Exec(query, false);
+        return dao.Exec(query, false);
     }
 
-    public async Task<long> Exec(
+    public static async Task<long> Exec(
+        this IRelationDbDao dao,
         Query query, bool getScalarValue, CancellationToken ct = default
-    ) => await provider.ExecuteKateQuery(async (db, tx)
+    ) => await dao.ExecuteKateQuery(async (db, tx)
         => getScalarValue
             ? await db.ExecuteScalarAsync<long>(
                 query: query,
                 transaction: tx,
-                timeout: option.TimeoutSeconds,
                 cancellationToken: ct)
             : await db.ExecuteAsync(
                 query: query,
                 transaction: tx,
-                timeout: option.TimeoutSeconds,
                 cancellationToken: ct)
     );
 
-    public async Task<long[]> ExecBatch(
+    public static async Task<long[]> ExecBatch(
+        this IRelationDbDao dao,
         IEnumerable<(Query, bool)> queries, CancellationToken ct = default
     )
     {
         //already in transaction, let outer code handle transaction 
-        if (provider.InTransaction())
+        if (dao.InTransaction())
         {
             return await ExecAll();
         }
 
-        var tx = await provider.BeginTransaction();
+        var tx = await dao.BeginTransaction();
         try
         {
             var ret = await ExecAll();
@@ -144,34 +149,37 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
             var ret = new List<long>();
             foreach (var (query, returnId) in queries)
             {
-                ret.Add(await Exec(query, returnId, ct));
+                ret.Add(await dao.Exec(query, returnId, ct));
             }
 
             return ret.ToArray();
         }
     }
 
-    public Task<Record?> Single(
+    public static Task<Record?> Single(
+        this IRelationDbDao dao,
         Query query, CancellationToken ct
-    ) => provider.ExecuteKateQuery(async (db, tx)
-        => await db.FirstOrDefaultAsync(query: query, transaction: tx, timeout: option.TimeoutSeconds,
+    ) => dao.ExecuteKateQuery(async (db, tx)
+        => await db.FirstOrDefaultAsync(query: query, transaction: tx,
             cancellationToken: ct) as Record
     );
 
-    public Task<Record[]> Many(
+    public static Task<Record[]> Many(
+        this IRelationDbDao dao,
         Query query, CancellationToken ct = default
-    ) => provider.ExecuteKateQuery(async (db, tx) =>
+    ) => dao.ExecuteKateQuery(async (db, tx) =>
     {
         var items = await db.GetAsync(
             query: query,
             transaction: tx,
-            timeout: option.TimeoutSeconds,
             cancellationToken: ct);
         return items.Select(x => (Record)x).ToArray();
     });
 
     //resolve filter depends on provider
-    public Task<Record[]> Many(Query query, Column[] columns, Filter[] filters, Sort[] sorts,
+    public static Task<Record[]> Many(
+        this IRelationDbDao dao,
+        Query query, Column[] columns, Filter[] filters, Sort[] sorts,
         CancellationToken ct = default)
     {
         foreach (var (field, order) in sorts)
@@ -180,10 +188,24 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
         }
 
         query = ApplyFilters(query, columns, filters);
-        return Many(query, ct);
+        return dao.Many(query, ct);
     }
 
-    private Query ApplyFilters(Query query, Column[] columns, Filter[] filters)
+    public static Task<int> Count(
+        this IRelationDbDao dao,
+        Query query, Column[] columns, Filter[] filters, CancellationToken ct)
+    {
+        query = ApplyFilters(query, columns, filters);
+        return dao.Count(query, ct);
+    }
+
+    public static async Task<int> Count(
+        this IRelationDbDao dao,
+        Query query, CancellationToken ct
+    ) => await dao.ExecuteKateQuery((db, tx) =>
+        db.CountAsync<int>(query, transaction: tx, cancellationToken: ct));
+    
+    private static Query ApplyFilters(Query query, Column[] columns, Filter[] filters)
     {
         foreach (var (fieldName, matchType, constraints) in filters)
         {
@@ -206,7 +228,7 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
         return query;
     }
 
-    private object? ResolveDatabaseValue(Column column, string? s)
+    private static  object? ResolveDatabaseValue(Column column, string? s)
     {
         if (s == null)
             return null;
@@ -223,14 +245,5 @@ public sealed class KateQueryExecutor(IRelationDbDao provider, KateQueryExecutor
         };
     }
 
-    public Task<int> Count(Query query, Column[] columns, Filter[] filters, CancellationToken ct)
-    {
-        query = ApplyFilters(query, columns, filters);
-        return Count(query, ct);
-    }
 
-    public async Task<int> Count(
-        Query query, CancellationToken ct
-    ) => await provider.ExecuteKateQuery((db, tx) =>
-        db.CountAsync<int>(query, transaction: tx, timeout: option.TimeoutSeconds, cancellationToken: ct));
 }

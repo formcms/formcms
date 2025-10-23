@@ -43,6 +43,6 @@ public class ActivityEventHandler(
         if (message.Operation != CmsOperations.Create && message.Operation != CmsOperations.Delete) return;
         using var scope = scopeFactory.CreateScope();
         var activityCollectService = scope.ServiceProvider.GetRequiredService<IActivityCollectService>();
-        await activityCollectService.RecordMessage(message.UserId,message.EntityName,message.RecordId,[message.Activity],ct);
+        await activityCollectService.RecordForMessageBroker(message.UserId,message.EntityName,message.RecordId,[message.Activity],ct);
     }
 }

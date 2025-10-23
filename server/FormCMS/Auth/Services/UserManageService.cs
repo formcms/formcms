@@ -10,7 +10,7 @@ using Microsoft.EntityFrameworkCore;
 namespace FormCMS.Auth.Services;
 
 public class UserManageService<TUser>(
-    KateQueryExecutor executor,
+    ShardGroup shardGroup,
     UserManager<TUser> userManager,
     IFileStore store
     ):IUserManageService
@@ -33,7 +33,7 @@ public class UserManageService<TUser>(
             .Where(primaryKey, recordId)
             .Select(Constants.CreatedBy);
         
-        var record = await executor.Single(query, CancellationToken.None);
+        var record = await shardGroup.PrimaryDao.Single(query, CancellationToken.None);
         if (record is not null 
             && record.TryGetValue(Constants.CreatedBy, out var createdBy) && 
             createdBy is  string s)

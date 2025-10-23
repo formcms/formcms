@@ -17,15 +17,15 @@ public class EmitMessageHandler(
 ) : TaskWorker(serviceScopeFactory: scopeFactory, logger: logger,delaySeconds: options.DelaySeconds)
 {
     protected override async Task DoTask(
-        IServiceScope serviceScope, KateQueryExecutor executor,
+        IServiceScope serviceScope, IRelationDbDao sourceDao,
         SystemTask task, CancellationToken ct)
     {
         var setting = JsonSerializer.Deserialize<EmitMessageSetting>(task.TaskSettings)!;
         var entityName = setting.EntityName;
         
-        var record = await executor.Single(SchemaHelper.ByNameAndType(SchemaType.Entity, [entityName], null),ct);
+        var record = await sourceDao.Single(SchemaHelper.ByNameAndType(SchemaType.Entity, [entityName], null),ct);
         var entity = SchemaHelper.RecordToSchema(record).Ok().Settings.Entity!;
-        await executor.HandlePageData(entity.TableName,entity.PrimaryKey,[entity.PrimaryKey], async records =>
+        await sourceDao.HandlePageData(entity.TableName,entity.PrimaryKey,[entity.PrimaryKey], async records =>
         {
             foreach (var record in records)
             {

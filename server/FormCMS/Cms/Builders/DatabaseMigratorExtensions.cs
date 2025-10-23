@@ -8,7 +8,7 @@ namespace FormCMS.Cms.Builders;
 
 public static class DatabaseMigratorExtensions
 {
-    public static async Task EnsureCmsTables(this DatabaseMigrator migrator)
+    public static async Task EnsureCmsTables(this IRelationDbDao migrator)
     {
         await migrator.MigrateTable(SchemaHelper.TableName, SchemaHelper.Columns);
         await migrator.MigrateTable(TaskHelper.TableName,TaskHelper.Columns);

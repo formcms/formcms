@@ -7,6 +7,7 @@ using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.EnumExt;
+using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
 
@@ -14,20 +15,19 @@ namespace FormCMS.Activities.Services;
 
 public class ActivityCollectService(
     PluginRegistry registry,
-    ICountBuffer countBuffer,
-    IStatusBuffer statusBuffer,
-    IStringMessageProducer producer,    
     ActivitySettings settings,
+    ActivityContext ctx,
+    
     IIdentityService identityService,
+    IUserManageService userManager,
+    
     IEntitySchemaService entitySchemaService,  
-    IEntityService entityService,
     IPageResolver pageResolver,
     IContentTagService contentTagService,
-    KateQueryExecutorOption kateQueryExecutorOption,
-    KateQueryExecutor executor,
-    IRelationDbDao defaultDao,
-    ActivityContext activityContext,
-    IUserManageService userManager
+    
+    ICountBuffer countBuffer,
+    IStatusBuffer statusBuffer,
+    IStringMessageProducer producer    
 ) : IActivityCollectService
 {
     public async Task Flush(DateTime? lastFlushTime, CancellationToken ct)
@@ -41,7 +41,8 @@ public class ActivityCollectService(
         var countRecords = counts.Select(pair =>
             (ActivityCounts.Parse(pair.Key) with { Count = pair.Value }).UpsertRecord()).ToArray();
         
-        await defaultDao.ChunkUpdateOnConflict(1000,ActivityCounts.TableName,  countRecords, ActivityCounts.KeyFields,ct);
+        await ctx.DefaultShardGroup.PrimaryDao.ChunkUpdateOnConflict(
+            1000,ActivityCounts.TableName,  countRecords, ActivityCounts.KeyFields,ct);
         
         //Query title and image 
         var statusList = await statusBuffer.GetAfterLastFlush(lastFlushTime.Value);
@@ -50,11 +51,11 @@ public class ActivityCollectService(
         await UpsertActivities(activities,ct);
     }
     
-    public async Task<long[]> GetCurrentUserActiveStatus(string entityName, string activityType, long[] recordIds, CancellationToken ct)
+    public async Task<string[]> GetCurrentUserActiveStatus(string entityName, string activityType, string[] recordIds, CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
-        var ret = new List<long>();
-        var missed = new List<long>();
+        var ret = new List<string>();
+        var missed = new List<string>();
         if (settings.EnableBuffering)
         {
             var activities = recordIds.Select(id => new Activity(entityName, id, activityType, userId)).ToArray();
@@ -78,17 +79,16 @@ public class ActivityCollectService(
         }
 
         var query = Models.Activities.ActiveStatus(entityName, userId,activityType,  recordIds);
-        var userShardExecutor = activityContext.ShardManager.FollowExecutor(userId, kateQueryExecutorOption);
-        var records = await userShardExecutor.Many(query,ct);
-        ret.AddRange(records.Select(x => (long)x[nameof(Activity.RecordId).Camelize()]));
+        var records = await ctx.ShardRouter.ReplicaDao(userId).Many(query,ct);
+        ret.AddRange(records.Select(x => x.StrOrEmpty(nameof(Activity.RecordId).Camelize())));
         return ret.ToArray();
     }
     
     public async Task<Dictionary<string, ActiveCount>> GetSetActiveCount(
-        string cookieUserId,string entityName, long recordId, CancellationToken ct
+        string cookieUserId,string entityName, string recordId, CancellationToken ct
         )
     {
-        var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
+        var entity = await entitySchemaService.ValidateEntity(entityName, ct).Ok();
         var ret = new Dictionary<string, ActiveCount>();
 
         var userOrCookieId = identityService.GetUserAccess()?.Id ?? cookieUserId;
@@ -138,20 +138,17 @@ public class ActivityCollectService(
             }
             return ret;
         }
-        async Task<Dictionary<string,bool>> GetActiveDictFromDb()
-        {
-            var dao = activityContext.ShardManager.Leader(userId).Dao;
-            return await dao.FetchValues<bool>(
+        async Task<Dictionary<string,bool>> GetActiveDictFromDb() =>
+            await ctx.ShardRouter.PrimaryDao(userId).FetchValues<bool>(
                 Models.Activities.TableName, 
                 Models.Activities.Condition(entityName,recordId,userId),
                 Models.Activities.TypeField,
                 manualRecordTypes,
                 Models.Activities.ActiveField,
                 ct);
-        }
     }
 
-    public async Task<Dictionary<string,long>> GetCountDict(string entityName, long recordId,string[] types, CancellationToken ct)
+    public async Task<Dictionary<string,long>> GetCountDict(string entityName, string recordId,string[] types, CancellationToken ct)
     {
         var counts = types.Select(x => 
             new ActivityCount(entityName, recordId, x)).ToArray();
@@ -178,25 +175,25 @@ public class ActivityCollectService(
     {
         var path = new Uri(url).AbsolutePath.TrimStart('/');
         var page = await pageResolver.GetPage(path, ct);
-        await SetStatusCount(identityService.GetUserAccess()?.Id ?? cookieUserId, null,Constants.PageEntity, page.Id, [Constants.VisitActivityType], ct);
+        await SetStatusCount(identityService.GetUserAccess()?.Id ?? cookieUserId, null,Constants.PageEntity, page.SchemaId, [Constants.VisitActivityType], ct);
     }
 
-    public async Task RecordMessage(
+    public async Task RecordForMessageBroker(
         string useId,
         string entityName,
-        long recordId,
+        string recordId,
         string[] activityTypes,
         CancellationToken ct
     )
     {
-        var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
+        var entity = await entitySchemaService.ValidateEntity(entityName, ct).Ok();
         await SetStatusCount(useId, entity,entityName, recordId, activityTypes, ct);
     }
 
-    public async Task<Dictionary<string, long>> Record(
+    public async Task<Dictionary<string, long>> RecordForWebRequest(
         string cookieUserId,
         string entityName,
-        long recordId,
+        string recordId,
         string[] activityTypes,
         CancellationToken ct
     )
@@ -208,7 +205,7 @@ public class ActivityCollectService(
         {
             throw new ResultException("One or more activity types are not supported.");
         }
-        var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId,ct).Ok();
+        var entity = await entitySchemaService.ValidateEntity(entityName, ct).Ok();
         var userOrCookieId = identityService.GetUserAccess()?.Id ?? cookieUserId;
 
         return await SetStatusCount(userOrCookieId, entity,entityName, recordId, activityTypes, ct);
@@ -216,7 +213,7 @@ public class ActivityCollectService(
 
     public async Task<long> Toggle(
         string entityName,
-        long recordId,
+        string recordId,
         string activityType,
         bool isActive,
         CancellationToken ct)
@@ -227,7 +224,7 @@ public class ActivityCollectService(
         if (identityService.GetUserAccess() is not { Id: var userId })
             throw new ResultException("User is not logged in");
 
-        var entity = await entityService.GetEntityAndValidateRecordId(entityName, recordId, ct).Ok();
+        var entity = await entitySchemaService.ValidateEntity(entityName, ct).Ok();
  
         var activity = new Activity(entityName, recordId, activityType, userId,isActive);
         var count = new ActivityCount(entityName, recordId, activityType);
@@ -243,7 +240,7 @@ public class ActivityCollectService(
         }
 
         //only update is Active field, to determine if you should increase count
-        var userShardDao = activityContext.ShardManager.Leader(userId).Dao;
+        var userShardDao = ctx.ShardRouter.PrimaryDao(userId);
         var changed = await userShardDao.UpdateOnConflict(
             Models.Activities.TableName,
             activity.UpsertRecord(false), 
@@ -252,7 +249,7 @@ public class ActivityCollectService(
         var ret= changed switch
         {
             true => await UpdateContentTagAndIncrease(),
-            false => (await defaultDao.FetchValues<long>(
+            false => (await ctx.DefaultShardGroup.PrimaryDao.FetchValues<long>(
                     ActivityCounts.TableName,
                     ActivityCounts.Condition(count.EntityName,count.RecordId,count.ActivityType),
                     null, null,
@@ -277,7 +274,7 @@ public class ActivityCollectService(
                 await ProduceActivityMessage(entity, loadedActivities[0], ct);
             }
 
-            return await defaultDao.Increase(
+            return await ctx.DefaultShardGroup.PrimaryDao.Increase(
                 ActivityCounts.TableName,
                 ActivityCounts.Condition(count.EntityName,count.RecordId,count.ActivityType),
                 ActivityCounts.CountField,
@@ -314,7 +311,7 @@ public class ActivityCollectService(
             else
             {
                 var timeScore = await GetInitialScoreByPublishedAt();
-                await defaultDao.Increase(
+                await ctx.DefaultShardGroup.PrimaryDao.Increase(
                     ActivityCounts.TableName, 
                     ActivityCounts.Condition(count.EntityName,count.RecordId,count.ActivityType),
                     ActivityCounts.CountField,timeScore, weight, ct);
@@ -335,7 +332,8 @@ public class ActivityCollectService(
 
             async Task<long> GetInitialScoreByPublishedAt()
             {
-                var rec = await executor.Single(entity.PublishedAt(count.RecordId),ct);
+                var query = entity.PublishedAt(long.Parse(count.RecordId));
+                var rec = await ctx.DefaultShardGroup.PrimaryDao.Single(query, ct);
                 if (rec is null 
                     || !rec.TryGetValue(DefaultAttributeNames.PublishedAt.Camelize(), out var value) 
                     || value is null) throw new ResultException("invalid publish time");
@@ -355,7 +353,7 @@ public class ActivityCollectService(
         string userId,
         LoadedEntity? entity,
         string entityName,
-        long recordId,
+        string recordId,
         string[] activityTypes,
         CancellationToken ct
     ){
@@ -379,7 +377,7 @@ public class ActivityCollectService(
             await UpsertActivities(activities,ct);
             foreach (var count in counts)
             {
-                result[count.ActivityType] = await defaultDao.Increase(
+                result[count.ActivityType] = await ctx.DefaultShardGroup.PrimaryDao.Increase(
                     ActivityCounts.TableName, 
                     ActivityCounts.Condition(count.EntityName,count.RecordId,count.ActivityType),
                     ActivityCounts.CountField, 0,1, ct);
@@ -430,7 +428,7 @@ public class ActivityCollectService(
     private async Task ProduceActivityMessage(LoadedEntity entity, Activity activity, CancellationToken ct)
     {
         var targetUserId = await
-            userManager.GetCreatorId(entity.TableName, entity.PrimaryKey, activity.RecordId, ct);
+            userManager.GetCreatorId(entity.TableName, entity.PrimaryKey, long.Parse(activity.RecordId), ct);
 
         var msg = new ActivityMessage(
             UserId: activity.UserId,
@@ -478,7 +476,7 @@ public class ActivityCollectService(
             }
         }
 
-        await activityContext.ShardManager.Execute(
+        await ctx.ShardRouter.Execute(
             toUpdate,
             rec => rec[nameof(Activity.UserId).Camelize()].ToString()!,
             (dao, records) => dao.ChunkUpdateOnConflict(
@@ -489,12 +487,12 @@ public class ActivityCollectService(
                 ct));
     }
 
-    private async Task<Dictionary<string, long>> GetCountsByTypes(string entityName, long recordId, 
+    private async Task<Dictionary<string, long>> GetCountsByTypes(string entityName, string recordId, 
         string[] types, CancellationToken ct)
     {
         if (types.Length == 0 ) return [];
 
-        return await defaultDao.FetchValues<long>(
+        return await ctx.DefaultShardGroup.ReplicaDao.FetchValues<long>(
             ActivityCounts.TableName,
             ActivityCounts.Condition(entityName, recordId),
             ActivityCounts.TypeField,
@@ -506,10 +504,11 @@ public class ActivityCollectService(
     private async Task<bool> GetActiveFromDb(string key)
     {
         var activity = Models.Activities.Parse(key);
-        var dao =activityContext.ShardManager.Follower(activity.UserId).Dao ?? defaultDao;
-        var res = await dao.FetchValues<bool>(
+        var condition = Models.Activities.Condition(
+            activity.EntityName, activity.RecordId, activity.UserId, activity.ActivityType);
+        var res = await  ctx.ShardRouter.ReplicaDao(activity.UserId).FetchValues<bool>(
             Models.Activities.TableName, 
-            Models.Activities.Condition(activity.EntityName, activity.RecordId,activity.UserId,activity.ActivityType),
+            condition,
             null,null,Models.Activities.ActiveField);
         return res.Count > 0 && res.First().Value;
     }
@@ -517,7 +516,7 @@ public class ActivityCollectService(
     private async Task<long> GetCountFromDb(string key)
     {
         var count = ActivityCounts.Parse(key);
-        var res = await defaultDao.FetchValues<long>(
+        var res = await ctx.DefaultShardGroup.ReplicaDao.FetchValues<long>(
             ActivityCounts.TableName, 
             ActivityCounts.Condition(count.EntityName, count.RecordId,count.ActivityType),
             null,null,

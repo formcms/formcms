@@ -3,13 +3,14 @@ using FormCMS.Cms.Services;
 using FormCMS.Comments.Models;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Utils.RecordExt;
 using Humanizer;
 
 namespace FormCMS.Activities.Services;
 
 public class ActivityQueryPlugin(
     ActivitySettings settings,
-    KateQueryExecutor executor,
+    ActivityContext ctx,
     IQueryService queryService,
     IEntitySchemaService  entitySchemaService,
     IActivityCollectService activityCollectService 
@@ -23,7 +24,7 @@ public class ActivityQueryPlugin(
         if (limit > 30 || offset > 30) throw new Exception("Can't access top items");
         var allEntities = await entitySchemaService.AllEntities(ct);
         var entity = allEntities.FirstOrDefault(x=>x.Name == entityName)?? throw new Exception($"Entity {entityName} not found");
-        var items = await executor.Many(ActivityCounts.TopCountItems(entityName, offset,limit), ct);
+        var items = await ctx.DefaultShardGroup.ReplicaDao.Many(ActivityCounts.TopCountItems(entityName, offset,limit), ct);
         var ids = items
             .Select(x => x[nameof(TopCountItem.RecordId).Camelize()].ToString())
             .ToArray();
@@ -42,8 +43,8 @@ public class ActivityQueryPlugin(
         for (var i = 0; i < items.Length; i++)
         {
             var item = items[i];
-            var id = (long)item[nameof(TopCountItem.RecordId).Camelize()];
-            TopCountItemHelper.LoadMetaData(entity.ToLoadedEntity(),item, dict[id.ToString()]);
+            var id = item.StrOrEmpty(nameof(TopCountItem.RecordId).Camelize());
+            TopCountItemHelper.LoadMetaData(entity.ToLoadedEntity(),item, dict[id]);
             item[nameof(TopCountItem.Counts).Camelize()] = await activityCollectService.GetCountDict(entityName, id,types,ct);
             item[nameof(TopCountItem.I).Camelize()] = i + 1 + offset;
         }
@@ -61,7 +62,7 @@ public class ActivityQueryPlugin(
             
             foreach (var record in items)
             {
-                var id = (long)record[entity.PrimaryKey];
+                var id = record.StrOrEmpty(entity.PrimaryKey);
                 var countDict = await activityCollectService.GetCountDict(entity.Name, id, types, ct);
                 foreach (var t in types)
                 {

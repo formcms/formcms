@@ -1,12 +1,15 @@
 using System.Data;
+using FormCMS.Utils.LoadBalancing;
 using Microsoft.Data.Sqlite;
+using Npgsql;
 
 namespace FormCMS.Infrastructure.Fts;
 
 // SQLite FTS Implementation
-public class SqliteFts(SqliteConnection conn) : IFullTextSearch
+public class SqliteFts(SqliteConnection primary, SqliteConnection[] replicas) : IFullTextSearch
 {
-    private SqliteConnection GetConnection()
+    private readonly RoundRobinBalancer<SqliteConnection> _balancer = new (primary, replicas);
+    private SqliteConnection GetConnection(SqliteConnection conn)
     {
         if (conn.State != ConnectionState.Open)
         {
@@ -14,7 +17,6 @@ public class SqliteFts(SqliteConnection conn) : IFullTextSearch
             {
                 conn.Close();
             }
-
             conn.Open();
         }
 
@@ -39,7 +41,7 @@ public class SqliteFts(SqliteConnection conn) : IFullTextSearch
                                     AND name = @ftsTable;
                                 """;
 
-        await using var checkCmd = new SqliteCommand(checkSql, GetConnection());
+        await using var checkCmd = new SqliteCommand(checkSql, GetConnection(primary));
         checkCmd.Parameters.AddWithValue("@ftsTable", ftsTable);
         var exists = Convert.ToInt64(await checkCmd.ExecuteScalarAsync(ct)) > 0;
 
@@ -52,7 +54,7 @@ public class SqliteFts(SqliteConnection conn) : IFullTextSearch
                        USING fts5({string.Join(", ", fields)}, content='{table}', content_rowid='id');
                    """;
 
-        await using var cmd = new SqliteCommand(sql, GetConnection());
+        await using var cmd = new SqliteCommand(sql, GetConnection(primary));
         await cmd.ExecuteNonQueryAsync(ct);
 
         // Create triggers to keep FTS table in sync
@@ -82,7 +84,7 @@ public class SqliteFts(SqliteConnection conn) : IFullTextSearch
 
         foreach (var triggerSql in new[] { insertTrigger, updateTrigger, deleteTrigger })
         {
-            await using var tcmd = new SqliteCommand(triggerSql, GetConnection());
+            await using var tcmd = new SqliteCommand(triggerSql, GetConnection(primary));
             await tcmd.ExecuteNonQueryAsync(ct);
         }
     }
@@ -114,7 +116,7 @@ public class SqliteFts(SqliteConnection conn) : IFullTextSearch
                   updateCols.Select(c => $"\"{c.Replace("\"", "\"\"")}\" = excluded.\"{c.Replace("\"", "\"\"")}\"")) +
               ";";
 
-        await using var cmd = new SqliteCommand(sql, GetConnection());
+        await using var cmd = new SqliteCommand(sql, GetConnection(primary));
 
         // add parameters only for the VALUES(...)
         var colsList = columns.ToList();
@@ -136,8 +138,8 @@ public class SqliteFts(SqliteConnection conn) : IFullTextSearch
         var sql = $"DELETE FROM {tableName} WHERE {where}";
         var ftsSql = $"DELETE FROM fts_{tableName} WHERE {where}";
 
-        await using var cmd = new SqliteCommand(sql, GetConnection());
-        await using var ftsCmd = new SqliteCommand(ftsSql, GetConnection());
+        await using var cmd = new SqliteCommand(sql, GetConnection(primary));
+        await using var ftsCmd = new SqliteCommand(ftsSql, GetConnection(primary));
 
         foreach (var kv in keyValues)
         {
@@ -198,7 +200,7 @@ public class SqliteFts(SqliteConnection conn) : IFullTextSearch
                    LIMIT @limit OFFSET @offset;
                    """;
 
-        await using var cmd = new SqliteCommand(sql, GetConnection());
+        await using var cmd = new SqliteCommand(sql, GetConnection(_balancer.Next));
 
         cmd.Parameters.AddWithValue("@match", matchQuery);
 

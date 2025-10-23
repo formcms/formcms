@@ -23,15 +23,11 @@ public class ExportWorker(
         return TaskType.Export;
     }
 
-    protected override async Task DoTask(IServiceScope serviceScope,KateQueryExecutor sourceExecutor,SystemTask task, CancellationToken ct)
+    protected override async Task DoTask(IServiceScope serviceScope,IRelationDbDao sourceDao,SystemTask task, CancellationToken ct)
     {
         var destConnection = task.GetPaths().CreateConnection();
         var destDao = new SqliteDao(destConnection, new Logger<SqliteDao>(logFactory));
 
-        var (destExecutor, destMigrator) = (
-            new KateQueryExecutor(destDao, new KateQueryExecutorOption(300)),
-            new DatabaseMigrator(destDao)
-        );
         var (schemaRecords, entities,entityDict) = await LoadData();
         await ExportSchema();
         await ExportEntities();
@@ -46,10 +42,9 @@ public class ExportWorker(
 
         async Task ExportAssets()
         {
-            await destMigrator.MigrateTable(Assets.TableName, Assets.Columns);
-            await KateQueryExecutor.GetPageDataAndInsert(
-                sourceExecutor,
-                destExecutor,
+            await destDao.MigrateTable(Assets.TableName, Assets.Columns);
+            await sourceDao.GetPageDataAndInsert(
+                destDao,
                 Assets.TableName,
                 nameof(Asset.Id).Camelize(),
                 Assets.XEntity.Attributes.Select(x => x.Field),
@@ -66,10 +61,9 @@ public class ExportWorker(
 
         async Task ExportAssetLinks()
         {
-             await destMigrator.MigrateTable(AssetLinks.TableName, AssetLinks.Columns);
-             await KateQueryExecutor.GetPageDataAndInsert(
-                 sourceExecutor,
-                 destExecutor,
+             await destDao.MigrateTable(AssetLinks.TableName, AssetLinks.Columns);
+             await sourceDao.GetPageDataAndInsert(
+                 destDao,
                  AssetLinks.TableName,
                  nameof(AssetLink.Id).Camelize(),
                  AssetLinks.Columns.Select(x=>x.Name),
@@ -80,7 +74,7 @@ public class ExportWorker(
         async Task<(Record[], LoadedEntity[], Dictionary<string, LoadedEntity>)> LoadData()
         {
             //export latest schema
-            var records = await sourceExecutor.Many(SchemaHelper.ByNameAndType(null, null, null),ct);
+            var records = await sourceDao.Many(SchemaHelper.ByNameAndType(null, null, null),ct);
             var arr = records.Select(x => SchemaHelper.RecordToSchema(x).Ok())
                 .Where(x => x.Type == SchemaType.Entity)
                 .Select(x => x.Settings.Entity!.ToLoadedEntity()).ToArray();
@@ -122,14 +116,14 @@ public class ExportWorker(
         {
             var attrs = entity.Attributes.Where(x => x.DataType.IsLocal());
             var cols = attrs.ToColumns(entityDict);
-            await destMigrator.MigrateTable(entity.TableName, cols.EnsureColumn(DefaultColumnNames.Deleted,ColumnType.Boolean));
-            await KateQueryExecutor.GetPageDataAndInsert(sourceExecutor,destExecutor, entity.TableName, entity.PrimaryKey, cols.Select(x=>x.Name),null,ct);
+            await destDao.MigrateTable(entity.TableName, cols.EnsureColumn(DefaultColumnNames.Deleted,ColumnType.Boolean));
+            await sourceDao.GetPageDataAndInsert(destDao, entity.TableName, entity.PrimaryKey, cols.Select(x=>x.Name),null,ct);
         }
 
         async Task ExportSchema()
         {
-            await destMigrator.MigrateTable(SchemaHelper.TableName, SchemaHelper.Columns);
-            await destExecutor.BatchInsert(SchemaHelper.TableName, schemaRecords);
+            await destDao.MigrateTable(SchemaHelper.TableName, SchemaHelper.Columns);
+            await sourceDao.BatchInsert(SchemaHelper.TableName, schemaRecords);
         }
     }
 }

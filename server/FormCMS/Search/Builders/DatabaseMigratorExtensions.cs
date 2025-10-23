@@ -6,7 +6,7 @@ namespace FormCMS.Search.Builders;
 
 public static class DatabaseMigratorExtensions
 {
-    public static async Task EnsureFtsTables(this DatabaseMigrator migrator)
+    public static async Task EnsureFtsTables(this IRelationDbDao migrator)
     {
         await migrator.MigrateTable(SearchConstants.TableName, SearchDocumentHelper.Columns);
         await migrator.CreateIndex(SearchConstants.TableName, SearchDocumentHelper.UniqKeyFields,true,CancellationToken.None);

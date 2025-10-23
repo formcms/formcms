@@ -15,13 +15,14 @@ using Humanizer;
 namespace FormCMS.Cms.Services;
 
 public sealed class QueryService(
-    KateQueryExecutor executor,
     IQuerySchemaService schemaSvc,
     IEntitySchemaService entitySchemaService,
     IServiceProvider provider,
     HookRegistry hook,
     PluginRegistry  registry,
-    IUserManageService userManageService
+    IUserManageService userManageService,
+    ShardGroup shardGroup
+    
 ) : IQueryService
 {
     public async Task<Record[]> ListWithAction(GraphQlRequestDto dto)
@@ -106,7 +107,7 @@ public sealed class QueryService(
                 PublicationStatusHelper.GetDataStatus(args)
             );
 
-            records = await executor.Many(kateQuery, ct);
+            records = await shardGroup.ReplicaDao.Many(kateQuery, ct);
             await LoadSubNodeData(normalNodes, args, records, ct);
         }
 
@@ -181,7 +182,7 @@ public sealed class QueryService(
             var kateQuery = query.Entity.ListQuery([..query.Filters], [..query.Sorts], pagination.PlusLimitOne(),
                 validSpan, normalAttrs, status);
             if (query.Distinct) kateQuery = kateQuery.Distinct();
-            items = await executor.Many(kateQuery, ct);
+            items = await shardGroup.ReplicaDao.Many(kateQuery, ct);
             items = span.ToPage(items, pagination.Limit);
             if (items.Length > 0)
             {
@@ -227,7 +228,7 @@ public sealed class QueryService(
             PublicationStatus? pubStatus =
                 args.ContainsEnumKey(SpecialQueryKeys.Preview) ? null : PublicationStatus.Published;
             var kateQuery = query.Entity.SingleQuery([..query.Filters], [..query.Sorts], normalAttrs, pubStatus).Ok();
-            item = await executor.Single(kateQuery, ct);
+            item = await shardGroup.ReplicaDao.Single(kateQuery, ct);
             if (item is not null)
             {
                 await LoadSubNodeData(normalNodes, args, [item], ct);
@@ -286,7 +287,7 @@ public sealed class QueryService(
             
             var query = desc.GetQuery(attrs, ids, collectionArgs,
                 PublicationStatusHelper.GetDataStatus(args));
-            var targetRecords = await executor.Many(query, ct);
+            var targetRecords = await shardGroup.ReplicaDao.Many(query, ct);
 
             if (targetRecords.Length > 0)
             {
@@ -315,7 +316,7 @@ public sealed class QueryService(
             foreach (var id in ids)
             {
                 var query = desc.GetQuery(fields, ids, plusOneArgs, pubStatus);
-                var targetRecords = await executor.Many(query, ct);
+                var targetRecords = await shardGroup.ReplicaDao.Many(query, ct);
 
                 targetRecords = new Span().ToPage(targetRecords, collectionArgs.Pagination.Limit);
                 if (targetRecords.Length > 0)
@@ -372,7 +373,7 @@ public sealed class QueryService(
         var paths = GetAllAssetPaths();
         if (paths.Length == 0) return;
         
-        var assetRecords = await executor.Many(Assets.GetAssetsByPaths(paths));
+        var assetRecords = await shardGroup.ReplicaDao.Many(Assets.GetAssetsByPaths(paths));
         var assets = assetRecords.ToDictionary(x => x.StrOrEmpty(nameof(Asset.Path).Camelize()));
         ReplaceAssets();
         return;

@@ -7,6 +7,7 @@ namespace FormCMS.Utils.DataModels;
 public enum ColumnType
 {
     Id,     //primary key and auto increase
+    StringPrimaryKey,     //primary key but not auto increase
     Int ,
     Boolean,
     

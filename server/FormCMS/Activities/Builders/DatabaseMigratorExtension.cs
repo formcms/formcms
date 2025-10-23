@@ -6,7 +6,7 @@ namespace FormCMS.Activities.Builders;
 
 public static class DatabaseMigratorExtension
 {
-    public static async Task EnsureBookmarkTables(this DatabaseMigrator migrator)
+    public static async Task EnsureBookmarkTables(this IRelationDbDao migrator)
     {
         await migrator.MigrateTable(BookmarkFolders.TableName, BookmarkFolders.Columns);
         await migrator.MigrateTable(Bookmarks.TableName, Bookmarks.Columns);
@@ -18,7 +18,7 @@ public static class DatabaseMigratorExtension
         );
     }
 
-    public static async Task EnsureActivityTables(this DatabaseMigrator migrator)
+    public static async Task EnsureActivityTables(this IRelationDbDao migrator)
     {
         await migrator.MigrateTable(Models.Activities.TableName, Models.Activities.Columns);
         await migrator.CreateIndex(Models.Activities.TableName, Models.Activities.KeyFields, true,

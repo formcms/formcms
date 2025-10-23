@@ -23,19 +23,19 @@ public static class CommentHandler
             ) => s.Update(c, ct)
         );
         
-        builder.MapPost("/reply/{referencedId:long}",
+        builder.MapPost("/reply/{referencedId}",
             (
                 ICommentsService s, 
                 Comment c, 
-                long referencedId, 
+                string referencedId, 
                 CancellationToken ct
             ) => s.Reply(referencedId, c, ct)
         );
         
-        builder.MapPost("/delete/{id:long}",
+        builder.MapPost("/delete/{id}",
             (
                 ICommentsService s,
-                long id,
+                string id,
                 CancellationToken ct
             ) => s.Delete(id, ct)
         );

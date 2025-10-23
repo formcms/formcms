@@ -180,8 +180,6 @@ public class MySqlDao( MySqlConnection connection,ILogger<MySqlDao> logger) : IR
         await command.ExecuteNonQueryAsync(ct);
     }
 
-
-
     public async Task<bool> UpdateOnConflict(string tableName, Record data, string[] keyFields, CancellationToken ct)
     {
         var keyConditions = data.Where(kvp => keyFields.Contains(kvp.Key))
@@ -399,6 +397,7 @@ public class MySqlDao( MySqlConnection connection,ILogger<MySqlDao> logger) : IR
         return t switch
         {
             ColumnType.Id => "BIGINT AUTO_INCREMENT PRIMARY KEY",
+            ColumnType.StringPrimaryKey => "VARCHAR(255) PRIMARY KEY",
             ColumnType.Int => "BIGINT",
             ColumnType.Boolean => "BOOLEAN DEFAULT FALSE",
             ColumnType.Text => "MEDIUMTEXT",

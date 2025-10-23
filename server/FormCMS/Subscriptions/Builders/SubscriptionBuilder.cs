@@ -49,7 +49,7 @@ namespace FormCMS.Subscriptions.Builders
             
             
             var scope = app.Services.CreateScope();
-            await scope.ServiceProvider.GetRequiredService<DatabaseMigrator>().EnsureSubscriptionTables();
+            await scope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao.EnsureSubscriptionTables();
 
             logger.LogInformation("""
                                   *********************************************************

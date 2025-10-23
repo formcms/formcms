@@ -46,22 +46,22 @@ public static class ActivityHandler
         builder.MapGet("/status/{entityName}/{activity}", (
             string entityName,
             string activity,
-            long[] id,
+            string [] id,
             IActivityCollectService s,
             CancellationToken ct
         ) => s.GetCurrentUserActiveStatus(entityName,activity,id, ct));
         
-        builder.MapGet("/{entityName}/{recordId:long}", (
+        builder.MapGet("/{entityName}/{recordId}", (
             string entityName,
-            long recordId,
+            string recordId,
             IActivityCollectService s,
             HttpContext http, // Inject HttpContext
             CancellationToken ct
         ) => s.GetSetActiveCount(UserId(http), entityName, recordId, ct));
 
-        builder.MapPost("/toggle/{entityName}/{recordId:long}", (
+        builder.MapPost("/toggle/{entityName}/{recordId}", (
             string entityName,
-            long recordId,
+            string recordId,
             string type,
             bool active,
             IActivityCollectService s,
@@ -75,16 +75,16 @@ public static class ActivityHandler
         ) => s.Visit(UserId(context), url, ct));
         
         
-        builder.MapPost("/record/{entityName}/{recordId:long}", async (
+        builder.MapPost("/record/{entityName}/{recordId}", async (
             string entityName,
-            long recordId,
+            string recordId,
             string type,
             HttpContext context,
             IActivityCollectService s,
             CancellationToken ct
         ) =>
         {
-            var res = await s.Record(UserId(context),entityName, recordId, [type], ct);
+            var res = await s.RecordForWebRequest(UserId(context),entityName, recordId, [type], ct);
             return res.First().Value;
         });
         return builder;

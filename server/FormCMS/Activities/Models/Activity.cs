@@ -11,7 +11,7 @@ namespace FormCMS.Activities.Models;
 
 public record Activity(
     string EntityName,
-    long RecordId,
+    string RecordId,
     string ActivityType,
     string UserId,
     bool IsActive = true,
@@ -48,7 +48,7 @@ public static class Activities
     [
         ColumnHelper.CreateCamelColumn<Activity>(x => x.Id!, ColumnType.Id),
         ColumnHelper.CreateCamelColumn<Activity, string>(x => x.EntityName),
-        ColumnHelper.CreateCamelColumn<Activity, long>(x => x.RecordId),
+        ColumnHelper.CreateCamelColumn<Activity, string>(x => x.RecordId),
         ColumnHelper.CreateCamelColumn<Activity, string>(x => x.ActivityType),
         ColumnHelper.CreateCamelColumn<Activity, string>(x => x.UserId),
         
@@ -68,7 +68,7 @@ public static class Activities
     public static Activity Parse(string recordKey)
     {
         var parts = recordKey.Split('.');
-        return new Activity(parts[0], long.Parse(parts[1]), parts[2], parts[3]);
+        return new Activity(parts[0], parts[1], parts[2], parts[3]);
     }
 
     public static string Key(this Activity activityApi)
@@ -97,7 +97,7 @@ public static class Activities
         return RecordExtensions.FormObject(activityApi, [..whitList]);
     }
 
-    public static Record Condition(string entityName, long recordId, string userId)
+    public static Record Condition(string entityName, string recordId, string userId)
         => new Dictionary<string, object>
         {
             { nameof(Activity.EntityName).Camelize(), entityName },
@@ -105,7 +105,7 @@ public static class Activities
             { nameof(Activity.UserId).Camelize(), userId }
         };
 
-    public static Record Condition(string entityName, long recordId, string userId, string activityType)
+    public static Record Condition(string entityName, string recordId, string userId, string activityType)
         => new Dictionary<string, object>
         {
             { nameof(Activity.EntityName).Camelize(), entityName },
@@ -150,7 +150,7 @@ public static class Activities
         return q;
     }
 
-    public static Query ActiveStatus(string entityName,string userId, string activityType, long[] recordIds)
+    public static Query ActiveStatus(string entityName,string userId, string activityType, string[] recordIds)
     {
         var q = new Query(TableName)
             .Select(nameof(Activity.RecordId).Camelize(), nameof(Activity.IsActive).Camelize())

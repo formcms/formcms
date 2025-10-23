@@ -11,7 +11,6 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Identities;
 using FormCMS.Core.Plugins;
-using FormCMS.Core.Tasks;
 using FormCMS.Infrastructure.Cache;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
@@ -22,12 +21,9 @@ using FormCMS.Utils.PageRender;
 using FormCMS.Utils.ResultExt;
 using FormCMS.Utils.ServiceCollectionExt;
 using GraphQL;
-using Humanizer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.EntityFrameworkCore.Diagnostics;
-using Microsoft.EntityFrameworkCore.Migrations.Internal;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Schema = FormCMS.Cms.Graph.Schema;
 
@@ -35,21 +31,19 @@ namespace FormCMS.Cms.Builders;
 
 public sealed record Problem(string Title, int Code, string? Detail = null);
 
-public sealed record DbOption(DatabaseProvider Provider, string ConnectionString);
-
 public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
 {
 
     public static IServiceCollection AddCms(
         IServiceCollection services,
         DatabaseProvider databaseProvider,
-        string connectionString,
-        Action<SystemSettings>? optionsAction = null
+        string leadConnStr,
+        Action<SystemSettings>? optionsAction = null,
+        string[]? followConnStrings = null
     )
     {
         var systemSettings = new SystemSettings();
         optionsAction?.Invoke(systemSettings);
-
         services.AddSingleton<CmsBuilder>();
         
         //only set options to FormCMS enum types.
@@ -60,6 +54,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<PublicationStatus>);
         services.AddSingleton(systemSettings);
 
+        services.AddScoped<ShardGroup>(sp =>  sp.CreateShard(databaseProvider, new ShardConfig(leadConnStr, followConnStrings)));
 
         var registry = new PluginRegistry(
             FeatureMenus: [Menus.MenuSchemaBuilder, Menus.MenuTasks],
@@ -74,15 +69,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         );
         
         services.AddSingleton(registry);
-
-        services.AddSingleton(new DbOption(databaseProvider, connectionString));
         services.AddSingleton<HookRegistry>();
-
-        services.AddDao(databaseProvider, connectionString);
-        services.AddSingleton(new KateQueryExecutorOption(systemSettings.DatabaseQueryTimeout));
-        services.AddScoped<KateQueryExecutor>();
-        services.AddScoped<DatabaseMigrator>();
-
         services.AddSingleton(new RewriteOptions());
         AddChannelMessageBus();
         AddCacheServices();
@@ -187,12 +174,6 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         void AddCacheServices()
         {
             services.AddMemoryCache();
-            services.AddSingleton<KeyValueCache<long>>(p => new KeyValueCache<long>(
-                p,
-                "maxRecordId",
-                TimeSpan.FromSeconds(1)
-            ));
-
             services.AddSingleton<KeyValueCache<FormCMS.Core.Descriptors.Schema>>(
                 p => new KeyValueCache<FormCMS.Core.Descriptors.Schema>(
                     p,
@@ -217,7 +198,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
     {
         var settings = app.Services.GetRequiredService<SystemSettings>();
         using var serviceScope = app.Services.CreateScope();
-        await serviceScope.ServiceProvider.GetRequiredService<DatabaseMigrator>().EnsureCmsTables(); 
+        await serviceScope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao.EnsureCmsTables(); 
         await Seed(serviceScope);
         
         PrintVersion();
@@ -371,14 +352,11 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             var informationalVersion = assembly
                 .GetCustomAttribute<AssemblyInformationalVersionAttribute>()
                 ?.InformationalVersion;
-            var dbOptions = app.Services.GetRequiredService<DbOption>();
-            var parts = dbOptions.ConnectionString.Split(";").Where(x => !x.StartsWith("Password"));
 
             logger.LogInformation(
                 $"""
                 *********************************************************
                 Using {title}, Version {informationalVersion?.Split("+").First()}
-                Database : {dbOptions.Provider} - {string.Join(";", parts)}
                 Client App is Enabled :{settings.EnableClient}
                 Use CMS' home page: {settings.MapCmsHomePage}
                 GraphQL Client Path: {settings.GraphQlPath}

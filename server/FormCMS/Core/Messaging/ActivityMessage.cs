@@ -17,7 +17,7 @@ public record ActivityMessage(
     string UserId, 
     string TargetUserId, 
     string EntityName, 
-    long RecordId, 
+    string RecordId, 
     string Activity,  
     string Operation,
     string Message,

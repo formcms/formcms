@@ -1,15 +1,19 @@
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Notify.Handlers;
 using FormCMS.Notify.Services;
+using FormCMS.Utils.ServiceCollectionExt;
 
 namespace FormCMS.Notify.Builders;
 
 public class NotificationBuilder(ILogger<NotificationBuilder> logger)
 {
-    public static IServiceCollection AddNotify(IServiceCollection services)
+    public static IServiceCollection AddNotify(IServiceCollection services,
+        ShardRouterConfig? shardManagerConfig = null)
     {
         services.AddSingleton<NotificationBuilder>();
         services.AddScoped<INotificationService,NotificationService>();
+        services.AddScoped(sp => new NotificationContext( sp.CreateShardManager(shardManagerConfig)));
+
         return services;
     }
 
@@ -22,7 +26,7 @@ public class NotificationBuilder(ILogger<NotificationBuilder> logger)
         
         //db
         using var scope = app.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<DatabaseMigrator>().EnsureNotifyTable();
+        await scope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao.EnsureNotifyTable();
      
         logger.LogInformation(
             $"""

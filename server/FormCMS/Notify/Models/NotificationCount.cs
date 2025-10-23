@@ -27,7 +27,7 @@ public static class NotificationCountExtensions
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime)
     ];
     
-    public static Query ReadAll(string userId)
+    public static Query ResetCount(string userId)
     {
         var query = new Query(TableName)
             .Where(nameof(NotificationCount.UserId).Camelize(), userId);

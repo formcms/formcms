@@ -8,7 +8,7 @@ using Humanizer;
 namespace FormCMS.Cms.Services;
 
 public sealed class SchemaService(
-    KateQueryExecutor queryExecutor,
+    ShardGroup shardGroup,
     HookRegistry hook,
     IServiceProvider provider
 ) : ISchemaService
@@ -20,7 +20,7 @@ public sealed class SchemaService(
     }
 
     public Task Publish(Schema schema, CancellationToken ct = default)
-        =>queryExecutor.ExecBatch([
+        =>shardGroup.PrimaryDao.ExecBatch([
             (schema.ResetPublished(),false),
             (schema.Publish(),false)
         ], ct);
@@ -28,7 +28,7 @@ public sealed class SchemaService(
     public async Task<Schema[]> All(SchemaType? type, IEnumerable<string>? names, PublicationStatus? status, CancellationToken ct = default)
     {
         var query = SchemaHelper.ByNameAndType(type, names, status);
-        var items = await queryExecutor.Many(query, ct);
+        var items = await shardGroup.PrimaryDao.Many(query, ct);
         return items.Select(x => SchemaHelper.RecordToSchema(x).Ok()).ToArray();
     }
 
@@ -45,7 +45,7 @@ public sealed class SchemaService(
     public async Task<Schema[]> History(string schemaId, CancellationToken ct = default)
     {
         var query = SchemaHelper.BySchemaId(schemaId);
-        var items = await queryExecutor.Many(query, ct);
+        var items = await shardGroup.PrimaryDao.Many(query, ct);
         var schemas= items.Select(x => SchemaHelper.RecordToSchema(x).Ok()).ToArray();
         await hook.SchemaPostGetHistory.Trigger(provider, new SchemaPostGetHistoryArgs([..schemas]));
         return schemas;
@@ -54,7 +54,7 @@ public sealed class SchemaService(
     public async Task<Schema?> ById(long id, CancellationToken ct = default)
     {
         var query = SchemaHelper.ById(id);
-        var item = await queryExecutor.Single(query, ct);
+        var item = await shardGroup.PrimaryDao.Single(query, ct);
         var res = SchemaHelper.RecordToSchema(item);
         return res.IsSuccess ? res.Value : null;
     }
@@ -62,7 +62,7 @@ public sealed class SchemaService(
     public async Task<Schema?> ByNameOrDefault(string name, SchemaType type, PublicationStatus?status, CancellationToken ct = default)
     {
         var query = SchemaHelper.ByNameAndType(type, [name],status);
-        var item = await queryExecutor.Single(query, ct);
+        var item = await shardGroup.PrimaryDao.Single(query, ct);
         var res = SchemaHelper.RecordToSchema(item);
         return res.IsSuccess ? res.Value : null;
     }
@@ -70,7 +70,7 @@ public sealed class SchemaService(
     public async Task<Schema?> ByStartsOrDefault(string name, SchemaType type, PublicationStatus?status,
         CancellationToken ct = default)
     {
-        var item = await queryExecutor.Single(SchemaHelper.StartsAndType(name,type,status), ct);
+        var item = await shardGroup.PrimaryDao.Single(SchemaHelper.StartsAndType(name,type,status), ct);
 
         var res = SchemaHelper.RecordToSchema(item);
 
@@ -80,7 +80,7 @@ public sealed class SchemaService(
     public async Task<Result> NameNotTakenByOther(Schema schema, CancellationToken ct)
     {
         var query = SchemaHelper.ByNameAndTypeAndNotId(schema.Name, schema.Type, schema.SchemaId);
-        var count = await queryExecutor.Count(query, ct);
+        var count = await shardGroup.PrimaryDao.Count(query, ct);
         return count == 0 ? Result.Ok() : Result.Fail($"the schema name {schema.Name} was taken by other schema");
     }
 
@@ -97,7 +97,7 @@ public sealed class SchemaService(
         }
         queries.Add((schema.Save(), true));
 
-        var ids = await queryExecutor.ExecBatch([..queries], ct);
+        var ids = await shardGroup.PrimaryDao.ExecBatch([..queries], ct);
         schema = schema with { Id = ids.Last()};
         return schema;
     }
@@ -140,13 +140,13 @@ public sealed class SchemaService(
     {
         var schema = await ById(id,ct)?? throw new ResultException($"Schema [{id}] not found");
         await hook.SchemaPreDel.Trigger(provider, new SchemaPreDelArgs(schema));
-        await queryExecutor.Exec(SchemaHelper.SoftDelete(schema.SchemaId),false, ct);
+        await shardGroup.PrimaryDao.Exec(SchemaHelper.SoftDelete(schema.SchemaId),false, ct);
     }
 
     public async Task EnsureTopMenuBar(CancellationToken ct)
     {
         var query = SchemaHelper.ByNameAndType(SchemaType.Menu, [SchemaName.TopMenuBar], null);
-        var item = await queryExecutor.Single(query, ct);
+        var item = await shardGroup.PrimaryDao.Single(query, ct);
         if (item is not null)
         {
             return;

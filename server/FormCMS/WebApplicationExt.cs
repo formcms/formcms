@@ -79,7 +79,7 @@ public static class WebApplicationExt
     public static IServiceCollection AddAuditLog(this IServiceCollection services)
         => AuditLogBuilder.AddAuditLog(services);
 
-    public static IServiceCollection AddActivity(this IServiceCollection services, bool enableBuffering = true,ShardManagerConfig? shardConfig = null)
+    public static IServiceCollection AddActivity(this IServiceCollection services, bool enableBuffering = true,ShardRouterConfig? shardConfig = null)
         => ActivityBuilder.AddActivity(services, enableBuffering,shardConfig);
 
     public static IServiceCollection AddComments(this IServiceCollection services, bool enableBuffering = true)
@@ -91,8 +91,10 @@ public static class WebApplicationExt
     public static IServiceCollection AddNotify(this IServiceCollection services)
         => NotificationBuilder.AddNotify(services);
 
-    public static IServiceCollection AddSearch(this IServiceCollection services)
-        => SearchBuilder.AddSearch(services);
+    public static IServiceCollection AddSearch(this IServiceCollection services,
+        FtsProvider ftsProvider, string primaryConnString,string[]? replicaConnStrings=null
+        )
+        => SearchBuilder.AddSearch(services,ftsProvider, primaryConnString, replicaConnStrings);
 
     public static IServiceCollection AddCrudMessageProducer(
         this IServiceCollection services, string[] entities

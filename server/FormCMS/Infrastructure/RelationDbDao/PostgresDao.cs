@@ -155,6 +155,11 @@ public class PostgresDao( NpgsqlConnection connection,ILogger<PostgresDao> logge
         await command.ExecuteNonQueryAsync(ct);
     }
 
+    public Task CreatePrimaryKey(string table, string[] fields, CancellationToken ct)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<bool> UpdateOnConflict(string tableName, Record data, string[] keyFields, CancellationToken ct)
     {
         var keyConditions = data.Where(kvp => keyFields.Contains(kvp.Key))
@@ -401,6 +406,7 @@ public class PostgresDao( NpgsqlConnection connection,ILogger<PostgresDao> logge
         return t switch
         {
             ColumnType.Id => "BIGSERIAL PRIMARY KEY",
+            ColumnType.StringPrimaryKey => "varchar(255) PRIMARY KEY",
             ColumnType.Int => "BIGINT",
             ColumnType.Boolean => "BOOLEAN DEFAULT FALSE",
             

@@ -8,13 +8,12 @@ public enum DatabaseProvider
     SqlServer,
     Mysql,
 }
-
 public enum FtsProvider
 {
-    Mysql,
+    Sqlite,
     Postgres,
-    Sql,
-    ElasticSearch,
+    SqlServer,
+    Mysql,
 }
 public class ImageCompressionOptions
 {
@@ -45,7 +44,6 @@ public sealed class SystemSettings
     public TimeSpan EntitySchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);
     public TimeSpan PageSchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);
     public TimeSpan QuerySchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);
-    public int DatabaseQueryTimeout { get; set; } = 30;
     public ImageCompressionOptions ImageCompression { get; set; } = new();
     public RouteOptions RouteOptions { get; set; } = new();
     public string[] KnownPaths { get; set; } = [];

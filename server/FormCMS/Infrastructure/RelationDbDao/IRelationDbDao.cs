@@ -14,7 +14,6 @@ public interface IRelationDbDao
     Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct = default);
     Task CreateForeignKey(string table, string col, string refTable, string refCol, CancellationToken ct);
     Task CreateIndex(string table, string[] fields, bool isUniq, CancellationToken ct);
-    
     Task<bool> UpdateOnConflict(string tableName, Record data, string []keyField, CancellationToken ct);
     Task BatchUpdateOnConflict(string tableName, Record[]records, string[] keyField, CancellationToken ct);
     

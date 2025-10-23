@@ -9,7 +9,7 @@ namespace FormCMS.Activities.Models;
 
 public record ActivityCount(
     string EntityName,
-    long RecordId,
+    string RecordId,
     string ActivityType,
     long Count = 1,
     long? Id = null
@@ -33,7 +33,7 @@ public static class ActivityCounts
     [
         ColumnHelper.CreateCamelColumn<ActivityCount>(x => x.Id!, ColumnType.Id),
         ColumnHelper.CreateCamelColumn<ActivityCount, string>(x => x.EntityName),
-        ColumnHelper.CreateCamelColumn<ActivityCount, long>(x => x.RecordId),
+        ColumnHelper.CreateCamelColumn<ActivityCount, string>(x => x.RecordId),
         ColumnHelper.CreateCamelColumn<ActivityCount, string>(x => x.ActivityType),
         ColumnHelper.CreateCamelColumn<ActivityCount, long>(x => x.Count),
 
@@ -45,7 +45,7 @@ public static class ActivityCounts
     public static ActivityCount Parse(string key)
     {
         var parts = key.Split('.');
-        return new ActivityCount(parts[0], long.Parse(parts[1]), parts[2]);
+        return new ActivityCount(parts[0], parts[1], parts[2]);
     }
 
     public static string Key(this ActivityCount count)
@@ -59,14 +59,14 @@ public static class ActivityCounts
             nameof(ActivityCount.Count)
         ]);
 
-    public static Record Condition(string entityName, long recordId)
+    public static Record Condition(string entityName, string recordId)
         => new Dictionary<string, object>
         {
             { nameof(ActivityCount.EntityName).Camelize(), entityName },
             { nameof(ActivityCount.RecordId).Camelize(), recordId }
         };
 
-    public static Record Condition(string entityName, long recordId, string activityType)
+    public static Record Condition(string entityName, string recordId, string activityType)
         => new Dictionary<string, object>
         {
 

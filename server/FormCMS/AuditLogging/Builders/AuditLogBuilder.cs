@@ -34,7 +34,7 @@ public sealed class AuditLogBuilder(ILogger<AuditLogBuilder> logger )
         app.Services.GetRequiredService<PluginRegistry>().RegisterAuditLogPlugins();
         
         using var scope = app.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<DatabaseMigrator>().EnsureAuditLogTables();
+        await scope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao.EnsureAuditLogTables();
         
         logger.LogInformation(
             """

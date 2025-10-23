@@ -1,5 +1,3 @@
-using FormCMS.Infrastructure.RelationDbDao;
-
 namespace FormCMS.Activities.Models;
 
 public record ActivitySettings(
@@ -12,8 +10,6 @@ public record ActivitySettings(
     DateTime ReferenceDateTime,
     long HourBoostWeight
 );
-
-public record ActivityContext(ShardManager ShardManager);
 
 public static class ActivitySettingsExtensions
 {

@@ -83,27 +83,20 @@ public class Program
             builder.Services.AddAuditLog();
 
             var enableActivityBuffer = builder.Configuration.GetValue<bool>("EnableActivityBuffer");
-            var shardConfig = builder.Configuration.GetSection("ActivityShardManagerConfig").Get<ShardManagerConfig>();
+            var shardConfig = builder.Configuration.GetSection("ActivityShardManagerConfig").Get<ShardRouterConfig>();
             builder.Services.AddActivity(enableActivityBuffer,shardConfig);
 
             builder.Services.AddComments();
             builder.Services.AddNotify();
-            builder.Services.AddSearch();
+            
+            var ftsProvider = builder.Configuration.GetValue<string>(Constants.FtsProvider) ?? dbProvider;
+            builder.Services.AddSearch(Enum.Parse<FtsProvider>(ftsProvider),dbConnStr);
 
             builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
             builder.Services.AddSubscriptions();
             builder.Services.AddVideo();
 
-            var ftsProvider = builder.Configuration.GetValue<string>(Constants.FtsProvider) ?? dbProvider;
-            _ = ftsProvider switch
-            {
-                Constants.Mysql => builder.Services.AddScoped<IFullTextSearch, MysqlFts>(),
-                Constants.Sqlite => builder.Services.AddScoped<IFullTextSearch, SqliteFts>(),
-                Constants.Postgres => builder.Services.AddScoped<IFullTextSearch, PostgresFts>(),
-                Constants.SqlServer => builder.Services.AddScoped<IFullTextSearch, SqlServerFts>(),
-                _ => throw new Exception("Database provider not found")
-            };
-        }
+       }
 
         void AddMessageProducer()
         {

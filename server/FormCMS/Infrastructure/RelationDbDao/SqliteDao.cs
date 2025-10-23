@@ -124,6 +124,11 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
         await command.ExecuteNonQueryAsync(ct);
     }
 
+    public Task CreatePrimaryKey(string table, string[] fields, CancellationToken ct)
+    {
+        throw new NotImplementedException();
+    }
+
     public async Task<bool> UpdateOnConflict(string tableName, Record data, string[] keyFields, CancellationToken ct)
     {
         var insertColumns = string.Join(", ", data.Keys);

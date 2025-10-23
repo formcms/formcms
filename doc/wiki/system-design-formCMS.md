@@ -39,7 +39,7 @@ This helps developers build backends faster for different kinds of projects — 
 
 ![compare-news-course](compare-news-course.png)
 
-Common CMS features (admin panel, auth, payments, comments, likes, views, notifications, search, etc.) are built in formCMS
+Common CMS features (admin panel, auth, payments, comments, likes, views, notifications, search, etc.) are built into formCMS.    
 The system should let developers **define** entities  and  APIs for them.
 
 Instead of writing table schemas, APIs, and docs manually, developers just fill out forms in the **Entity Builder** and **Query Builder** — backend development becomes as simple as completing a form.
