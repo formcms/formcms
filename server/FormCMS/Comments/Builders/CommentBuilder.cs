@@ -4,7 +4,7 @@ using FormCMS.Comments.Services;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.RelationDbDao;
-using FormCMS.Utils.ServiceCollectionExt;
+using FormCMS.Utils.Builders;
 
 namespace FormCMS.Comments.Builders;
 
@@ -15,7 +15,10 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
         services.AddSingleton<CommentBuilder>();
         services.AddScoped<ICommentsService, CommentsService>();
         services.AddScoped<ICommentsQueryPlugin, CommentsQueryPlugin>();
-        services.AddScoped(sp => new CommentsContext(sp.CreateShardManager(config)));
+        services.AddScoped(sp =>
+            new CommentsContext(config is null
+                ? new ShardRouter([sp.GetRequiredService<ShardGroup>()])
+                : sp.CreateShardRouter(config)));
         return services;
     }
 
@@ -29,7 +32,9 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
         app.Services.GetRequiredService<HookRegistry>().RegisterCommentsHooks();
         
         var scope = app.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<ShardRouter>().ExecuteAll(dao => dao.EnsureCommentsTable());
+        await scope.ServiceProvider.GetRequiredService<CommentsContext>()
+            .RecordCommentShardRouter 
+            .ExecuteAll(dao => dao.EnsureCommentsTable());
         
         logger.LogInformation(
             $"""

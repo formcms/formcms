@@ -41,7 +41,7 @@ public class ActivityCollectService(
         var countRecords = counts.Select(pair =>
             (ActivityCounts.Parse(pair.Key) with { Count = pair.Value }).UpsertRecord()).ToArray();
         
-        await ctx.DefaultShardGroup.PrimaryDao.ChunkUpdateOnConflict(
+        await ctx.CountShardGroup.PrimaryDao.ChunkUpdateOnConflict(
             1000,ActivityCounts.TableName,  countRecords, ActivityCounts.KeyFields,ct);
         
         //Query title and image 
@@ -79,7 +79,7 @@ public class ActivityCollectService(
         }
 
         var query = Models.Activities.ActiveStatus(entityName, userId,activityType,  recordIds);
-        var records = await ctx.ShardRouter.ReplicaDao(userId).Many(query,ct);
+        var records = await ctx.UserActivityShardRouter.ReplicaDao(userId).Many(query,ct);
         ret.AddRange(records.Select(x => x.StrOrEmpty(nameof(Activity.RecordId).Camelize())));
         return ret.ToArray();
     }
@@ -139,7 +139,7 @@ public class ActivityCollectService(
             return ret;
         }
         async Task<Dictionary<string,bool>> GetActiveDictFromDb() =>
-            await ctx.ShardRouter.PrimaryDao(userId).FetchValues<bool>(
+            await ctx.UserActivityShardRouter.PrimaryDao(userId).FetchValues<bool>(
                 Models.Activities.TableName, 
                 Models.Activities.Condition(entityName,recordId,userId),
                 Models.Activities.TypeField,
@@ -240,7 +240,7 @@ public class ActivityCollectService(
         }
 
         //only update is Active field, to determine if you should increase count
-        var userShardDao = ctx.ShardRouter.PrimaryDao(userId);
+        var userShardDao = ctx.UserActivityShardRouter.PrimaryDao(userId);
         var changed = await userShardDao.UpdateOnConflict(
             Models.Activities.TableName,
             activity.UpsertRecord(false), 
@@ -249,7 +249,7 @@ public class ActivityCollectService(
         var ret= changed switch
         {
             true => await UpdateContentTagAndIncrease(),
-            false => (await ctx.DefaultShardGroup.PrimaryDao.FetchValues<long>(
+            false => (await ctx.CountShardGroup.PrimaryDao.FetchValues<long>(
                     ActivityCounts.TableName,
                     ActivityCounts.Condition(count.EntityName,count.RecordId,count.ActivityType),
                     null, null,
@@ -274,7 +274,7 @@ public class ActivityCollectService(
                 await ProduceActivityMessage(entity, loadedActivities[0], ct);
             }
 
-            return await ctx.DefaultShardGroup.PrimaryDao.Increase(
+            return await ctx.CountShardGroup.PrimaryDao.Increase(
                 ActivityCounts.TableName,
                 ActivityCounts.Condition(count.EntityName,count.RecordId,count.ActivityType),
                 ActivityCounts.CountField,
@@ -311,7 +311,7 @@ public class ActivityCollectService(
             else
             {
                 var timeScore = await GetInitialScoreByPublishedAt();
-                await ctx.DefaultShardGroup.PrimaryDao.Increase(
+                await ctx.CountShardGroup.PrimaryDao.Increase(
                     ActivityCounts.TableName, 
                     ActivityCounts.Condition(count.EntityName,count.RecordId,count.ActivityType),
                     ActivityCounts.CountField,timeScore, weight, ct);
@@ -333,7 +333,7 @@ public class ActivityCollectService(
             async Task<long> GetInitialScoreByPublishedAt()
             {
                 var query = entity.PublishedAt(long.Parse(count.RecordId));
-                var rec = await ctx.DefaultShardGroup.PrimaryDao.Single(query, ct);
+                var rec = await ctx.CountShardGroup.PrimaryDao.Single(query, ct);
                 if (rec is null 
                     || !rec.TryGetValue(DefaultAttributeNames.PublishedAt.Camelize(), out var value) 
                     || value is null) throw new ResultException("invalid publish time");
@@ -377,7 +377,7 @@ public class ActivityCollectService(
             await UpsertActivities(activities,ct);
             foreach (var count in counts)
             {
-                result[count.ActivityType] = await ctx.DefaultShardGroup.PrimaryDao.Increase(
+                result[count.ActivityType] = await ctx.CountShardGroup.PrimaryDao.Increase(
                     ActivityCounts.TableName, 
                     ActivityCounts.Condition(count.EntityName,count.RecordId,count.ActivityType),
                     ActivityCounts.CountField, 0,1, ct);
@@ -476,7 +476,7 @@ public class ActivityCollectService(
             }
         }
 
-        await ctx.ShardRouter.Execute(
+        await ctx.UserActivityShardRouter.Execute(
             toUpdate,
             rec => rec[nameof(Activity.UserId).Camelize()].ToString()!,
             (dao, records) => dao.ChunkUpdateOnConflict(
@@ -492,7 +492,7 @@ public class ActivityCollectService(
     {
         if (types.Length == 0 ) return [];
 
-        return await ctx.DefaultShardGroup.ReplicaDao.FetchValues<long>(
+        return await ctx.CountShardGroup.ReplicaDao.FetchValues<long>(
             ActivityCounts.TableName,
             ActivityCounts.Condition(entityName, recordId),
             ActivityCounts.TypeField,
@@ -506,7 +506,7 @@ public class ActivityCollectService(
         var activity = Models.Activities.Parse(key);
         var condition = Models.Activities.Condition(
             activity.EntityName, activity.RecordId, activity.UserId, activity.ActivityType);
-        var res = await  ctx.ShardRouter.ReplicaDao(activity.UserId).FetchValues<bool>(
+        var res = await  ctx.UserActivityShardRouter.ReplicaDao(activity.UserId).FetchValues<bool>(
             Models.Activities.TableName, 
             condition,
             null,null,Models.Activities.ActiveField);
@@ -516,7 +516,7 @@ public class ActivityCollectService(
     private async Task<long> GetCountFromDb(string key)
     {
         var count = ActivityCounts.Parse(key);
-        var res = await ctx.DefaultShardGroup.ReplicaDao.FetchValues<long>(
+        var res = await ctx.CountShardGroup.ReplicaDao.FetchValues<long>(
             ActivityCounts.TableName, 
             ActivityCounts.Condition(count.EntityName, count.RecordId,count.ActivityType),
             null,null,

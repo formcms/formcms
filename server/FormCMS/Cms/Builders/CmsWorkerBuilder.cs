@@ -2,7 +2,7 @@ using FormCMS.Cms.Workers;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
-using FormCMS.Utils.ServiceCollectionExt;
+using FormCMS.Utils.Builders;
 
 namespace FormCMS.Cms.Builders;
 
@@ -42,8 +42,8 @@ public static class CmsWorkerBuilder
         services.AddSingleton(new ImportWorkerOptions(taskTimingSeconds.ImportDelay));
         services.AddHostedService<ImportWorker>();
 
-      
-        services.AddScoped<ShardGroup>(sp =>  sp.CreateShard(databaseProvider, new ShardConfig(connectionString)));
+
+        services.AddScoped<ShardGroup>(sp => sp.CreateShard(new ShardConfig(databaseProvider, connectionString)));
   
         services.AddSingleton(new DataPublishingWorkerOptions(taskTimingSeconds.PublishDelay));
         services.AddHostedService<DataPublishingWorker>();

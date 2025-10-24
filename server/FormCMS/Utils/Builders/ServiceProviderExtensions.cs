@@ -5,36 +5,24 @@ using MySqlConnector;
 using Npgsql;
 using SqlConnection = Microsoft.Data.SqlClient.SqlConnection;
 
-namespace FormCMS.Utils.ServiceCollectionExt;
+namespace FormCMS.Utils.Builders;
 
 public static class ServiceProviderExtensions
 {
-
     public static ShardGroup CreateShard(
         this IServiceProvider sp, 
-        DatabaseProvider? databaseProvider,
-        ShardConfig? shardConfig)
+        ShardConfig shardConfig)
     {
-        if (databaseProvider == null || shardConfig == null)
-        {
-            return sp.GetRequiredService<ShardGroup>();
-        }
-
-        var leader = sp.CreateDao(databaseProvider.Value, shardConfig.LeadConnStr);
+        var leader = sp.CreateDao(shardConfig.DatabaseProvider, shardConfig.LeadConnStr);
         var follower = (shardConfig.FollowConnStrings??[])
-            .Select(x => sp.CreateDao(databaseProvider.Value, x))
+            .Select(x => sp.CreateDao(shardConfig.DatabaseProvider, x))
             .ToArray();
         return new ShardGroup(leader, follower, shardConfig.Start, shardConfig.End);
     }
 
-    public static ShardRouter CreateShardManager(this IServiceProvider sp,  ShardRouterConfig? configs = null)
+    public static ShardRouter CreateShardRouter(this IServiceProvider sp,  ShardRouterConfig configs)
     {
-        if (configs == null)
-        {
-            return new ShardRouter([sp.GetRequiredService<ShardGroup>()]);
-        }
-
-        var shards = configs.ShardConfigs.Select(config => sp.CreateShard(configs.DatabaseProvider, config));
+        var shards = configs.ShardConfigs.Select(sp.CreateShard);
         return new ShardRouter(shards.ToArray());
     }
 
@@ -44,20 +32,28 @@ public static class ServiceProviderExtensions
         {
             FtsProvider.Mysql => new MysqlFts(
                 new MySqlConnection(primaryConnString),
-                replicaConnStrings.Select(x => new MySqlConnection(x)).ToArray()),
+                replicaConnStrings.Select(x => new MySqlConnection(x)).ToArray(),
+                sp.GetRequiredService<ILogger<MysqlFts>>()
+                ),
             FtsProvider.Sqlite => new SqliteFts(
                 new SqliteConnection(primaryConnString),
-                replicaConnStrings.Select(x => new SqliteConnection(x)).ToArray()),
+                replicaConnStrings.Select(x => new SqliteConnection(x)).ToArray(),
+            sp.GetRequiredService<ILogger<SqliteFts>>()
+                ),
             FtsProvider.Postgres => new PostgresFts(
                 new NpgsqlConnection(primaryConnString),
-                replicaConnStrings.Select(x => new NpgsqlConnection(x)).ToArray()),
+                replicaConnStrings.Select(x => new NpgsqlConnection(x)).ToArray(),
+                sp.GetRequiredService<ILogger<PostgresFts>>()
+                ),
             FtsProvider.SqlServer => new SqlServerFts(
                 new SqlConnection(primaryConnString),
-                replicaConnStrings.Select(x => new SqlConnection(x)).ToArray()),
+                replicaConnStrings.Select(x => new SqlConnection(x)).ToArray(),
+                sp.GetRequiredService<ILogger<SqlServerFts>>()
+                ),
             _ => throw new NotImplementedException(),
         };
 
-    private static IRelationDbDao CreateDao(this IServiceProvider sp, DatabaseProvider databaseProvider, string connectionString)
+    public static IRelationDbDao CreateDao(this IServiceProvider sp, DatabaseProvider databaseProvider, string connectionString)
         => databaseProvider switch
         {
             DatabaseProvider.Mysql => new MySqlDao(

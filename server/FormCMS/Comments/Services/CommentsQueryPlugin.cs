@@ -54,7 +54,7 @@ public class CommentsQueryPlugin(
         ValidPagination pg, ValidSpan? sp, ValidSort[] sorts, CancellationToken ct)
     {
         var query = CommentHelper.List(entityName, recordId, sorts, sp, pg);
-        return  ctx.ShardRouter.ReplicaDao(new Comment(entityName,recordId).GetSourceKey()).Many(query, ct);
+        return  ctx.RecordCommentShardRouter.ReplicaDao(new Comment(entityName,recordId).GetSourceKey()).Many(query, ct);
     }
     
     public Task AttachComments(
@@ -74,7 +74,7 @@ public class CommentsQueryPlugin(
                 var variablePagination = PaginationHelper.FromVariables(args, node.Prefix, node.Field);
                 var validPagination = PaginationHelper.MergePagination(variablePagination, node.Pagination,args, CommentHelper.DefaultPageSize );
                 var kateQuery = CommentHelper.List(entity.Name, recordId, sorts,null ,validPagination.PlusLimitOne());
-                var comments = await ctx.ShardRouter.ReplicaDao(new Comment(entity.Name,recordId).GetSourceKey()).Many(kateQuery, ct);
+                var comments = await ctx.RecordCommentShardRouter.ReplicaDao(new Comment(entity.Name,recordId).GetSourceKey()).Many(kateQuery, ct);
                 comments = new Span().ToPage(comments, validPagination.Limit);
                 rec[node.Field] = comments;
             }

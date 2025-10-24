@@ -17,14 +17,14 @@ public static class DatabaseMigratorExtension
             CancellationToken.None
         );
     }
-
-    public static async Task EnsureActivityTables(this IRelationDbDao migrator)
+    public static async Task EnsureCountTable(this IRelationDbDao dao)
     {
-        await migrator.MigrateTable(Models.Activities.TableName, Models.Activities.Columns);
-        await migrator.CreateIndex(Models.Activities.TableName, Models.Activities.KeyFields, true,
-            CancellationToken.None);
-
-        await migrator.MigrateTable(ActivityCounts.TableName, ActivityCounts.Columns);
-        await migrator.CreateIndex(ActivityCounts.TableName, ActivityCounts.KeyFields, true, CancellationToken.None);
+        await dao.MigrateTable(ActivityCounts.TableName, ActivityCounts.Columns);
+        await dao.CreateIndex(ActivityCounts.TableName, ActivityCounts.KeyFields, true, CancellationToken.None);
+    }
+    public static async Task EnsureActivityTable(this IRelationDbDao dao)
+    {
+        await dao.MigrateTable(Models.Activities.TableName, Models.Activities.Columns);
+        await dao.CreateIndex(Models.Activities.TableName, Models.Activities.KeyFields, true, CancellationToken.None);
     } 
 }

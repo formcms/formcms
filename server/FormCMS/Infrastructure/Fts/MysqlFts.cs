@@ -4,7 +4,7 @@ using MySqlConnector;
 
 namespace FormCMS.Infrastructure.Fts;
 
-public class MysqlFts(MySqlConnection primary,MySqlConnection[] replicas) : IFullTextSearch
+public class MysqlFts(MySqlConnection primary,MySqlConnection[] replicas, ILogger<MysqlFts> logger) : IFullTextSearch
 {
     private readonly RoundRobinBalancer<MySqlConnection> _balancer = new (primary, replicas);
     private MySqlConnection GetConnection(MySqlConnection conn)

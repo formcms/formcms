@@ -20,25 +20,25 @@ public class ActivityService(
     {
         if (!identityService.GetUserAccess()?.CanAccessAdmin == true || daysAgo > 30)
             throw new Exception("Can't access daily count");
-        var query = Models.Activities.GetDailyActivityCount(ctx.DefaultShardGroup.PrimaryDao.CastDate, daysAgo);
-        return ctx.DefaultShardGroup.ReplicaDao.Many(query , ct);
+        var query = Models.Activities.GetDailyActivityCount(ctx.CountShardGroup.PrimaryDao.CastDate, daysAgo);
+        return ctx.CountShardGroup.ReplicaDao.Many(query , ct);
     }
 
     public Task<Record[]> GetDailyPageVisitCount(int daysAgo, bool authed, CancellationToken ct)
     {
         if (!identityService.GetUserAccess()?.CanAccessAdmin == true || daysAgo > 30)
             throw new Exception("Can't access daily count");
-        var query = Models.Activities.GetDailyVisitCount(ctx.DefaultShardGroup.PrimaryDao.CastDate, daysAgo, authed);
-        return ctx.DefaultShardGroup.ReplicaDao.Many(query, ct);
+        var query = Models.Activities.GetDailyVisitCount(ctx.CountShardGroup.PrimaryDao.CastDate, daysAgo, authed);
+        return ctx.CountShardGroup.ReplicaDao.Many(query, ct);
     }
 
     public async Task<Record[]> GetTopVisitPages(int topN, CancellationToken ct)
     {
         if (!identityService.GetUserAccess()?.CanAccessAdmin == true || topN > 30)
             throw new Exception("Can't access daily count");
-        var counts = await ctx.DefaultShardGroup.ReplicaDao.Many(ActivityCounts.PageVisites(topN), ct);
+        var counts = await ctx.CountShardGroup.ReplicaDao.Many(ActivityCounts.PageVisites(topN), ct);
         var ids = counts.Select(x => x[nameof(ActivityCount.RecordId).Camelize()]).ToArray();
-        var schemas = await ctx.DefaultShardGroup.ReplicaDao.Many(SchemaHelper.ByIds(ids), ct);
+        var schemas = await ctx.CountShardGroup.ReplicaDao.Many(SchemaHelper.ByIds(ids), ct);
         var dict = schemas.ToDictionary(x => (long)x[nameof(Schema.Id).Camelize()]);
         foreach (var count in counts)
         {
@@ -60,7 +60,7 @@ public class ActivityService(
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
         var (filters, sorts) = QueryStringParser.Parse(args);
         var query = Models.Activities.List(userId, activityType, offset, limit);
-        var userShardExecutor = ctx.ShardRouter.ReplicaDao(userId);
+        var userShardExecutor = ctx.UserActivityShardRouter.ReplicaDao(userId);
         var items = await userShardExecutor.Many(query, Models.Activities.Columns,filters,sorts,ct);
         var countQuery = Models.Activities.Count(userId, activityType);
         var count = await userShardExecutor.Count(countQuery,Models.Activities.Columns,filters,ct);
@@ -70,7 +70,7 @@ public class ActivityService(
     public Task Delete(long id, CancellationToken ct = default)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
-        var userShardExecutor = ctx.ShardRouter.ReplicaDao(userId);
+        var userShardExecutor = ctx.UserActivityShardRouter.ReplicaDao(userId);
         return userShardExecutor.Exec(Models.Activities.Delete(userId, id), false,ct);
     }
 

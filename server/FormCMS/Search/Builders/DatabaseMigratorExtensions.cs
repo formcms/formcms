@@ -6,10 +6,10 @@ namespace FormCMS.Search.Builders;
 
 public static class DatabaseMigratorExtensions
 {
-    public static async Task EnsureFtsTables(this IRelationDbDao migrator)
+    public static async Task EnsureFtsTables(this IRelationDbDao dao)
     {
-        await migrator.MigrateTable(SearchConstants.TableName, SearchDocumentHelper.Columns);
-        await migrator.CreateIndex(SearchConstants.TableName, SearchDocumentHelper.UniqKeyFields,true,CancellationToken.None);
+        await dao.MigrateTable(SearchConstants.TableName, SearchDocumentHelper.Columns);
+        await dao.CreateIndex(SearchConstants.TableName, SearchDocumentHelper.UniqKeyFields,true,CancellationToken.None);
     }
 
 

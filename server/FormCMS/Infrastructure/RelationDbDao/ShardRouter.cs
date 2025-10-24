@@ -3,7 +3,7 @@ using System.Text;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public record ShardRouterConfig(DatabaseProvider DatabaseProvider, ShardConfig[] ShardConfigs );
+public record ShardRouterConfig(ShardConfig[] ShardConfigs );
     
 public class ShardRouter(ShardGroup[] shards)
 {
@@ -38,7 +38,9 @@ public class ShardRouter(ShardGroup[] shards)
         return allResults;
     }
 
-    public Task ExecuteAll( Func<IRelationDbDao, Task> func) => Task.WhenAll(shards.Select(x => func(x.PrimaryDao)));
+    public Task ExecuteAll(Func<IRelationDbDao, Task> func) => Task.WhenAll(shards.Select(x =>
+        func(x.PrimaryDao))
+    );
 
     public Task Execute<T>(
         IEnumerable<T> records,

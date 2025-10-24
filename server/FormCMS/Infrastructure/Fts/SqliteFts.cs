@@ -6,9 +6,14 @@ using Npgsql;
 namespace FormCMS.Infrastructure.Fts;
 
 // SQLite FTS Implementation
-public class SqliteFts(SqliteConnection primary, SqliteConnection[] replicas) : IFullTextSearch
+public class SqliteFts(
+    SqliteConnection primary,
+    SqliteConnection[] replicas,
+    ILogger<SqliteFts> logger
+) : IFullTextSearch
 {
-    private readonly RoundRobinBalancer<SqliteConnection> _balancer = new (primary, replicas);
+    private readonly RoundRobinBalancer<SqliteConnection> _balancer = new(primary, replicas);
+
     private SqliteConnection GetConnection(SqliteConnection conn)
     {
         if (conn.State != ConnectionState.Open)
@@ -17,6 +22,7 @@ public class SqliteFts(SqliteConnection primary, SqliteConnection[] replicas) : 
             {
                 conn.Close();
             }
+
             conn.Open();
         }
 
@@ -165,7 +171,7 @@ public class SqliteFts(SqliteConnection primary, SqliteConnection[] replicas) : 
 
         var ftsTable = $"fts_{tableName}";
 
-        
+
         // Build MATCH conditions with named parameters
         var matchQuery = string.Join(" OR ", ftsFields.Select(f => $"{f.Name}:{f.Query}"));
         var matchClause = $"{ftsTable} MATCH @match";

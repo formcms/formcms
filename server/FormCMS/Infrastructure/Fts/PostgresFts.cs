@@ -11,7 +11,12 @@ using System.Threading.Tasks;
 using Npgsql;
 
 // PostgreSQL FTS Implementation
-public class PostgresFts(NpgsqlConnection primary, NpgsqlConnection[] replicas) : IFullTextSearch
+public class PostgresFts(
+    NpgsqlConnection primary, 
+    NpgsqlConnection[] replicas,
+    ILogger<PostgresFts> logger
+    
+    ) : IFullTextSearch
 {
     private readonly RoundRobinBalancer<NpgsqlConnection> _balancer = new (primary, replicas);
 

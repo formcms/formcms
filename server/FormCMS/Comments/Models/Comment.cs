@@ -35,7 +35,7 @@ public static class CommentHelper
     public const string CommentContentTagQuery = "commentContentTagQuery";
 
     public static readonly Column[] Columns = [
-        ColumnHelper.CreateCamelColumn<Comment,string>(x => x.Id),
+        ColumnHelper.CreateCamelColumn<Comment>(x => x.Id,ColumnType.StringPrimaryKey),
         ColumnHelper.CreateCamelColumn<Comment, string>(x => x.EntityName),
         ColumnHelper.CreateCamelColumn<Comment, long>(x => x.RecordId),
         ColumnHelper.CreateCamelColumn<Comment, string>(x => x.CreatedBy),

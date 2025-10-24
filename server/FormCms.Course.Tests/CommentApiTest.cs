@@ -78,7 +78,7 @@ public class CommentApiTest(AppFactory factory)
         var count = await QueryReplyCount(comment.Id);
         Assert.True(count > 0);
     }
-    private async Task<long> QueryReplyCount(long commentId)
+    private async Task<long> QueryReplyCount(string commentId)
     {
         await """
               query commentReplies($source:Int){
@@ -90,7 +90,7 @@ public class CommentApiTest(AppFactory factory)
               """.GraphQlQuery<JsonElement>(factory.QueryApi).Ok();
         var args = new Dictionary<string, StringValues>
         {
-            {"source", commentId.ToString()}
+            {"source", commentId}
         }; 
         var items = await factory.QueryApi.List("commentReplies",args).Ok();
         return items.Length;

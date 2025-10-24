@@ -8,7 +8,7 @@ using FormCMS.Utils.ResultExt;
 using Humanizer;
 
 namespace FormCMS.Notify.Services;
-public record NotificationContext(ShardRouter ShardRouter);
+public record NotificationContext(ShardRouter UserNotificationShardRouter);
 
 public class NotificationService(
     NotificationContext ctx,
@@ -19,7 +19,7 @@ public class NotificationService(
     public async Task<ListResponse> List(StrArgs args, int? offset, int? limit, CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
-        var followKate = ctx.ShardRouter.ReplicaDao(userId);
+        var followKate = ctx.UserNotificationShardRouter.ReplicaDao(userId);
         var (filters, sorts) = QueryStringParser.Parse(args);
         var query = Notifications.List(userId, offset, limit);
         var items = await followKate.Many(query, Notifications.Columns,filters,sorts,ct);
@@ -28,7 +28,7 @@ public class NotificationService(
         var countQuery = Notifications.Count(userId);
         var count = await followKate.Count(countQuery,Notifications.Columns,filters,ct);
 
-        var leadKate = ctx.ShardRouter.ReplicaDao(userId);
+        var leadKate = ctx.UserNotificationShardRouter.ReplicaDao(userId);
         await leadKate.Exec(Notifications.ReadAll(userId), false,ct);
         await leadKate.Exec(NotificationCountExtensions.ResetCount(userId), false, ct);
         
@@ -39,7 +39,7 @@ public class NotificationService(
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User not logged in");
         var query = NotificationCountExtensions.UnreadCount(userId);
-        return ctx.ShardRouter.ReplicaDao(userId).Exec(query, true,ct);
+        return ctx.UserNotificationShardRouter.ReplicaDao(userId).Exec(query, true,ct);
     }
 
     private async Task LoadSender(Record[] notifications,CancellationToken ct)

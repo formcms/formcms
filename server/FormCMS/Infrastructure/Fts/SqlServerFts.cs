@@ -6,7 +6,11 @@ using Microsoft.Data.Sqlite;
 namespace FormCMS.Infrastructure.Fts;
 
 // SQL Server FTS Implementation
-public class SqlServerFts(SqlConnection primary, SqlConnection[] replicas) : IFullTextSearch
+public class SqlServerFts(
+    SqlConnection primary, 
+    SqlConnection[] replicas,
+    ILogger<SqlServerFts> logger
+    ) : IFullTextSearch
 {
     private readonly RoundRobinBalancer<SqlConnection> _balancer = new (primary, replicas);
 

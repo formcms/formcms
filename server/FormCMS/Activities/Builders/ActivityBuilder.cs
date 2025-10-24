@@ -6,16 +6,16 @@ using FormCMS.Core.Plugins;
 using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.RelationDbDao;
-using FormCMS.Utils.ServiceCollectionExt;
+using FormCMS.Utils.Builders;
 
 namespace FormCMS.Activities.Builders;
 
 public class ActivityBuilder(ILogger<ActivityBuilder> logger)
 {
-    public static IServiceCollection AddActivity(IServiceCollection services, bool enableBuffering, 
-        ShardRouterConfig? shardManagerConfig = null,
-        DatabaseProvider? defaultDatabaseProvider = null,
-        ShardConfig? defaultShardConfig = null
+    public static IServiceCollection AddActivity(IServiceCollection services, 
+        bool enableBuffering, 
+        ShardRouterConfig? userActivityShardConfig = null,
+        ShardConfig? countShardConfig = null
         )
     {
         services.AddSingleton(ActivitySettingsExtensions.DefaultActivitySettings with
@@ -32,8 +32,19 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         services.AddScoped<IActivityQueryPlugin, ActivityQueryPlugin>();
         services.AddScoped<IBookmarkService, BookmarkService>();
 
-        services.AddScoped(sp => new ActivityContext(
-            sp.CreateShardManager(shardManagerConfig), sp.CreateShard(defaultDatabaseProvider, defaultShardConfig)));
+        services.AddScoped(sp =>
+        {
+            //activity module can use the same shard group as cms.
+            //it can also use its own database and shard data for scalability
+            var defaultShard = sp.GetRequiredService<ShardGroup>();
+            return new ActivityContext(
+                userActivityShardConfig == null
+                    ? new ShardRouter([defaultShard])
+                    : sp.CreateShardRouter(userActivityShardConfig),
+                countShardConfig == null
+                    ? defaultShard
+                    : sp.CreateShard(countShardConfig));
+        });
         
         services.AddHostedService<BufferFlushWorker>();
         return services;
@@ -52,15 +63,11 @@ public class ActivityBuilder(ILogger<ActivityBuilder> logger)
         app.Services.GetRequiredService<PluginRegistry>().RegisterActivityPlugins(activitySettings);
         
         using var scope = app.Services.CreateScope();
-        
         var context =scope.ServiceProvider.GetRequiredService<ActivityContext>();
-        
-        await context.DefaultShardGroup.PrimaryDao.EnsureActivityTables();
-        await context.DefaultShardGroup.PrimaryDao.EnsureBookmarkTables();
-        
-        await context.ShardRouter.ExecuteAll(async dao =>
+        await context.CountShardGroup.PrimaryDao.EnsureCountTable();
+        await context.UserActivityShardRouter.ExecuteAll(async dao =>
         {
-            await dao.EnsureActivityTables();
+            await dao.EnsureActivityTable();
             await dao.EnsureBookmarkTables();
         });
 

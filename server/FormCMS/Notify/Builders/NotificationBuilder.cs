@@ -1,7 +1,7 @@
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Notify.Handlers;
 using FormCMS.Notify.Services;
-using FormCMS.Utils.ServiceCollectionExt;
+using FormCMS.Utils.Builders;
 
 namespace FormCMS.Notify.Builders;
 
@@ -12,7 +12,9 @@ public class NotificationBuilder(ILogger<NotificationBuilder> logger)
     {
         services.AddSingleton<NotificationBuilder>();
         services.AddScoped<INotificationService,NotificationService>();
-        services.AddScoped(sp => new NotificationContext( sp.CreateShardManager(shardManagerConfig)));
+        services.AddScoped(sp => new NotificationContext(shardManagerConfig is null
+            ? new ShardRouter([sp.GetRequiredService<ShardGroup>()])
+            : sp.CreateShardRouter(shardManagerConfig)));
 
         return services;
     }

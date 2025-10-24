@@ -12,9 +12,9 @@ public class CommentsApiClient(HttpClient client)
     public Task<Result> Update(Comment comment)
         => client.PostResult($"/update".Url(),comment);
     
-    public Task<Result> Delete(long id)
+    public Task<Result> Delete(string id)
         => client.PostResult($"/delete/{id}".Url(),new{});
 
-    public Task<Result> Reply(long id, Comment comment)
+    public Task<Result> Reply(string id, Comment comment)
         => client.PostResult($"/reply/{id}".Url(), comment);
 }

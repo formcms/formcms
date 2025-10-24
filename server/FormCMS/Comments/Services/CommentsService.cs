@@ -26,7 +26,7 @@ public class CommentsService(
         var entity = await entityService.ValidateEntity(comment.EntityName,  ct).Ok();
         comment = AssignUser(comment.AssignId());
         var query = comment.Insert();
-        await ctx.ShardRouter.PrimaryDao(comment.GetSourceKey()).Exec(query, true, ct);
+        await ctx.RecordCommentShardRouter.PrimaryDao(comment.GetSourceKey()).Exec(query, true, ct);
         var creatorId = await userManageService.GetCreatorId(entity.TableName, entity.PrimaryKey, comment.RecordId, ct);
         var activityMessage = new ActivityMessage(comment.CreatedBy, creatorId, comment.EntityName,
             comment.RecordId.ToString(), CommentHelper.CommentActivity, CmsOperations.Create, comment.Content);
@@ -38,7 +38,7 @@ public class CommentsService(
     public async Task Delete(string id, CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
-        var executor = ctx.ShardRouter.PrimaryDao(CommentHelper.Parse(id).GetSourceKey());
+        var executor = ctx.RecordCommentShardRouter.PrimaryDao(CommentHelper.Parse(id).GetSourceKey());
         var commentRec = await executor.Single(CommentHelper.Single(id),ct);
         if (commentRec is null) throw new ResultException("Comment not found");
         var comment = commentRec.ToObject<Comment>().Ok();
@@ -82,7 +82,7 @@ public class CommentsService(
 
     public async Task<Comment> Reply(string referencedId,Comment comment, CancellationToken ct)
     {
-        var executor = ctx.ShardRouter.PrimaryDao(comment.GetSourceKey());
+        var executor = ctx.RecordCommentShardRouter.PrimaryDao(comment.GetSourceKey());
         comment = AssignUser(comment.AssignId());
         var parentRecord = await executor.Single(CommentHelper.Single(referencedId), ct) ??
                            throw new ResultException("Parent comment not found");
@@ -108,7 +108,7 @@ public class CommentsService(
     public async Task Update(Comment comment, CancellationToken ct)
     {
         comment = AssignUser(comment);
-        var executor = ctx.ShardRouter.PrimaryDao(comment.GetSourceKey());
+        var executor = ctx.RecordCommentShardRouter.PrimaryDao(comment.GetSourceKey());
         var affected = await executor.Exec(comment.Update(),false, ct);
         if (affected == 0) throw new ResultException("Failed to update comment.");
     } 

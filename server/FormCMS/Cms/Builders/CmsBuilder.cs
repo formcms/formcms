@@ -16,10 +16,10 @@ using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Utils.Builders;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.PageRender;
 using FormCMS.Utils.ResultExt;
-using FormCMS.Utils.ServiceCollectionExt;
 using GraphQL;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Rewrite;
@@ -54,7 +54,8 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<PublicationStatus>);
         services.AddSingleton(systemSettings);
 
-        services.AddScoped<ShardGroup>(sp =>  sp.CreateShard(databaseProvider, new ShardConfig(leadConnStr, followConnStrings)));
+        services.AddScoped<ShardGroup>(sp =>  sp.CreateShard( 
+            new ShardConfig(databaseProvider,leadConnStr, followConnStrings)));
 
         var registry = new PluginRegistry(
             FeatureMenus: [Menus.MenuSchemaBuilder, Menus.MenuTasks],

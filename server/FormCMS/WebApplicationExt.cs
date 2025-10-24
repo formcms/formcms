@@ -5,6 +5,7 @@ using FormCMS.Activities.Builders;
 using FormCMS.AuditLogging.Builders;
 using FormCMS.Auth.Models;
 using FormCMS.Comments.Builders;
+using FormCMS.Infrastructure.Fts;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Notify.Builders;
 using FormCMS.Search.Builders;
@@ -92,9 +93,9 @@ public static class WebApplicationExt
         => NotificationBuilder.AddNotify(services);
 
     public static IServiceCollection AddSearch(this IServiceCollection services,
-        FtsProvider ftsProvider, string primaryConnString,string[]? replicaConnStrings=null
-        )
-        => SearchBuilder.AddSearch(services,ftsProvider, primaryConnString, replicaConnStrings);
+        FtsProvider ftsProvider, string primaryConnString, string[]? replicaConnStrings = null
+    )
+        => SearchBuilder.AddSearch(services, ftsProvider, primaryConnString, replicaConnStrings);
 
     public static IServiceCollection AddCrudMessageProducer(
         this IServiceCollection services, string[] entities
