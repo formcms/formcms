@@ -26,30 +26,44 @@ public static class WebApplicationExt
      * 2. output cache
      * 3. other FormCms endpoints
      */
+    // csharp
     public static async Task UseCmsAsync(this WebApplication app, bool useOutputCache = true)
     {
         app.Services.GetService<IAuthBuilder>()?.UseCmsAuth(app);
         if (useOutputCache) app.UseOutputCache();
-        
-        var tasks = new []
-        {
-            app.Services.GetRequiredService<CmsBuilder>().UseCmsAsync(app),
-            app.Services.GetService<DocumentDbQueryBuilder>()?.UseDocumentDbQuery(app),
-            app.Services.GetService<CmsCrudMessageProduceBuilder>()?.UseEventProducer(app),
-            app.Services.GetService<AuditLogBuilder>()?.UseAuditLog(app),
-            // have to use comments before engagement plugin, engagement query plugin can add like count
-            app.Services.GetService<CommentBuilder>()?.UseComments(app),
-            app.Services.GetService<SubscriptionBuilder>()?.UseStripeSubscriptions(app),
-            app.Services.GetService<EngagementsBuilder>()?.UseEngagement(app),
-            app.Services.GetService<NotificationBuilder>()?.UseNotification(app),
-            app.Services.GetService<VideoBuilder>()?.UseVideo(app),
-            app.Services.GetService<SearchBuilder>()?.UseSearch(app),
-        };
 
-        foreach (var t in tasks)
-        {
-            if (t is not null) await t;
-        }
+        using var scope = app.Services.CreateScope();
+
+        // call and await each builder sequentially to avoid concurrent DB commands
+        await app.Services.GetRequiredService<CmsBuilder>().UseCmsAsync(app, scope);
+
+        var docBuilder = app.Services.GetService<DocumentDbQueryBuilder>();
+        if (docBuilder != null) await docBuilder.UseDocumentDbQuery(app);
+
+        var crudBuilder = app.Services.GetService<CmsCrudMessageProduceBuilder>();
+        if (crudBuilder != null) await crudBuilder.UseEventProducer(app);
+
+        var auditBuilder = app.Services.GetService<AuditLogBuilder>();
+        if (auditBuilder != null) await auditBuilder.UseAuditLog(app, scope);
+
+        // have to use comments before engagement plugin
+        var commentBuilder = app.Services.GetService<CommentBuilder>();
+        if (commentBuilder != null) await commentBuilder.UseComments(app, scope);
+
+        var subscriptionBuilder = app.Services.GetService<SubscriptionBuilder>();
+        if (subscriptionBuilder != null) await subscriptionBuilder.UseStripeSubscriptions(app, scope);
+
+        var engagementsBuilder = app.Services.GetService<EngagementsBuilder>();
+        if (engagementsBuilder != null) await engagementsBuilder.UseEngagement(app, scope);
+
+        var notificationBuilder = app.Services.GetService<NotificationBuilder>();
+        if (notificationBuilder != null) await notificationBuilder.UseNotification(app, scope);
+
+        var videoBuilder = app.Services.GetService<VideoBuilder>();
+        if (videoBuilder != null) await videoBuilder.UseVideo(app);
+
+        var searchBuilder = app.Services.GetService<SearchBuilder>();
+        if (searchBuilder != null) await searchBuilder.UseSearch(app, scope);
 
         app.UseRewriter(app.Services.GetRequiredService<RewriteOptions>());
     }

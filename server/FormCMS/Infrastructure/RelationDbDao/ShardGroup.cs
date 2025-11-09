@@ -10,11 +10,12 @@ public class ShardGroup(IRelationDbDao primaryDao, IRelationDbDao[]? replicas = 
     public bool InRange(int idx) => idx >= start && idx < End;
 
     private readonly RoundRobinBalancer<IRelationDbDao> _selector = new (primaryDao,replicas);
+    private readonly IRelationDbDao _primaryDao = primaryDao;
     public IRelationDbDao PrimaryDao { get; } = primaryDao;
     public IRelationDbDao ReplicaDao => _selector.Next;
     public void Dispose()
     {
-        primaryDao.Dispose();
+        _primaryDao.Dispose();
         if (replicas != null)
         {
             foreach (var dao in replicas)

@@ -30,7 +30,7 @@ namespace FormCMS.Subscriptions.Builders
                 );
         }
 
-        public async Task UseStripeSubscriptions(WebApplication app)
+        public async Task UseStripeSubscriptions(WebApplication app, IServiceScope scope)
         {
             //handler
             var options = app.Services.GetRequiredService<SystemSettings>();
@@ -40,8 +40,6 @@ namespace FormCMS.Subscriptions.Builders
             app.Services.GetRequiredService<HookRegistry>().RegisterSubscriptionsHooks();
             app.Services.GetRequiredService<PluginRegistry>().RegisterSubscriptionPlugin();
             
-            
-            var scope = app.Services.CreateScope();
             await scope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao.EnsureSubscriptionTables();
 
             logger.LogInformation("""

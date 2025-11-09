@@ -19,12 +19,11 @@ public class SearchBuilder(FtsProvider ftsProvider, string primaryConnectionStri
         return services;
     }
 
-    public async Task UseSearch(WebApplication app)
+    public async Task UseSearch(WebApplication app, IServiceScope scope)
     {
         app.Services.GetRequiredService<HookRegistry>().RegisterFtsHooks();
         app.Services.GetRequiredService<PluginRegistry>().RegisterFtsPlugin();
         
-        var scope = app.Services.CreateScope();
         var task = ftsProvider switch
         {
             //if we want to do fts on relation database, need create a physical table to let the db engine to do index

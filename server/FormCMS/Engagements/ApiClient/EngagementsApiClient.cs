@@ -22,7 +22,7 @@ public class EngagementsApiClient(HttpClient client)
         => client.GetResult<JsonElement[]>($"/visit-counts?authed={authed}&n={7}".EngagementsUrl());
     
     public Task<Result<Record[]>> ActivityCounts()
-        => client.GetResult<Record[]>($"/activity-counts?n={7}".EngagementsUrl());
+        => client.GetResult<Record[]>($"/counts?n={7}".EngagementsUrl());
     
     public Task Visit(string url)
         => client.GetResult($"/visit?url={HttpUtility.UrlEncode(url)}".EngagementsUrl());

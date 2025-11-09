@@ -195,12 +195,11 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         }
     }
 
-    public async Task UseCmsAsync(WebApplication app)
+    public async Task UseCmsAsync(WebApplication app,IServiceScope scope)
     {
         var settings = app.Services.GetRequiredService<SystemSettings>();
-        using var serviceScope = app.Services.CreateScope();
-        await serviceScope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao.EnsureCmsTables(); 
-        await Seed(serviceScope);
+        await scope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao.EnsureCmsTables(); 
+        await Seed(scope);
         
         PrintVersion();
         if (settings.EnableClient)

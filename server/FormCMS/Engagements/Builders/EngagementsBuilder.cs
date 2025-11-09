@@ -50,7 +50,7 @@ public class EngagementsBuilder(ILogger<EngagementsBuilder> logger)
         return services;
     }
 
-    public async Task UseEngagement(WebApplication app)
+    public async Task UseEngagement(WebApplication app,IServiceScope scope)
     {
         var activitySettings = app.Services.GetRequiredService<EngagementSettings>();
         var systemSettings = app.Services.GetRequiredService<SystemSettings>();
@@ -62,7 +62,6 @@ public class EngagementsBuilder(ILogger<EngagementsBuilder> logger)
         app.Services.GetRequiredService<HookRegistry>().RegisterActivityHooks();
         app.Services.GetRequiredService<PluginRegistry>().RegisterActivityPlugins(activitySettings);
         
-        using var scope = app.Services.CreateScope();
         var context =scope.ServiceProvider.GetRequiredService<EngagementContext>();
         await context.CountShardGroup.PrimaryDao.EnsureCountTable();
         await context.UserActivityShardRouter.ExecuteAll(async dao =>

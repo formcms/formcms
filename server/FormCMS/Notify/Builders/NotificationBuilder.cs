@@ -19,7 +19,7 @@ public class NotificationBuilder(ILogger<NotificationBuilder> logger)
         return services;
     }
 
-    public async Task UseNotification(WebApplication app)
+    public async Task UseNotification(WebApplication app, IServiceScope scope)
     {
         //handler
         var systemSettings = app.Services.GetRequiredService<SystemSettings>();
@@ -27,7 +27,6 @@ public class NotificationBuilder(ILogger<NotificationBuilder> logger)
         apiGroup.MapGroup("notifications").MapNotificationHandler();
         
         //db
-        using var scope = app.Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao.EnsureNotifyTable();
      
         logger.LogInformation(

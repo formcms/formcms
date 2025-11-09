@@ -4,26 +4,26 @@
 
 ---
 
-## Social Activity
+## User Engagement 
 <details>  
 <summary>  
-The Social Activity feature enhances user engagement by enabling views, likes, saves, and shares. It also provides detailed analytics to help understand content performance.
+The user engaagment feature enhances user engagement by enabling views, likes, saves, and shares. It also provides detailed analytics to help understand content performance.
 </summary>  
 
 ### Endpoints
-- `GET /api/activities/{entityName}/{recordId:long}`  
-  Increments the view count by 1. Returns the active status and count for: like, view, share, and save.
+- `GET /api/engagements/{entityName}/{recordId:long}`  
+  Increments the view count by 1. Returns the engagement status and count for: like, view, share, and save.
 
-- `GET /api/activities/record/{entityName}/{recordId}?type={view|share}`  
-  Retrieves activity info of type `view` or `share` for a given entity record.
+- `GET /api/engagements/record/{entityName}/{recordId}?type={view|share}`  
+  Retrieves engagement info of type `view` or `share` for a given entity record.
 
-- `POST /api/activities/toggle/{entityName}/{recordId}?type={like|save}&active={true|false}`  
-  Toggles the activity (like or save) on or off based on the `active` flag.
+- `POST /api/engagements/toggle/{entityName}/{recordId}?type={like|save}&active={true|false}`  
+  Toggles the engagement (like or save) on or off based on the `active` flag.
 
 ### Challenges
 The system cannot leverage traditional output caching due to dynamic nature of the content, which may lead to high database load under heavy traffic.
 
-To address this, buffered writes are introduced. Activity events are first stored in a buffer (in-memory or Redis), and then periodically flushed to the database, balancing performance and accuracy.
+To address this, buffered writes are introduced. Engagement events are first stored in a buffer (in-memory or Redis), and then periodically flushed to the database, balancing performance and accuracy.
 
 ---
 
@@ -53,7 +53,7 @@ export const options = {
 
 export default function () {
     const id = Math.floor(Math.random() * 100) + 1;
-    const res = http.get(`http://localhost:5000/api/activities/post/${id}`);
+    const res = http.get(`http://localhost:5000/api/engagements/post/${id}`);
     ResponseTime.add(res.timings.duration);
     check(res, { 'status is 200': (r) => r.status === 200 });
 }

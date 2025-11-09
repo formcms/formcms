@@ -22,7 +22,7 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
         return services;
     }
 
-    public  Task UseComments(WebApplication app)
+    public  Task UseComments(WebApplication app, IServiceScope scope)
     {
         logger.LogInformation(
             """
@@ -38,7 +38,6 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
         app.Services.GetRequiredService<PluginRegistry>().RegisterCommentPlugins();
         app.Services.GetRequiredService<HookRegistry>().RegisterCommentsHooks();
         
-        var scope = app.Services.CreateScope();
         return scope.ServiceProvider.GetRequiredService<CommentsContext>()
             .Router 
             .ExecuteAll(dao => 

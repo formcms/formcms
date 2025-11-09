@@ -153,7 +153,7 @@
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#social-activity" class="nav-link">Social Activity</a>
+            <li class="nav-item" data-bs-level="2"><a href="#user-engagement" class="nav-link">User Engagement</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -2059,26 +2059,26 @@ Alternatively, click the <code>View Page</code> button on the <code>Page Design<
 <h3 id="duplicate_1">Duplicate</h3>
 <p>You can duplicate any schema version and save it as a new schema.</p>
 <hr />
-<h2 id="social-activity">Social Activity</h2>
-<p>The Social Activity feature enhances user engagement by enabling views, likes, saves, and shares. It also provides detailed analytics to help understand content performance.</p>
+<h2 id="user-engagement">User Engagement</h2>
+<p>The user engaagment feature enhances user engagement by enabling views, likes, saves, and shares. It also provides detailed analytics to help understand content performance.</p>
 <h3 id="endpoints">Endpoints</h3>
 <ul>
 <li>
-<p><code>GET /api/activities/{entityName}/{recordId:long}</code><br />
-  Increments the view count by 1. Returns the active status and count for: like, view, share, and save.</p>
+<p><code>GET /api/engagements/{entityName}/{recordId:long}</code><br />
+  Increments the view count by 1. Returns the engagement status and count for: like, view, share, and save.</p>
 </li>
 <li>
-<p><code>GET /api/activities/record/{entityName}/{recordId}?type={view|share}</code><br />
-  Retrieves activity info of type <code>view</code> or <code>share</code> for a given entity record.</p>
+<p><code>GET /api/engagements/record/{entityName}/{recordId}?type={view|share}</code><br />
+  Retrieves engagement info of type <code>view</code> or <code>share</code> for a given entity record.</p>
 </li>
 <li>
-<p><code>POST /api/activities/toggle/{entityName}/{recordId}?type={like|save}&amp;active={true|false}</code><br />
-  Toggles the activity (like or save) on or off based on the <code>active</code> flag.</p>
+<p><code>POST /api/engagements/toggle/{entityName}/{recordId}?type={like|save}&amp;active={true|false}</code><br />
+  Toggles the engagement (like or save) on or off based on the <code>active</code> flag.</p>
 </li>
 </ul>
 <h3 id="challenges">Challenges</h3>
 <p>The system cannot leverage traditional output caching due to dynamic nature of the content, which may lead to high database load under heavy traffic.</p>
-<p>To address this, buffered writes are introduced. Activity events are first stored in a buffer (in-memory or Redis), and then periodically flushed to the database, balancing performance and accuracy.</p>
+<p>To address this, buffered writes are introduced. Engagement events are first stored in a buffer (in-memory or Redis), and then periodically flushed to the database, balancing performance and accuracy.</p>
 <hr />
 <h3 id="load-testing">Load Testing</h3>
 <p>Below is a test script using <a href="https://k6.io/">k6</a> to simulate traffic and measure performance:</p>
@@ -2103,7 +2103,7 @@ export const options = {
 
 export default function () {
     const id = Math.floor(Math.random() * 100) + 1;
-    const res = http.get(`http://localhost:5000/api/activities/post/${id}`);
+    const res = http.get(`http://localhost:5000/api/engagements/post/${id}`);
     ResponseTime.add(res.timings.duration);
     check(res, { 'status is 200': (r) =&gt; r.status === 200 });
 }
@@ -2795,5 +2795,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-09-10 17:19:11.265633+00:00
+Build Date UTC : 2025-11-09 20:11:01.635855+00:00
 -->
