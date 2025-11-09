@@ -12,7 +12,7 @@ namespace FormCMS.Engagements.Builders;
 
 public class EngagementsBuilder(ILogger<EngagementsBuilder> logger)
 {
-    public static IServiceCollection AddActivity(IServiceCollection services, 
+    public static IServiceCollection AddEngagement(IServiceCollection services, 
         bool enableBuffering, 
         ShardRouterConfig? userActivityShardConfig = null,
         ShardConfig? countShardConfig = null
@@ -50,7 +50,7 @@ public class EngagementsBuilder(ILogger<EngagementsBuilder> logger)
         return services;
     }
 
-    public async Task<WebApplication> UseActivity(WebApplication app)
+    public async Task UseEngagement(WebApplication app)
     {
         var activitySettings = app.Services.GetRequiredService<EngagementSettings>();
         var systemSettings = app.Services.GetRequiredService<SystemSettings>();
@@ -81,6 +81,5 @@ public class EngagementsBuilder(ILogger<EngagementsBuilder> logger)
              autoRecordActivities = {string.Join(",", activitySettings.CommandAutoRecordActivities)}
              *********************************************************
              """);
-        return app;
     }
 }

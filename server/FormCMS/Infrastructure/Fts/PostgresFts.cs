@@ -257,5 +257,6 @@ public class PostgresFts(
         {
             replica.Dispose();
         }
+        logger.LogTrace("PostgresFts disposed.");
     }
 }

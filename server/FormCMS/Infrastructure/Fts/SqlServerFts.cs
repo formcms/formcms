@@ -387,5 +387,6 @@ public class SqlServerFts(
         {
             replica.Dispose();
         }
+        logger.LogTrace("SqlServerFts disposed.");
     }
 }

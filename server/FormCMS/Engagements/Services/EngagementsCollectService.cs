@@ -455,7 +455,7 @@ public class EngagementsCollectService(
     private async Task ProduceMessage(LoadedEntity entity, EngagementStatus engagementStatus, CancellationToken ct)
     {
         var targetUserId = await
-            userManager.GetCreatorId(entity.TableName, entity.PrimaryKey, long.Parse(engagementStatus.RecordId), ct);
+            userManager.GetCreatorId(entity.TableName, entity.PrimaryKey, engagementStatus.RecordId, ct);
 
         var msg = new ActivityMessage(
             UserId: engagementStatus.UserId,

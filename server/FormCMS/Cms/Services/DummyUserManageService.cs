@@ -9,7 +9,7 @@ public class DummyUserManageService:IUserManageService
         return Task.FromResult(Array.Empty<PublicUserInfo>());
     }
 
-    public Task<string> GetCreatorId(string tableName, string primaryKey, long recordId, CancellationToken ct)
+    public Task<string> GetCreatorId(string tableName, string primaryKey, string recordId, CancellationToken ct)
     {
         return Task.FromResult(primaryKey);
     }

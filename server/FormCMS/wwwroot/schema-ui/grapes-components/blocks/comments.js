@@ -91,7 +91,7 @@ export const comments = {
                     data-gjs-type="foreach" 
                     data-component="foreach"
                     data-entity="comment" 
-                    data-batch-fetch-status-activity="like"
+                    data-batch-fetch-status-engagement="like"
                 >
                     <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700" data-component='comment-container' data-id="{{id}}" data-user-id="{{createdBy.id}}">
                         <div class="flex items-start" >

@@ -37,7 +37,9 @@ public class EngagementService(
         if (!identityService.GetUserAccess()?.CanAccessAdmin == true || topN > 30)
             throw new Exception("Can't access daily count");
         var countsRecords = await ctx.CountShardGroup.ReplicaDao.Many(EngagementCountHelper.PageVisites(topN), ct);
-        var schemaIds = countsRecords.Select(x => x[nameof(EngagementCount.RecordId).Camelize()].ToString()).ToArray();
+        var schemaIds = countsRecords
+            .Select(x =>x.StrOrEmpty(nameof(EngagementCount.RecordId).Camelize()))
+            .ToArray();
         var schemaRecords = await ctx.CountShardGroup.ReplicaDao.Many(SchemaHelper.BySchemaIds(schemaIds), ct);
         
         var schemaNameKey = nameof(Schema.Name).Camelize();

@@ -27,10 +27,11 @@ public class UserManageService<TUser>(
             .ToArray();
     }
 
-    public async Task<string> GetCreatorId(string tableName, string primaryKey, long recordId, CancellationToken ct)
+    public async Task<string> GetCreatorId(string tableName, string primaryKey, string recordId, CancellationToken ct)
     {
         var query = new SqlKata.Query(tableName)
-            .Where(primaryKey, recordId)
+            // primary key can be string(uuid) or long(auto increment)
+            .Where(primaryKey, long.TryParse(recordId, out var id)? id : recordId)
             .Select(Constants.CreatedBy);
         
         var record = await shardGroup.PrimaryDao.Single(query, CancellationToken.None);

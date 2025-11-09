@@ -54,17 +54,17 @@ foreach (var app in apps)
     TsGenerator.GenerateCode<UserAccess>($"../../../{app}/libs/FormCmsAdminSdk/auth/types/userAccess.ts");
     TsGenerator.GenerateCode<RoleAccess>($"../../../{app}/libs/FormCmsAdminSdk/auth/types/roleAccess.ts");
 
-    //activity
+    //engagement
     TsGenerator.GenerateCode<DailyActionCount>(
         $"../../../{app}/libs/FormCmsAdminSdk/auditLog/types/dailyActionCount.ts");
-    TsGenerator.GenerateCode<EngagementStatus>($"../../../{app}/libs/FormCmsAdminSdk/activity/types/activity.ts");
-    TsGenerator.GenerateCode<Bookmark>($"../../../{app}/libs/FormCmsAdminSdk/activity/types/bookmark.ts");
+    TsGenerator.GenerateCode<EngagementStatus>($"../../../{app}/libs/FormCmsAdminSdk/engagements/types/engagement.ts");
+    TsGenerator.GenerateCode<Bookmark>($"../../../{app}/libs/FormCmsAdminSdk/engagements/types/bookmark.ts");
     TsGenerator.GenerateCode<BookmarkFolder>(
-        $"../../../{app}/libs/FormCmsAdminSdk/activity/types/bookmarkFolder.ts");
+        $"../../../{app}/libs/FormCmsAdminSdk/engagements/types/bookmarkFolder.ts");
     TsGenerator.GenerateCode<DailyEngagementCount>(
-        $"../../../{app}/libs/FormCmsAdminSdk/activity/types/dailyActivityCount.ts");
+        $"../../../{app}/libs/FormCmsAdminSdk/engagements/types/dailyEngagementCount.ts");
     TsGenerator.GenerateCode<PageVisitCount>(
-        $"../../../{app}/libs/FormCmsAdminSdk/activity/types/pageVisitCount.ts");
+        $"../../../{app}/libs/FormCmsAdminSdk/engagements/types/pageVisitCount.ts");
     TsGenerator.GenerateCode<Notification>(
         $"../../../{app}/libs/FormCmsAdminSdk/notifications/types/notification.ts");
     

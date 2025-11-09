@@ -30,7 +30,7 @@ namespace FormCMS.Subscriptions.Builders
                 );
         }
 
-        public async Task<WebApplication> UseStripeSubscriptions(WebApplication app)
+        public async Task UseStripeSubscriptions(WebApplication app)
         {
             //handler
             var options = app.Services.GetRequiredService<SystemSettings>();
@@ -49,7 +49,6 @@ namespace FormCMS.Subscriptions.Builders
                                   Using Subscription  Services
                                   *********************************************************
                                   """);
-            return app;
         }
     }
 }

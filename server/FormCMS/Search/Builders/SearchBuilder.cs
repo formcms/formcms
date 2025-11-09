@@ -19,7 +19,7 @@ public class SearchBuilder(FtsProvider ftsProvider, string primaryConnectionStri
         return services;
     }
 
-    public async Task<WebApplication> UseSearch(WebApplication app)
+    public async Task UseSearch(WebApplication app)
     {
         app.Services.GetRequiredService<HookRegistry>().RegisterFtsHooks();
         app.Services.GetRequiredService<PluginRegistry>().RegisterFtsPlugin();
@@ -41,6 +41,5 @@ public class SearchBuilder(FtsProvider ftsProvider, string primaryConnectionStri
         };
         await task;
         await scope.ServiceProvider.GetRequiredService<IFullTextSearch>().EnsureFtsIndex();
-        return app;
     }
 }

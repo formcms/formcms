@@ -12,6 +12,8 @@ export function renderComments(element, render) {
     
     fetchUser().then(_ => {
         initCommentButtons(element, render);
-        dataLists.forEach((dl)=>initCommentButtons(dl, render));
+        if(dataLists) {
+            dataLists.forEach((dl) => initCommentButtons(dl, render));
+        }
     });
 }

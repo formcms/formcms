@@ -23,7 +23,7 @@ public sealed class AuditLogBuilder(ILogger<AuditLogBuilder> logger )
 
     private static void AddCamelEnumConverter<T>(Microsoft.AspNetCore.Http.Json.JsonOptions options) where T : struct, Enum
         => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter<T>(JsonNamingPolicy.CamelCase));
-    public async Task<WebApplication> UseAuditLog(WebApplication app)
+    public async Task UseAuditLog(WebApplication app)
     {
         var options = app.Services.GetRequiredService<SystemSettings>();
         var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
@@ -41,7 +41,6 @@ public sealed class AuditLogBuilder(ILogger<AuditLogBuilder> logger )
             Using AuditLog
             *********************************************************
             """);
-        return app;
     }
 
 }

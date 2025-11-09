@@ -33,7 +33,9 @@ public class EntityAuthService(
     public  Task CheckGetSinglePermission(LoadedEntity entity, ValidValue recordId)
     {
         var level = profileService.MustGetReadLevel(entity.Name);
-        return level == AccessLevel.Full ? Task.CompletedTask : EnsureCreatedByCurrentUser(entity, recordId.ObjectValue??0);
+        return level == AccessLevel.Full
+            ? Task.CompletedTask
+            : EnsureCreatedByCurrentUser(entity, recordId.ObjectValue?.ToString() ?? "0");
     }
 
     public void CheckInsertPermission(LoadedEntity entity)
@@ -44,13 +46,17 @@ public class EntityAuthService(
     public  Task CheckUpdatePermission(LoadedEntity entity, Record record)
     {
         var level = profileService.MustGetReadWriteLevel(entity.Name);
-        return level == AccessLevel.Full ? Task.CompletedTask : EnsureCreatedByCurrentUser(entity, record[entity.PrimaryKey]);
+        return level == AccessLevel.Full
+            ? Task.CompletedTask
+            : EnsureCreatedByCurrentUser(entity, record.StrOrEmpty(entity.PrimaryKey));
     }
 
     public  Task CheckUpdatePermission(LoadedEntity entity, ValidValue recordId)
     {
         var level = profileService.MustGetReadWriteLevel(entity.Name);
-        return level == AccessLevel.Full ? Task.CompletedTask : EnsureCreatedByCurrentUser(entity, recordId.ObjectValue??0);
+        return level == AccessLevel.Full
+            ? Task.CompletedTask
+            : EnsureCreatedByCurrentUser(entity, recordId.ObjectValue?.ToString() ?? "0");
     }
 
     public void AssignCreatedBy(Record record)
@@ -58,9 +64,10 @@ public class EntityAuthService(
         record[Constants.CreatedBy] = identityService.GetUserAccess()!.Id;
     }
 
-    private async Task EnsureCreatedByCurrentUser(LoadedEntity entity, object recordId)
+    private async Task EnsureCreatedByCurrentUser(LoadedEntity entity, string recordId)
     {
-        var userId = await userManageService.GetCreatorId(entity.TableName, entity.PrimaryKey, (long)recordId,CancellationToken.None);
+        var userId = await userManageService.GetCreatorId(entity.TableName, entity.PrimaryKey, recordId,
+            CancellationToken.None);
         if (userId != identityService.GetUserAccess()!.Id)
         {
             throw new ResultException(

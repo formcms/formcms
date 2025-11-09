@@ -17,11 +17,11 @@ public class CmsCrudMessageProduceBuilder(ILogger<CmsCrudMessageProduceBuilder> 
         return services;
     }
 
-    public WebApplication UseEventProducer(WebApplication app)
+    public Task UseEventProducer(WebApplication app)
     {
         Print();
         RegisterHooks(app);
-        return app;
+        return Task.CompletedTask;
     }
     
     private void Print()

@@ -85,7 +85,7 @@ export const customTypes = [
             {name:"data-entity", label:'Entity Name'},
             {name:"data-record-id", label:'Record Id'},
             {
-                name:" data-fetch-status", 
+                name:"data-fetch-status", 
                 label:'Fetch Status',
                 type: 'select',
                 options: [

@@ -26,8 +26,9 @@ public class CommentsService(
         var entity = await entityService.ValidateEntity(comment.EntityName,  ct).Ok();
         comment = AssignUser(comment.AssignId());
         var query = comment.Insert();
-        await ctx.RecordCommentShardRouter.PrimaryDao(comment.GetSourceKey()).Exec(query, false, ct);
-        var creatorId = await userManageService.GetCreatorId(entity.TableName, entity.PrimaryKey, comment.RecordId, ct);
+        await ctx.Router.PrimaryDao(comment.GetSourceKey()).Exec(query, false, ct);
+        var creatorId =
+            await userManageService.GetCreatorId(entity.TableName, entity.PrimaryKey, comment.RecordId.ToString(), ct);
         var activityMessage = new ActivityMessage(comment.CreatedBy, creatorId, comment.EntityName,
             comment.RecordId.ToString(), CommentHelper.CommentActivity, CmsOperations.Create, comment.Content);
         activityMessage = await SetLinkUrl(activityMessage,entity,comment.RecordId,ct);
@@ -38,7 +39,7 @@ public class CommentsService(
     public async Task Delete(string id, CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
-        var executor = ctx.RecordCommentShardRouter.PrimaryDao(CommentHelper.Parse(id).GetSourceKey());
+        var executor = ctx.Router.PrimaryDao(CommentHelper.Parse(id).GetSourceKey());
         var commentRec = await executor.Single(CommentHelper.Single(id),ct);
         if (commentRec is null) throw new ResultException("Comment not found");
         var comment = commentRec.ToObject<Comment>().Ok();
@@ -68,7 +69,8 @@ public class CommentsService(
         {
             //new comment, send notification to original post author
             var entity = await entityService.ValidateEntity(comment.EntityName,  ct).Ok();
-            var creatorId =  await userManageService.GetCreatorId(entity.TableName,entity.PrimaryKey, comment.RecordId, ct);
+            var creatorId = await userManageService.GetCreatorId(entity.TableName, entity.PrimaryKey,
+                comment.RecordId.ToString(), ct);
             
             var activityMessage = new ActivityMessage(
                 userId, creatorId, 
@@ -82,7 +84,7 @@ public class CommentsService(
 
     public async Task<Comment> Reply(string referencedId,Comment comment, CancellationToken ct)
     {
-        var executor = ctx.RecordCommentShardRouter.PrimaryDao(comment.GetSourceKey());
+        var executor = ctx.Router.PrimaryDao(comment.GetSourceKey());
         comment = AssignUser(comment.AssignId());
         var parentRecord = await executor.Single(CommentHelper.Single(referencedId), ct) ??
                            throw new ResultException("Parent comment not found");
@@ -108,7 +110,7 @@ public class CommentsService(
     public async Task Update(Comment comment, CancellationToken ct)
     {
         comment = AssignUser(comment);
-        var executor = ctx.RecordCommentShardRouter.PrimaryDao(comment.GetSourceKey());
+        var executor = ctx.Router.PrimaryDao(comment.GetSourceKey());
         var affected = await executor.Exec(comment.Update(),false, ct);
         if (affected == 0) throw new ResultException("Failed to update comment.");
     } 

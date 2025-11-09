@@ -2,4 +2,4 @@ using FormCMS.Infrastructure.RelationDbDao;
 
 namespace FormCMS.Comments.Models;
 
-public record CommentsContext(ShardRouter RecordCommentShardRouter);
+public record CommentsContext(ShardRouter Router);

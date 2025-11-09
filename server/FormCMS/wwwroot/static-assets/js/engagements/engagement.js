@@ -27,23 +27,23 @@ export function renderEngagementBar(element) {
     `;
         document.head.appendChild(style);
     }
-    element.querySelectorAll('[data-component="activity-bar"]').forEach(loadActivityBar);
+    element.querySelectorAll('[data-component="engagement-bar"]').forEach(loadActivityBar);
     element.querySelectorAll('[data-batch-fetch-engagement]').forEach(loadBatchStatus);
 }
 
 export async function loadBatchStatus(ele){
-    const bars = ele?.querySelectorAll('[data-component="activity-bar"]');
-    const activity = ele.dataset.batchFetchStatusActivity;
+    const bars = ele?.querySelectorAll('[data-component="engagement-bar"]');
+    const engagementType = ele.dataset.batchFetchEngagement;
     const entity = ele.dataset.entity;
     
     if ( bars.length > 0) {
         const recordIds = Array.from(bars).map(element => element.getAttribute('data-record-id'));
-        const activeIds = await fetchActivityStatus(entity,activity,recordIds);
-        console.info(entity, activity,recordIds,activeIds);
+        const activeIds = await fetchActivityStatus(entity,engagementType,recordIds);
+        console.info({entity, engagementType,recordIds,activeIds});
         bars.forEach((bar) => {
-            if (activeIds.includes(+bar.dataset.recordId)) {
+            if (activeIds.includes(bar.dataset.recordId)) {
                 console.log(bar.dataset.recordId);
-                const btn = bar.querySelector(`[data-component="${activity}-button"]`);
+                const btn = bar.querySelector(`[data-component="${engagementType}-button"]`);
                 btn.classList.toggle('active', true);
             }
         })

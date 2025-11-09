@@ -218,5 +218,6 @@ public class MysqlFts(MySqlConnection primary,MySqlConnection[] replicas, ILogge
         {
             replica.Dispose();
         }
+        logger.LogTrace("MysqlFts disposed.");
     }
 }

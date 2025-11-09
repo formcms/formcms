@@ -10,8 +10,9 @@ public class VideoBuilder
         return services;
     }
 
-    public void UseVideo(WebApplication app)
+    public Task UseVideo(WebApplication app)
     {
         app.Services.GetRequiredService<HookRegistry>().RegisterVideoMessageProducerPlugIn(); 
+        return Task.CompletedTask;
     }
 }

@@ -247,5 +247,6 @@ public class SqliteFts(
         {
             replica.Dispose();
         }
+        logger.LogTrace("SqliteFts disposed.");
     }
 }

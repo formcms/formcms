@@ -19,7 +19,7 @@ public class NotificationBuilder(ILogger<NotificationBuilder> logger)
         return services;
     }
 
-    public async Task<WebApplication> UseNotification(WebApplication app)
+    public async Task UseNotification(WebApplication app)
     {
         //handler
         var systemSettings = app.Services.GetRequiredService<SystemSettings>();
@@ -36,6 +36,5 @@ public class NotificationBuilder(ILogger<NotificationBuilder> logger)
              Using Notification Plugin
              *********************************************************
              """); 
-        return app;
     }
 }

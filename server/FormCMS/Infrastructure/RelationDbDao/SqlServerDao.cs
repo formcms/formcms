@@ -324,6 +324,7 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
 
             ColumnType.Text => "TEXT",
             ColumnType.String => "NVARCHAR(255)",
+            ColumnType.StringPrimaryKey => "NVARCHAR(255)",
 
             ColumnType.Datetime => "DATETIME",
             ColumnType.CreatedTime or ColumnType.UpdatedTime=> "DATETIME DEFAULT GETUTCDATE()",

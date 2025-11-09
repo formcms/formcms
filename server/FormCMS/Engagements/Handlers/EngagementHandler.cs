@@ -21,7 +21,7 @@ public static class EngagementHandler
             
         ) => s.GetDailyPageVisitCount(n,authed,ct));
 
-        builder.MapGet("/activity-counts", (
+        builder.MapGet("/counts", (
             int n,
             CancellationToken ct,
             IEngagementService s

@@ -30,18 +30,26 @@ public static class WebApplicationExt
     {
         app.Services.GetService<IAuthBuilder>()?.UseCmsAuth(app);
         if (useOutputCache) app.UseOutputCache();
+        
+        var tasks = new []
+        {
+            app.Services.GetRequiredService<CmsBuilder>().UseCmsAsync(app),
+            app.Services.GetService<DocumentDbQueryBuilder>()?.UseDocumentDbQuery(app),
+            app.Services.GetService<CmsCrudMessageProduceBuilder>()?.UseEventProducer(app),
+            app.Services.GetService<AuditLogBuilder>()?.UseAuditLog(app),
+            // have to use comments before engagement plugin, engagement query plugin can add like count
+            app.Services.GetService<CommentBuilder>()?.UseComments(app),
+            app.Services.GetService<SubscriptionBuilder>()?.UseStripeSubscriptions(app),
+            app.Services.GetService<EngagementsBuilder>()?.UseEngagement(app),
+            app.Services.GetService<NotificationBuilder>()?.UseNotification(app),
+            app.Services.GetService<VideoBuilder>()?.UseVideo(app),
+            app.Services.GetService<SearchBuilder>()?.UseSearch(app),
+        };
 
-        await app.Services.GetRequiredService<CmsBuilder>().UseCmsAsync(app);
-        app.Services.GetService<DocumentDbQueryBuilder>()?.UseDocumentDbQuery(app);
-        app.Services.GetService<CmsCrudMessageProduceBuilder>()?.UseEventProducer(app);
-        app.Services.GetService<AuditLogBuilder>()?.UseAuditLog(app);
-        //have to use comments before activity, activity query plugin can add like count
-        app.Services.GetService<CommentBuilder>()?.UseComments(app);
-        app.Services.GetService<SubscriptionBuilder>()?.UseStripeSubscriptions(app);
-        app.Services.GetService<EngagementsBuilder>()?.UseActivity(app);
-        app.Services.GetService<NotificationBuilder>()?.UseNotification(app);
-        app.Services.GetService<VideoBuilder>()?.UseVideo(app);
-        app.Services.GetService<SearchBuilder>()?.UseSearch(app);
+        foreach (var t in tasks)
+        {
+            if (t is not null) await t;
+        }
 
         app.UseRewriter(app.Services.GetRequiredService<RewriteOptions>());
     }
@@ -81,7 +89,7 @@ public static class WebApplicationExt
         => AuditLogBuilder.AddAuditLog(services);
 
     public static IServiceCollection AddActivity(this IServiceCollection services, bool enableBuffering = true,ShardRouterConfig? shardConfig = null)
-        => EngagementsBuilder.AddActivity(services, enableBuffering,shardConfig);
+        => EngagementsBuilder.AddEngagement(services, enableBuffering,shardConfig);
 
     public static IServiceCollection AddComments(this IServiceCollection services, bool enableBuffering = true)
         => CommentBuilder.AddComments(services);

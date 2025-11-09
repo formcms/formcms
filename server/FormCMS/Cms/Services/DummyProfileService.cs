@@ -15,16 +15,18 @@ public class DummyProfileService: IProfileService
         return AccessLevel.Full;
     }
 
-    public async Task ChangePassword(string password, string newPassword)
+    public Task ChangePassword(string password, string newPassword)
     {
+        return Task.CompletedTask;
     }
 
     public void MustHasAnyRole(IEnumerable<string> role)
     {
     }
 
-    public async Task EnsureCurrentUserHaveEntityAccess(string entityName)
+    public Task EnsureCurrentUserHaveEntityAccess(string entityName)
     {
+        return Task.CompletedTask;
     }
 
     public bool HasRole(string role)
@@ -32,7 +34,8 @@ public class DummyProfileService: IProfileService
         return true;
     }
 
-    public async Task UploadAvatar(IFormFile file, CancellationToken ct)
+    public Task UploadAvatar(IFormFile file, CancellationToken ct)
     {
+        return Task.CompletedTask;
     }
 }

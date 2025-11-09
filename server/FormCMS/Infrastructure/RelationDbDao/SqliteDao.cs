@@ -305,6 +305,7 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
 
             ColumnType.Text => "TEXT",
             ColumnType.String => "TEXT",
+            ColumnType.StringPrimaryKey => "TEXT",
 
             ColumnType.Datetime => "INTEGER",
             ColumnType.CreatedTime or ColumnType.UpdatedTime => "integer default (datetime('now'))",

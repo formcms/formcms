@@ -16,14 +16,14 @@ public static class HookRegistryExtensions
             
             var parentFullPath = nameof(Comment.Parent).Camelize();
             // check if any filter targets the parent field
-            if (args.Filters != null && args.Filters.Any(f => f?.Vector?.FullPath == parentFullPath))
+            if (args.Filters != null && args.Filters.Any(f => f.Vector.FullPath == parentFullPath))
             {
                 // find the first matching filter
-                var parentFilter = args.Filters.First(f => f?.Vector?.FullPath == parentFullPath);
+                var parentFilter = args.Filters.First(f => f.Vector.FullPath == parentFullPath);
 
                 // for reply comments,
                 var parentId = parentFilter.Constraints[0].Values.First().S;
-                var parentComment = CommentHelper.Parse(parentId);
+                var parentComment = CommentHelper.Parse(parentId!);
                 var records = await p.GetByFilters(
                     parentComment.EntityName,
                     parentComment.RecordId,
