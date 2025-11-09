@@ -26,7 +26,7 @@ public class CommentsService(
         var entity = await entityService.ValidateEntity(comment.EntityName,  ct).Ok();
         comment = AssignUser(comment.AssignId());
         var query = comment.Insert();
-        await ctx.RecordCommentShardRouter.PrimaryDao(comment.GetSourceKey()).Exec(query, true, ct);
+        await ctx.RecordCommentShardRouter.PrimaryDao(comment.GetSourceKey()).Exec(query, false, ct);
         var creatorId = await userManageService.GetCreatorId(entity.TableName, entity.PrimaryKey, comment.RecordId, ct);
         var activityMessage = new ActivityMessage(comment.CreatedBy, creatorId, comment.EntityName,
             comment.RecordId.ToString(), CommentHelper.CommentActivity, CmsOperations.Create, comment.Content);
@@ -95,7 +95,7 @@ public class CommentsService(
             Parent = parentComment.Parent ?? parentComment.Id,
             Mention = parentComment.Parent is null ? null :parentComment.CreatedBy
         };
-        await executor.Exec(comment.Insert(),true, ct);
+        await executor.Exec(comment.Insert(),false, ct);
         
         var activityMessage = new ActivityMessage(comment.CreatedBy, parentComment.CreatedBy, CommentHelper.Entity.Name,
             parentComment.Id, CommentHelper.CommentActivity, CmsOperations.Create,comment.Content);

@@ -2,7 +2,6 @@ using FormCMS.Core.Tasks;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
-using Microsoft.Data.Sqlite;
 using TaskStatus = FormCMS.Core.Tasks.TaskStatus;
 
 namespace FormCMS.Cms.Workers;

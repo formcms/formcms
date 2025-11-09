@@ -259,7 +259,7 @@ public class QueryApiTest
         var posts = (await Factory.QueryApi.List(_queryName, new Dictionary<string, StringValues>
         {
             [$"{attrName}.limit"] = limit.ToString(),
-            [$"limit"] = "1",
+            ["limit"] = "1",
         })).Ok();
 
         var post = posts[0].ToDictionary();

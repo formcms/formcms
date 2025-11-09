@@ -29,13 +29,13 @@ public class SearchBuilder(FtsProvider ftsProvider, string primaryConnectionStri
         {
             //if we want to do fts on relation database, need create a physical table to let the db engine to do index
             //later if we want to do fts on elastic search, this table is not needed
-            FtsProvider.Postgres => app.Services.GetRequiredService<ServiceProvider>()
+            FtsProvider.Postgres => app.Services
                 .CreateDao(DatabaseProvider.Postgres, primaryConnectionString).EnsureFtsTables(),
-            FtsProvider.Sqlite => app.Services.GetRequiredService<ServiceProvider>()
+            FtsProvider.Sqlite => app.Services
                 .CreateDao(DatabaseProvider.Sqlite, primaryConnectionString).EnsureFtsTables(),
-            FtsProvider.SqlServer => app.Services.GetRequiredService<ServiceProvider>()
+            FtsProvider.SqlServer => app.Services
                 .CreateDao(DatabaseProvider.SqlServer, primaryConnectionString).EnsureFtsTables(),
-            FtsProvider.Mysql => app.Services.GetRequiredService<ServiceProvider>()
+            FtsProvider.Mysql => app.Services
                 .CreateDao(DatabaseProvider.Mysql, primaryConnectionString).EnsureFtsTables(),
             _ => throw new ArgumentOutOfRangeException()
         };

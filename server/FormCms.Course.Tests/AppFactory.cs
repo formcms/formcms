@@ -1,10 +1,10 @@
 using Bogus;
-using FormCMS.Activities.ApiClient;
 using FormCMS.AuditLogging.ApiClient;
 using FormCMS.Auth.ApiClient;
 using FormCMS.Comments.ApiClient;
 using FormCMS.CoreKit.ApiClient;
 using FormCMS.CoreKit.Test;
+using FormCMS.Engagements.ApiClient;
 using FormCMS.Notify.ApiClient;
 using FormCMS.Subscriptions.ApiClient;
 using FormCMS.Utils.EnumExt;
@@ -18,7 +18,7 @@ public class AppFactory : WebApplicationFactory<Program>
     public AuthApiClient AuthApi {get;}
     public SchemaApiClient SchemaApi {get;}
     public AccountApiClient AccountApi{get;}
-    public ActivityApiClient ActivityApi{get;}
+    public EngagementsApiClient EngagementsApi{get;}
     public QueryApiClient QueryApi{get;}
     public AssetApiClient AssetApi{get;}
     public EntityApiClient EntityApi{get;}
@@ -51,7 +51,7 @@ public class AppFactory : WebApplicationFactory<Program>
         AuthApi = new AuthApiClient(_httpClient);
         SchemaApi = new SchemaApiClient(_httpClient);
         AccountApi = new AccountApiClient(_httpClient);
-        ActivityApi = new ActivityApiClient(_httpClient);
+        EngagementsApi = new EngagementsApiClient(_httpClient);
         EntityApi = new EntityApiClient(_httpClient);
         QueryApi = new QueryApiClient(_httpClient);
         AssetApi = new AssetApiClient(_httpClient);

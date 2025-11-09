@@ -76,10 +76,10 @@ export const customTypes = [
             {name: "data-entity", label: 'Entity Name'},
         ]
     },
-    /*standalone activity bar, load counts and status, 
-    contrary to activity-bar in 'top list' */
+    /*standalone engagement bar, load counts and status, 
+    contrary to engagement-bar in 'top list' */
     {
-        name: 'activity-bar',
+        name: 'engagement-bar',
         openTm:true,
         traits: [
             {name:"data-entity", label:'Entity Name'},

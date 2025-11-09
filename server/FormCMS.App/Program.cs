@@ -72,6 +72,6 @@ async Task SeedArticles(int start, int count)
     }
     
     using var scope = app.Services.CreateScope();
-    var exe = scope.ServiceProvider.GetRequiredService<KateQueryExecutor>();
+    var exe = scope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao;
     await exe.BatchInsert("article",records.ToArray());
 }

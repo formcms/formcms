@@ -40,7 +40,7 @@ export const comments = {
         data-gjs-type="foreach" 
         data-component="foreach"  
         data-entity="comment" 
-        data-batch-fetch-status-activity="like"
+        data-batch-fetch-engagement="like"
     >
         <div class="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700" data-component='comment-container' data-user-id="{{createdBy.id}}">
              <div class="flex items-start" >
@@ -54,8 +54,8 @@ export const comments = {
              </div>
                   
              <div class="flex items-center gap-2 mt-2" 
-                data-component="activity-bar" 
-                data-gjs-type="activity-bar" 
+                data-component="engagement-bar" 
+                data-gjs-type="engagement-bar" 
                 data-record-id="{{__record_id}}" 
                 data-entity="comment" 
                 data-fetch-individual-status="no" 
@@ -104,8 +104,8 @@ export const comments = {
                             </div>
                         </div>
                          <div class="flex items-center gap-2 mt-2" 
-                            data-component="activity-bar" 
-                            data-gjs-type="activity-bar" 
+                            data-component="engagement-bar" 
+                            data-gjs-type="engagement-bar" 
                             data-record-id="{{__record_id}}" 
                             data-entity="comment" 
                             data-fetch-individual-status="no" 

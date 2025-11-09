@@ -380,4 +380,12 @@ public class SqlServerFts(
                 ex);
         }
     }
+    public void Dispose()
+    {
+        primary.Dispose();
+        foreach (var replica in replicas)
+        {
+            replica.Dispose();
+        }
+    }
 }

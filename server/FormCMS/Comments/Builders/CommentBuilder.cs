@@ -34,7 +34,8 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
         var scope = app.Services.CreateScope();
         await scope.ServiceProvider.GetRequiredService<CommentsContext>()
             .RecordCommentShardRouter 
-            .ExecuteAll(dao => dao.EnsureCommentsTable());
+            .ExecuteAll(dao => 
+                dao.EnsureCommentsTable());
         
         logger.LogInformation(
             $"""

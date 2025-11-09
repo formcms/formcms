@@ -246,8 +246,8 @@ public class PostgresDao( NpgsqlConnection connection,ILogger<PostgresDao> logge
                 var paramName = $"@p{paramIndex}";
                 rowParams.Add(paramName);
 
-                var value = record.TryGetValue(field, out var val) ? val : DBNull.Value;
-                parameters.Add(new NpgsqlParameter(paramName, GetNpgsqlDbType(value)) { Value = value ?? DBNull.Value });
+                var value = record.TryGetValue(field, out var val) && val is not null ? val : DBNull.Value;
+                parameters.Add(new NpgsqlParameter(paramName, GetNpgsqlDbType(value)) { Value = value});
 
                 paramIndex++;
             }
@@ -431,5 +431,10 @@ public class PostgresDao( NpgsqlConnection connection,ILogger<PostgresDao> logge
             "timestamp" => ColumnType.Datetime,
             _ => ColumnType.String
         };
+    }
+
+    void IDisposable.Dispose()
+    {
+        connection.Dispose();
     }
 }

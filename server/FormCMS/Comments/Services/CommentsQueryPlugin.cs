@@ -12,6 +12,16 @@ public class CommentsQueryPlugin(
     CommentsContext ctx
 ) : ICommentsQueryPlugin
 {
+    public async Task<Record[]> GetByFilters( string entityName, long recordId, ValidFilter[] filters, ValidSort[] sorts, ValidPagination pagination,
+        ValidSpan span,
+        CancellationToken ct)
+    {
+        var kateQuery = CommentHelper.List(filters, sorts, span, pagination);
+        var  key = new Comment(entityName,recordId).GetSourceKey();
+        var executor = ctx.RecordCommentShardRouter.ReplicaDao(key);
+        return await executor.Many(kateQuery, ct);
+    }
+
     // when a user liked a comments, a notification message will call this function
     public async Task<Record[]> GetTags(string[] commentIds)
     {

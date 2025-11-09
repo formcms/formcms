@@ -211,4 +211,12 @@ public class MysqlFts(MySqlConnection primary,MySqlConnection[] replicas, ILogge
 
         return results.ToArray();
     }
+    public void Dispose()
+    {
+        primary.Dispose();
+        foreach (var replica in replicas)
+        {
+            replica.Dispose();
+        }
+    }
 }

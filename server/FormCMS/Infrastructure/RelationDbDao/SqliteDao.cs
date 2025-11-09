@@ -321,4 +321,9 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
             _ => ColumnType.Text
         };
     }
+
+    public void Dispose()
+    {
+        conn.Dispose();
+    }
 }

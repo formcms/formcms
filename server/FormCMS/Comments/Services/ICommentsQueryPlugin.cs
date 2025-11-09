@@ -12,8 +12,9 @@ public interface ICommentsQueryPlugin
         StrArgs args,
         CancellationToken ct);
 
-    // Task<Record[]> GetByFilters(ValidFilter[] filters, ValidSort[] sorts, ValidPagination pagination, ValidSpan span,
-    //     CancellationToken ct);
+    //use case, get comments by parentId
+    Task<Record[]> GetByFilters(string entityName, long recordId, ValidFilter[] filters, ValidSort[] sorts, ValidPagination pagination, ValidSpan span,
+        CancellationToken ct);
 
     Task<Record[]> GetByEntityRecordId(string entityName, long recordId,
         ValidPagination pg, ValidSpan sp, ValidSort[] sorts, CancellationToken ct);

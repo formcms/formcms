@@ -215,7 +215,8 @@ public static class EntityHelper
     }
     public static SqlKata.Query PublishedAt(this LoadedEntity entity, long recordId)
     {
-        return entity.Basic().Where(entity.PrimaryKey, recordId)
+        return entity.Basic()
+            .Where(entity.PrimaryKey, recordId)
             .Select(DefaultAttributeNames.PublishedAt.Camelize());
     }
     public static Result<SqlKata.Query> SingleQuery(

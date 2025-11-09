@@ -181,4 +181,46 @@ public static class RecordExtensions
         using var doc = JsonDocument.Parse(json);
         return doc.RootElement.Clone(); // Clone so element outlives the JsonDocument
     }
+    
+    public static Record[] MergeFrom(this Record[] dest, Record[] src, string destKey, string srcKey, params string[] fieldsToCopy)
+    {
+        if (dest == null) throw new ArgumentNullException(nameof(dest));
+        if (src == null || src.Length == 0 || fieldsToCopy == null || fieldsToCopy.Length == 0) return dest;
+    
+        var srcDict = new Dictionary<string, Record?>(StringComparer.Ordinal);
+        foreach (var r in src)
+        {
+            if (r == null) continue;
+            if (r.TryGetValue(srcKey, out var keyObj) && keyObj != null)
+            {
+                var keyStr = keyObj.ToString() ?? string.Empty;
+                if (!string.IsNullOrEmpty(keyStr) && !srcDict.ContainsKey(keyStr))
+                {
+                    srcDict[keyStr] = r;
+                }
+            }
+        }
+    
+        foreach (var d in dest)
+        {
+            if (d == null) continue;
+            if (!d.TryGetValue(destKey, out var destKeyObj) || destKeyObj == null) continue;
+            var destKeyStr = destKeyObj.ToString() ?? string.Empty;
+            if (string.IsNullOrEmpty(destKeyStr)) continue;
+    
+            if (!srcDict.TryGetValue(destKeyStr, out var srcRecord) || srcRecord == null) continue;
+    
+            foreach (var field in fieldsToCopy)
+            {
+                if (string.IsNullOrEmpty(field)) continue;
+                if (srcRecord.TryGetValue(field, out var val))
+                {
+                    d[field] = val!;
+                }
+            }
+        }
+    
+        return dest;
+    }
+    
 }

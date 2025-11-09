@@ -40,7 +40,7 @@ public static class CommentHelper
         ColumnHelper.CreateCamelColumn<Comment, long>(x => x.RecordId),
         ColumnHelper.CreateCamelColumn<Comment, string>(x => x.CreatedBy),
         ColumnHelper.CreateCamelColumn<Comment>(x => x.Content, ColumnType.Text),
-        ColumnHelper.CreateCamelColumn<Comment>(x => x.Parent!, ColumnType.Int),
+        ColumnHelper.CreateCamelColumn<Comment>(x => x.Parent!, ColumnType.String),
         ColumnHelper.CreateCamelColumn<Comment>(x => x.Mention!, ColumnType.String),
         DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
         DefaultAttributeNames.PublishedAt.CreateCamelColumn(ColumnType.CreatedTime),
@@ -54,7 +54,7 @@ public static class CommentHelper
             new Attribute(nameof(Comment.Id).Camelize()),
             new Attribute(nameof(Comment.EntityName).Camelize(),DisplayType:DisplayType.Number),
             new Attribute(nameof(Comment.RecordId).Camelize(),DataType:DataType.Int,DisplayType:DisplayType.Number),
-            new Attribute(nameof(Comment.Parent).Camelize(),DataType:DataType.Int,DisplayType:DisplayType.Number),
+            new Attribute(nameof(Comment.Parent).Camelize(),DataType:DataType.Text,DisplayType:DisplayType.Text),
             new Attribute(nameof(Comment.CreatedBy).Camelize(),DataType: DataType.Lookup, Options:PublicUserInfos.Entity.Name),
             new Attribute(nameof(Comment.Content).Camelize()),
             new Attribute(nameof(Comment.CreatedAt).Camelize(),DataType: DataType.Datetime,DisplayType:DisplayType.LocalDatetime),
@@ -174,7 +174,7 @@ public static class CommentHelper
                     nameof(Comment.Parent),
                     nameof(Comment.Mention)
                 ]
-            ),true);
+            ));
     
     public static Query Update(this Comment comment)
         => new Query(Entity.TableName)

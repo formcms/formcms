@@ -4,7 +4,7 @@ using SqlKata.Execution;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public interface IRelationDbDao
+public interface IRelationDbDao:IDisposable
 {
     ValueTask<TransactionManager> BeginTransaction();
     bool InTransaction();

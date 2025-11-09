@@ -78,6 +78,10 @@ public static class HttpClientExt
     public static async Task<Result> PostAndSaveCookie(this HttpClient client, string url, object payload)
     {
         var response = await client.PostAsync(url, Content(payload,JsonSerializerOptions));
+        if (!response.IsSuccessStatusCode)
+        {
+            return Result.Fail(response.ReasonPhrase);
+        }
         client.DefaultRequestHeaders.Add("Cookie", response.Headers.GetValues("Set-Cookie"));
         return await response.ParseResult();
     }

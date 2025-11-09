@@ -421,4 +421,9 @@ public class MySqlDao( MySqlConnection connection,ILogger<MySqlDao> logger) : IR
             _ => ColumnType.String
         };
     }
+
+    public void Dispose()
+    {
+        connection.Dispose();
+    }
 }

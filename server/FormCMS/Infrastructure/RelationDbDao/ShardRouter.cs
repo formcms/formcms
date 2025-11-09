@@ -5,7 +5,7 @@ namespace FormCMS.Infrastructure.RelationDbDao;
 
 public record ShardRouterConfig(ShardConfig[] ShardConfigs );
     
-public class ShardRouter(ShardGroup[] shards)
+public class ShardRouter(ShardGroup[] shards):IDisposable
 {
     public IRelationDbDao  PrimaryDao(string key) => GetShard(key).Shard.PrimaryDao;
     public IRelationDbDao ReplicaDao(string key) => GetShard(key).Shard.ReplicaDao;
@@ -93,5 +93,13 @@ public class ShardRouter(ShardGroup[] shards)
         // Turn first 4 bytes into an int
         var value = BitConverter.ToInt32(hash, 0);
         return GetShard(value);
+    }
+
+    public void Dispose()
+    {
+        foreach (var shardGroup in shards)
+        {
+            shardGroup.Dispose();
+        }
     }
 }

@@ -81,7 +81,7 @@ public class CommentApiTest(AppFactory factory)
     private async Task<long> QueryReplyCount(string commentId)
     {
         await """
-              query commentReplies($source:Int){
+              query commentReplies($source:String){
                 commentList(parentSet:[$source],sort:id){
                   id,
                   content,
@@ -98,7 +98,7 @@ public class CommentApiTest(AppFactory factory)
     }
     private async Task<int> QueryCommentsCount()
     {
-        await factory.ActivityApi.Get(TestEntityNames.TestPost.Camelize(), BlogsTestData.CommentTestPostId).Ok();
+        await factory.EngagementsApi.Get(TestEntityNames.TestPost.Camelize(), BlogsTestData.CommentTestPostId).Ok();
         await $$"""
                 query {{_queryName}}{
                    {{TestEntityNames.TestPost.Camelize()}}(idSet:{{BlogsTestData.CommentTestPostId}})

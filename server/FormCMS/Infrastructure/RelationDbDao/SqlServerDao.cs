@@ -341,4 +341,9 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
             _ => ColumnType.String
         };
     }
+
+    public void Dispose()
+    {
+        conn.Dispose();
+    }
 }

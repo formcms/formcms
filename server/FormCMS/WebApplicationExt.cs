@@ -1,10 +1,10 @@
 using FormCMS.Auth.Builders;
 using FormCMS.Cms.Builders;
 using FluentResults;
-using FormCMS.Activities.Builders;
 using FormCMS.AuditLogging.Builders;
 using FormCMS.Auth.Models;
 using FormCMS.Comments.Builders;
+using FormCMS.Engagements.Builders;
 using FormCMS.Infrastructure.Fts;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Notify.Builders;
@@ -38,7 +38,7 @@ public static class WebApplicationExt
         //have to use comments before activity, activity query plugin can add like count
         app.Services.GetService<CommentBuilder>()?.UseComments(app);
         app.Services.GetService<SubscriptionBuilder>()?.UseStripeSubscriptions(app);
-        app.Services.GetService<ActivityBuilder>()?.UseActivity(app);
+        app.Services.GetService<EngagementsBuilder>()?.UseActivity(app);
         app.Services.GetService<NotificationBuilder>()?.UseNotification(app);
         app.Services.GetService<VideoBuilder>()?.UseVideo(app);
         app.Services.GetService<SearchBuilder>()?.UseSearch(app);
@@ -81,7 +81,7 @@ public static class WebApplicationExt
         => AuditLogBuilder.AddAuditLog(services);
 
     public static IServiceCollection AddActivity(this IServiceCollection services, bool enableBuffering = true,ShardRouterConfig? shardConfig = null)
-        => ActivityBuilder.AddActivity(services, enableBuffering,shardConfig);
+        => EngagementsBuilder.AddActivity(services, enableBuffering,shardConfig);
 
     public static IServiceCollection AddComments(this IServiceCollection services, bool enableBuffering = true)
         => CommentBuilder.AddComments(services);
