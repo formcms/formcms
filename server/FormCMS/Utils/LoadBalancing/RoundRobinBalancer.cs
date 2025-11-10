@@ -1,10 +1,12 @@
 namespace FormCMS.Utils.LoadBalancing;
 
-public class RoundRobinBalancer<T>(T primary, T[]? replicas) where T : class
+public class RoundRobinBalancer<TPrimary, TReplica>(TPrimary primary, TReplica[]? replicas)
+    where TReplica : class
+    where TPrimary : TReplica
 {
     private int _counter;
 
-    public T Next
+    public TReplica Next
         => replicas is { Length: > 0 } ? replicas[GetNextIndex()] : primary;
 
     private int GetNextIndex()

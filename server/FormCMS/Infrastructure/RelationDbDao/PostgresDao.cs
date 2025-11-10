@@ -7,7 +7,7 @@ using SqlKata.Execution;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public class PostgresDao( NpgsqlConnection connection,ILogger<PostgresDao> logger):IRelationDbDao
+public class PostgresDao( NpgsqlConnection connection,ILogger<PostgresDao> logger):IPrimaryDao
 {
     private TransactionManager? _transaction;
     private readonly Compiler _compiler = new PostgresCompiler();
@@ -73,7 +73,7 @@ public class PostgresDao( NpgsqlConnection connection,ILogger<PostgresDao> logge
 
             //double quota " is necessary, otherwise postgres will change the field name to lowercase
             parts.Add($"""
-                       "{column.Name}" {ColTypeToString(column.Type)}
+                       "{column.Name}" {ColTypeToString(column)}
                        """);
         }
         var sql = $"""
@@ -107,7 +107,7 @@ public class PostgresDao( NpgsqlConnection connection,ILogger<PostgresDao> logge
     {
         var parts = cols.Select(x =>
             $"""
-            Alter Table "{table}" ADD COLUMN "{x.Name}" {ColTypeToString(x.Type)}
+            Alter Table "{table}" ADD COLUMN "{x.Name}" {ColTypeToString(x)}
             """
         );
         var sql = string.Join(";", parts.ToArray());
@@ -401,21 +401,21 @@ public class PostgresDao( NpgsqlConnection connection,ILogger<PostgresDao> logge
         };
     }
 
-    private static string ColTypeToString(ColumnType t)
+    private static string ColTypeToString(Column col)
     {
-        return t switch
+        return col.Type switch
         {
             ColumnType.Id => "BIGSERIAL PRIMARY KEY",
-            ColumnType.StringPrimaryKey => "varchar(255) PRIMARY KEY",
+            ColumnType.StringPrimaryKey => $"varchar({col.Length}) PRIMARY KEY",
             ColumnType.Int => "BIGINT",
             ColumnType.Boolean => "BOOLEAN DEFAULT FALSE",
             
             ColumnType.Text => "TEXT",
-            ColumnType.String => "varchar(255)",
+            ColumnType.String => $"varchar({col.Length})",
             
             ColumnType.Datetime => "TIMESTAMP",
             ColumnType.CreatedTime or ColumnType.UpdatedTime=> "TIMESTAMP  DEFAULT timezone('UTC', now())",
-            _ => throw new NotSupportedException($"Type {t} is not supported")
+            _ => throw new NotSupportedException($"Type {col.Type} is not supported")
         };
     }
 

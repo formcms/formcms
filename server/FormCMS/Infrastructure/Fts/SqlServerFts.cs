@@ -12,7 +12,7 @@ public class SqlServerFts(
     ILogger<SqlServerFts> logger
     ) : IFullTextSearch
 {
-    private readonly RoundRobinBalancer<SqlConnection> _balancer = new (primary, replicas);
+    private readonly RoundRobinBalancer<SqlConnection,SqlConnection> _balancer = new (primary, replicas);
 
     private SqlConnection GetConnection(SqlConnection conn)
     {

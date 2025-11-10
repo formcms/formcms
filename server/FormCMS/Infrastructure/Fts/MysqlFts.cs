@@ -6,7 +6,7 @@ namespace FormCMS.Infrastructure.Fts;
 
 public class MysqlFts(MySqlConnection primary,MySqlConnection[] replicas, ILogger<MysqlFts> logger) : IFullTextSearch
 {
-    private readonly RoundRobinBalancer<MySqlConnection> _balancer = new (primary, replicas);
+    private readonly RoundRobinBalancer<MySqlConnection,MySqlConnection> _balancer = new (primary, replicas);
     private MySqlConnection GetConnection(MySqlConnection conn)
     {
         if (conn.State != ConnectionState.Open)

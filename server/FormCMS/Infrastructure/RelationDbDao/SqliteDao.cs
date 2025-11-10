@@ -6,7 +6,7 @@ using SqlKata.Execution;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) : IRelationDbDao
+public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) : IPrimaryDao
 {
     private readonly Compiler _compiler = new SqliteCompiler();
     private TransactionManager? _transaction;

@@ -23,7 +23,7 @@ public class ImportWorker(
 ) : TaskWorker(serviceScopeFactory: scopeFactory, logger: logger,delaySeconds: options.DelaySeconds)
 {
     protected override async Task DoTask(
-        IServiceScope serviceScope, IRelationDbDao dao,
+        IServiceScope serviceScope, IPrimaryDao dao,
         SystemTask task, CancellationToken ct)
     {
         task.GetPaths().ExtractTaskFile();

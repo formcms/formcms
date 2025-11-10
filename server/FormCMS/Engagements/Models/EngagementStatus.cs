@@ -45,11 +45,11 @@ public static class EngagementStatusHelper
 
     public static readonly Column[] Columns =
     [
-        ColumnHelper.CreateCamelColumn<EngagementStatus>(x => x.Id!, ColumnType.Id),
-        ColumnHelper.CreateCamelColumn<EngagementStatus, string>(x => x.EntityName),
-        ColumnHelper.CreateCamelColumn<EngagementStatus, string>(x => x.RecordId),
-        ColumnHelper.CreateCamelColumn<EngagementStatus, string>(x => x.EngagementType),
-        ColumnHelper.CreateCamelColumn<EngagementStatus, string>(x => x.UserId),
+        ColumnHelper.CreateCamelColumn<EngagementStatus>(x => x.Id, ColumnType.Id),
+        ColumnHelper.CreateCamelColumn<EngagementStatus, string>(x => x.EntityName,50),
+        ColumnHelper.CreateCamelColumn<EngagementStatus, string>(x => x.RecordId,100),
+        ColumnHelper.CreateCamelColumn<EngagementStatus, string>(x => x.EngagementType,50),
+        ColumnHelper.CreateCamelColumn<EngagementStatus, string>(x => x.UserId,50),
         
         //use active, not deleted, the end point pass parameter ?type=like&active=true
         ColumnHelper.CreateCamelColumn<EngagementStatus, bool>(x => x.IsActive),

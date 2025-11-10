@@ -18,7 +18,7 @@ public class PostgresFts(
     
     ) : IFullTextSearch
 {
-    private readonly RoundRobinBalancer<NpgsqlConnection> _balancer = new (primary, replicas);
+    private readonly RoundRobinBalancer<NpgsqlConnection,NpgsqlConnection> _balancer = new (primary, replicas);
 
     private NpgsqlConnection GetConnection(NpgsqlConnection conn)
     {

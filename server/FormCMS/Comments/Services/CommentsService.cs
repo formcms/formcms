@@ -26,7 +26,7 @@ public class CommentsService(
         var entity = await entityService.ValidateEntity(comment.EntityName,  ct).Ok();
         comment = AssignUser(comment.AssignId());
         var query = comment.Insert();
-        await ctx.Router.PrimaryDao(comment.GetSourceKey()).Exec(query, false, ct);
+        await ctx.Router.PrimaryDao(comment.GetSourceKey()).Exec(query, ct);
         var creatorId =
             await userManageService.GetCreatorId(entity.TableName, entity.PrimaryKey, comment.RecordId.ToString(), ct);
         var activityMessage = new ActivityMessage(comment.CreatedBy, creatorId, comment.EntityName,
@@ -45,7 +45,7 @@ public class CommentsService(
         var comment = commentRec.ToObject<Comment>().Ok();
 
         if (userId != comment.CreatedBy) throw new ResultException("You don't have permission to delete this comment");
-        await executor.Exec(CommentHelper.Delete(userId, id), false, ct);
+        await executor.Exec(CommentHelper.Delete(userId, id), ct);
 
         if (comment.Parent is not null)
         {
@@ -97,7 +97,7 @@ public class CommentsService(
             Parent = parentComment.Parent ?? parentComment.Id,
             Mention = parentComment.Parent is null ? null :parentComment.CreatedBy
         };
-        await executor.Exec(comment.Insert(),false, ct);
+        await executor.Exec(comment.Insert(),ct);
         
         var activityMessage = new ActivityMessage(comment.CreatedBy, parentComment.CreatedBy, CommentHelper.Entity.Name,
             parentComment.Id, CommentHelper.CommentActivity, CmsOperations.Create,comment.Content);
@@ -111,7 +111,7 @@ public class CommentsService(
     {
         comment = AssignUser(comment);
         var executor = ctx.Router.PrimaryDao(comment.GetSourceKey());
-        var affected = await executor.Exec(comment.Update(),false, ct);
+        var affected = await executor.Exec(comment.Update(),ct);
         if (affected == 0) throw new ResultException("Failed to update comment.");
     } 
 

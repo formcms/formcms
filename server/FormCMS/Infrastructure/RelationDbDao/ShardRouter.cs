@@ -7,15 +7,15 @@ public record ShardRouterConfig(ShardConfig[] ShardConfigs );
     
 public class ShardRouter(ShardGroup[] shards):IDisposable
 {
-    public IRelationDbDao  PrimaryDao(string key) => GetShard(key).Shard.PrimaryDao;
-    public IRelationDbDao ReplicaDao(string key) => GetShard(key).Shard.ReplicaDao;
+    public IPrimaryDao  PrimaryDao(string key) => GetShard(key).Shard.PrimaryDao;
+    public IReplicaDao ReplicaDao(string key) => GetShard(key).Shard.ReplicaDao;
         
     public async Task<T[]> Fetch<T>(
         string[] keys,
-        Func<IRelationDbDao, string[],Task<T[]>> func
+        Func<IReplicaDao, string[],Task<T[]>> func
     )
     {
-        var dict = new Dictionary<int, (IRelationDbDao dao,List<string>list)>();
+        var dict = new Dictionary<int, (IReplicaDao dao,List<string>list)>();
         foreach (var key in keys)
         {
             var (idx, shard) = GetShard(key);
@@ -38,16 +38,16 @@ public class ShardRouter(ShardGroup[] shards):IDisposable
         return allResults;
     }
 
-    public Task ExecuteAll(Func<IRelationDbDao, Task> func) => Task.WhenAll(shards.Select(x =>
+    public Task ExecuteAll(Func<IPrimaryDao, Task> func) => Task.WhenAll(shards.Select(x =>
         func(x.PrimaryDao))
     );
 
     public Task Execute<T>(
         IEnumerable<T> records,
         Func<T,string> getKeyFunc,
-        Func<IRelationDbDao,T[] ,Task> func)
+        Func<IPrimaryDao,T[] ,Task> func)
     {
-        var dict = new Dictionary<int, (IRelationDbDao dao,List<T> list)>();
+        var dict = new Dictionary<int, (IPrimaryDao dao,List<T> list)>();
         foreach (var record in records)
         {
             var k = getKeyFunc(record);

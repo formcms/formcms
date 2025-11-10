@@ -12,7 +12,7 @@ public class SqliteFts(
     ILogger<SqliteFts> logger
 ) : IFullTextSearch
 {
-    private readonly RoundRobinBalancer<SqliteConnection> _balancer = new(primary, replicas);
+    private readonly RoundRobinBalancer<SqliteConnection,SqliteConnection> _balancer = new(primary, replicas);
 
     private SqliteConnection GetConnection(SqliteConnection conn)
     {

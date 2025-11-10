@@ -53,7 +53,7 @@ public static class ServiceProviderExtensions
             _ => throw new NotImplementedException(),
         };
 
-    public static IRelationDbDao CreateDao(this IServiceProvider sp, DatabaseProvider databaseProvider, string connectionString)
+    public static IPrimaryDao CreateDao(this IServiceProvider sp, DatabaseProvider databaseProvider, string connectionString)
         => databaseProvider switch
         {
             DatabaseProvider.Mysql => new MySqlDao(

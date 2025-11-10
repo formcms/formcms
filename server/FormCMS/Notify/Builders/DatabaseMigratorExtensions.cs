@@ -6,7 +6,7 @@ namespace FormCMS.Notify.Builders;
 
 public static class DatabaseMigratorExtensions
 {
-    public static async Task EnsureNotifyTable(this IRelationDbDao  migrator)
+    public static async Task EnsureNotifyTable(this IPrimaryDao  migrator)
     {
         await migrator.MigrateTable(Notifications.TableName, Notifications.Columns);
         await migrator.MigrateTable(NotificationCountExtensions.TableName, NotificationCountExtensions.Columns);

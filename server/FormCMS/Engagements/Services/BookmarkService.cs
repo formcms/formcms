@@ -41,7 +41,7 @@ public class BookmarkService(
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
         folder = folder with { UserId = userId, Id=id};
             
-        var affected = await ctx.UserActivityShardRouter.PrimaryDao(userId).Exec(folder.Update(),false, ct);
+        var affected = await ctx.UserActivityShardRouter.PrimaryDao(userId).Exec(folder.Update(),ct);
         if (affected == 0) throw new ResultException("Failed to update folder.");
     }
 
@@ -55,8 +55,8 @@ public class BookmarkService(
         using var trans = await dao.BeginTransaction();
         try
         {
-            await executor.Exec(Bookmarks.DeleteBookmarksByFolder(userId, folderId),false,ct);
-            await executor.Exec(BookmarkFolders.Delete(userId, folderId), false, ct);
+            await executor.Exec(Bookmarks.DeleteBookmarksByFolder(userId, folderId),ct);
+            await executor.Exec(BookmarkFolders.Delete(userId, folderId), ct);
             trans.Commit();
         }
         catch 
@@ -94,7 +94,7 @@ public class BookmarkService(
         foreach (var l in toDelete)
         {
             var q = Bookmarks.Delete(userId, entityName, recordId, l > 0 ? l : null);
-            await executor.Exec(q, false, ct);
+            await executor.Exec(q, ct);
         }
 
         if (!string.IsNullOrWhiteSpace(newFolderName))
@@ -127,7 +127,7 @@ public class BookmarkService(
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in.");
         var query = Bookmarks.Delete(userId, bookmarkId);
-        return ctx.UserActivityShardRouter.PrimaryDao(userId).Exec(query, false, ct);
+        return ctx.UserActivityShardRouter.PrimaryDao(userId).Exec(query, ct);
     }
 
     private async Task<Bookmark[]> LoadMetaData(LoadedEntity entity, Bookmark[] bookmarks, CancellationToken ct)
@@ -162,7 +162,7 @@ public class BookmarkService(
     {
          folder = folder with { UserId = userId };
          var query = folder.Insert();
-         var id = await ctx.UserActivityShardRouter.PrimaryDao(userId).Exec(query, true, ct);
+         var id = await ctx.UserActivityShardRouter.PrimaryDao(userId).ExecuteScalar(query, ct);
          folder = folder with { Id = id };
          return folder;       
     }

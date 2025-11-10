@@ -5,7 +5,7 @@ namespace FormCMS.Infrastructure.RelationDbDao;
 public static class DaoUtil
 {
     public static async Task ChunkUpdateOnConflict(
-        this IRelationDbDao dao, 
+        this IPrimaryDao dao, 
         int chunkSize,
         string tableName, Record[] records, string[] keyField,
         CancellationToken ct)
@@ -24,7 +24,7 @@ public static class DaoUtil
     }
     
     public static async Task MigrateTable(
-        this IRelationDbDao dao, 
+        this IPrimaryDao dao, 
         string tableName, Column[] columns)
     {
         var existingColumns = await dao.GetColumnDefinitions(tableName,CancellationToken.None);

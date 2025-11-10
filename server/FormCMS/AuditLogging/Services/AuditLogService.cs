@@ -50,7 +50,7 @@ public class AuditLogService(
             Payload: record,
             CreatedAt: DateTime.Now
         );
-        return shardGroup.PrimaryDao.Exec(log.Insert(),true);
+        return shardGroup.PrimaryDao.ExecuteScalar(log.Insert());
     }
 
    

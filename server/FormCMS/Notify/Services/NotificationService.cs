@@ -28,9 +28,9 @@ public class NotificationService(
         var countQuery = Notifications.Count(userId);
         var count = await followKate.Count(countQuery,Notifications.Columns,filters,ct);
 
-        var leadKate = ctx.UserNotificationShardRouter.ReplicaDao(userId);
-        await leadKate.Exec(Notifications.ReadAll(userId), false,ct);
-        await leadKate.Exec(NotificationCountExtensions.ResetCount(userId), false, ct);
+        var leadKate = ctx.UserNotificationShardRouter.PrimaryDao(userId);
+        await leadKate.Exec(Notifications.ReadAll(userId), ct);
+        await leadKate.Exec(NotificationCountExtensions.ResetCount(userId), ct);
         
         return new ListResponse(items,count); 
     }
@@ -39,7 +39,7 @@ public class NotificationService(
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User not logged in");
         var query = NotificationCountExtensions.UnreadCount(userId);
-        return ctx.UserNotificationShardRouter.ReplicaDao(userId).Exec(query, true,ct);
+        return ctx.UserNotificationShardRouter.ReplicaDao(userId).ReadScalar(query, ct);
     }
 
     private async Task LoadSender(Record[] notifications,CancellationToken ct)

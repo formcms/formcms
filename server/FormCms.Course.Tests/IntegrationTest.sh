@@ -61,8 +61,8 @@ set -e
 
 #db_path=$(pwd)/cms_test1.db && rm -f "$db_path" && test_sqlite "$db_path"
 
-test_postgres_container 
+#test_postgres_container 
 
 #test_sqlserver_container
 
-#test_mysql_container
+test_mysql_container

@@ -35,7 +35,7 @@ public class TaskService(
         await store.Del(task.GetPaths().Zip,ct);
         
         var query = TaskHelper.UpdateTaskStatus(new SystemTask(Id: id, TaskStatus: TaskStatus.Archived));
-        await shardGroup.PrimaryDao.Exec(query,false,ct);
+        await shardGroup.PrimaryDao.Exec(query,ct);
     }
 
     public async Task<string> GetTaskFileUrl(long id, CancellationToken ct)
@@ -52,7 +52,7 @@ public class TaskService(
         var task = TaskHelper.InitTask(TaskType.EmitMessage, identityService.GetUserAccess()?.Name ?? "");
         task = task with { TaskSettings = setting.ToJson() };
         var query = TaskHelper.AddTask(task);
-        return shardGroup.PrimaryDao.Exec(query,true);
+        return shardGroup.PrimaryDao.ExecuteScalar(query);
     }
    
     public async Task<long> AddImportTask(IFormFile file)
@@ -60,7 +60,7 @@ public class TaskService(
         EnsureHasPermission();
         var task = TaskHelper.InitTask(TaskType.Import, identityService.GetUserAccess()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
-        var id = await shardGroup.PrimaryDao.Exec(query,true);
+        var id = await shardGroup.PrimaryDao.ExecuteScalar(query);
 
         await using var stream = new FileStream(task.GetPaths().FullZip, FileMode.Create);
         await file.CopyToAsync(stream);
@@ -84,7 +84,7 @@ public class TaskService(
         var url = $"https://github.com/FormCMS/FormCMS/raw/refs/heads/doc/etc/{title}-demo-data-{version}.zip";
         var task = TaskHelper.InitTask(TaskType.Import, identityService.GetUserAccess()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
-        var id = await shardGroup.PrimaryDao.Exec(query,true);
+        var id = await shardGroup.PrimaryDao.ExecuteScalar(query);
 
         await using var stream = new FileStream(task.GetPaths().FullZip, FileMode.Create);
         var fileBytes = await httpClient.GetByteArrayAsync(url);
@@ -97,7 +97,7 @@ public class TaskService(
         EnsureHasPermission();
         var task = TaskHelper.InitTask(TaskType.Export, identityService.GetUserAccess()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
-        return shardGroup.PrimaryDao.Exec(query,true);
+        return shardGroup.PrimaryDao.ExecuteScalar(query);
     }
 
     public async Task<ListResponse> List(StrArgs args,int? offset, int? limit, CancellationToken ct)

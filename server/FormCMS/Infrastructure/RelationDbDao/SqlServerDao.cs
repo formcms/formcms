@@ -6,7 +6,7 @@ using SqlKata.Execution;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : IRelationDbDao
+public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : IPrimaryDao
 {
     private readonly Compiler _compiler = new SqlServerCompiler();
     private TransactionManager? _transaction;
@@ -69,7 +69,7 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
             {
                 updateAtField = column.Name;
             }
-            parts.Add($"[{column.Name}] {ColumnTypeToString(column.Type)}");
+            parts.Add($"[{column.Name}] {ColumnTypeToString(column)}");
         }
 
         var colDefine = string.Join(", ", parts);
@@ -103,7 +103,7 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
     public async Task AddColumns(string table, IEnumerable<Column> cols, CancellationToken ct)
     {
         var parts = cols.Select(x =>
-            $"ALTER TABLE [{table}] ADD [{x.Name}] {ColumnTypeToString(x.Type)}"
+            $"ALTER TABLE [{table}] ADD [{x.Name}] {ColumnTypeToString(x)}"
         );
         var sql = string.Join(";", parts);
         await using var command = new SqlCommand(sql, GetConnection());
@@ -315,20 +315,20 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
     
     public string CastDate(string field)=> $"CAST({field} AS DATE)";
 
-    private static string ColumnTypeToString(ColumnType dataType)
-        => dataType switch
+    private static string ColumnTypeToString(Column col)
+        => col.Type switch
         {
             ColumnType.Id => "BIGINT IDENTITY(1,1) PRIMARY KEY",
             ColumnType.Int => "BIGINT",
             ColumnType.Boolean => "BIT DEFAULT 0",
 
             ColumnType.Text => "TEXT",
-            ColumnType.String => "NVARCHAR(255)",
-            ColumnType.StringPrimaryKey => "NVARCHAR(255)",
+            ColumnType.String => $"NVARCHAR({col.Length})",
+            ColumnType.StringPrimaryKey => $"NVARCHAR({col.Length}) PRIMARY KEY",
 
             ColumnType.Datetime => "DATETIME",
             ColumnType.CreatedTime or ColumnType.UpdatedTime=> "DATETIME DEFAULT GETUTCDATE()",
-            _ => throw new NotSupportedException($"Type {dataType} is not supported")
+            _ => throw new NotSupportedException($"Type {col.Type} is not supported")
         };
 
     private ColumnType StringToDataType(string s)

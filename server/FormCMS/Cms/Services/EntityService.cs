@@ -107,7 +107,7 @@ public sealed class EntityService(
         }
 
         var query = entity.SavePublicationStatus(id, record).Ok();
-        await shardGroup.PrimaryDao.Exec(query, false, ct);
+        await shardGroup.PrimaryDao.Exec(query, ct);
     }
 
     public async Task<LookupListResponse> LookupList(string name, string startsVal, CancellationToken ct = default)
@@ -146,7 +146,7 @@ public sealed class EntityService(
             new JunctionPreDelArgs(ctx.Entity, ctx.Id, ctx.Attribute, items));
 
         var query = ctx.Junction.Delete(ctx.Id, res.RefItems);
-        var ret = await shardGroup.PrimaryDao.Exec(query, false, ct);
+        var ret = await shardGroup.PrimaryDao.Exec(query, ct);
         return ret;
     }
 
@@ -161,7 +161,7 @@ public sealed class EntityService(
             new JunctionPreAddArgs(ctx.Entity, ctx.Id, ctx.Attribute, items));
         var query = ctx.Junction.Insert(ctx.Id, res.RefItems);
 
-        var ret = await shardGroup.PrimaryDao.Exec(query, true, ct);
+        var ret = await shardGroup.PrimaryDao.ExecuteScalar(query, ct);
         return ret;
     }
 
@@ -329,7 +329,7 @@ public sealed class EntityService(
         {
             var query = entity.UpdateQuery(id, record).Ok();
 
-            var affected = await shardGroup.PrimaryDao.Exec(query, false, ct);
+            var affected = await shardGroup.PrimaryDao.Exec(query, ct);
             if (affected == 0)
             {
                 throw new ResultException(
@@ -364,7 +364,7 @@ public sealed class EntityService(
         try
         {
 
-            var id = await shardGroup.PrimaryDao.Exec(entity.Insert(record), true, ct);
+            var id = await shardGroup.PrimaryDao.ExecuteScalar(entity.Insert(record), ct);
 
             await assetService.UpdateAssetsLinks([],entity.GetAssets(record), entity.Name, id, ct);
             record[entity.PrimaryKey] = id;
@@ -398,7 +398,7 @@ public sealed class EntityService(
         var transaction = await shardGroup.PrimaryDao.BeginTransaction();
         try
         {
-            var affected = await shardGroup.PrimaryDao.Exec(entity.DeleteQuery(id, record).Ok(), false, ct);
+            var affected = await shardGroup.PrimaryDao.Exec(entity.DeleteQuery(id, record).Ok(), ct);
             if (affected == 0)
             {
                 throw new ResultException(

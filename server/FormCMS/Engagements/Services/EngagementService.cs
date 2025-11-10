@@ -60,10 +60,10 @@ public class EngagementService(
  
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
         var (filters, sorts) = QueryStringParser.Parse(args);
-        var query = Models.EngagementStatusHelper.List(userId, activityType, offset, limit);
+        var query = EngagementStatusHelper.List(userId, activityType, offset, limit);
         var userShardExecutor = ctx.UserActivityShardRouter.ReplicaDao(userId);
-        var items = await userShardExecutor.Many(query, Models.EngagementStatusHelper.Columns,filters,sorts,ct);
-        var countQuery = Models.EngagementStatusHelper.EngagementCountQuery(userId, activityType);
+        var items = await userShardExecutor.Many(query, EngagementStatusHelper.Columns,filters,sorts,ct);
+        var countQuery = EngagementStatusHelper.EngagementCountQuery(userId, activityType);
         var count = await userShardExecutor.Count(countQuery,Models.EngagementStatusHelper.Columns,filters,ct);
         return new ListResponse(items,count); 
     }
@@ -71,8 +71,8 @@ public class EngagementService(
     public Task Delete(long id, CancellationToken ct = default)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
-        var userShardExecutor = ctx.UserActivityShardRouter.ReplicaDao(userId);
-        return userShardExecutor.Exec(Models.EngagementStatusHelper.Delete(userId, id), false,ct);
+        var userShardExecutor = ctx.UserActivityShardRouter.PrimaryDao(userId);
+        return userShardExecutor.Exec(EngagementStatusHelper.Delete(userId, id), ct);
     }
 
 }

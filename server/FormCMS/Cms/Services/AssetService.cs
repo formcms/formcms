@@ -90,7 +90,7 @@ public class AssetService(
         else
         {
             var updateQuery = Assets.UpdateFile((long)record[nameof(Asset.Id).Camelize()], fileName, info.Size, info.ContentType);
-            await shardGroup.PrimaryDao.Exec(updateQuery, false, ct);
+            await shardGroup.PrimaryDao.Exec(updateQuery, ct);
         }
         return path;
     }
@@ -146,7 +146,7 @@ public class AssetService(
         try
         {
             var updateQuery = Assets.UpdateFile(asset.Id, file.FileName, file.Length, file.ContentType);
-            await shardGroup.PrimaryDao.Exec(updateQuery, false, ct);
+            await shardGroup.PrimaryDao.Exec(updateQuery, ct);
             await store.Upload([(asset.Path, file)],ct);
             trans.Commit();
         }
@@ -160,7 +160,7 @@ public class AssetService(
     public async Task UpdateMetadata(Asset asset, CancellationToken ct)
     {
         await hookRegistry.AssetPreUpdate.Trigger(provider,new AssetPreUpdateArgs(asset.Id));
-        await shardGroup.PrimaryDao.Exec(asset.UpdateMetaData(), false, ct);
+        await shardGroup.PrimaryDao.Exec(asset.UpdateMetaData(), ct);
     }
 
     //foreign key will ensure only orphan assets can be deleted
@@ -171,7 +171,7 @@ public class AssetService(
         using var trans = await shardGroup.PrimaryDao.BeginTransaction();
         try
         {
-            await shardGroup.PrimaryDao.Exec(Assets.Deleted(id), false, ct);
+            await shardGroup.PrimaryDao.Exec(Assets.Deleted(id), ct);
             await store.Del(asset.Path,ct);
             await hookRegistry.AssetPostDelete.Trigger(provider,new AssetPostDeleteArgs(asset));
             trans.Commit();
@@ -202,7 +202,7 @@ public class AssetService(
 
         if (toDel.Length > 0)
         {
-            await shardGroup.PrimaryDao.Exec(AssetLinks.DeleteByEntityAndRecordId(entityName, id, toDel), false, ct);
+            await shardGroup.PrimaryDao.Exec(AssetLinks.DeleteByEntityAndRecordId(entityName, id, toDel), ct);
         }
     }
 
@@ -255,7 +255,7 @@ public class AssetService(
 
     public async  Task UpdateHlsProgress(Asset asset, CancellationToken ct)
     {
-        await shardGroup.PrimaryDao.Exec(asset.UpdateHlsProgress(), false, ct);
+        await shardGroup.PrimaryDao.Exec(asset.UpdateHlsProgress(), ct);
     }
 
     public bool IsValidSignature(IFormFile file)

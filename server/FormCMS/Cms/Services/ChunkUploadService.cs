@@ -34,7 +34,7 @@ public class ChunkUploadService(
         var record = await shardGroup.PrimaryDao.Single(UploadSessions.Find(userId, fileName, fileSize),ct);
         if (record is null)
         {
-            await shardGroup.PrimaryDao.Exec(session.Insert(), false,ct);
+            await shardGroup.PrimaryDao.Exec(session.Insert(), ct);
             return new ChunkStatus(session.Path, 0);
         }
         
@@ -48,6 +48,6 @@ public class ChunkUploadService(
         if (identityService.GetUserAccess()?.CanAccessAdmin != true) throw new ResultException("User not found");
         await fileStore.CommitChunks(path, ct);
         await assetService.AddWithAction(path, fileName, ct);
-        await shardGroup.PrimaryDao.Exec(UploadSessions.Delete(path), false, ct);
+        await shardGroup.PrimaryDao.Exec(UploadSessions.Delete(path), ct);
     }
 }

@@ -32,9 +32,9 @@ public static class EngagementCountHelper
     public static readonly Column[] Columns =
     [
         ColumnHelper.CreateCamelColumn<EngagementCount>(x => x.Id!, ColumnType.Id),
-        ColumnHelper.CreateCamelColumn<EngagementCount, string>(x => x.EntityName),
-        ColumnHelper.CreateCamelColumn<EngagementCount, string>(x => x.RecordId),
-        ColumnHelper.CreateCamelColumn<EngagementCount, string>(x => x.EngagementType),
+        ColumnHelper.CreateCamelColumn<EngagementCount, string>(x => x.EntityName,50),
+        ColumnHelper.CreateCamelColumn<EngagementCount, string>(x => x.RecordId,100),
+        ColumnHelper.CreateCamelColumn<EngagementCount, string>(x => x.EngagementType,50),
         ColumnHelper.CreateCamelColumn<EngagementCount, long>(x => x.Count),
 
         DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),

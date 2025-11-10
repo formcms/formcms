@@ -23,7 +23,7 @@ public class ExportWorker(
         return TaskType.Export;
     }
 
-    protected override async Task DoTask(IServiceScope serviceScope,IRelationDbDao sourceDao,SystemTask task, CancellationToken ct)
+    protected override async Task DoTask(IServiceScope serviceScope,IPrimaryDao sourceDao,SystemTask task, CancellationToken ct)
     {
         var destConnection = task.GetPaths().CreateConnection();
         var destDao = new SqliteDao(destConnection, new Logger<SqliteDao>(logFactory));

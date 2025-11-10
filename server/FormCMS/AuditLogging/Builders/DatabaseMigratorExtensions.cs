@@ -5,7 +5,7 @@ namespace FormCMS.AuditLogging.Builders;
 
 public static class DatabaseMigratorExtensions
 {
-    public static async Task EnsureAuditLogTables(this IRelationDbDao migrator)
+    public static async Task EnsureAuditLogTables(this IPrimaryDao migrator)
     {
         await migrator.MigrateTable(AuditLogConstants.TableName,AuditLogHelper.Columns);
     }

@@ -17,7 +17,7 @@ public class EmitMessageHandler(
 ) : TaskWorker(serviceScopeFactory: scopeFactory, logger: logger,delaySeconds: options.DelaySeconds)
 {
     protected override async Task DoTask(
-        IServiceScope serviceScope, IRelationDbDao sourceDao,
+        IServiceScope serviceScope, IPrimaryDao sourceDao,
         SystemTask task, CancellationToken ct)
     {
         var setting = JsonSerializer.Deserialize<EmitMessageSetting>(task.TaskSettings)!;

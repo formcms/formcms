@@ -140,7 +140,7 @@ public sealed class SchemaService(
     {
         var schema = await ById(id,ct)?? throw new ResultException($"Schema [{id}] not found");
         await hook.SchemaPreDel.Trigger(provider, new SchemaPreDelArgs(schema));
-        await shardGroup.PrimaryDao.Exec(SchemaHelper.SoftDelete(schema.SchemaId),false, ct);
+        await shardGroup.PrimaryDao.Exec(SchemaHelper.SoftDelete(schema.SchemaId),ct);
     }
 
     public async Task EnsureTopMenuBar(CancellationToken ct)
