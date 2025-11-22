@@ -26,7 +26,7 @@ public static class EngagementHandler
             CancellationToken ct,
             IEngagementService s
             
-        ) => s.GetDailyActivityCount(n,ct));
+        ) => s.GetDailyCounts(n,ct));
         
         builder.MapGet("/list/{activityType}", (
             CancellationToken ct,

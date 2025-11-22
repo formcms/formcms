@@ -3,44 +3,23 @@ using System.Text;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public record ShardRouterConfig(ShardConfig[] ShardConfigs );
-    
 public class ShardRouter(ShardGroup[] shards):IDisposable
 {
+    public int ShardCount => shards.Length;
     public IPrimaryDao  PrimaryDao(string key) => GetShard(key).Shard.PrimaryDao;
     public IReplicaDao ReplicaDao(string key) => GetShard(key).Shard.ReplicaDao;
         
-    public async Task<T[]> Fetch<T>(
-        string[] keys,
-        Func<IReplicaDao, string[],Task<T[]>> func
-    )
-    {
-        var dict = new Dictionary<int, (IReplicaDao dao,List<string>list)>();
-        foreach (var key in keys)
-        {
-            var (idx, shard) = GetShard(key);
-            if (dict.TryGetValue(idx, out var value))
-            {
-                value.list.Add(key);
-            }
-            else
-            {
-                dict[idx] = (shard.ReplicaDao, [key]);
-            }
-        }
-        var tasks = new List<Task<T[]>>();
-        foreach (var (_, val) in dict)
-        {
-            tasks.Add(func(val.dao, val.list.ToArray()));
-        }
-        var results = await Task.WhenAll(tasks);
-        var allResults = results.SelectMany(r => r).ToArray();
-        return allResults;
-    }
 
     public Task ExecuteAll(Func<IPrimaryDao, Task> func) => Task.WhenAll(shards.Select(x =>
         func(x.PrimaryDao))
     );
+
+    public async Task<T[]> FetchAll<T>(Func<IReplicaDao, Task<T[]>> func)
+    {
+        var tasks = shards.Select(x => func(x.ReplicaDao));
+        var results = await Task.WhenAll(tasks);
+        return results.SelectMany(x => x).ToArray();
+    }
 
     public Task Execute<T>(
         IEnumerable<T> records,
@@ -73,12 +52,15 @@ public class ShardRouter(ShardGroup[] shards):IDisposable
         // Ensure non-negative
         if (value < 0) value = ~value;
 
-        var idx = (int)value % shards.Last().End;
+        // Use the total range (last shard's End) for consistent hashing
+        var totalRange = shards.Last().End;
+        var idx = (int)(value % totalRange);
+
         for (var i = 0; i < shards.Length; i++)
         {
             if (shards[i].InRange(idx)) return (i, shards[i]);
         }
-        throw new InvalidOperationException("Invalid shard index.");
+        throw new InvalidOperationException($"Invalid shard index: {idx} (total range: {totalRange})");
     }       
     
     private (int Idx,ShardGroup Shard) GetShard(string key)

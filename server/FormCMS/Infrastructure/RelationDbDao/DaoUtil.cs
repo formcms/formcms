@@ -24,7 +24,7 @@ public static class DaoUtil
     }
     
     public static async Task MigrateTable(
-        this IPrimaryDao dao, 
+        this IPrimaryDao dao,
         string tableName, Column[] columns)
     {
         var existingColumns = await dao.GetColumnDefinitions(tableName,CancellationToken.None);

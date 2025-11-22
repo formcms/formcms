@@ -87,7 +87,7 @@ public class EngagementsCollectService(
             var query = EngagementStatusHelper.EngagementStatusQuery(
                 entityName, userId, activityType, ids);
 
-            var records = await ctx.UserActivityShardRouter
+            var records = await ctx.EngagementStatusShardRouter
                 .ReplicaDao(userId)
                 .Many(query, ct);
 
@@ -155,7 +155,7 @@ public class EngagementsCollectService(
             return ret;
         }
         async Task<Dictionary<string,bool>> GetStatusFromDb(string[] types) =>
-            await ctx.UserActivityShardRouter.PrimaryDao(userId).FetchValues<bool>(
+            await ctx.EngagementStatusShardRouter.PrimaryDao(userId).FetchValues<bool>(
                 Models.EngagementStatusHelper.TableName, 
                 Models.EngagementStatusHelper.Condition(entityName,recordId,userId),
                 Models.EngagementStatusHelper.TypeField,
@@ -223,7 +223,7 @@ public class EngagementsCollectService(
         }
 
         //only update is Active field, to determine if you should increase count
-        var userShardDao = ctx.UserActivityShardRouter.PrimaryDao(userId);
+        var userShardDao = ctx.EngagementStatusShardRouter.PrimaryDao(userId);
         var changed = await userShardDao.UpdateOnConflict(
             Models.EngagementStatusHelper.TableName,
             activity.UpsertRecord(false), 
@@ -232,7 +232,7 @@ public class EngagementsCollectService(
         var ret= changed switch
         {
             true => await UpdateContentTagAndIncrease(),
-            false => (await ctx.CountShardGroup.PrimaryDao.FetchValues<long>(
+            false => (await ctx.EngagementCountShardGroup.PrimaryDao.FetchValues<long>(
                     EngagementCountHelper.TableName,
                     EngagementCountHelper.Condition(count.EntityName,count.RecordId,count.EngagementType),
                     null, null,
@@ -257,7 +257,7 @@ public class EngagementsCollectService(
                 await ProduceMessage(entity, loadedActivities[0], ct);
             }
 
-            return await ctx.CountShardGroup.PrimaryDao.Increase(
+            return await ctx.EngagementCountShardGroup.PrimaryDao.Increase(
                 EngagementCountHelper.TableName,
                 EngagementCountHelper.Condition(count.EntityName,count.RecordId,count.EngagementType),
                 EngagementCountHelper.CountField,
@@ -302,7 +302,7 @@ public class EngagementsCollectService(
         var countRecords = counts.Select(pair =>
             (EngagementCountHelper.Parse(pair.Key) with { Count = pair.Value }).UpsertRecord()).ToArray();
         
-        await ctx.CountShardGroup.PrimaryDao.ChunkUpdateOnConflict(
+        await ctx.EngagementCountShardGroup.PrimaryDao.ChunkUpdateOnConflict(
             1000,EngagementCountHelper.TableName,  countRecords, EngagementCountHelper.KeyFields,ct);
         
         //Query title and image 
@@ -337,7 +337,7 @@ public class EngagementsCollectService(
             else
             {
                 var timeScore = await GetInitialScoreByPublishedAt();
-                await ctx.CountShardGroup.PrimaryDao.Increase(
+                await ctx.EngagementCountShardGroup.PrimaryDao.Increase(
                     EngagementCountHelper.TableName, 
                     EngagementCountHelper.Condition(count.EntityName,count.RecordId,count.EngagementType),
                     EngagementCountHelper.CountField,timeScore, weight, ct);
@@ -360,7 +360,7 @@ public class EngagementsCollectService(
             {
                 var query = entity.PublishedAt(long.Parse(count.RecordId));
                 //todo: count shard group might not be cms's shard group
-                var rec = await ctx.CountShardGroup.PrimaryDao.Single(query, ct);
+                var rec = await ctx.EngagementCountShardGroup.PrimaryDao.Single(query, ct);
                 if (rec is null 
                     || !rec.TryGetValue(DefaultAttributeNames.PublishedAt.Camelize(), out var value) 
                     || value is null) throw new ResultException("invalid publish time");
@@ -404,7 +404,7 @@ public class EngagementsCollectService(
             await UpsertStatuses(statuses,ct);
             foreach (var count in counts)
             {
-                result[count.EngagementType] = await ctx.CountShardGroup.PrimaryDao.Increase(
+                result[count.EngagementType] = await ctx.EngagementCountShardGroup.PrimaryDao.Increase(
                     EngagementCountHelper.TableName, 
                     EngagementCountHelper.Condition(count.EntityName,count.RecordId,count.EngagementType),
                     EngagementCountHelper.CountField, 0,1, ct);
@@ -503,7 +503,7 @@ public class EngagementsCollectService(
             }
         }
 
-        await ctx.UserActivityShardRouter.Execute(
+        await ctx.EngagementStatusShardRouter.Execute(
             toUpdate,
             rec => rec[nameof(EngagementStatus.UserId).Camelize()].ToString()!,
             (dao, records) => dao.ChunkUpdateOnConflict(
@@ -519,7 +519,7 @@ public class EngagementsCollectService(
     {
         if (types.Length == 0 ) return [];
 
-        return await ctx.CountShardGroup.ReplicaDao.FetchValues<long>(
+        return await ctx.EngagementCountShardGroup.ReplicaDao.FetchValues<long>(
             EngagementCountHelper.TableName,
             EngagementCountHelper.Condition(entityName, recordId),
             EngagementCountHelper.TypeField,
@@ -533,7 +533,7 @@ public class EngagementsCollectService(
         var activity = EngagementStatusHelper.Parse(key);
         var condition = EngagementStatusHelper.Condition(
             activity.EntityName, activity.RecordId, activity.UserId, activity.EngagementType);
-        var res = await  ctx.UserActivityShardRouter.ReplicaDao(activity.UserId).FetchValues<bool>(
+        var res = await  ctx.EngagementStatusShardRouter.ReplicaDao(activity.UserId).FetchValues<bool>(
             Models.EngagementStatusHelper.TableName, 
             condition,
             null,null,EngagementStatusHelper.ActiveField);
@@ -543,7 +543,7 @@ public class EngagementsCollectService(
     private async Task<long> GetCountFromDb(string key)
     {
         var count = EngagementCountHelper.Parse(key);
-        var res = await ctx.CountShardGroup.ReplicaDao.FetchValues<long>(
+        var res = await ctx.EngagementCountShardGroup.ReplicaDao.FetchValues<long>(
             EngagementCountHelper.TableName, 
             EngagementCountHelper.Condition(count.EntityName, count.RecordId,count.EngagementType),
             null,null,

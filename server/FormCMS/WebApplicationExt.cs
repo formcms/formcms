@@ -77,20 +77,24 @@ public static class WebApplicationExt
     ) => DocumentDbQueryBuilder.AddDocumentDbQuery(services, queryCollectionLinks);
 
     public static IServiceCollection AddPostgresCms(
-        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
-    ) => CmsBuilder.AddCms(services, DatabaseProvider.Postgres, connectionString, action);
+        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null,
+        string[]? followConnStrings = null
+    ) => CmsBuilder.AddCms(services, DatabaseProvider.Postgres, connectionString, action, followConnStrings);
 
     public static IServiceCollection AddMysqlCms(
-        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
-    ) => CmsBuilder.AddCms(services, DatabaseProvider.Mysql, connectionString, action);
+        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null,
+        string[]? followConnStrings = null
+    ) => CmsBuilder.AddCms(services, DatabaseProvider.Mysql, connectionString, action, followConnStrings);
 
     public static IServiceCollection AddSqliteCms(
-        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
-    ) => CmsBuilder.AddCms(services, DatabaseProvider.Sqlite, connectionString, action);
+        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null,
+        string[]? followConnStrings = null
+    ) => CmsBuilder.AddCms(services, DatabaseProvider.Sqlite, connectionString, action, followConnStrings);
 
     public static IServiceCollection AddSqlServerCms(
-        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null
-    ) => CmsBuilder.AddCms(services, DatabaseProvider.SqlServer, connectionString, action);
+        this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null,
+        string[]? followConnStrings = null
+    ) => CmsBuilder.AddCms(services, DatabaseProvider.SqlServer, connectionString, action, followConnStrings);
 
     public static IServiceCollection AddCmsAuth<TUser, TRole, TContext>(this IServiceCollection services,
         AuthConfig authConfig)
@@ -102,8 +106,8 @@ public static class WebApplicationExt
     public static IServiceCollection AddAuditLog(this IServiceCollection services)
         => AuditLogBuilder.AddAuditLog(services);
 
-    public static IServiceCollection AddActivity(this IServiceCollection services, bool enableBuffering = true,ShardRouterConfig? shardConfig = null)
-        => EngagementsBuilder.AddEngagement(services, enableBuffering,shardConfig);
+    public static IServiceCollection AddEngagement(this IServiceCollection services, bool enableBuffering = true,ShardConfig[]? shardConfigs = null)
+        => EngagementsBuilder.AddEngagement(services, enableBuffering,shardConfigs);
 
     public static IServiceCollection AddComments(this IServiceCollection services, bool enableBuffering = true)
         => CommentBuilder.AddComments(services);

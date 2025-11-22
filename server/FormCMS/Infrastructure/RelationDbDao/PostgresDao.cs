@@ -437,4 +437,40 @@ public class PostgresDao( NpgsqlConnection connection,ILogger<PostgresDao> logge
     {
         connection.Dispose();
     }
+
+    public async Task EnsureDatabase(CancellationToken ct = default)
+    {
+        var builder = new NpgsqlConnectionStringBuilder(connection.ConnectionString);
+        var databaseName = builder.Database;
+
+        if (string.IsNullOrEmpty(databaseName))
+            throw new ArgumentException("Database name not found in connection string");
+
+        // Connect to 'postgres' database to create the target database
+        builder.Database = "postgres";
+        var masterConnString = builder.ToString();
+
+        try
+        {
+            await using var masterConn = new NpgsqlConnection(masterConnString);
+            await masterConn.OpenAsync(ct);
+
+            // Check if database exists
+            await using var checkCmd = new NpgsqlCommand(
+                $"SELECT 1 FROM pg_database WHERE datname = '{databaseName}'", masterConn);
+            var exists = await checkCmd.ExecuteScalarAsync(ct) != null;
+
+            if (!exists)
+            {
+                // Create database
+                await using var createCmd = new NpgsqlCommand($"CREATE DATABASE \"{databaseName}\"", masterConn);
+                await createCmd.ExecuteNonQueryAsync(ct);
+            }
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Failed to ensure database '{DatabaseName}' exists", databaseName);
+            throw;
+        }
+    }
 }

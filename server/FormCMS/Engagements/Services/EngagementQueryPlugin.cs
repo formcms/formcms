@@ -23,7 +23,7 @@ public class EngagementQueryPlugin(
         if (limit > 30 || offset > 30) throw new Exception("Can't access top items");
         var allEntities = await entitySchemaService.AllEntities(ct);
         var entity = allEntities.FirstOrDefault(x=>x.Name == entityName)?? throw new Exception($"Entity {entityName} not found");
-        var items = await ctx.CountShardGroup.ReplicaDao.Many(EngagementCountHelper.TopCountItems(entityName, offset,limit), ct);
+        var items = await ctx.EngagementCountShardGroup.ReplicaDao.Many(EngagementCountHelper.TopCountItems(entityName, offset,limit), ct);
         var ids = items
             .Select(x => x[nameof(TopCountItem.RecordId).Camelize()].ToString())
             .ToArray();

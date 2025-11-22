@@ -12,10 +12,10 @@ namespace FormCMS.Engagements.Builders;
 
 public class EngagementsBuilder(ILogger<EngagementsBuilder> logger)
 {
-    public static IServiceCollection AddEngagement(IServiceCollection services, 
-        bool enableBuffering, 
-        ShardRouterConfig? userActivityShardConfig = null,
-        ShardConfig? countShardConfig = null
+    public static IServiceCollection AddEngagement(IServiceCollection services,
+        bool enableBuffering,
+        ShardConfig[]? engagementStatusConfigs = null,
+        ShardConfig? engagementCountConfig = null
         )
     {
         services.AddSingleton(ActivitySettingsExtensions.DefaultEngagementSettings with
@@ -37,13 +37,26 @@ public class EngagementsBuilder(ILogger<EngagementsBuilder> logger)
             //activity module can use the same shard group as cms.
             //it can also use its own database and shard data for scalability
             var defaultShard = sp.GetRequiredService<ShardGroup>();
+            var logger = sp.GetRequiredService<ILogger<EngagementsBuilder>>();
+
+            if (engagementStatusConfigs == null || engagementStatusConfigs.Length == 0)
+            {
+                logger.LogWarning("No EngagementStatusConfigs provided, using single default shard");
+                return new EngagementContext(
+                    new ShardRouter([defaultShard]),
+                    engagementCountConfig == null ? defaultShard : sp.CreateShard(engagementCountConfig));
+            }
+
+            logger.LogInformation($"Creating ShardRouter with {engagementStatusConfigs.Length} shards");
+            for (int i = 0; i < engagementStatusConfigs.Length; i++)
+            {
+                var cfg = engagementStatusConfigs[i];
+                logger.LogInformation($"  Shard {i}: {cfg.DatabaseProvider}, Range [{cfg.Start}, {cfg.End}), DB: {cfg.LeadConnStr.Split(';').FirstOrDefault(x => x.Contains("Database"))}");
+            }
+
             return new EngagementContext(
-                userActivityShardConfig == null
-                    ? new ShardRouter([defaultShard])
-                    : sp.CreateShardRouter(userActivityShardConfig),
-                countShardConfig == null
-                    ? defaultShard
-                    : sp.CreateShard(countShardConfig));
+                sp.CreateShardRouter(engagementStatusConfigs),
+                engagementCountConfig == null ? defaultShard : sp.CreateShard(engagementCountConfig));
         });
         
         services.AddHostedService<BufferFlushWorker>();
@@ -63,9 +76,10 @@ public class EngagementsBuilder(ILogger<EngagementsBuilder> logger)
         app.Services.GetRequiredService<PluginRegistry>().RegisterActivityPlugins(activitySettings);
         
         var context =scope.ServiceProvider.GetRequiredService<EngagementContext>();
-        await context.CountShardGroup.PrimaryDao.EnsureCountTable();
-        await context.UserActivityShardRouter.ExecuteAll(async dao =>
+        await context.EngagementCountShardGroup.PrimaryDao.EnsureCountTable();
+        await context.EngagementStatusShardRouter.ExecuteAll(async dao =>
         {
+            await dao.EnsureDatabase();
             await dao.EnsureEngagementStatusTable();
             await dao.EnsureBookmarkTables();
         });
@@ -75,6 +89,7 @@ public class EngagementsBuilder(ILogger<EngagementsBuilder> logger)
              *********************************************************
              Using Engagement Services
              enable buffering = {activitySettings.EnableBuffering}
+             shard count = {context.EngagementStatusShardRouter.ShardCount}
              recordActivities = {string.Join(",", activitySettings.CommandRecordActivities)}
              toggleActivities = {string.Join(",", activitySettings.CommandToggleActivities)}
              autoRecordActivities = {string.Join(",", activitySettings.CommandAutoRecordActivities)}

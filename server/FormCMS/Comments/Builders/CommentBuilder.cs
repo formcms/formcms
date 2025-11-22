@@ -10,7 +10,7 @@ namespace FormCMS.Comments.Builders;
 
 public class CommentBuilder(ILogger<CommentBuilder> logger)
 {
-    public static IServiceCollection AddComments(IServiceCollection services, ShardRouterConfig? config = null)
+    public static IServiceCollection AddComments(IServiceCollection services, ShardConfig[]? config = null)
     {
         services.AddSingleton<CommentBuilder>();
         services.AddScoped<ICommentsService, CommentsService>();

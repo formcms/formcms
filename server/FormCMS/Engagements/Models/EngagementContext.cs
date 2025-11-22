@@ -2,4 +2,4 @@ using FormCMS.Infrastructure.RelationDbDao;
 
 namespace FormCMS.Engagements.Models;
 
-public record EngagementContext(ShardRouter UserActivityShardRouter, ShardGroup CountShardGroup);
+public record EngagementContext(ShardRouter EngagementStatusShardRouter, ShardGroup EngagementCountShardGroup);

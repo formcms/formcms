@@ -427,4 +427,32 @@ public class MySqlDao( MySqlConnection connection,ILogger<MySqlDao> logger) : IP
     {
         connection.Dispose();
     }
+
+    public async Task EnsureDatabase(CancellationToken ct = default)
+    {
+        var builder = new MySqlConnectionStringBuilder(connection.ConnectionString);
+        var databaseName = builder.Database;
+
+        if (string.IsNullOrEmpty(databaseName))
+            throw new ArgumentException("Database name not found in connection string");
+
+        // Connect without specifying a database
+        builder.Database = "";
+        var masterConnString = builder.ToString();
+
+        await using var masterConn = new MySqlConnection(masterConnString);
+        await masterConn.OpenAsync(ct);
+
+        // Check if database exists
+        await using var checkCmd = new MySqlCommand(
+            $"SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = '{databaseName}'", masterConn);
+        var exists = await checkCmd.ExecuteScalarAsync(ct) != null;
+
+        if (!exists)
+        {
+            // Create database
+            await using var createCmd = new MySqlCommand($"CREATE DATABASE `{databaseName}`", masterConn);
+            await createCmd.ExecuteNonQueryAsync(ct);
+        }
+    }
 }

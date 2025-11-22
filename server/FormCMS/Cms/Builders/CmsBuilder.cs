@@ -44,8 +44,13 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
     {
         var systemSettings = new SystemSettings();
         optionsAction?.Invoke(systemSettings);
+
+        // Store database configuration
+        systemSettings.DatabaseProvider = databaseProvider;
+        systemSettings.ReplicaCount = followConnStrings?.Length ?? 0;
+
         services.AddSingleton<CmsBuilder>();
-        
+
         //only set options to FormCMS enum types.
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<DataType>);
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<DisplayType>);
@@ -357,6 +362,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 $"""
                 *********************************************************
                 Using {title}, Version {informationalVersion?.Split("+").First()}
+                Database Provider: {settings.DatabaseProvider}, Replicas: {settings.ReplicaCount}
                 Client App is Enabled :{settings.EnableClient}
                 Use CMS' home page: {settings.MapCmsHomePage}
                 GraphQL Client Path: {settings.GraphQlPath}

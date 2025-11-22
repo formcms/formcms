@@ -33,6 +33,10 @@ public class Program
         var dbConnStr = builder.Configuration.GetConnectionString(dbProvider)
                         ?? throw new Exception($"Connection string {dbProvider} not found");
 
+        var replicaConnStrs = builder.Configuration.GetSection("ReplicaConnectionStrings")
+                                  .GetSection(dbProvider)
+                                  .Get<string[]>();
+
         var apiKey = builder.Configuration.GetValue<string>("Authentication:ApiKey")
                      ?? throw new Exception("Authentication:ApiKey not found");
 
@@ -82,9 +86,9 @@ public class Program
             builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(GetAuthConfig());
             builder.Services.AddAuditLog();
 
-            var enableActivityBuffer = builder.Configuration.GetValue<bool>("EnableActivityBuffer");
-            var shardConfig = builder.Configuration.GetSection("ActivityShardManagerConfig").Get<ShardRouterConfig>();
-            builder.Services.AddActivity(enableActivityBuffer,shardConfig);
+            var enableEngagementBuffer = builder.Configuration.GetValue<bool>("EnableEngagementBuffer");
+            var shardConfig = builder.Configuration.GetSection("EngagementShards").Get<ShardConfig[]>();
+            builder.Services.AddEngagement(enableEngagementBuffer,shardConfig);
 
             builder.Services.AddComments();
             builder.Services.AddNotify();
@@ -147,6 +151,16 @@ public class Program
         {
             await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]).Ok();
             await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user1@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user2@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user3@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user4@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user5@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user6@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user7@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user8@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user9@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user10@cms.com", "Admin1!", [Roles.Admin]).Ok();
         }
 
         void AddDbContext()
@@ -170,10 +184,10 @@ public class Program
         {
             _ = dbProvider switch
             {
-                Constants.Sqlite => builder.Services.AddSqliteCms(dbConnStr),
-                Constants.Postgres => builder.Services.AddPostgresCms(dbConnStr),
-                Constants.SqlServer => builder.Services.AddSqlServerCms(dbConnStr),
-                Constants.Mysql => builder.Services.AddMysqlCms(dbConnStr),
+                Constants.Sqlite => builder.Services.AddSqliteCms(dbConnStr, followConnStrings: replicaConnStrs),
+                Constants.Postgres => builder.Services.AddPostgresCms(dbConnStr, followConnStrings: replicaConnStrs),
+                Constants.SqlServer => builder.Services.AddSqlServerCms(dbConnStr, followConnStrings: replicaConnStrs),
+                Constants.Mysql => builder.Services.AddMysqlCms(dbConnStr, followConnStrings: replicaConnStrs),
                 _ => throw new Exception("Database provider not found")
             };
         }

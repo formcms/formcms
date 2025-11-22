@@ -20,12 +20,9 @@ public static class ServiceProviderExtensions
         return new ShardGroup(leader, follower, shardConfig.Start, shardConfig.End);
     }
 
-    public static ShardRouter CreateShardRouter(this IServiceProvider sp,  ShardRouterConfig configs)
-    {
-        var shards = configs.ShardConfigs.Select(sp.CreateShard);
-        return new ShardRouter(shards.ToArray());
-    }
-
+    public static ShardRouter CreateShardRouter(this IServiceProvider sp, ShardConfig[] configs)
+        => new (configs.Select(sp.CreateShard).ToArray());
+    
     public static IFullTextSearch CreateFullTextSearch(this IServiceProvider sp, 
         FtsProvider provider, string primaryConnString, string[] replicaConnStrings )
         => provider switch

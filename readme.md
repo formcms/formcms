@@ -1928,7 +1928,7 @@ Choose the approach based on your system’s scalability requirements and infras
 Users can access their view history, liked posts, bookmarked posts, and manage authentication via GitHub OAuth in a personalized portal.  
 </summary> 
 
-The **User Portal** in FormCMS provides a centralized interface for users to manage their social activity, including viewing their interaction history, liked posts, bookmarked content, and authenticating seamlessly via GitHub OAuth. This enhances user engagement by offering a tailored experience to revisit, organize content, and simplify account creation.
+The **User Portal** in FormCMS provides a centralized interface for users to manage their social engagement, including viewing their interaction history, liked posts, bookmarked content, and authenticating seamlessly via GitHub OAuth. This enhances user engagement by offering a tailored experience to revisit, organize content, and simplify account creation.
 
 ### History
 Users can view a list of all items they have previously accessed, such as pages, posts, or other content. Each item in the history is displayed with a clickable link, allowing users to easily revisit the content.
@@ -2030,16 +2030,16 @@ FormCMS's Comments Plugin enables adding a comments feature to any entity, enhan
 After configuring, click `Save and Publish` to enable the comments feature. The Comments Plugin is designed for `Detail Pages`, where comments are associated with an `Entity Name` and `RecordId` (automatically retrieved from the page URL parameters).  
 
 ### Comment Interactions
-Authenticated users can add, edit, delete, like, and reply to comments. The Comments Plugin sends events for these actions, which are handled by other plugins. For example:  
-- The Notification Plugin processes these events to send notice to the comment's creator.  
-- The Engage Activity Plugin uses these events to update the record's engagement score.  
+Authenticated users can add, edit, delete, like, and reply to comments. The Comments Plugin sends events for these actions, which are handled by other plugins. For example:
+- The Notification Plugin processes these events to send notice to the comment's creator.
+- The Engagement Plugin uses these events to update the record's engagement score.
 
 ### Integrating Comments with GraphQL
-Each `Detail Page` is linked to a FormCMS GraphQL query. To include comments:  
-- Add the `Comments` field to your GraphQL query.  
-- The Comments Plugin automatically attaches comment data to the query results.  
+Each `Detail Page` is linked to a FormCMS GraphQL query. To include comments:
+- Add the `Comments` field to your GraphQL query.
+- The Comments Plugin automatically attaches comment data to the query results.
 
-### Update Score and Daily Activity
+### Update Score and Daily Engagement
 
 * Each comment contributes to increasing the record's popularity score.
 * The admin panel displays the daily comment count.

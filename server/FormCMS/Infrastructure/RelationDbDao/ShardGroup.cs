@@ -2,7 +2,13 @@ using FormCMS.Utils.LoadBalancing;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public record ShardConfig(DatabaseProvider DatabaseProvider,  string LeadConnStr, string[]? FollowConnStrings = null, int Start = 0, int End = 12);
+public record ShardConfig(
+    DatabaseProvider DatabaseProvider,
+    string LeadConnStr,
+    string[]? FollowConnStrings = null,
+    int Start = 0,
+    int End = 12
+);
 
 public class ShardGroup(IPrimaryDao primaryDao, IReplicaDao[]? replicas = null, int start = 0, int end = 12):IDisposable
 {

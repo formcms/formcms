@@ -8,7 +8,7 @@ namespace FormCMS.Notify.Builders;
 public class NotificationBuilder(ILogger<NotificationBuilder> logger)
 {
     public static IServiceCollection AddNotify(IServiceCollection services,
-        ShardRouterConfig? shardManagerConfig = null)
+        ShardConfig[]? shardManagerConfig = null)
     {
         services.AddSingleton<NotificationBuilder>();
         services.AddScoped<INotificationService,NotificationService>();

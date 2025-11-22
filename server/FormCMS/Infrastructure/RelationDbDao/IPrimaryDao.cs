@@ -13,4 +13,10 @@ public interface IPrimaryDao:IReplicaDao
     Task<bool> UpdateOnConflict(string tableName, Record data, string []keyField, CancellationToken ct);
     Task BatchUpdateOnConflict(string tableName, Record[]records, string[] keyField, CancellationToken ct);
     Task<long> Increase(string tableName, Record keyConditions, string valueField,long initVal, long delta, CancellationToken ct);
+
+    /// <summary>
+    /// Ensures that the database specified in the DAO's connection exists, creating it if necessary.
+    /// </summary>
+    /// <param name="ct">Cancellation token</param>
+    Task EnsureDatabase(CancellationToken ct = default);
 }

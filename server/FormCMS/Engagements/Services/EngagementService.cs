@@ -16,31 +16,85 @@ public class EngagementService(
     IIdentityService identityService
 ) : IEngagementService
 {
-    public Task<Record[]> GetDailyActivityCount(int daysAgo, CancellationToken ct)
+    private static string FormatDateToString(object? dateValue)
     {
-        if (!identityService.GetUserAccess()?.CanAccessAdmin == true || daysAgo > 30)
-            throw new Exception("Can't access daily count");
-        var query = EngagementStatusHelper.GetDailyActivityCount(ctx.CountShardGroup.PrimaryDao.CastDate, daysAgo);
-        return ctx.CountShardGroup.ReplicaDao.Many(query , ct);
+        if (dateValue == null) return string.Empty;
+
+        if (dateValue is DateTime dt)
+            return dt.ToString("yyyy-MM-dd");
+
+        if (dateValue is DateOnly d)
+            return d.ToString("yyyy-MM-dd");
+
+        var dateStr = dateValue.ToString() ?? string.Empty;
+
+        // Try to parse the date string and format it consistently
+        if (DateTime.TryParse(dateStr, out var parsedDate))
+            return parsedDate.ToString("yyyy-MM-dd");
+
+        return dateStr;
     }
 
-    public Task<Record[]> GetDailyPageVisitCount(int daysAgo, bool authed, CancellationToken ct)
+    public async Task<Record[]> GetDailyCounts(int daysAgo, CancellationToken ct)
     {
         if (!identityService.GetUserAccess()?.CanAccessAdmin == true || daysAgo > 30)
             throw new Exception("Can't access daily count");
-        var query = EngagementStatusHelper.GetDailyVisitCount(ctx.CountShardGroup.PrimaryDao.CastDate, daysAgo, authed);
-        return ctx.CountShardGroup.ReplicaDao.Many(query, ct);
+        var query = EngagementStatusHelper.GetDailyActivityCount(ctx.EngagementStatusShardRouter.PrimaryDao("").CastDate, daysAgo);
+        var records = await ctx.EngagementStatusShardRouter.FetchAll( dao=> dao.Many(query,ct));
+
+        // Group by engagement type and day, sum the counts
+        var dayKey = nameof(DailyEngagementCount.Day).Camelize();
+        var typeKey = nameof(DailyEngagementCount.EngagementType).Camelize();
+        var countKey = nameof(DailyEngagementCount.Count).Camelize();
+
+        var merged = records
+            .GroupBy(r => (
+                Day: FormatDateToString(r[dayKey]),
+                Type: r.StrOrEmpty(typeKey)
+            ))
+            .Select(g => new Dictionary<string, object>
+            {
+                [dayKey] = g.Key.Day,
+                [typeKey] = g.Key.Type,
+                [countKey] = g.Sum(r => Convert.ToInt64(r.StrOrEmpty(countKey)))
+            } as Record)
+            .ToArray();
+
+        return merged;
+    }
+
+    public async Task<Record[]> GetDailyPageVisitCount(int daysAgo, bool authed, CancellationToken ct)
+    {
+        if (!identityService.GetUserAccess()?.CanAccessAdmin == true || daysAgo > 30)
+            throw new Exception("Can't access daily count");
+        var query = EngagementStatusHelper.GetDailyVisitCount(ctx.EngagementCountShardGroup.PrimaryDao.CastDate, daysAgo, authed);
+        var records = await ctx.EngagementStatusShardRouter.FetchAll(dao => dao.Many(query, ct));
+
+        // Group by day, sum the counts
+        var dayKey = nameof(DailyEngagementCount.Day).Camelize();
+        var countKey = nameof(DailyEngagementCount.Count).Camelize();
+
+        var merged = records
+            .GroupBy(r => FormatDateToString(r[dayKey]))
+            .Select(g => new Dictionary<string, object>
+            {
+                [dayKey] = g.Key,
+                [countKey] = g.Sum(r => Convert.ToInt64(r.StrOrEmpty(countKey)))
+            } as Record)
+            .ToArray();
+
+        return merged;
     }
 
     public async Task<Record[]> GetTopVisitPages(int topN, CancellationToken ct)
     {
         if (!identityService.GetUserAccess()?.CanAccessAdmin == true || topN > 30)
             throw new Exception("Can't access daily count");
-        var countsRecords = await ctx.CountShardGroup.ReplicaDao.Many(EngagementCountHelper.PageVisites(topN), ct);
+        var countsRecords = await ctx.EngagementCountShardGroup.ReplicaDao.Many(EngagementCountHelper.PageVisites(topN), ct);
         var schemaIds = countsRecords
             .Select(x =>x.StrOrEmpty(nameof(EngagementCount.RecordId).Camelize()))
             .ToArray();
-        var schemaRecords = await ctx.CountShardGroup.ReplicaDao.Many(SchemaHelper.BySchemaIds(schemaIds), ct);
+        var schemaRecords = await ctx.EngagementCountShardGroup.ReplicaDao.Many(SchemaHelper.BySchemaIds(schemaIds), ct);
         
         var schemaNameKey = nameof(Schema.Name).Camelize();
         var recordIdKey = nameof(EngagementCount.RecordId).Camelize();
@@ -61,7 +115,7 @@ public class EngagementService(
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
         var (filters, sorts) = QueryStringParser.Parse(args);
         var query = EngagementStatusHelper.List(userId, activityType, offset, limit);
-        var userShardExecutor = ctx.UserActivityShardRouter.ReplicaDao(userId);
+        var userShardExecutor = ctx.EngagementStatusShardRouter.ReplicaDao(userId);
         var items = await userShardExecutor.Many(query, EngagementStatusHelper.Columns,filters,sorts,ct);
         var countQuery = EngagementStatusHelper.EngagementCountQuery(userId, activityType);
         var count = await userShardExecutor.Count(countQuery,Models.EngagementStatusHelper.Columns,filters,ct);
@@ -71,7 +125,7 @@ public class EngagementService(
     public Task Delete(long id, CancellationToken ct = default)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
-        var userShardExecutor = ctx.UserActivityShardRouter.PrimaryDao(userId);
+        var userShardExecutor = ctx.EngagementStatusShardRouter.PrimaryDao(userId);
         return userShardExecutor.Exec(EngagementStatusHelper.Delete(userId, id), ct);
     }
 
