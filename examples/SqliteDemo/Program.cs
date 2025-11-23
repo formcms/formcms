@@ -1,5 +1,4 @@
 using FormCMS;
-using FormCMS.Activities.Workers;
 using FormCMS.Auth.Models;
 using FormCMS.Cms.Workers;
 using FormCMS.Core.Auth;
@@ -11,6 +10,7 @@ using FormCMS.Video.Workers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using SqliteDemo;
+using EventHandler = FormCMS.Engagements.Workers.EventHandler;
 
 var webBuilder = WebApplication.CreateBuilder(args);
 
@@ -25,7 +25,7 @@ const string apikey = "12345";
 webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite(connectionString));
 webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, AppDbContext>(new AuthConfig(KeyAuthConfig:new KeyAuthConfig(apikey)));
 webBuilder.Services.AddAuditLog();
-webBuilder.Services.AddActivity();
+webBuilder.Services.AddEngagement();
 webBuilder.Services.AddComments();
 webBuilder.Services.AddVideo();
 
@@ -36,15 +36,13 @@ webBuilder.Services.AddSubscriptions();
 
 webBuilder.Services.AddCrudMessageProducer(["course"]);
 
-webBuilder.Services.AddScoped<IFullTextSearch, SqliteFts>();
-webBuilder.Services.AddSearch();
+webBuilder.Services.AddSearch(FtsProvider.Sqlite, connectionString);
 
 
 // For distributed deployments, it's recommended to run ActivityEventHandler in a separate hosted service.
 // In this case, we register ActivityEventHandler within the web application to share the in-memory channel bus.
-webBuilder.Services.AddHostedService<ActivityEventHandler>();
+webBuilder.Services.AddHostedService<EventHandler>();
 
-webBuilder.Services.AddHostedService<ActivityEventHandler>();
 webBuilder.Services.AddHostedService<FFMpegWorker>();
 
 webBuilder.Services.AddSingleton( new FtsSettings(["course"]));

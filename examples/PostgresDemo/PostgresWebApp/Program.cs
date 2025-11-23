@@ -1,7 +1,7 @@
 using FormCMS;
-using FormCMS.Activities.Builders;
-using FormCMS.Activities.Models;
-using FormCMS.Activities.Workers;
+using FormCMS.Engagements.Builders;
+using FormCMS.Engagements.Models;
+using FormCMS.Engagements.Workers;
 using FormCMS.Auth.Models;
 using FormCMS.Cms.Workers;
 using FormCMS.Comments.Builders;
@@ -17,6 +17,7 @@ using FormCMS.Video.Workers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using PostgresWebApp;
+using EventHandler = FormCMS.Engagements.Workers.EventHandler;
 
 const string apiKey = "12345";
 var webBuilder = WebApplication.CreateBuilder(args);
@@ -34,13 +35,12 @@ webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(conn
 webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, AppDbContext>(new AuthConfig(KeyAuthConfig:new KeyAuthConfig(apiKey)));
 
 webBuilder.Services.AddAuditLog();
-webBuilder.Services.AddActivity();
+webBuilder.Services.AddEngagement();
 webBuilder.Services.AddComments();
 webBuilder.Services.AddVideo();
 webBuilder.Services.AddCrudMessageProducer(["course"]);
 
-webBuilder.Services.AddScoped<IFullTextSearch, PostgresFts>();
-webBuilder.Services.AddSearch();
+webBuilder.Services.AddSearch(FtsProvider.Postgres, connectionString);
 
 // need to set stripe keys to appsettings.json
 webBuilder.Services.Configure<StripeSettings>(webBuilder.Configuration.GetSection("Stripe"));
@@ -61,13 +61,12 @@ await webApp.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]).Ok();
 await webApp.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
 
 var workerBuilder = Host.CreateApplicationBuilder(args);
-workerBuilder.Services.AddScoped<IFullTextSearch,PostgresFts>();
 
 //worker and web are two independent instances, still need to add cms services
 workerBuilder.Services.AddPostgresCms(connectionString);
-workerBuilder.Services.AddActivity();
+workerBuilder.Services.AddEngagement();
 workerBuilder.Services.AddComments();
-workerBuilder.Services.AddSearch();
+workerBuilder.Services.AddSearch(FtsProvider.Postgres, connectionString);
 
 // communication between web app and worker app
 // web app -> worker
@@ -76,8 +75,8 @@ workerBuilder.Services.AddSingleton<IStringMessageConsumer, NatsMessageBus>();
 // worker call rest api to notify web
 workerBuilder.Services.AddSingleton(new CmsRestClientSettings( "http://localhost:5119", apiKey));
 
-workerBuilder.Services.AddSingleton(ActivitySettingsExtensions.DefaultActivitySettings);
-workerBuilder.Services.AddHostedService<ActivityEventHandler>();
+workerBuilder.Services.AddSingleton(EngagementSettingsExtensions.DefaultEngagementSettings);
+workerBuilder.Services.AddHostedService<EventHandler>();
 
 workerBuilder.Services.AddHostedService<FFMpegWorker>();
 
@@ -101,11 +100,11 @@ workerBuilder.Services.AddSingleton<IStringMessageProducer, NatsMessageBus>();
 var workerApp = workerBuilder.Build();
 var hookRegistry = workerApp.Services.GetRequiredService<HookRegistry>();
 var pluginRegistry = workerApp.Services.GetRequiredService<PluginRegistry>();
-var activitySettings = workerApp.Services.GetRequiredService<ActivitySettings>();
-hookRegistry.RegisterActivityHooks();
+var settings = workerApp.Services.GetRequiredService<EngagementSettings>();
+hookRegistry.RegisterEngagementHooks();
 hookRegistry.RegisterCommentsHooks();
 
-pluginRegistry.RegisterActivityPlugins(activitySettings);
+pluginRegistry.RegisterEngagementPlugins(settings);
 pluginRegistry.RegisterCommentPlugins();
 
 
