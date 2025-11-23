@@ -52,7 +52,7 @@ public class TaskService(
         var task = TaskHelper.InitTask(TaskType.EmitMessage, identityService.GetUserAccess()?.Name ?? "");
         task = task with { TaskSettings = setting.ToJson() };
         var query = TaskHelper.AddTask(task);
-        return shardGroup.PrimaryDao.ExecuteScalar(query);
+        return shardGroup.PrimaryDao.ExecuteLong(query);
     }
    
     public async Task<long> AddImportTask(IFormFile file)
@@ -60,7 +60,7 @@ public class TaskService(
         EnsureHasPermission();
         var task = TaskHelper.InitTask(TaskType.Import, identityService.GetUserAccess()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
-        var id = await shardGroup.PrimaryDao.ExecuteScalar(query);
+        var id = await shardGroup.PrimaryDao.ExecuteLong(query);
 
         await using var stream = new FileStream(task.GetPaths().FullZip, FileMode.Create);
         await file.CopyToAsync(stream);
@@ -84,7 +84,7 @@ public class TaskService(
         var url = $"https://github.com/FormCMS/FormCMS/raw/refs/heads/doc/etc/{title}-demo-data-{version}.zip";
         var task = TaskHelper.InitTask(TaskType.Import, identityService.GetUserAccess()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
-        var id = await shardGroup.PrimaryDao.ExecuteScalar(query);
+        var id = await shardGroup.PrimaryDao.ExecuteLong(query);
 
         await using var stream = new FileStream(task.GetPaths().FullZip, FileMode.Create);
         var fileBytes = await httpClient.GetByteArrayAsync(url);
@@ -97,7 +97,7 @@ public class TaskService(
         EnsureHasPermission();
         var task = TaskHelper.InitTask(TaskType.Export, identityService.GetUserAccess()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
-        return shardGroup.PrimaryDao.ExecuteScalar(query);
+        return shardGroup.PrimaryDao.ExecuteLong(query);
     }
 
     public async Task<ListResponse> List(StrArgs args,int? offset, int? limit, CancellationToken ct)

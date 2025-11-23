@@ -5,7 +5,7 @@ namespace FormCMS.Engagements.Handlers;
 
 public static class EngagementHandler
 {
-    public static RouteGroupBuilder MapActivityHandler(this RouteGroupBuilder builder)
+    public static RouteGroupBuilder MapEngagementHandler(this RouteGroupBuilder builder)
     {
         builder.MapGet("/page-counts", (
             IEngagementService s,

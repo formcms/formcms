@@ -69,7 +69,7 @@ public class EngagementsBuilder(ILogger<EngagementsBuilder> logger)
         var systemSettings = app.Services.GetRequiredService<SystemSettings>();
         
         var apiGroup = app.MapGroup(systemSettings.RouteOptions.ApiBaseUrl);
-        apiGroup.MapGroup("/engagements").MapActivityHandler();
+        apiGroup.MapGroup("/engagements").MapEngagementHandler();
         apiGroup.MapGroup("/bookmarks").MapBookmarkHandler();
 
         app.Services.GetRequiredService<HookRegistry>().RegisterActivityHooks();

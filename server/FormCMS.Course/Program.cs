@@ -87,20 +87,24 @@ public class Program
             builder.Services.AddAuditLog();
 
             var enableEngagementBuffer = builder.Configuration.GetValue<bool>("EnableEngagementBuffer");
-            var shardConfig = builder.Configuration.GetSection("EngagementShards").Get<ShardConfig[]>();
-            builder.Services.AddEngagement(enableEngagementBuffer,shardConfig);
+            var engagementShards = builder.Configuration.GetSection("EngagementShards").Get<ShardConfig[]>();
+            builder.Services.AddEngagement(enableEngagementBuffer,engagementShards);
 
-            builder.Services.AddComments();
-            builder.Services.AddNotify();
-            
-            var ftsProvider = builder.Configuration.GetValue<string>(Constants.FtsProvider) ?? dbProvider;
-            builder.Services.AddSearch(Enum.Parse<FtsProvider>(ftsProvider),dbConnStr);
+            var commentShards = builder.Configuration.GetSection("CommentShards").Get<ShardConfig[]>();
+            builder.Services.AddComments(commentShards);
+
+            var notifyShards = builder.Configuration.GetSection("NotifyShards").Get<ShardConfig[]>();
+            builder.Services.AddNotify(notifyShards);
+
+            var ftsProvider = builder.Configuration.GetValue<string>("FtsProvider") ?? dbProvider;
+            var ftsPrimaryConnString = builder.Configuration.GetValue<string>("FtsPrimaryConnString") ?? dbConnStr;
+            var ftsReplicaConnStrings = builder.Configuration.GetSection("FtsReplicaConnStrings").Get<string[]>();
+            builder.Services.AddSearch(Enum.Parse<FtsProvider>(ftsProvider), ftsPrimaryConnString, ftsReplicaConnStrings);
 
             builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
             builder.Services.AddSubscriptions();
             builder.Services.AddVideo();
-
-       }
+        }
 
         void AddMessageProducer()
         {

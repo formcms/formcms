@@ -161,7 +161,7 @@ public sealed class EntityService(
             new JunctionPreAddArgs(ctx.Entity, ctx.Id, ctx.Attribute, items));
         var query = ctx.Junction.Insert(ctx.Id, res.RefItems);
 
-        var ret = await shardGroup.PrimaryDao.ExecuteScalar(query, ct);
+        var ret = await shardGroup.PrimaryDao.ExecuteLong(query, ct);
         return ret;
     }
 
@@ -364,7 +364,7 @@ public sealed class EntityService(
         try
         {
 
-            var id = await shardGroup.PrimaryDao.ExecuteScalar(entity.Insert(record), ct);
+            var id = await shardGroup.PrimaryDao.ExecuteLong(entity.Insert(record), ct);
 
             await assetService.UpdateAssetsLinks([],entity.GetAssets(record), entity.Name, id, ct);
             record[entity.PrimaryKey] = id;

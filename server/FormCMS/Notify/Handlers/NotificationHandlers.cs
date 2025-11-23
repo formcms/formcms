@@ -15,10 +15,10 @@ public static class NotificationHandlers
             CancellationToken ct
         ) => s.List(QueryHelpers.ParseQuery(context.Request.QueryString.Value),offset,limit,ct));
         
-        builder.MapGet("/unread", (
+        builder.MapGet("/unread", async (
             INotificationService s,
             CancellationToken ct
-        ) => s.UnreadCount(ct));
+        ) => await s.UnreadCount(ct));
         return builder;
     }
 }

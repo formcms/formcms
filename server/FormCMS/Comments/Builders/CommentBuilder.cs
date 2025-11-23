@@ -37,12 +37,14 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
         
         app.Services.GetRequiredService<PluginRegistry>().RegisterCommentPlugins();
         app.Services.GetRequiredService<HookRegistry>().RegisterCommentsHooks();
-        
-        return scope.ServiceProvider.GetRequiredService<CommentsContext>()
-            .Router 
-            .ExecuteAll(dao => 
-                dao.EnsureCommentsTable());
-        
 
+        return scope.ServiceProvider.GetRequiredService<CommentsContext>()
+            .Router
+            .ExecuteAll(async dao =>
+                {
+                    await dao.EnsureDatabase();
+                    await dao.EnsureCommentsTable();
+                }
+            );
     }
 }

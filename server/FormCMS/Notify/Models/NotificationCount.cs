@@ -33,14 +33,10 @@ public static class NotificationCountExtensions
             .Where(nameof(NotificationCount.UserId).Camelize(), userId);
         return query.AsUpdate([nameof(NotificationCount.UnreadCount).Camelize()], [0]);
     }
-    
+
     public static Query UnreadCount(string userId)
-    {
-        var query = new Query(TableName)
+        => new Query(TableName)
             .Select(nameof(NotificationCount.UnreadCount).Camelize())
-            .Where(nameof(NotificationCount.UserId).Camelize(), userId)
-            ;
-            
-        return query;
-    }
+            .Where(nameof(NotificationCount.UserId).Camelize(), userId);
+
 }

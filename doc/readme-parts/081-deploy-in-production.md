@@ -10,8 +10,9 @@ FormCMS leverages Aspire to simplify deployment.
 
 ### Architecture Overview
 
-A scalable deployment of  FormCMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.
+A scalable deployment of FormCMS involves multiple web application nodes, a Redis server for distributed caching, and one or more database servers, all behind a load balancer.
 
+#### Basic Architecture (Single Database)
 
 ```
                  +------------------+
@@ -32,6 +33,31 @@ A scalable deployment of  FormCMS involves multiple web application nodes, a Red
        +------------------+    +------------------+
        | Database Server  |    |   Redis Server   |
        +------------------+    +------------------+
+```
+
+#### Advanced Architecture (Sharded Databases)
+
+For high-traffic applications, FormCMS supports horizontal database sharding for engagement, comments, notifications, and full-text search features. See the [Database Sharding](#database-sharding-for-scalability) section for detailed configuration.
+
+```
+                    +------------------+
+                    |  Load Balancer   |
+                    +------------------+
+                             |
+           +-----------------+-----------------+
+           |                                   |
+   +------------------+              +------------------+
+   |   Web App Node   |              |   Web App Node   |
+   +------------------+              +------------------+
+           |                                   |
+           +-------------------+---------------+
+                               |
+       +-------------------+---+--------+--------------+
+       |                   |            |              |
+  +----v-----+      +------v---+   +---v------+   +---v-----+
+  | CMS DB   |      |Engagement|   | Comment  |   | Notify  |
+  |(Primary) |      | Shards   |   | Shards   |   | Shards  |
+  +----------+      +----------+   +----------+   +---------+
 ```
 
 ---

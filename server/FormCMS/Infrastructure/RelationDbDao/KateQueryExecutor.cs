@@ -104,21 +104,21 @@ public static class KateQueryExtensions
         var query = new Query(tableName).AsInsert(cols, values);
         return dao.Exec(query);
     }
-    public static async Task<long> ReadScalar(
+    public static async Task<long> ReadLong(
         this IReplicaDao dao,
         Query query, CancellationToken ct = default
     ) => await dao.ExecuteKateQuery(async (db, tx)
-        => await db.ExecuteAsync(
+        => await db.ExecuteScalarAsync<long>(
                 query: query,
                 transaction: tx,
                 cancellationToken: ct)
     );
     
-    public static async Task<long> ExecuteScalar(
+    public static async Task<long> ExecuteLong(
         this IPrimaryDao dao,
         Query query, CancellationToken ct = default
     ) => await dao.ExecuteKateQuery(async (db, tx)
-        => await db.ExecuteAsync(
+        => await db.ExecuteScalarAsync<long>(
             query: query,
             transaction: tx,
             cancellationToken: ct)
@@ -166,7 +166,7 @@ public static class KateQueryExtensions
 
                 if (returnId)
                 {
-                    ret.Add(await dao.ExecuteScalar(query, ct));
+                    ret.Add(await dao.ExecuteLong(query, ct));
                 }
                 else
                 {

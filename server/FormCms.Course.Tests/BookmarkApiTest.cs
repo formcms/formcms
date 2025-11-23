@@ -38,7 +38,8 @@ public class BookmarkApiTest(AppFactory factory)
     {
         //add
         var name = Ulid.NewUlid().ToString();
-        await factory.BookmarkApi.AddBookmarks(TestEntityNames.TestPost.Camelize(),  BlogsTestData.BookmarkTestPostId, name, []).Ok();
+        await factory.BookmarkApi
+            .AddBookmarks(TestEntityNames.TestPost.Camelize(), BlogsTestData.BookmarkTestPostId, name, []).Ok();
         var folders = await factory.BookmarkApi.AllFolders().Ok();
         var folder = folders.FirstOrDefault(x => x.GetProperty("name").GetString() == name);
         Assert.NotEqual(JsonValueKind.Undefined,folder.ValueKind);

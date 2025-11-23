@@ -27,7 +27,12 @@ public class NotificationBuilder(ILogger<NotificationBuilder> logger)
         apiGroup.MapGroup("notifications").MapNotificationHandler();
         
         //db
-        await scope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao.EnsureNotifyTable();
+        var ctx = scope.ServiceProvider.GetRequiredService<NotificationContext>();
+        await ctx.UserNotificationShardRouter.ExecuteAll(async dao =>
+        {
+            await dao.EnsureDatabase();
+            await dao.EnsureNotifyTable();
+        });
      
         logger.LogInformation(
             $"""

@@ -8,7 +8,7 @@ public class ShardRouter(ShardGroup[] shards):IDisposable
     public int ShardCount => shards.Length;
     public IPrimaryDao  PrimaryDao(string key) => GetShard(key).Shard.PrimaryDao;
     public IReplicaDao ReplicaDao(string key) => GetShard(key).Shard.ReplicaDao;
-        
+
 
     public Task ExecuteAll(Func<IPrimaryDao, Task> func) => Task.WhenAll(shards.Select(x =>
         func(x.PrimaryDao))

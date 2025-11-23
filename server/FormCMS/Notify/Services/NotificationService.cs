@@ -37,9 +37,10 @@ public class NotificationService(
     
     public  Task<long> UnreadCount(CancellationToken ct)
     {
-        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User not logged in");
+        var userId = identityService.GetUserAccess()?.Id 
+                     ?? throw new ResultException("User not logged in");
         var query = NotificationCountExtensions.UnreadCount(userId);
-        return ctx.UserNotificationShardRouter.ReplicaDao(userId).ReadScalar(query, ct);
+        return ctx.UserNotificationShardRouter.ReplicaDao(userId).ReadLong(query, ct);
     }
 
     private async Task LoadSender(Record[] notifications,CancellationToken ct)

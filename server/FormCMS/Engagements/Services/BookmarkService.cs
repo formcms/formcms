@@ -113,8 +113,8 @@ public class BookmarkService(
             await executor.BatchInsert(Bookmarks.TableName,records);
         }
 
-        var count = new Models.EngagementCount(entityName, recordId.ToString(), Bookmarks.ActivityType, 1);
-        await ctx.EngagementStatusShardRouter.PrimaryDao(userId).Increase(
+        var count = new EngagementCount(entityName, recordId.ToString(), Bookmarks.ActivityType, 1);
+        await ctx.EngagementCountShardGroup.PrimaryDao.Increase(
             EngagementCountHelper.TableName, 
             EngagementCountHelper.Condition(count.EntityName, count.RecordId, count.EngagementType),
             EngagementCountHelper.CountField, 
@@ -162,7 +162,7 @@ public class BookmarkService(
     {
          folder = folder with { UserId = userId };
          var query = folder.Insert();
-         var id = await ctx.EngagementStatusShardRouter.PrimaryDao(userId).ExecuteScalar(query, ct);
+         var id = await ctx.EngagementStatusShardRouter.PrimaryDao(userId).ExecuteLong(query, ct);
          folder = folder with { Id = id };
          return folder;       
     }

@@ -106,17 +106,19 @@ public static class WebApplicationExt
     public static IServiceCollection AddAuditLog(this IServiceCollection services)
         => AuditLogBuilder.AddAuditLog(services);
 
-    public static IServiceCollection AddEngagement(this IServiceCollection services, bool enableBuffering = true,ShardConfig[]? shardConfigs = null)
-        => EngagementsBuilder.AddEngagement(services, enableBuffering,shardConfigs);
+    public static IServiceCollection AddEngagement(this IServiceCollection services, bool enableBuffering = true,
+        ShardConfig[]? shardConfigs = null)
+        => EngagementsBuilder.AddEngagement(services, enableBuffering, shardConfigs);
 
-    public static IServiceCollection AddComments(this IServiceCollection services, bool enableBuffering = true)
-        => CommentBuilder.AddComments(services);
+    public static IServiceCollection AddComments(this IServiceCollection services,
+        ShardConfig[]? shardConfigs = null)
+        => CommentBuilder.AddComments(services,shardConfigs);
 
-    public static IServiceCollection AddSubscriptions(this IServiceCollection services, bool enableBuffering = true)
+    public static IServiceCollection AddSubscriptions(this IServiceCollection services)
         => SubscriptionBuilder.AddStripeSubscription(services);
 
-    public static IServiceCollection AddNotify(this IServiceCollection services)
-        => NotificationBuilder.AddNotify(services);
+    public static IServiceCollection AddNotify(this IServiceCollection services, ShardConfig[]? shardConfigs = null)
+        => NotificationBuilder.AddNotify(services,shardConfigs);
 
     public static IServiceCollection AddSearch(this IServiceCollection services,
         FtsProvider ftsProvider, string primaryConnString, string[]? replicaConnStrings = null
