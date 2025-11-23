@@ -17,6 +17,7 @@ using FormCMS.Video.Workers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using EventHandler = FormCMS.Engagements.Workers.EventHandler;
 
 namespace FormCMS.Course;
 
@@ -118,7 +119,7 @@ public class Program
 
             // For distributed deployments, it's recommended to runEvent Handling services in a separate hosted App.
             // In this case, we register them within the web application to share the in-memory channel bus.
-            builder.Services.AddHostedService<ActivityEventHandler>();
+            builder.Services.AddHostedService<EventHandler>();
             builder.Services.AddSingleton(new NotifySettings(["comment", "like"]));
             builder.Services.AddScoped<INotificationCollectService, NotificationCollectService>();
             builder.Services.AddHostedService<NotificationEventHandler>();

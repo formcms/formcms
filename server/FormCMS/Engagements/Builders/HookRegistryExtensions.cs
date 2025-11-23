@@ -7,7 +7,7 @@ namespace FormCMS.Engagements.Builders;
 
 public static class HookRegistryExtensions
 {
-    public static void RegisterActivityHooks(this HookRegistry hookRegistry)
+    public static void RegisterEngagementHooks(this HookRegistry hookRegistry)
     {
         hookRegistry.ListPlugInQueryArgs.RegisterDynamic(EngagementQueryPluginConstants.TopList,
             async (IEngagementQueryPlugin s, ListPlugInQueryArgs args) =>

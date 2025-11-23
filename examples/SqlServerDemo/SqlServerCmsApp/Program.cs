@@ -1,14 +1,13 @@
 using CmsApp;
 using FormCMS;
-using FormCMS.Activities.Builders;
-using FormCMS.Activities.Models;
-using FormCMS.Activities.Workers;
 using FormCMS.Auth.Models;
 using FormCMS.Cms.Workers;
 using FormCMS.Comments.Builders;
 using FormCMS.Core.Auth;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Plugins;
+using FormCMS.Engagements.Builders;
+using FormCMS.Engagements.Models;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.Fts;
 using FormCMS.Search.Workers;
@@ -17,6 +16,7 @@ using FormCMS.Utils.ResultExt;
 using FormCMS.Video.Workers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using EventHandler = FormCMS.Engagements.Workers.EventHandler;
 
 const string apiKey = "12345";
 var webBuilder = WebApplication.CreateBuilder(args);
@@ -38,13 +38,10 @@ webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseSqlServer(d
 webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, AppDbContext>(new AuthConfig(KeyAuthConfig:new KeyAuthConfig(apiKey)));
 
 webBuilder.Services.AddAuditLog();
-webBuilder.Services.AddActivity();
+webBuilder.Services.AddEngagement();
 webBuilder.Services.AddComments();
 webBuilder.Services.AddVideo();
 webBuilder.Services.AddCrudMessageProducer(["course"]);
-
-webBuilder.Services.AddScoped<IFullTextSearch, SqlServerFts>();
-webBuilder.Services.AddSearch();
 
 // need to set stripe keys to appsettings.json
 webBuilder.Services.Configure<StripeSettings>(webBuilder.Configuration.GetSection("Stripe"));
@@ -66,13 +63,11 @@ await webApp.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
 
 
 var workerBuilder = Host.CreateApplicationBuilder(args);
-workerBuilder.Services.AddScoped<IFullTextSearch,SqlServerFts>();
 
 //worker and web are two independent instances, still need to add cms services
 workerBuilder.Services.AddSqlServerCms(dbConn);
-workerBuilder.Services.AddActivity();
+workerBuilder.Services.AddEngagement();
 workerBuilder.Services.AddComments();
-workerBuilder.Services.AddSearch();
 
 // communication between web app and worker app
 // web app-> worker app
@@ -83,8 +78,8 @@ workerBuilder.Services.AddSingleton(new CmsRestClientSettings( "http://localhost
 
 workerBuilder.Services.AddSqlServerCmsWorker(dbConn);
 
-workerBuilder.Services.AddSingleton(ActivitySettingsExtensions.DefaultActivitySettings);
-workerBuilder.Services.AddHostedService<ActivityEventHandler>();
+workerBuilder.Services.AddSingleton(EngagementSettingsExtensions.DefaultEngagementSettings);
+workerBuilder.Services.AddHostedService<EventHandler>();
 workerBuilder.Services.AddHostedService<FFMpegWorker>();
 
 
@@ -107,11 +102,11 @@ workerBuilder.Services.AddSingleton<IStringMessageProducer, NatsMessageBus>();
 var workerApp = workerBuilder.Build();
 var hookRegistry = workerApp.Services.GetRequiredService<HookRegistry>();
 var pluginRegistry = workerApp.Services.GetRequiredService<PluginRegistry>();
-var activitySettings = workerApp.Services.GetRequiredService<ActivitySettings>();
-hookRegistry.RegisterActivityHooks();
+var settings = workerApp.Services.GetRequiredService<EngagementSettings>();
+hookRegistry.RegisterEngagementHooks();
 hookRegistry.RegisterCommentsHooks();
 
-pluginRegistry.RegisterActivityPlugins(activitySettings);
+pluginRegistry.RegisterEngagementPlugins(settings);
 pluginRegistry.RegisterCommentPlugins();
 
 // Run both the web application and the background worker concurrently

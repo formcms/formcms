@@ -11,7 +11,7 @@ public record EngagementSettings(
     long HourBoostWeight
 );
 
-public static class ActivitySettingsExtensions
+public static class EngagementSettingsExtensions
 {
     public static HashSet<string> AllCountTypes(this EngagementSettings engagementSettings)
         => engagementSettings.CommandAutoRecordActivities

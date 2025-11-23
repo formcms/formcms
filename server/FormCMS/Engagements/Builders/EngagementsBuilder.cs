@@ -18,7 +18,7 @@ public class EngagementsBuilder(ILogger<EngagementsBuilder> logger)
         ShardConfig? engagementCountConfig = null
         )
     {
-        services.AddSingleton(ActivitySettingsExtensions.DefaultEngagementSettings with
+        services.AddSingleton(EngagementSettingsExtensions.DefaultEngagementSettings with
         {
             EnableBuffering = enableBuffering
         });
@@ -72,8 +72,8 @@ public class EngagementsBuilder(ILogger<EngagementsBuilder> logger)
         apiGroup.MapGroup("/engagements").MapEngagementHandler();
         apiGroup.MapGroup("/bookmarks").MapBookmarkHandler();
 
-        app.Services.GetRequiredService<HookRegistry>().RegisterActivityHooks();
-        app.Services.GetRequiredService<PluginRegistry>().RegisterActivityPlugins(activitySettings);
+        app.Services.GetRequiredService<HookRegistry>().RegisterEngagementHooks();;
+        app.Services.GetRequiredService<PluginRegistry>().RegisterEngagementPlugins(activitySettings);
         
         var context =scope.ServiceProvider.GetRequiredService<EngagementContext>();
         await context.EngagementCountShardGroup.PrimaryDao.EnsureCountTable();

@@ -8,7 +8,7 @@ namespace FormCMS.Engagements.Builders;
 
 public static class PluginRegistryExtensions
 {
-    public static void RegisterActivityPlugins(this PluginRegistry registry, EngagementSettings settings)
+    public static void RegisterEngagementPlugins(this PluginRegistry registry, EngagementSettings settings)
     {
         registry.PluginQueries.Add(EngagementQueryPluginConstants.TopList);
         foreach (var type in settings.AllCountTypes())
