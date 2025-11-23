@@ -123,11 +123,7 @@ public class ExportWorker(
         async Task ExportSchema()
         {
             await destDao.MigrateTable(SchemaHelper.TableName, SchemaHelper.Columns);
-            foreach (var schemaRecord in schemaRecords)
-            {
-                schemaRecord.Remove(nameof(Schema.Id).Camelize());
-            }
-            await sourceDao.BatchInsert(SchemaHelper.TableName, schemaRecords);
+            await destDao.BatchInsert(SchemaHelper.TableName, schemaRecords);
         }
     }
 }
