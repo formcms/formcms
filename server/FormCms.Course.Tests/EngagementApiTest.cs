@@ -15,7 +15,7 @@ public class EngagementApiTest(AppFactory factory)
     public async Task EngagementCountNotEmpty()
     {
         await factory.EngagementsApi.Get(TestEntityNames.TestPost.Camelize(), BlogsTestData.ActivityTestPostId).Ok();
-        var counts = await factory.EngagementsApi.ActivityCounts().Ok();
+        var counts = await factory.EngagementsApi.Counts().Ok();
         Assert.True(counts.Length > 0);
     }
     

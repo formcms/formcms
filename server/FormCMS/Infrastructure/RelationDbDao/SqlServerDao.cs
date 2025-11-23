@@ -347,32 +347,4 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
     {
         conn.Dispose();
     }
-
-    public async Task EnsureDatabase(CancellationToken ct = default)
-    {
-        var builder = new SqlConnectionStringBuilder(conn.ConnectionString);
-        var databaseName = builder.InitialCatalog;
-
-        if (string.IsNullOrEmpty(databaseName))
-            throw new ArgumentException("Database name not found in connection string");
-
-        // Connect to 'master' database to create the target database
-        builder.InitialCatalog = "master";
-        var masterConnString = builder.ToString();
-
-        await using var masterConn = new SqlConnection(masterConnString);
-        await masterConn.OpenAsync(ct);
-
-        // Check if database exists
-        await using var checkCmd = new SqlCommand(
-            $"SELECT database_id FROM sys.databases WHERE name = '{databaseName}'", masterConn);
-        var exists = await checkCmd.ExecuteScalarAsync(ct) != null;
-
-        if (!exists)
-        {
-            // Create database
-            await using var createCmd = new SqlCommand($"CREATE DATABASE [{databaseName}]", masterConn);
-            await createCmd.ExecuteNonQueryAsync(ct);
-        }
-    }
 }

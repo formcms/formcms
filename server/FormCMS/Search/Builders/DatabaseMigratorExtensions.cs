@@ -8,7 +8,6 @@ public static class DatabaseMigratorExtensions
 {
     public static async Task EnsureFtsTables(this IPrimaryDao dao)
     {
-        await dao.EnsureDatabase();
         await dao.MigrateTable(SearchConstants.TableName, SearchDocumentHelper.Columns);
         await dao.CreateIndex(SearchConstants.TableName, SearchDocumentHelper.UniqKeyFields,true,CancellationToken.None);
     }

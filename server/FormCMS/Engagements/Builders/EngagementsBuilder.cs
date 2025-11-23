@@ -79,7 +79,6 @@ public class EngagementsBuilder(ILogger<EngagementsBuilder> logger)
         await context.EngagementCountShardGroup.PrimaryDao.EnsureCountTable();
         await context.EngagementStatusShardRouter.ExecuteAll(async dao =>
         {
-            await dao.EnsureDatabase();
             await dao.EnsureEngagementStatusTable();
             await dao.EnsureBookmarkTables();
         });

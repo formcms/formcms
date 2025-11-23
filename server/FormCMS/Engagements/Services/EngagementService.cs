@@ -67,7 +67,7 @@ public class EngagementService(
     {
         if (!identityService.GetUserAccess()?.CanAccessAdmin == true || daysAgo > 30)
             throw new Exception("Can't access daily count");
-        var query = EngagementStatusHelper.GetDailyVisitCount(ctx.EngagementCountShardGroup.PrimaryDao.CastDate, daysAgo, authed);
+        var query = EngagementStatusHelper.GetDailyVisitCount(ctx.EngagementStatusShardRouter.PrimaryDao("").CastDate, daysAgo, authed);
         var records = await ctx.EngagementStatusShardRouter.FetchAll(dao => dao.Many(query, ct));
 
         // Group by day, sum the counts

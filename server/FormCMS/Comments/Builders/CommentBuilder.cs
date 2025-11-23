@@ -42,7 +42,6 @@ public class CommentBuilder(ILogger<CommentBuilder> logger)
             .Router
             .ExecuteAll(async dao =>
                 {
-                    await dao.EnsureDatabase();
                     await dao.EnsureCommentsTable();
                 }
             );

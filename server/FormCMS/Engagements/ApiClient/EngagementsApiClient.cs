@@ -21,7 +21,7 @@ public class EngagementsApiClient(HttpClient client)
     public Task<Result<JsonElement[]>> VisitCounts(bool authed)
         => client.GetResult<JsonElement[]>($"/visit-counts?authed={authed}&n={7}".EngagementsUrl());
     
-    public Task<Result<Record[]>> ActivityCounts()
+    public Task<Result<Record[]>> Counts()
         => client.GetResult<Record[]>($"/counts?n={7}".EngagementsUrl());
     
     public Task Visit(string url)

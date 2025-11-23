@@ -30,7 +30,6 @@ public class NotificationBuilder(ILogger<NotificationBuilder> logger)
         var ctx = scope.ServiceProvider.GetRequiredService<NotificationContext>();
         await ctx.UserNotificationShardRouter.ExecuteAll(async dao =>
         {
-            await dao.EnsureDatabase();
             await dao.EnsureNotifyTable();
         });
      

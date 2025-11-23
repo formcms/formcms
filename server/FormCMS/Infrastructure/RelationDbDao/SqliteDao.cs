@@ -327,31 +327,4 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
     {
         conn.Dispose();
     }
-
-    public Task EnsureDatabase(CancellationToken ct = default)
-    {
-        var builder = new SqliteConnectionStringBuilder(conn.ConnectionString);
-        var databasePath = builder.DataSource;
-
-        if (string.IsNullOrEmpty(databasePath))
-            throw new ArgumentException("Database path not found in connection string");
-
-        // For SQLite, just opening a connection creates the file if it doesn't exist
-        if (!File.Exists(databasePath))
-        {
-            // Ensure the directory exists
-            var directory = Path.GetDirectoryName(databasePath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            // Create the database file by opening and closing a connection
-            using var newConn = new SqliteConnection(conn.ConnectionString);
-            newConn.Open();
-            newConn.Close();
-        }
-
-        return Task.CompletedTask;
-    }
 }

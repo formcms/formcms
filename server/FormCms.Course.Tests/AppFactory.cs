@@ -39,7 +39,7 @@ public class AppFactory : WebApplicationFactory<Program>
 
     public AppFactory()
     {
-        Environment.SetEnvironmentVariable("EnableActivityBuffer", "false");
+        Environment.SetEnvironmentVariable("EnableEngagementBuffer", "false");
         Environment.SetEnvironmentVariable("FtsSettings__FtsEntities__0", TestEntityNames.TestPost.Camelize());
 
         _httpClient = CreateClient(new WebApplicationFactoryClientOptions

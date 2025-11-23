@@ -25,7 +25,6 @@ public static class EngagementHandler
             int n,
             CancellationToken ct,
             IEngagementService s
-            
         ) => s.GetDailyCounts(n,ct));
         
         builder.MapGet("/list/{activityType}", (
@@ -114,8 +113,8 @@ public static class EngagementHandler
             var bytes = System.Text.Encoding.UTF8.GetBytes(rawData);
             var hash = System.Security.Cryptography.SHA256.HashData(bytes);
             var pseudoUserId = Convert.ToHexString(hash); // .NET 5+ 
+            pseudoUserId = pseudoUserId[..40];
             pseudoUserId = Models.EngagementStatusHelper.AddAnonymouseHeader(pseudoUserId);
-
             return pseudoUserId;
         }
     }
