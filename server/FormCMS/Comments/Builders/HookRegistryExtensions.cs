@@ -9,11 +9,41 @@ public static class HookRegistryExtensions
 {
     public static void RegisterCommentsHooks(this HookRegistry registry)
     {
+        /*to handle comments reply*/
+        registry.QueryPreList.RegisterDynamic("*", async (ICommentsQueryPlugin p, QueryPreListArgs args) =>
+        {
+            if (args.Query.Entity.Name != CommentHelper.Entity.Name) return args;
+            
+            var parentFullPath = nameof(Comment.Parent).Camelize();
+            // check if any filter targets the parent field
+            if (args.Filters != null && args.Filters.Any(f => f.Vector.FullPath == parentFullPath))
+            {
+                // find the first matching filter
+                var parentFilter = args.Filters.First(f => f.Vector.FullPath == parentFullPath);
+
+                // for reply comments,
+                var parentId = parentFilter.Constraints[0].Values.First().S;
+                var parentComment = CommentHelper.Parse(parentId!);
+                var records = await p.GetByFilters(
+                    parentComment.EntityName,
+                    parentComment.RecordId,
+                    [..args.Filters],
+                    [..args.Sorts],
+                    args.Pagination,
+                    args.Span,
+                    CancellationToken.None
+                );
+                return args with { OutRecords = records };
+            }
+            return args with { OutRecords = [] };
+        });
+        
         registry.ListPlugInQueryArgs.RegisterDynamic(CommentHelper.CommentContentTagQuery,
             async (ICommentsQueryPlugin s,ListPlugInQueryArgs args) =>
             {
                 var ids = args.Args[nameof(Comment.Id).Camelize()]
-                    .Where(x => x is not null).Select(x => x!).Select(long.Parse).ToArray();
+                    .Where(x => x is not null)
+                    .Select(x => x!).ToArray();
                 var records = await s.GetTags(ids);
                 return args with { OutRecords = records };
             });
@@ -26,18 +56,7 @@ public static class HookRegistryExtensions
             return args with { OutRecords = records };
         });
             
-        registry.QueryPreList.RegisterDynamic("*", async (ICommentsQueryPlugin p, QueryPreListArgs args) =>
-        {
-            if (args.Query.Entity.Name != CommentHelper.Entity.Name) return args;
-            var records = await p.GetByFilters(
-                [..args.Filters], [..args.Sorts],
-                args.Pagination,
-                args.Span,
-                CancellationToken.None
-            );
-            args = args with { OutRecords = records };
-            return args;
-        });
+        
             
         registry.QueryPostSingle.RegisterDynamic("*", async (ICommentsQueryPlugin p, QueryPostSingleArgs args) =>
         {
@@ -45,5 +64,4 @@ public static class HookRegistryExtensions
             return args;
         });
     }
-    
 }

@@ -1,7 +1,6 @@
 using System.Text.Json;
-using FormCMS.Activities.ApiClient;
-using FormCMS.Activities.Models;
 using FormCMS.CoreKit.Test;
+using FormCMS.Engagements.Models;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.ResultExt;
 using NUlid;
@@ -10,14 +9,13 @@ namespace FormCMS.Course.Tests;
 [Collection("API")]
 public class BookmarkApiTest(AppFactory factory)
 {
-    private const  long  RecordId = 22;
     private bool _ = factory.LoginAndInitTestData();
 
     [Fact]
     public async Task ListBookmarkByFolderIdAndDelete()
     {
         var name = Ulid.NewUlid().ToString();
-        await factory.BookmarkApi.AddBookmarks(TestEntityNames.TestPost.Camelize(), RecordId, name, []).Ok();
+        await factory.BookmarkApi.AddBookmarks(TestEntityNames.TestPost.Camelize(), BlogsTestData.BookmarkTestPostId, name, []).Ok();
         var folders = await factory.BookmarkApi.AllFolders().Ok();
         var folder = folders.FirstOrDefault(x => x.GetProperty("name").GetString() == name);
 
@@ -40,7 +38,8 @@ public class BookmarkApiTest(AppFactory factory)
     {
         //add
         var name = Ulid.NewUlid().ToString();
-        await factory.BookmarkApi.AddBookmarks(TestEntityNames.TestPost.Camelize(), RecordId, name, []).Ok();
+        await factory.BookmarkApi
+            .AddBookmarks(TestEntityNames.TestPost.Camelize(), BlogsTestData.BookmarkTestPostId, name, []).Ok();
         var folders = await factory.BookmarkApi.AllFolders().Ok();
         var folder = folders.FirstOrDefault(x => x.GetProperty("name").GetString() == name);
         Assert.NotEqual(JsonValueKind.Undefined,folder.ValueKind);
@@ -62,8 +61,8 @@ public class BookmarkApiTest(AppFactory factory)
             await factory.BookmarkApi.DeleteBookmark(item.GetLong("id")).Ok();
         }
         //save to default folder
-        await factory.BookmarkApi.AddBookmarks(TestEntityNames.TestPost.Camelize(), RecordId, "", [0]).Ok();
-        var folders = await factory.BookmarkApi.FolderWithRecordStatus(TestEntityNames.TestPost.Camelize(), RecordId).Ok();
+        await factory.BookmarkApi.AddBookmarks(TestEntityNames.TestPost.Camelize(),  BlogsTestData.BookmarkTestPostId, "", [0]).Ok();
+        var folders = await factory.BookmarkApi.FolderWithRecordStatus(TestEntityNames.TestPost.Camelize(),  BlogsTestData.BookmarkTestPostId).Ok();
         Assert.True(folders.First(x => x.Id == 0).Selected);
     }
 
@@ -71,7 +70,7 @@ public class BookmarkApiTest(AppFactory factory)
     public async Task SaveAndCreateFolderOnTheFlight()
     {
         var name = Ulid.NewUlid().ToString();
-        await factory.BookmarkApi.AddBookmarks(TestEntityNames.TestPost.Camelize(), RecordId, name, [0]).Ok();
+        await factory.BookmarkApi.AddBookmarks(TestEntityNames.TestPost.Camelize(),  BlogsTestData.BookmarkTestPostId, name, [0]).Ok();
         var folders = await factory.BookmarkApi.FolderWithRecordStatus(TestEntityNames.TestPost.Camelize(), 1).Ok();
         Assert.NotNull(folders.FirstOrDefault(x => x.Name == name));
     }

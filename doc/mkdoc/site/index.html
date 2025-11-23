@@ -73,6 +73,11 @@
               </ul>
             </li>
             
+            <li class="nav-item" data-bs-level="2"><a href="#performance-scalability-reusability" class="nav-link">Performance, Scalability &amp; Reusability</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
             <li class="nav-item" data-bs-level="2"><a href="#online-course-system-backend" class="nav-link">Online Course System Backend</a>
               <ul class="nav flex-column">
               </ul>
@@ -153,7 +158,7 @@
               </ul>
             </li>
             
-            <li class="nav-item" data-bs-level="2"><a href="#social-activity" class="nav-link">Social Activity</a>
+            <li class="nav-item" data-bs-level="2"><a href="#user-engagement" class="nav-link">User Engagement</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -209,6 +214,11 @@
             </li>
             
             <li class="nav-item" data-bs-level="2"><a href="#adding-business-logic" class="nav-link">Adding Business Logic</a>
+              <ul class="nav flex-column">
+              </ul>
+            </li>
+            
+            <li class="nav-item" data-bs-level="2"><a href="#database-sharding-for-scalability" class="nav-link">Database Sharding for Scalability</a>
               <ul class="nav flex-column">
               </ul>
             </li>
@@ -331,6 +341,291 @@ By combining robust CMS functionality with a strong emphasis on social engagemen
   - Eamil : <code>samdmin@cms.com</code><br />
   - Password: <code>Admin1!</code>  </p>
 <p>After login to <code>Admin Panel</code>, you can go to <code>Tasks</code>, click <code>Import Demo Data</code>, to import demo data.</p>
+<hr />
+<h2 id="performance-scalability-reusability">Performance, Scalability &amp; Reusability</h2>
+<p>FormCMS is designed with performance, scalability, and extensibility as core principles.</p>
+<h3 id="design-objectives">Design Objectives</h3>
+<p>FormCMS was built to address three critical concerns for modern CMS platforms:</p>
+<h4 id="1-performance"><strong>1. Performance</strong></h4>
+<ul>
+<li>P95 latency under 200ms for the slowest APIs</li>
+<li>Throughput over 1,000 QPS per application node</li>
+<li>Support for complex queries (5-table joins over 1M rows)</li>
+<li>Efficient handling of large tables (100M+ records for user activities)</li>
+</ul>
+<h4 id="2-scalability"><strong>2. Scalability</strong></h4>
+<ul>
+<li>Handle millions of posts and users</li>
+<li>Support billions of user activities (views, likes, shares)</li>
+<li>Horizontal scaling for high-volume features</li>
+<li>CDN-friendly architecture for content delivery</li>
+</ul>
+<h4 id="3-extensibility-reusability"><strong>3. Extensibility &amp; Reusability</strong></h4>
+<ul>
+<li>Distributed as a <strong>NuGet package</strong> for easy integration</li>
+<li>Hook system for custom business logic</li>
+<li>Message broker for event-driven architecture</li>
+<li>Modular design with isolated features</li>
+</ul>
+<hr />
+<h3 id="performance-benchmarks">Performance Benchmarks</h3>
+<p>FormCMS achieves performance comparable to specialized GraphQL engines while maintaining full CMS functionality.</p>
+<h4 id="test-environment"><strong>Test Environment</strong></h4>
+<ul>
+<li>PostgreSQL + App Server (4 CPU, 4GB RAM each)</li>
+<li>Tables: post (1M), post_tag (3M), tag (100K), post_cat (2M), category (10K)</li>
+</ul>
+<h4 id="query-performance-comparison"><strong>Query Performance Comparison</strong></h4>
+<table>
+<thead>
+<tr>
+<th>Platform</th>
+<th>List 20 Posts (P95)</th>
+<th>Throughput</th>
+<th>Filter by Tag (P95)</th>
+<th>Throughput</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>FormCMS</strong></td>
+<td>48 ms</td>
+<td>2,400 QPS</td>
+<td>55 ms</td>
+<td>2,165 QPS</td>
+</tr>
+<tr>
+<td>Hasura</td>
+<td>48 ms</td>
+<td>2,458 QPS</td>
+<td>53 ms</td>
+<td>2,056 QPS</td>
+</tr>
+<tr>
+<td>Orchard Core</td>
+<td>2.3 s</td>
+<td>30 QPS</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h4 id="high-volume-activity-data-100m-rows"><strong>High-Volume Activity Data (100M rows)</strong></h4>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>P95 Latency</th>
+<th>Throughput</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Read operations</td>
+<td>187 ms</td>
+<td>~1,000 QPS</td>
+</tr>
+<tr>
+<td>Buffered writes</td>
+<td><strong>19 ms</strong></td>
+<td><strong>~4,200 QPS</strong></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="performance-optimization-strategies">Performance Optimization Strategies</h3>
+<h4 id="1-normalized-data-modeling"><strong>1. Normalized Data Modeling</strong></h4>
+<p>Most CMS platforms use key-value storage or JSON documents for flexibility, sacrificing performance. FormCMS takes a different approach:</p>
+<pre><code>Traditional CMS (Key-Value Storage):
++------------------+
+| ContentItemId    |
+| PropertyName     |  ← No indexes, slow joins
+| PropertyValue    |
++------------------+
+
+FormCMS (Normalized Tables):
++------------------+
+| id               |  ← Primary key
+| title            |  ← Indexed
+| publishedAt      |  ← Indexed
+| categoryId       |  ← Foreign key
++------------------+
+</code></pre>
+<p><strong>Benefits</strong>:
+- Leverages database indexes for fast queries
+- Maintains referential integrity
+- Enables efficient joins and complex queries
+- Standard SQL tools work out of the box</p>
+<h4 id="2-intelligent-caching-strategy"><strong>2. Intelligent Caching Strategy</strong></h4>
+<p><strong>Schema Caching</strong>:
+- Entity and query definitions cached in memory
+- Hybrid cache (local + distributed) for multi-node setups
+- 20-second local expiration for consistency
+- Automatic invalidation on schema changes</p>
+<p><strong>Data Caching</strong>:
+- Output caching for query results and pages
+- CDN-friendly GET requests for GraphQL queries
+- Configurable expiration policies per query type</p>
+<h4 id="3-write-buffering-for-high-volume"><strong>3. Write Buffering for High Volume</strong></h4>
+<p>For user activity data (likes, views, shares):
+- In-memory buffer collects writes for 1 minute
+- Batch flush reduces database round trips
+- ~30GB buffer handles 5,000 QPS for 10 minutes
+- <strong>Result</strong>: 19ms P95 latency at 4,200+ QPS</p>
+<h4 id="4-query-optimization"><strong>4. Query Optimization</strong></h4>
+<ul>
+<li>Single optimized SQL query per GraphQL request</li>
+<li>Eliminates N+1 query problem</li>
+<li>Efficient JOIN strategies for related entities</li>
+<li>Unique key lookups to reduce redundant queries</li>
+</ul>
+<hr />
+<h3 id="scalability-architecture">Scalability Architecture</h3>
+<p>FormCMS separates cacheable CMS content from high-volume user data for independent scaling.</p>
+<h4 id="cms-content-scale-via-caching"><strong>CMS Content (Scale via Caching)</strong></h4>
+<pre><code>CDN Layer
+    ↓
+App Nodes (with local cache)
+    ↓
+Distributed Cache (Redis)
+    ↓
+Primary Database
+</code></pre>
+<p><strong>Characteristics</strong>:
+- GraphQL queries converted to cacheable GET requests
+- Static content served from CDN
+- 1M posts × 10KB average = ~10GB cache size
+- Easily handles hundreds of millions of monthly visits</p>
+<h4 id="user-activity-data-scale-via-sharding"><strong>User Activity Data (Scale via Sharding)</strong></h4>
+<pre><code>App Nodes
+    ↓
+Shard Router (MD5 hash by userId)
+    ↓
++----------+  +----------+  +----------+
+| Shard 1  |  | Shard 2  |  | Shard N  |
+| ~100M    |  | ~100M    |  | ~100M    |
+| records  |  | records  |  | records  |
++----------+  +----------+  +----------+
+</code></pre>
+<p><strong>Characteristics</strong>:
+- 1M users × 10K activities = 10B records
+- Shard by userId for data locality
+- ~100M records per shard (~200GB with indexes)
+- Real-time updates (not cacheable)
+- Linear scaling with additional shards</p>
+<h4 id="scaling-example-news-portal"><strong>Scaling Example: News Portal</strong></h4>
+<p>Using The New York Times scale (639M monthly visits):
+- <strong>Static content</strong>: Served by CDN (no backend load)
+- <strong>Dynamic queries</strong>: 4-10 app nodes handle thousands of QPS
+- <strong>User activities</strong>: Sharded across multiple database servers
+- <strong>Search</strong>: Dedicated FTS database with read replicas</p>
+<hr />
+<h3 id="extensibility-reusability">Extensibility &amp; Reusability</h3>
+<p>FormCMS is designed as a <strong>reusable framework</strong> rather than a standalone application.</p>
+<h4 id="nuget-package-distribution"><strong>NuGet Package Distribution</strong></h4>
+<p>Install FormCMS in any ASP.NET Core project:</p>
+<pre><code class="language-bash">dotnet add package FormCMS
+</code></pre>
+<pre><code class="language-csharp">// Minimal setup in your existing project
+builder.Services.AddPostgresCms(connectionString);
+builder.Services.AddCmsAuth&lt;CmsUser, IdentityRole, CmsDbContext&gt;(authConfig);
+
+await app.UseCmsAsync();
+</code></pre>
+<h4 id="hook-system-for-custom-logic"><strong>Hook System for Custom Logic</strong></h4>
+<p>Inject custom business logic at key lifecycle points:</p>
+<pre><code class="language-csharp">// Before/after entity operations
+hookRegistry.Register(HookPointType.EntityPreAdd, async (args, ct) =&gt; {
+    var entity = args.Entity;
+    var record = args.Record;
+    // Custom validation, transformation, or side effects
+    return Result.Ok();
+});
+
+hookRegistry.Register(HookPointType.EntityPostUpdate, async (args, ct) =&gt; {
+    // Trigger workflows, send notifications, etc.
+    return Result.Ok();
+});
+</code></pre>
+<p><strong>Available Hooks</strong>:
+- Schema: <code>SchemaPreGetAll</code>, <code>SchemaPostSave</code>
+- Entity: <code>EntityPreAdd</code>, <code>EntityPostUpdate</code>, <code>EntityPreDel</code>, <code>EntityPostDel</code>
+- Query: <code>QueryPreList</code>, <code>QueryPostList</code>
+- Asset: <code>AssetPreAdd</code>, <code>AssetPostDelete</code></p>
+<h4 id="message-broker-integration"><strong>Message Broker Integration</strong></h4>
+<p>Event-driven architecture for loosely coupled systems:</p>
+<pre><code class="language-csharp">// Publish CRUD events
+builder.Services.AddCrudMessageProducer([&quot;course&quot;, &quot;lesson&quot;]);
+
+// Subscribe to events in separate workers
+public class CustomEventHandler : IHostedService
+{
+    public async Task HandleCourseCreated(CourseCreatedEvent evt)
+    {
+        // Update search index, send notifications, etc.
+    }
+}
+</code></pre>
+<p><strong>Benefits</strong>:
+- Decouple features from core CMS
+- Scale event processors independently
+- Add new features without modifying core code</p>
+<h4 id="module-isolation"><strong>Module Isolation</strong></h4>
+<p>Each feature owns its data and can be enabled/disabled independently:</p>
+<pre><code class="language-csharp">// Enable only the features you need
+builder.Services.AddCmsAuth&lt;CmsUser, IdentityRole, CmsDbContext&gt;(authConfig);
+builder.Services.AddEngagement(enableBuffering: true, shardConfigs);
+builder.Services.AddComments(commentShards);
+builder.Services.AddNotify(notifyShards);
+builder.Services.AddSearch(ftsProvider, connString);
+builder.Services.AddSubscriptions(); // Stripe integration
+builder.Services.AddVideo(); // HLS video processing
+</code></pre>
+<p><strong>Benefits</strong>:
+- No bloat from unused features
+- Independent versioning and updates
+- Easier testing and maintenance</p>
+<hr />
+<h3 id="why-this-matters">Why This Matters</h3>
+<h4 id="for-small-projects"><strong>For Small Projects</strong></h4>
+<ul>
+<li>Start with single database, no sharding</li>
+<li>Leverage CDN for free global scaling</li>
+<li>Add features incrementally as needed</li>
+<li>Low operational complexity</li>
+</ul>
+<h4 id="for-medium-projects-100k-1m-users"><strong>For Medium Projects</strong> (100K - 1M users)</h4>
+<ul>
+<li>Add Redis for distributed caching</li>
+<li>Enable write buffering for activities</li>
+<li>Use read replicas for database scaling</li>
+<li>Still manageable with small DevOps team</li>
+</ul>
+<h4 id="for-large-projects-1m-users"><strong>For Large Projects</strong> (1M+ users)</h4>
+<ul>
+<li>Shard high-volume features across databases</li>
+<li>Multi-region CDN deployment</li>
+<li>Dedicated search infrastructure</li>
+<li>Scales to billions of records</li>
+</ul>
+<h4 id="for-developer-teams"><strong>For Developer Teams</strong></h4>
+<ul>
+<li>Reuse FormCMS across multiple projects</li>
+<li>Customize with hooks instead of forking</li>
+<li>Standard .NET ecosystem tools</li>
+<li>Clear separation between framework and business logic</li>
+</ul>
+<hr />
+<h3 id="real-world-applicability">Real-World Applicability</h3>
+<p>FormCMS architecture supports diverse use cases:</p>
+<ul>
+<li><strong>News Portals</strong>: Handle millions of articles with CDN caching (e.g., NYT scale)</li>
+<li><strong>Online Courses</strong>: Manage complex hierarchies with efficient queries (e.g., Udemy scale)</li>
+<li><strong>Video Platforms</strong>: Process HLS video, track billions of views (e.g., YouTube-like features)</li>
+<li><strong>E-commerce</strong>: Product catalogs with dynamic pricing and inventory</li>
+<li><strong>Social Platforms</strong>: User-generated content with engagement tracking</li>
+</ul>
+<p>The combination of <strong>normalized data modeling</strong>, <strong>intelligent caching</strong>, <strong>horizontal sharding</strong>, and <strong>modular architecture</strong> enables FormCMS to scale from prototype to production while maintaining developer productivity.</p>
 <hr />
 <h2 id="online-course-system-backend">Online Course System Backend</h2>
 <p>This section provides detailed guidance on developing a foundational online course system, encompassing key entities: <code>teacher</code>, <code>course</code>, <code>lesson</code>,<code>skill</code>, and <code>material</code>.</p>
@@ -2059,26 +2354,26 @@ Alternatively, click the <code>View Page</code> button on the <code>Page Design<
 <h3 id="duplicate_1">Duplicate</h3>
 <p>You can duplicate any schema version and save it as a new schema.</p>
 <hr />
-<h2 id="social-activity">Social Activity</h2>
-<p>The Social Activity feature enhances user engagement by enabling views, likes, saves, and shares. It also provides detailed analytics to help understand content performance.</p>
+<h2 id="user-engagement">User Engagement</h2>
+<p>The user engaagment feature enhances user engagement by enabling views, likes, saves, and shares. It also provides detailed analytics to help understand content performance.</p>
 <h3 id="endpoints">Endpoints</h3>
 <ul>
 <li>
-<p><code>GET /api/activities/{entityName}/{recordId:long}</code><br />
-  Increments the view count by 1. Returns the active status and count for: like, view, share, and save.</p>
+<p><code>GET /api/engagements/{entityName}/{recordId:long}</code><br />
+  Increments the view count by 1. Returns the engagement status and count for: like, view, share, and save.</p>
 </li>
 <li>
-<p><code>GET /api/activities/record/{entityName}/{recordId}?type={view|share}</code><br />
-  Retrieves activity info of type <code>view</code> or <code>share</code> for a given entity record.</p>
+<p><code>GET /api/engagements/record/{entityName}/{recordId}?type={view|share}</code><br />
+  Retrieves engagement info of type <code>view</code> or <code>share</code> for a given entity record.</p>
 </li>
 <li>
-<p><code>POST /api/activities/toggle/{entityName}/{recordId}?type={like|save}&amp;active={true|false}</code><br />
-  Toggles the activity (like or save) on or off based on the <code>active</code> flag.</p>
+<p><code>POST /api/engagements/toggle/{entityName}/{recordId}?type={like|save}&amp;active={true|false}</code><br />
+  Toggles the engagement (like or save) on or off based on the <code>active</code> flag.</p>
 </li>
 </ul>
 <h3 id="challenges">Challenges</h3>
 <p>The system cannot leverage traditional output caching due to dynamic nature of the content, which may lead to high database load under heavy traffic.</p>
-<p>To address this, buffered writes are introduced. Activity events are first stored in a buffer (in-memory or Redis), and then periodically flushed to the database, balancing performance and accuracy.</p>
+<p>To address this, buffered writes are introduced. Engagement events are first stored in a buffer (in-memory or Redis), and then periodically flushed to the database, balancing performance and accuracy.</p>
 <hr />
 <h3 id="load-testing">Load Testing</h3>
 <p>Below is a test script using <a href="https://k6.io/">k6</a> to simulate traffic and measure performance:</p>
@@ -2103,7 +2398,7 @@ export const options = {
 
 export default function () {
     const id = Math.floor(Math.random() * 100) + 1;
-    const res = http.get(`http://localhost:5000/api/activities/post/${id}`);
+    const res = http.get(`http://localhost:5000/api/engagements/post/${id}`);
     ResponseTime.add(res.timings.duration);
     check(res, { 'status is 200': (r) =&gt; r.status === 200 });
 }
@@ -2177,7 +2472,7 @@ export default function () {
 <hr />
 <h2 id="user-portal">User Portal</h2>
 <p>Users can access their view history, liked posts, bookmarked posts, and manage authentication via GitHub OAuth in a personalized portal.  </p>
-<p>The <strong>User Portal</strong> in FormCMS provides a centralized interface for users to manage their social activity, including viewing their interaction history, liked posts, bookmarked content, and authenticating seamlessly via GitHub OAuth. This enhances user engagement by offering a tailored experience to revisit, organize content, and simplify account creation.</p>
+<p>The <strong>User Portal</strong> in FormCMS provides a centralized interface for users to manage their social engagement, including viewing their interaction history, liked posts, bookmarked content, and authenticating seamlessly via GitHub OAuth. This enhances user engagement by offering a tailored experience to revisit, organize content, and simplify account creation.</p>
 <h3 id="history">History</h3>
 <p>Users can view a list of all items they have previously accessed, such as pages, posts, or other content. Each item in the history is displayed with a clickable link, allowing users to easily revisit the content.</p>
 <h3 id="liked-items">Liked Items</h3>
@@ -2250,14 +2545,14 @@ To favor fresh content, the score is slightly reduced for older posts. The older
 </ol>
 <p>After configuring, click <code>Save and Publish</code> to enable the comments feature. The Comments Plugin is designed for <code>Detail Pages</code>, where comments are associated with an <code>Entity Name</code> and <code>RecordId</code> (automatically retrieved from the page URL parameters).  </p>
 <h3 id="comment-interactions">Comment Interactions</h3>
-<p>Authenticated users can add, edit, delete, like, and reply to comments. The Comments Plugin sends events for these actions, which are handled by other plugins. For example:<br />
-- The Notification Plugin processes these events to send notice to the comment's creator.<br />
-- The Engage Activity Plugin uses these events to update the record's engagement score.  </p>
+<p>Authenticated users can add, edit, delete, like, and reply to comments. The Comments Plugin sends events for these actions, which are handled by other plugins. For example:
+- The Notification Plugin processes these events to send notice to the comment's creator.
+- The Engagement Plugin uses these events to update the record's engagement score.</p>
 <h3 id="integrating-comments-with-graphql">Integrating Comments with GraphQL</h3>
-<p>Each <code>Detail Page</code> is linked to a FormCMS GraphQL query. To include comments:<br />
-- Add the <code>Comments</code> field to your GraphQL query.<br />
-- The Comments Plugin automatically attaches comment data to the query results.  </p>
-<h3 id="update-score-and-daily-activity">Update Score and Daily Activity</h3>
+<p>Each <code>Detail Page</code> is linked to a FormCMS GraphQL query. To include comments:
+- Add the <code>Comments</code> field to your GraphQL query.
+- The Comments Plugin automatically attaches comment data to the query results.</p>
+<h3 id="update-score-and-daily-engagement">Update Score and Daily Engagement</h3>
 <ul>
 <li>Each comment contributes to increasing the record's popularity score.</li>
 <li>The admin panel displays the daily comment count.</li>
@@ -2384,7 +2679,8 @@ app.UseOutputCache();
 <h2 id="aspire-integration">Aspire Integration</h2>
 <p>FormCMS leverages Aspire to simplify deployment.</p>
 <h3 id="architecture-overview">Architecture Overview</h3>
-<p>A scalable deployment of  FormCMS involves multiple web application nodes, a Redis server for distributed caching, and a database server, all behind a load balancer.</p>
+<p>A scalable deployment of FormCMS involves multiple web application nodes, a Redis server for distributed caching, and one or more database servers, all behind a load balancer.</p>
+<h4 id="basic-architecture-single-database">Basic Architecture (Single Database)</h4>
 <pre><code>                 +------------------+
                  |  Load Balancer   |
                  +------------------+
@@ -2403,6 +2699,27 @@ app.UseOutputCache();
        +------------------+    +------------------+
        | Database Server  |    |   Redis Server   |
        +------------------+    +------------------+
+</code></pre>
+<h4 id="advanced-architecture-sharded-databases">Advanced Architecture (Sharded Databases)</h4>
+<p>For high-traffic applications, FormCMS supports horizontal database sharding for engagement, comments, notifications, and full-text search features. See the <a href="#database-sharding-for-scalability">Database Sharding</a> section for detailed configuration.</p>
+<pre><code>                    +------------------+
+                    |  Load Balancer   |
+                    +------------------+
+                             |
+           +-----------------+-----------------+
+           |                                   |
+   +------------------+              +------------------+
+   |   Web App Node   |              |   Web App Node   |
+   +------------------+              +------------------+
+           |                                   |
+           +-------------------+---------------+
+                               |
+       +-------------------+---+--------+--------------+
+       |                   |            |              |
+  +----v-----+      +------v---+   +---v------+   +---v-----+
+  | CMS DB   |      |Engagement|   | Comment  |   | Notify  |
+  |(Primary) |      | Shards   |   | Shards   |   | Shards  |
+  +----------+      +----------+   +----------+   +---------+
 </code></pre>
 <hr />
 <h3 id="local-emulation-with-aspire-and-service-discovery">Local Emulation with Aspire and Service Discovery</h3>
@@ -2633,9 +2950,276 @@ app.RegisterMessageProducerHook();
 </code></pre>
 <p>With this setup, events are produced to Kafka, allowing consumers to process business logic asynchronously.</p>
 <hr />
+<h2 id="database-sharding-for-scalability">Database Sharding for Scalability</h2>
+<p>FormCMS supports horizontal database sharding to scale high-volume features independently.</p>
+<h3 id="overview_4">Overview</h3>
+<p>FormCMS allows you to distribute data across multiple database servers for improved scalability and performance. While the main CMS content remains in a single database (optimized for CDN caching), high-volume features like engagements, comments, notifications, and full-text search can be scaled independently using dedicated databases or sharding.</p>
+<h3 id="architecture">Architecture</h3>
+<pre><code>+------------------+     +------------------+     +------------------+
+|   Web App Node   |     |   Web App Node   |     |   Web App Node   |
++------------------+     +------------------+     +------------------+
+         |                        |                        |
+         +------------------------+------------------------+
+                                  |
+         +------------------------+------------------------+
+         |            |            |            |          |
++--------v----+  +----v-----+  +--v-------+  +-v--------+ +-v------+
+| CMS         |  |Engagement|  | Comment  |  | Notify   | | FTS    |
+| Database    |  | Shards   |  | Shards   |  | Shards   | | DB     |
+| (Primary)   |  | (2-N)    |  | (2-N)    |  | (2-N)    | |        |
++-------------+  +----------+  +----------+  +----------+ +--------+
+</code></pre>
+<h3 id="shardable-features">Shardable Features</h3>
+<p>FormCMS supports sharding for the following features:</p>
+<h4 id="1-engagement-data-likes-shares-bookmarks-views">1. <strong>Engagement Data</strong> (Likes, Shares, Bookmarks, Views)</h4>
+<ul>
+<li><strong>Shard Key</strong>: <code>userId</code> (consistent hashing)</li>
+<li><strong>Use Case</strong>: High-volume user activity tracking</li>
+<li><strong>Benefits</strong>:</li>
+<li>Distributes write load across multiple databases</li>
+<li>Enables buffering for ~19ms P95 latency at 4200+ QPS</li>
+<li>Supports billions of engagement records</li>
+</ul>
+<h4 id="2-comments">2. <strong>Comments</strong></h4>
+<ul>
+<li><strong>Shard Key</strong>: <code>recordId</code> (entity ID)</li>
+<li><strong>Use Case</strong>: User-generated content and discussions</li>
+<li><strong>Benefits</strong>:</li>
+<li>Data locality (all comments for an entity in one shard)</li>
+<li>Efficient threaded comment queries</li>
+<li>Independent scaling from CMS content</li>
+</ul>
+<h4 id="3-notifications">3. <strong>Notifications</strong></h4>
+<ul>
+<li><strong>Shard Key</strong>: <code>userId</code></li>
+<li><strong>Use Case</strong>: User notification inbox</li>
+<li><strong>Benefits</strong>:</li>
+<li>User-specific data isolation</li>
+<li>Fast notification queries per user</li>
+<li>Scalable notification storage</li>
+</ul>
+<h4 id="4-full-text-search-fts">4. <strong>Full-Text Search (FTS)</strong></h4>
+<ul>
+<li><strong>Configuration</strong>: Dedicated database with read replicas</li>
+<li><strong>Use Case</strong>: Search index isolation</li>
+<li><strong>Benefits</strong>:</li>
+<li>Optimized hardware for search workloads</li>
+<li>Independent resource scaling</li>
+<li>Read replica support for query load distribution</li>
+</ul>
+<h3 id="configuration_2">Configuration</h3>
+<p>All sharding configuration is done in <code>appsettings.json</code>:</p>
+<h4 id="engagement-shards">Engagement Shards</h4>
+<pre><code class="language-json">{
+  &quot;EngagementShards&quot;: [
+    {
+      &quot;DatabaseProvider&quot;: &quot;Postgres&quot;,
+      &quot;LeadConnStr&quot;: &quot;Host=db1.example.com;Database=engagement1;Username=user;Password=pass&quot;,
+      &quot;FollowConnStrings&quot;: [
+        &quot;Host=db1-replica.example.com;Database=engagement1;Username=user;Password=pass&quot;
+      ],
+      &quot;Start&quot;: 0,
+      &quot;End&quot;: 6
+    },
+    {
+      &quot;DatabaseProvider&quot;: &quot;Postgres&quot;,
+      &quot;LeadConnStr&quot;: &quot;Host=db2.example.com;Database=engagement2;Username=user;Password=pass&quot;,
+      &quot;FollowConnStrings&quot;: [],
+      &quot;Start&quot;: 6,
+      &quot;End&quot;: 12
+    }
+  ]
+}
+</code></pre>
+<h4 id="comment-shards">Comment Shards</h4>
+<pre><code class="language-json">{
+  &quot;CommentShards&quot;: [
+    {
+      &quot;DatabaseProvider&quot;: &quot;Postgres&quot;,
+      &quot;LeadConnStr&quot;: &quot;Host=db3.example.com;Database=comment1;Username=user;Password=pass&quot;,
+      &quot;FollowConnStrings&quot;: [],
+      &quot;Start&quot;: 0,
+      &quot;End&quot;: 4
+    },
+    {
+      &quot;DatabaseProvider&quot;: &quot;Postgres&quot;,
+      &quot;LeadConnStr&quot;: &quot;Host=db4.example.com;Database=comment2;Username=user;Password=pass&quot;,
+      &quot;FollowConnStrings&quot;: [],
+      &quot;Start&quot;: 4,
+      &quot;End&quot;: 8
+    },
+    {
+      &quot;DatabaseProvider&quot;: &quot;Postgres&quot;,
+      &quot;LeadConnStr&quot;: &quot;Host=db5.example.com;Database=comment3;Username=user;Password=pass&quot;,
+      &quot;FollowConnStrings&quot;: [],
+      &quot;Start&quot;: 8,
+      &quot;End&quot;: 12
+    }
+  ]
+}
+</code></pre>
+<h4 id="notification-shards">Notification Shards</h4>
+<pre><code class="language-json">{
+  &quot;NotifyShards&quot;: [
+    {
+      &quot;DatabaseProvider&quot;: &quot;Postgres&quot;,
+      &quot;LeadConnStr&quot;: &quot;Host=db6.example.com;Database=notify1;Username=user;Password=pass&quot;,
+      &quot;FollowConnStrings&quot;: [],
+      &quot;Start&quot;: 0,
+      &quot;End&quot;: 3
+    },
+    {
+      &quot;DatabaseProvider&quot;: &quot;Postgres&quot;,
+      &quot;LeadConnStr&quot;: &quot;Host=db7.example.com;Database=notify2;Username=user;Password=pass&quot;,
+      &quot;FollowConnStrings&quot;: [],
+      &quot;Start&quot;: 3,
+      &quot;End&quot;: 6
+    },
+    {
+      &quot;DatabaseProvider&quot;: &quot;Postgres&quot;,
+      &quot;LeadConnStr&quot;: &quot;Host=db8.example.com;Database=notify3;Username=user;Password=pass&quot;,
+      &quot;FollowConnStrings&quot;: [],
+      &quot;Start&quot;: 6,
+      &quot;End&quot;: 9
+    },
+    {
+      &quot;DatabaseProvider&quot;: &quot;Postgres&quot;,
+      &quot;LeadConnStr&quot;: &quot;Host=db9.example.com;Database=notify4;Username=user;Password=pass&quot;,
+      &quot;FollowConnStrings&quot;: [],
+      &quot;Start&quot;: 9,
+      &quot;End&quot;: 12
+    }
+  ]
+}
+</code></pre>
+<h4 id="full-text-search-configuration">Full-Text Search Configuration</h4>
+<pre><code class="language-json">{
+  &quot;FtsProvider&quot;: &quot;Postgres&quot;,
+  &quot;FtsPrimaryConnString&quot;: &quot;Host=fts-primary.example.com;Database=fts;Username=user;Password=pass&quot;,
+  &quot;FtsReplicaConnStrings&quot;: [
+    &quot;Host=fts-replica1.example.com;Database=fts;Username=user;Password=pass&quot;,
+    &quot;Host=fts-replica2.example.com;Database=fts;Username=user;Password=pass&quot;
+  ]
+}
+</code></pre>
+<h3 id="programcs-setup">Program.cs Setup</h3>
+<p>Configure sharding in your <code>Program.cs</code>:</p>
+<pre><code class="language-csharp">void AddCmsFeatures()
+{
+    // Enable engagement with sharding
+    var enableEngagementBuffer = builder.Configuration.GetValue&lt;bool&gt;(&quot;EnableEngagementBuffer&quot;);
+    var engagementShards = builder.Configuration.GetSection(&quot;EngagementShards&quot;).Get&lt;ShardConfig[]&gt;();
+    builder.Services.AddEngagement(enableEngagementBuffer, engagementShards);
+
+    // Enable comments with sharding
+    var commentShards = builder.Configuration.GetSection(&quot;CommentShards&quot;).Get&lt;ShardConfig[]&gt;();
+    builder.Services.AddComments(commentShards);
+
+    // Enable notifications with sharding
+    var notifyShards = builder.Configuration.GetSection(&quot;NotifyShards&quot;).Get&lt;ShardConfig[]&gt;();
+    builder.Services.AddNotify(notifyShards);
+
+    // Configure full-text search
+    var ftsProvider = builder.Configuration.GetValue&lt;string&gt;(&quot;FtsProvider&quot;) ?? dbProvider;
+    var ftsPrimaryConnString = builder.Configuration.GetValue&lt;string&gt;(&quot;FtsPrimaryConnString&quot;) ?? dbConnStr;
+    var ftsReplicaConnStrings = builder.Configuration.GetSection(&quot;FtsReplicaConnStrings&quot;).Get&lt;string[]&gt;();
+    builder.Services.AddSearch(Enum.Parse&lt;FtsProvider&gt;(ftsProvider), ftsPrimaryConnString, ftsReplicaConnStrings);
+}
+</code></pre>
+<h3 id="shard-configuration-parameters">Shard Configuration Parameters</h3>
+<p>Each shard configuration supports:</p>
+<ul>
+<li><strong>DatabaseProvider</strong>: Database type (<code>Postgres</code>, <code>Mysql</code>, <code>SqlServer</code>, <code>Sqlite</code>)</li>
+<li><strong>LeadConnStr</strong>: Primary database connection string (for writes)</li>
+<li><strong>FollowConnStrings</strong>: Array of read replica connection strings (optional)</li>
+<li><strong>Start</strong>: Start of hash range (0-11)</li>
+<li><strong>End</strong>: End of hash range (0-12)</li>
+</ul>
+<h3 id="hash-range-calculation">Hash Range Calculation</h3>
+<p>FormCMS uses MD5 hashing for consistent shard routing:</p>
+<pre><code>hash = MD5(shardKey).GetHashCode() % 12
+</code></pre>
+<p>Example with 3 shards:
+- Shard 1: <code>Start=0, End=4</code> → handles hashes 0,1,2,3
+- Shard 2: <code>Start=4, End=8</code> → handles hashes 4,5,6,7
+- Shard 3: <code>Start=8, End=12</code> → handles hashes 8,9,10,11</p>
+<h3 id="read-replicas">Read Replicas</h3>
+<p>Each shard can have multiple read replicas specified in <code>FollowConnStrings</code>:</p>
+<pre><code class="language-json">{
+  &quot;LeadConnStr&quot;: &quot;Host=primary.example.com;Database=engagement1;...&quot;,
+  &quot;FollowConnStrings&quot;: [
+    &quot;Host=replica1.example.com;Database=engagement1;...&quot;,
+    &quot;Host=replica2.example.com;Database=engagement1;...&quot;
+  ]
+}
+</code></pre>
+<p><strong>Benefits</strong>:
+- Write operations go to <code>LeadConnStr</code> (primary)
+- Read operations are distributed across replicas
+- Horizontal read scaling within each shard</p>
+<h3 id="scaling-strategy">Scaling Strategy</h3>
+<h4 id="start-simple-single-database">Start Simple (Single Database)</h4>
+<pre><code class="language-csharp">// No sharding - uses main CMS database
+builder.Services.AddEngagement(enableBuffering: true);
+builder.Services.AddComments();
+builder.Services.AddNotify();
+</code></pre>
+<h4 id="scale-when-needed">Scale When Needed</h4>
+<ol>
+<li><strong>Low-Medium Traffic</strong> (&lt; 100K users):</li>
+<li>Use single dedicated database per feature</li>
+<li>
+<p>Add read replicas for FTS</p>
+</li>
+<li>
+<p><strong>Medium-High Traffic</strong> (100K - 1M users):</p>
+</li>
+<li>Add 2-4 shards for engagements</li>
+<li>
+<p>Keep comments/notifications on single DB</p>
+</li>
+<li>
+<p><strong>High Traffic</strong> (1M+ users):</p>
+</li>
+<li>Use 4+ shards for all features</li>
+<li>Add read replicas to each shard</li>
+<li>Enable engagement buffering (Redis)</li>
+</ol>
+<h3 id="performance-characteristics">Performance Characteristics</h3>
+<p>Based on production testing with 100M engagement records:</p>
+<ul>
+<li><strong>Without Sharding</strong>:</li>
+<li>P95 read latency: ~187ms at 1000 QPS</li>
+<li>
+<p>Single point of bottleneck</p>
+</li>
+<li>
+<p><strong>With 2-4 Shards + Buffering</strong>:</p>
+</li>
+<li>P95 write latency: ~19ms at 4200 QPS</li>
+<li>P95 read latency: ~48ms at 2400 QPS</li>
+<li>Linear scaling with shard count</li>
+</ul>
+<h3 id="best-practices">Best Practices</h3>
+<ol>
+<li><strong>Plan Shard Count</strong>: Start with power-of-2 shards (2, 4, 8) for balanced distribution</li>
+<li><strong>Monitor Hash Distribution</strong>: Ensure even distribution across shards</li>
+<li><strong>Use Read Replicas</strong>: Add replicas before adding shards for read-heavy workloads</li>
+<li><strong>Database Providers</strong>: Can mix providers (e.g., Postgres for CMS, MySQL for engagements)</li>
+<li><strong>Connection Pooling</strong>: Set appropriate <code>MaxPoolSize</code> based on concurrent requests</li>
+<li><strong>Avoid Resharding</strong>: Hash ranges are fixed; plan capacity ahead</li>
+</ol>
+<h3 id="migration-notes">Migration Notes</h3>
+<p>⚠️ <strong>Important</strong>: Changing shard configuration requires data migration. The hash function determines routing, so modifying <code>Start/End</code> ranges will misroute existing data.</p>
+<p>For resharding:
+1. Add new shards with new hash ranges
+2. Migrate data from old shards
+3. Update configuration
+4. Remove old shards</p>
+<hr />
 <h2 id="development-guide">Development Guide</h2>
 <p>The backend is written in ASP.NET Core, the Admin Panel uses React, and the Schema Builder is developed with jQuery.</p>
-<h3 id="overview_4">Overview</h3>
+<h3 id="overview_5">Overview</h3>
 <p>The system comprises three main components:<br />
 1. <strong>Backend</strong> - Developed in ASP.NET Core.<br />
 2. <strong>Admin Panel</strong> - Built using React.<br />
@@ -2656,7 +3240,7 @@ app.RegisterMessageProducerHook();
 <li><strong>ASP.NET Core</strong></li>
 <li><strong>SqlKata</strong> (<a href="https://sqlkata.com/">SqlKata Documentation</a>)</li>
 </ul>
-<h4 id="architecture">Architecture</h4>
+<h4 id="architecture_1">Architecture</h4>
 <p>The backend is influenced by Domain-Driven Design (DDD).<br />
 <img alt="DDD Architecture" src="https://raw.githubusercontent.com/formcms/formcms/doc/doc/diagrams/ddd-architecture.png" /></p>
 <p>Code organization follows this diagram:<br />
@@ -2795,5 +3379,5 @@ Instead, FormCMS focuses on checking the input and output of RESTful API endpoin
 
 <!--
 MkDocs version : 1.6.1
-Build Date UTC : 2025-09-10 17:19:11.265633+00:00
+Build Date UTC : 2025-11-22 22:39:30.291347+00:00
 -->

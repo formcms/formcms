@@ -13,7 +13,7 @@ namespace FormCMS.Auth.Services;
 public class AssetAuthService( 
     IIdentityService identityService,
     IProfileService profileService,
-    KateQueryExecutor executor
+    ShardGroup shardGroup
     ):IAssetAuthService
 {
     public Asset PreAdd(Asset asset)
@@ -54,7 +54,7 @@ public class AssetAuthService(
         var query = new SqlKata.Query(Assets.TableName)
             .Where(nameof(Asset.Id).Camelize(), recordId)
             .Select(nameof(Asset.CreatedBy).Camelize());
-        var record = await executor.Single(query, CancellationToken.None);
+        var record = await shardGroup.PrimaryDao.Single(query, CancellationToken.None);
         if (record is null || record.StrOrEmpty(nameof(Asset.CreatedBy).Camelize()) != identityService.GetUserAccess()!.Id)
         {
             throw new ResultException(

@@ -9,19 +9,18 @@ namespace FormCMS.Subscriptions.Services;
 
 public class BillingService(
     IIdentityService  identityService,
-    IRelationDbDao dao,
-    KateQueryExecutor executor
+    ShardGroup shard
     ):IBillingService
 {
     public Task UpsertBill(Billing billing, CancellationToken ct)
-        => dao.UpdateOnConflict(Billings.TableName, billing.ToUpsertRecord(), [nameof(Billing.UserId).Camelize()], ct);
+        => shard.PrimaryDao.UpdateOnConflict(Billings.TableName, billing.ToUpsertRecord(), [nameof(Billing.UserId).Camelize()], ct);
 
     public async Task<Billing?> GetSubBilling(CancellationToken ct)
     {
         var user = identityService.GetUserAccess();
         if (user == null) return null;
         var query = Billings.ByUserId(user.Id);
-        var ret = await executor.Single(query, ct);
+        var ret = await shard.PrimaryDao.Single(query, ct);
         return ret?.ToObject<Billing>().Ok();
     }
 }

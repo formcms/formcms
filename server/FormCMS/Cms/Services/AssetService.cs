@@ -13,13 +13,12 @@ namespace FormCMS.Cms.Services;
 
 public class AssetService(
     IFileStore store,
-    KateQueryExecutor executor,
     IIdentityService identityService,
-    IRelationDbDao dao,
     IResizer resizer,
     IServiceProvider provider,
     HookRegistry hookRegistry,
-    SystemSettings systemSettings
+    SystemSettings systemSettings,
+    ShardGroup shardGroup
 ) : IAssetService
 {
     public XEntity GetEntity(bool withLinkCount)
@@ -41,12 +40,12 @@ public class AssetService(
     
     private async Task<Asset> Single(SqlKata.Query query, bool loadLink, CancellationToken ct = default)
     {
-        var record = await executor.Single(query, ct);
+        var record = await shardGroup.PrimaryDao.Single(query, ct);
         var asset = record?.ToObject<Asset>().Ok() ?? throw new ResultException("Asset not found");
         await hookRegistry.AssetPreSingle.Trigger(provider, new AssetPreSingleArgs(asset.Id));
         if (!loadLink) return asset;
         
-        var links = await executor.Many(AssetLinks.LinksByAssetId([asset.Id]), ct);
+        var links = await shardGroup.PrimaryDao.Many(AssetLinks.LinksByAssetId([asset.Id]), ct);
         var assetLinks = links.Select(x => x.ToObject<AssetLink>().Ok()).ToArray();
         return asset with { Links = assetLinks, LinkCount = links.Length };
     }
@@ -58,9 +57,9 @@ public class AssetService(
         filters = [..res.RefFilters];
         
         var query = Assets.List(offset, limit);
-        var items = await executor.Many(query, Assets.Columns, filters, sorts, ct);
+        var items = await shardGroup.PrimaryDao.Many(query, Assets.Columns, filters, sorts, ct);
         if (withLinkCount) await LoadLinkCount(items, ct);
-        var count = await executor.Count(Assets.Count(), Assets.Columns, filters, ct);
+        var count = await shardGroup.PrimaryDao.Count(Assets.Count(), Assets.Columns, filters, ct);
         return new ListResponse(items, count);
     }
 
@@ -69,7 +68,7 @@ public class AssetService(
         var userId= identityService.GetUserAccess()?.Id ?? throw new ResultException("Access denied");
         var info = await store.GetMetadata(path, ct)?? throw new ResultException("Metadata not found");
         
-        var record = await executor.Single(Assets.Single(path), ct);
+        var record = await shardGroup.PrimaryDao.Single(Assets.Single(path), ct);
         if (record is null)
         {
             var asset = new Asset(
@@ -85,13 +84,13 @@ public class AssetService(
         
             var res =await hookRegistry.AssetPreAdd.Trigger(provider, new AssetPreAddArgs(asset));
             asset = res.RefAsset;
-            await executor.BatchInsert(Assets.TableName, Assets.ToInsertRecords([asset]));
+            await shardGroup.PrimaryDao.BatchInsert(Assets.TableName, Assets.ToInsertRecords([asset]));
             await hookRegistry.AssetPostAdd.Trigger(provider, new AssetPostAddArgs(asset));
         }
         else
         {
             var updateQuery = Assets.UpdateFile((long)record[nameof(Asset.Id).Camelize()], fileName, info.Size, info.ContentType);
-            await executor.Exec(updateQuery, false, ct);
+            await shardGroup.PrimaryDao.Exec(updateQuery, ct);
         }
         return path;
     }
@@ -127,7 +126,7 @@ public class AssetService(
 
         await store.Upload(pairs,ct);
         //track those assets to reuse later
-        await executor.BatchInsert(Assets.TableName, assets.ToInsertRecords());
+        await shardGroup.PrimaryDao.BatchInsert(Assets.TableName, assets.ToInsertRecords());
         foreach (var asset in assets)
         {
             await hookRegistry.AssetPostAdd.Trigger(provider, new AssetPostAddArgs(asset));
@@ -143,11 +142,11 @@ public class AssetService(
         //make sure the asset to replace existing
         var asset = await Single(id, false,ct);
         file = file.IsImage() ? resizer.CompressImage(file) : file;
-        using var trans = await dao.BeginTransaction();
+        using var trans = await shardGroup.PrimaryDao.BeginTransaction();
         try
         {
             var updateQuery = Assets.UpdateFile(asset.Id, file.FileName, file.Length, file.ContentType);
-            await executor.Exec(updateQuery, false, ct);
+            await shardGroup.PrimaryDao.Exec(updateQuery, ct);
             await store.Upload([(asset.Path, file)],ct);
             trans.Commit();
         }
@@ -161,7 +160,7 @@ public class AssetService(
     public async Task UpdateMetadata(Asset asset, CancellationToken ct)
     {
         await hookRegistry.AssetPreUpdate.Trigger(provider,new AssetPreUpdateArgs(asset.Id));
-        await executor.Exec(asset.UpdateMetaData(), false, ct);
+        await shardGroup.PrimaryDao.Exec(asset.UpdateMetaData(), ct);
     }
 
     //foreign key will ensure only orphan assets can be deleted
@@ -169,10 +168,10 @@ public class AssetService(
     {
         var asset = await Single(id, false, ct);
         await hookRegistry.AssetPreDelete.Trigger(provider,new AssetPreDeleteArgs(asset));
-        using var trans = await dao.BeginTransaction();
+        using var trans = await shardGroup.PrimaryDao.BeginTransaction();
         try
         {
-            await executor.Exec(Assets.Deleted(id), false, ct);
+            await shardGroup.PrimaryDao.Exec(Assets.Deleted(id), ct);
             await store.Del(asset.Path,ct);
             await hookRegistry.AssetPostDelete.Trigger(provider,new AssetPostDeleteArgs(asset));
             trans.Commit();
@@ -190,7 +189,7 @@ public class AssetService(
         Record[] newLinks = [];
         if (newAssets.Length > 0)
         {
-            newLinks = await executor.Many(Assets.GetAssetIDsByPaths(newAssets), ct);
+            newLinks = await shardGroup.PrimaryDao.Many(Assets.GetAssetIDsByPaths(newAssets), ct);
             newLinks = await EnsurePathTracked(newAssets, newLinks, ct);
         }
 
@@ -199,11 +198,11 @@ public class AssetService(
             oldLinks.Select(x => (long)x[nameof(AssetLink.AssetId).Camelize()])
         );
 
-        await executor.BatchInsert(AssetLinks.TableName, AssetLinks.ToInsertRecords(entityName, id, toAdd));
+        await shardGroup.PrimaryDao.BatchInsert(AssetLinks.TableName, AssetLinks.ToInsertRecords(entityName, id, toAdd));
 
         if (toDel.Length > 0)
         {
-            await executor.Exec(AssetLinks.DeleteByEntityAndRecordId(entityName, id, toDel), false, ct);
+            await shardGroup.PrimaryDao.Exec(AssetLinks.DeleteByEntityAndRecordId(entityName, id, toDel), ct);
         }
     }
 
@@ -234,8 +233,8 @@ public class AssetService(
         }
 
         if (list.Count <= 0) return assetRecords;
-        await executor.BatchInsert(Assets.TableName, list.ToInsertRecords());
-        assetRecords = await executor.Many(Assets.GetAssetIDsByPaths(assetPaths), ct);
+        await shardGroup.PrimaryDao.BatchInsert(Assets.TableName, list.ToInsertRecords());
+        assetRecords = await shardGroup.PrimaryDao.Many(Assets.GetAssetIDsByPaths(assetPaths), ct);
 
         return assetRecords;
     }
@@ -243,7 +242,7 @@ public class AssetService(
     private async Task LoadLinkCount(Record[] items, CancellationToken ct)
     {
         var ids = items.Select(x => (long)x[nameof(Asset.Id).Camelize()]);
-        var dict = await executor.LoadDict(
+        var dict = await shardGroup.PrimaryDao.LoadDict(
             AssetLinks.CountByAssetId(ids),
             nameof(AssetLink.AssetId).Camelize(),
             nameof(Asset.LinkCount).Camelize(), ct);
@@ -256,7 +255,7 @@ public class AssetService(
 
     public async  Task UpdateHlsProgress(Asset asset, CancellationToken ct)
     {
-        await executor.Exec(asset.UpdateHlsProgress(), false, ct);
+        await shardGroup.PrimaryDao.Exec(asset.UpdateHlsProgress(), ct);
     }
 
     public bool IsValidSignature(IFormFile file)

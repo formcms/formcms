@@ -17,7 +17,7 @@ public sealed class DataPublishingWorker(
             logger.LogInformation("Wakeup Publishing Worker...");
 
             using var scope = serviceScopeFactory.CreateScope();
-            var queryExecutor = scope.ServiceProvider.GetRequiredService<KateQueryExecutor>();
+            var queryExecutor = scope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao;
             try
             {
                 var query = SchemaHelper.ByNameAndType(SchemaType.Entity, null, PublicationStatus.Published);
@@ -37,7 +37,7 @@ public sealed class DataPublishingWorker(
                         try
                         {
                             count += await queryExecutor.Exec(
-                                entity.Settings.Entity!.PublishAllScheduled(), false,ct);
+                                entity.Settings.Entity!.PublishAllScheduled(), ct);
                         }
                         catch (Exception e)
                         {

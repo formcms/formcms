@@ -7,6 +7,7 @@ using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using Humanizer;
+using NUlid;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 using Column = FormCMS.Utils.DataModels.Column;
 using Query = SqlKata.Query;
@@ -16,10 +17,10 @@ namespace FormCMS.Comments.Models;
 public record Comment(
     string EntityName,
     long RecordId,
-    string CreatedBy,
-    string Content,
-    long Id = 0,
-    long? Parent = null,
+    string CreatedBy ="",
+    string Content="",
+    string Id = "", //use recordId +  ulid, make it easy for shard data
+    string? Parent = null,
     string? Mention = null,
     DateTime PublishedAt = default,
     DateTime CreatedAt = default,
@@ -34,12 +35,12 @@ public static class CommentHelper
     public const string CommentContentTagQuery = "commentContentTagQuery";
 
     public static readonly Column[] Columns = [
-        ColumnHelper.CreateCamelColumn<Comment>(x => x.Id, ColumnType.Id),
+        ColumnHelper.CreateCamelColumn<Comment>(x => x.Id,ColumnType.StringPrimaryKey,100),
         ColumnHelper.CreateCamelColumn<Comment, string>(x => x.EntityName),
         ColumnHelper.CreateCamelColumn<Comment, long>(x => x.RecordId),
         ColumnHelper.CreateCamelColumn<Comment, string>(x => x.CreatedBy),
         ColumnHelper.CreateCamelColumn<Comment>(x => x.Content, ColumnType.Text),
-        ColumnHelper.CreateCamelColumn<Comment>(x => x.Parent!, ColumnType.Int),
+        ColumnHelper.CreateCamelColumn<Comment>(x => x.Parent!, ColumnType.String),
         ColumnHelper.CreateCamelColumn<Comment>(x => x.Mention!, ColumnType.String),
         DefaultColumnNames.Deleted.CreateCamelColumn(ColumnType.Boolean),
         DefaultAttributeNames.PublishedAt.CreateCamelColumn(ColumnType.CreatedTime),
@@ -50,10 +51,10 @@ public static class CommentHelper
 
     public static readonly Entity Entity = new (
         Attributes: [
-            new Attribute(nameof(Comment.Id).Camelize(),DataType:DataType.Int),
+            new Attribute(nameof(Comment.Id).Camelize()),
             new Attribute(nameof(Comment.EntityName).Camelize(),DisplayType:DisplayType.Number),
             new Attribute(nameof(Comment.RecordId).Camelize(),DataType:DataType.Int,DisplayType:DisplayType.Number),
-            new Attribute(nameof(Comment.Parent).Camelize(),DataType:DataType.Int,DisplayType:DisplayType.Number),
+            new Attribute(nameof(Comment.Parent).Camelize(),DataType:DataType.Text,DisplayType:DisplayType.Text),
             new Attribute(nameof(Comment.CreatedBy).Camelize(),DataType: DataType.Lookup, Options:PublicUserInfos.Entity.Name),
             new Attribute(nameof(Comment.Content).Camelize()),
             new Attribute(nameof(Comment.CreatedAt).Camelize(),DataType: DataType.Datetime,DisplayType:DisplayType.LocalDatetime),
@@ -88,6 +89,18 @@ public static class CommentHelper
         nameof(Comment.CreatedAt).Camelize(),
         nameof(Comment.UpdatedAt).Camelize()
     ];
+
+    public static string GetSourceKey(this Comment comment) => $"{comment.EntityName}_{comment.RecordId}";
+    public static Comment Parse(string  commentId)
+    {
+        var parts =  commentId.Split('_');
+        return new Comment(parts[0], long.Parse(parts[1]), Id: parts[2] );
+    }
+
+    public static Comment AssignId(this Comment comment) => 
+        comment with { Id = $"{comment.EntityName}_{comment.RecordId}_{Ulid.NewUlid()}"};
+
+   
     public static Query List(ValidFilter[] filters,Sort[] sorts, ValidSpan span, ValidPagination pg)
     {
         var query = new Query(Entity.TableName)
@@ -133,14 +146,14 @@ public static class CommentHelper
         return query;
     }
     
-    public static Query Multiple(long[] ids)
+    public static Query Multiple(string[] ids)
     {
         return new Query(Entity.TableName)
             .WhereIn(nameof(Comment.Id).Camelize(), ids)
             .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false)
             .Select(Fields);
     }
-    public static Query Single(long id)
+    public static Query Single(string id)
     {
         return new Query(Entity.TableName)
             .Where(nameof(Comment.Id).Camelize(), id)
@@ -153,6 +166,7 @@ public static class CommentHelper
             RecordExtensions.FormObject(
                 comment, whiteList:
                 [
+                    nameof(Comment.Id),
                     nameof(Comment.EntityName),
                     nameof(Comment.RecordId),
                     nameof(Comment.CreatedBy),
@@ -160,7 +174,7 @@ public static class CommentHelper
                     nameof(Comment.Parent),
                     nameof(Comment.Mention)
                 ]
-            ),true);
+            ));
     
     public static Query Update(this Comment comment)
         => new Query(Entity.TableName)
@@ -171,7 +185,7 @@ public static class CommentHelper
                 [comment.Content]
             );
 
-    public static Query Delete(string userId, long id)
+    public static Query Delete(string userId, string id)
     => new Query(Entity.TableName)
         .Where(nameof(Comment.CreatedBy).Camelize(), userId)
         .Where(nameof(Comment.Id).Camelize(), id)

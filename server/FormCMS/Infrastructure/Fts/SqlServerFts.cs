@@ -1,12 +1,20 @@
 using System.Data;
+using FormCMS.Utils.LoadBalancing;
 using Microsoft.Data.SqlClient;
+using Microsoft.Data.Sqlite;
 
 namespace FormCMS.Infrastructure.Fts;
 
 // SQL Server FTS Implementation
-public class SqlServerFts(SqlConnection conn) : IFullTextSearch
+public class SqlServerFts(
+    SqlConnection primary, 
+    SqlConnection[] replicas,
+    ILogger<SqlServerFts> logger
+    ) : IFullTextSearch
 {
-    private SqlConnection GetConnection()
+    private readonly RoundRobinBalancer<SqlConnection,SqlConnection> _balancer = new (primary, replicas);
+
+    private SqlConnection GetConnection(SqlConnection conn)
     {
         if (conn.State != ConnectionState.Open)
         {
@@ -36,14 +44,14 @@ public class SqlServerFts(SqlConnection conn) : IFullTextSearch
         {
             // Step 1: Check if full-text catalog exists
             const string checkCatalogSql = "SELECT COUNT(*) FROM sys.fulltext_catalogs WHERE name = @catalog;";
-            await using var checkCatalogCmd = new SqlCommand(checkCatalogSql, GetConnection());
+            await using var checkCatalogCmd = new SqlCommand(checkCatalogSql, GetConnection(primary));
             checkCatalogCmd.Parameters.AddWithValue("@catalog", catalogName);
             var catalogExists = Convert.ToInt32(await checkCatalogCmd.ExecuteScalarAsync(ct)) > 0;
 
             if (!catalogExists)
             {
                 var createCatalogSql = $"CREATE FULLTEXT CATALOG {catalogName};";
-                await using var createCatalogCmd = new SqlCommand(createCatalogSql, GetConnection());
+                await using var createCatalogCmd = new SqlCommand(createCatalogSql, GetConnection(primary));
                 await createCatalogCmd.ExecuteNonQueryAsync(ct);
             }
 
@@ -53,7 +61,7 @@ public class SqlServerFts(SqlConnection conn) : IFullTextSearch
                                              FROM sys.fulltext_indexes 
                                              WHERE object_id = OBJECT_ID(@table);
                                          """;
-            await using var checkIndexCmd = new SqlCommand(checkIndexSql, GetConnection());
+            await using var checkIndexCmd = new SqlCommand(checkIndexSql, GetConnection(primary));
             checkIndexCmd.Parameters.AddWithValue("@table", table);
             var indexExists = Convert.ToInt32(await checkIndexCmd.ExecuteScalarAsync(ct)) > 0;
 
@@ -71,7 +79,7 @@ public class SqlServerFts(SqlConnection conn) : IFullTextSearch
                                                 WHERE object_id = OBJECT_ID(@table) 
                                                 AND is_primary_key = 1;
                                             """;
-            await using var getPrimaryKeyCmd = new SqlCommand(getPrimaryKeySql, GetConnection());
+            await using var getPrimaryKeyCmd = new SqlCommand(getPrimaryKeySql, GetConnection(primary));
             getPrimaryKeyCmd.Parameters.AddWithValue("@table", table);
             var primaryKeyName = await getPrimaryKeyCmd.ExecuteScalarAsync(ct) as string;
 
@@ -88,11 +96,11 @@ public class SqlServerFts(SqlConnection conn) : IFullTextSearch
                            WITH CHANGE_TRACKING AUTO;
                        """;
 
-            await using var cmd = new SqlCommand(sql, GetConnection());
+            await using var cmd = new SqlCommand(sql, GetConnection(primary));
             await cmd.ExecuteNonQueryAsync(ct);
 
             // Step 5: Verify the full-text index was created
-            await using var verifyIndexCmd = new SqlCommand(checkIndexSql, GetConnection());
+            await using var verifyIndexCmd = new SqlCommand(checkIndexSql, GetConnection(primary));
             verifyIndexCmd.Parameters.AddWithValue("@table", table);
             var indexCreated = Convert.ToInt32(await verifyIndexCmd.ExecuteScalarAsync(ct)) > 0;
 
@@ -135,7 +143,7 @@ public class SqlServerFts(SqlConnection conn) : IFullTextSearch
                            VALUES ({parameters});
                    """;
 
-        await using var cmd = new SqlCommand(sql, GetConnection());
+        await using var cmd = new SqlCommand(sql, GetConnection(primary));
         foreach (var kv in item)
         {
             cmd.Parameters.AddWithValue(kv.Key, kv.Value ?? DBNull.Value);
@@ -152,7 +160,7 @@ public class SqlServerFts(SqlConnection conn) : IFullTextSearch
         var where = string.Join(" AND ", keyValues.Keys.Select(k => $"[{k}]=@{k}"));
         var sql = $"DELETE FROM {tableName} WHERE {where}";
 
-        await using var cmd = new SqlCommand(sql, GetConnection());
+        await using var cmd = new SqlCommand(sql, GetConnection(primary));
         foreach (var kv in keyValues)
         {
             cmd.Parameters.AddWithValue(kv.Key, kv.Value ?? DBNull.Value);
@@ -232,7 +240,7 @@ public class SqlServerFts(SqlConnection conn) : IFullTextSearch
             FETCH NEXT @limit ROWS ONLY;
         """;
 
-        await using var cmd = new SqlCommand(sql, GetConnection());
+        await using var cmd = new SqlCommand(sql, GetConnection(_balancer.Next));
         // Add parameters for each full-text field query
         foreach (var f in ftsFields)
         {
@@ -328,7 +336,7 @@ public class SqlServerFts(SqlConnection conn) : IFullTextSearch
                            FETCH NEXT @limit ROWS ONLY;
                        """;
 
-            await using var cmd = new SqlCommand(sql, GetConnection());
+            await using var cmd = new SqlCommand(sql, GetConnection(_balancer.Next));
             // Use the first query term for CONTAINSTABLE; consider combining terms if needed
             cmd.Parameters.AddWithValue("searchQuery", ftsFields.First().Query);
 
@@ -371,5 +379,14 @@ public class SqlServerFts(SqlConnection conn) : IFullTextSearch
                 $"Error executing search on table {tableName}: {ex.Message} (Error Number: {ex.Number}, State: {ex.State})",
                 ex);
         }
+    }
+    public void Dispose()
+    {
+        primary.Dispose();
+        foreach (var replica in replicas)
+        {
+            replica.Dispose();
+        }
+        logger.LogTrace("SqlServerFts disposed.");
     }
 }

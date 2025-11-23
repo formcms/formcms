@@ -8,10 +8,10 @@ using Humanizer;
 namespace FormCMS.Cms.Services;
 
 public class ChunkUploadService(
-    IFileStore fileStore,
-    KateQueryExecutor executor,
     IIdentityService identityService,
-    IAssetService assetService
+    IAssetService assetService,
+    ShardGroup shardGroup,
+    IFileStore fileStore
     ):IChunkUploadService
 {
     
@@ -31,10 +31,10 @@ public class ChunkUploadService(
         if (identityService.GetUserAccess()?.CanAccessAdmin != true) throw new ResultException("User not found");
         var userId = identityService.GetUserAccess()!.Id; 
         var session = new UploadSession(userId, fileName, fileSize, FileUtils.GetFilePath(fileName));
-        var record = await executor.Single(UploadSessions.Find(userId, fileName, fileSize),ct);
+        var record = await shardGroup.PrimaryDao.Single(UploadSessions.Find(userId, fileName, fileSize),ct);
         if (record is null)
         {
-            await executor.Exec(session.Insert(), false,ct);
+            await shardGroup.PrimaryDao.Exec(session.Insert(), ct);
             return new ChunkStatus(session.Path, 0);
         }
         
@@ -48,6 +48,6 @@ public class ChunkUploadService(
         if (identityService.GetUserAccess()?.CanAccessAdmin != true) throw new ResultException("User not found");
         await fileStore.CommitChunks(path, ct);
         await assetService.AddWithAction(path, fileName, ct);
-        await executor.Exec(UploadSessions.Delete(path), false, ct);
+        await shardGroup.PrimaryDao.Exec(UploadSessions.Delete(path), ct);
     }
 }

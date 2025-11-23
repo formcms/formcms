@@ -12,7 +12,7 @@ import {heroB} from "./blocks/hero-b.js";
 import {threeLayerMenu} from "./blocks/three-layer-menu.js";
 import {breadcrumbs} from "./blocks/breadcrumbs.js";
 import {carousel} from "./blocks/carousel.js";
-import {activityBar}from "./blocks/activity-bar.js"
+import {engagementBar}from "./blocks/engagement-bar.js"
 import {topList} from "./blocks/top-list.js";
 import {featuredList} from "./blocks/featured-list.js";
 import {comments} from "./blocks/comments.js";
@@ -42,7 +42,7 @@ export const customBlocks = [
     threeLayerMenu,
     breadcrumbs,
     carousel,
-    activityBar,
+    engagementBar,
     featuredList,
     topList,
     comments,

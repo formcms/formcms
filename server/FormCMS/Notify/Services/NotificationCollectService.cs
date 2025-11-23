@@ -5,18 +5,18 @@ using Humanizer;
 namespace FormCMS.Notify.Services;
 
 public class NotificationCollectService(
-    IRelationDbDao dao,
-    KateQueryExecutor executor
+    NotificationContext ctx
 ):INotificationCollectService
 {
     public async Task Insert(Notification notification, CancellationToken ct)
     {
-        await executor.Exec(notification.Insert(), false,ct);
+        var userId = notification.UserId;
+        await ctx.UserNotificationShardRouter.PrimaryDao(userId).Exec(notification.Insert(),ct);
         var condition = new Dictionary<string,object>
         {
             [nameof(NotificationCount.UserId).Camelize()] = notification.UserId
         };
-        await dao.Increase(
+        await ctx.UserNotificationShardRouter.PrimaryDao(userId).Increase(
             NotificationCountExtensions.TableName, 
             condition,
             nameof(NotificationCount.UnreadCount).Camelize(),0,1

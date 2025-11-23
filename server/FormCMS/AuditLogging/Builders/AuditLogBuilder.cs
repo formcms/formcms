@@ -6,7 +6,6 @@ using FormCMS.AuditLogging.Services;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.RelationDbDao;
-using FormCMS.Utils.RecordExt;
 
 namespace FormCMS.AuditLogging.Builders;
 
@@ -24,7 +23,7 @@ public sealed class AuditLogBuilder(ILogger<AuditLogBuilder> logger )
 
     private static void AddCamelEnumConverter<T>(Microsoft.AspNetCore.Http.Json.JsonOptions options) where T : struct, Enum
         => options.SerializerOptions.Converters.Add(new JsonStringEnumConverter<T>(JsonNamingPolicy.CamelCase));
-    public async Task<WebApplication> UseAuditLog(WebApplication app)
+    public Task UseAuditLog(WebApplication app, IServiceScope scope)
     {
         var options = app.Services.GetRequiredService<SystemSettings>();
         var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
@@ -33,16 +32,13 @@ public sealed class AuditLogBuilder(ILogger<AuditLogBuilder> logger )
         app.Services.GetRequiredService<HookRegistry>().RegisterAuditLogHooks();
         app.Services.GetRequiredService<PluginRegistry>().RegisterAuditLogPlugins();
         
-        using var scope = app.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<DatabaseMigrator>().EnsureAuditLogTables();
-        
         logger.LogInformation(
             """
             *********************************************************
             Using AuditLog
             *********************************************************
             """);
-        return app;
+        return scope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao.EnsureAuditLogTables();
     }
 
 }

@@ -1,11 +1,12 @@
-using FormCMS.Activities.Workers;
 using FormCMS.Auth.Models;
 using FormCMS.Cms.Builders;
 using FormCMS.Cms.Workers;
 using FormCMS.Core.Auth;
+using FormCMS.Engagements.Workers;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.Fts;
+using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Notify.Models;
 using FormCMS.Notify.Services;
 using FormCMS.Notify.Workers;
@@ -16,6 +17,7 @@ using FormCMS.Video.Workers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using EventHandler = FormCMS.Engagements.Workers.EventHandler;
 
 namespace FormCMS.Course;
 
@@ -31,6 +33,10 @@ public class Program
 
         var dbConnStr = builder.Configuration.GetConnectionString(dbProvider)
                         ?? throw new Exception($"Connection string {dbProvider} not found");
+
+        var replicaConnStrs = builder.Configuration.GetSection("ReplicaConnectionStrings")
+                                  .GetSection(dbProvider)
+                                  .Get<string[]>();
 
         var apiKey = builder.Configuration.GetValue<string>("Authentication:ApiKey")
                      ?? throw new Exception("Authentication:ApiKey not found");
@@ -81,26 +87,24 @@ public class Program
             builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(GetAuthConfig());
             builder.Services.AddAuditLog();
 
-            var enableActivityBuffer = builder.Configuration.GetValue<bool>("EnableActivityBuffer");
-            builder.Services.AddActivity(enableActivityBuffer);
+            var enableEngagementBuffer = builder.Configuration.GetValue<bool>("EnableEngagementBuffer");
+            var engagementShards = builder.Configuration.GetSection("EngagementShards").Get<ShardConfig[]>();
+            builder.Services.AddEngagement(enableEngagementBuffer,engagementShards);
 
-            builder.Services.AddComments();
-            builder.Services.AddNotify();
-            builder.Services.AddSearch();
+            var commentShards = builder.Configuration.GetSection("CommentShards").Get<ShardConfig[]>();
+            builder.Services.AddComments(commentShards);
+
+            var notifyShards = builder.Configuration.GetSection("NotifyShards").Get<ShardConfig[]>();
+            builder.Services.AddNotify(notifyShards);
+
+            var ftsProvider = builder.Configuration.GetValue<string>("FtsProvider") ?? dbProvider;
+            var ftsPrimaryConnString = builder.Configuration.GetValue<string>("FtsPrimaryConnString") ?? dbConnStr;
+            var ftsReplicaConnStrings = builder.Configuration.GetSection("FtsReplicaConnStrings").Get<string[]>();
+            builder.Services.AddSearch(Enum.Parse<FtsProvider>(ftsProvider), ftsPrimaryConnString, ftsReplicaConnStrings);
 
             builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
             builder.Services.AddSubscriptions();
             builder.Services.AddVideo();
-
-            var ftsProvider = builder.Configuration.GetValue<string>(Constants.FtsProvider) ?? dbProvider;
-            _ = ftsProvider switch
-            {
-                Constants.Mysql => builder.Services.AddScoped<IFullTextSearch, MysqlFts>(),
-                Constants.Sqlite => builder.Services.AddScoped<IFullTextSearch, SqliteFts>(),
-                Constants.Postgres => builder.Services.AddScoped<IFullTextSearch, PostgresFts>(),
-                Constants.SqlServer => builder.Services.AddScoped<IFullTextSearch, SqlServerFts>(),
-                _ => throw new Exception("Database provider not found")
-            };
         }
 
         void AddMessageProducer()
@@ -115,7 +119,7 @@ public class Program
 
             // For distributed deployments, it's recommended to runEvent Handling services in a separate hosted App.
             // In this case, we register them within the web application to share the in-memory channel bus.
-            builder.Services.AddHostedService<ActivityEventHandler>();
+            builder.Services.AddHostedService<EventHandler>();
             builder.Services.AddSingleton(new NotifySettings(["comment", "like"]));
             builder.Services.AddScoped<INotificationCollectService, NotificationCollectService>();
             builder.Services.AddHostedService<NotificationEventHandler>();
@@ -152,6 +156,16 @@ public class Program
         {
             await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]).Ok();
             await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user1@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user2@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user3@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user4@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user5@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user6@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user7@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user8@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user9@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("user10@cms.com", "Admin1!", [Roles.Admin]).Ok();
         }
 
         void AddDbContext()
@@ -175,10 +189,10 @@ public class Program
         {
             _ = dbProvider switch
             {
-                Constants.Sqlite => builder.Services.AddSqliteCms(dbConnStr),
-                Constants.Postgres => builder.Services.AddPostgresCms(dbConnStr),
-                Constants.SqlServer => builder.Services.AddSqlServerCms(dbConnStr),
-                Constants.Mysql => builder.Services.AddMysqlCms(dbConnStr),
+                Constants.Sqlite => builder.Services.AddSqliteCms(dbConnStr, followConnStrings: replicaConnStrs),
+                Constants.Postgres => builder.Services.AddPostgresCms(dbConnStr, followConnStrings: replicaConnStrs),
+                Constants.SqlServer => builder.Services.AddSqlServerCms(dbConnStr, followConnStrings: replicaConnStrs),
+                Constants.Mysql => builder.Services.AddMysqlCms(dbConnStr, followConnStrings: replicaConnStrs),
                 _ => throw new Exception("Database provider not found")
             };
         }

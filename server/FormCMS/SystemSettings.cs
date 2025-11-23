@@ -1,21 +1,9 @@
 using FormCMS.Infrastructure.FileStore;
+using FormCMS.Infrastructure.RelationDbDao;
 
 namespace FormCMS;
-public enum DatabaseProvider
-{
-    Sqlite,
-    Postgres,
-    SqlServer,
-    Mysql,
-}
 
-public enum FtsProvider
-{
-    Mysql,
-    Postgres,
-    Sql,
-    ElasticSearch,
-}
+
 public class ImageCompressionOptions
 {
     public int MaxWidth { get; set; } = 1200;
@@ -45,9 +33,12 @@ public sealed class SystemSettings
     public TimeSpan EntitySchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);
     public TimeSpan PageSchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);
     public TimeSpan QuerySchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);
-    public int DatabaseQueryTimeout { get; set; } = 30;
     public ImageCompressionOptions ImageCompression { get; set; } = new();
     public RouteOptions RouteOptions { get; set; } = new();
+
+    // Database configuration
+    public DatabaseProvider DatabaseProvider { get; set; }
+    public int ReplicaCount { get; set; }
     public string[] KnownPaths { get; set; } = [];
 
     public LocalFileStoreOptions LocalFileStoreOptions { get; } = new(

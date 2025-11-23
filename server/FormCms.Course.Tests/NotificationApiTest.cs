@@ -9,19 +9,18 @@ namespace FormCMS.Course.Tests;
 public class NotificationApiTest(AppFactory factory)
 {
     private bool _ = factory.LoginAndInitTestData();
-    private const long RecordId = 31;
 
     [Fact]
     public async Task ListNotification()
     {
         var comment = new Comment(
             EntityName:TestEntityNames.TestPost.Camelize(),
-            RecordId: RecordId,
+            RecordId: BlogsTestData.NotificationTestPostId,
             CreatedBy:"",
             Content:"test"
         );
         await factory.CommentsApiClient.Add(comment).Ok();
-        Thread.Sleep(TimeSpan.FromSeconds(1));
+        Thread.Sleep(TimeSpan.FromSeconds(2));
         var count =await factory.NotifyApiClient.UnreadCount().Ok();
         Assert.True(count > 0);
 

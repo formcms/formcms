@@ -68,7 +68,104 @@ public static class EntityConstants
 
 public static class EntityHelper
 {
- 
+    public static Entity AddLookUp(this Entity entity, string lookup)
+    {
+        if (string.IsNullOrWhiteSpace(lookup)) return entity;
+        var attr = new Attribute
+        (
+            Field: lookup,
+            Options: lookup,
+            Header: lookup,
+            InList: true,
+            InDetail: true,
+            DataType: DataType.Lookup,
+            DisplayType: DisplayType.Lookup
+        );
+        return entity with{Attributes = entity.Attributes.Add(attr)};
+    }
+
+    public static Entity AddJunction(this Entity entity, string junction)
+    {
+        if (string.IsNullOrWhiteSpace(junction)) return entity;
+       var attr = new Attribute
+        (
+            Field: junction,
+            Options: junction,
+            Header: junction,
+            DataType: DataType.Junction,
+            DisplayType: DisplayType.Picklist,
+            InDetail: true
+        );
+        return entity with { Attributes = entity.Attributes.Add(attr) };
+    }
+    
+    public static Entity AddStr(this Entity entity, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(fieldName)) return entity;
+        var attr = new Attribute
+        (
+            Field: fieldName,
+            DataType: DataType.String,
+            DisplayType: DisplayType.Text,
+            InDetail: true,
+            InList: true
+        );
+        return entity with { Attributes = entity.Attributes.Add(attr) };
+    }
+    public static Entity AddImage(this Entity entity, string fieldName)
+    {
+        if (string.IsNullOrWhiteSpace(fieldName)) return entity;
+        var attr = new Attribute
+        (
+            Field: fieldName,
+            DataType: DataType.String,
+            DisplayType: DisplayType.Image,
+            InDetail: true,
+            InList: true
+        );
+        return entity with { Attributes = entity.Attributes.Add(attr) };
+    }
+
+    public static Entity AddCollection(this Entity entity, string collection, string linkAttribute)
+    {
+        if (string.IsNullOrWhiteSpace(collection)) return entity;
+        var attr = new Attribute
+        (
+            Field: collection,
+            Options: $"{collection}.{linkAttribute}",
+            Header: collection,
+            DataType: DataType.Collection,
+            DisplayType: DisplayType.EditTable,
+            InDetail: true
+        );
+        return entity with { Attributes = entity.Attributes.Add(attr) };
+    }
+
+    
+    public static Entity CreateSimpleEntity( string entityName, string field, bool needPublish)
+    {
+        var attr = new List<Attribute>([
+            new Attribute
+            (
+                Field: field,
+                Header: field
+            )
+        ]);
+
+        var entity = new Entity
+        (
+            Name: entityName,
+            TableName: entityName,
+            DisplayName: entityName,
+            DefaultPageSize: EntityConstants.DefaultPageSize,
+            PrimaryKey: "id",
+            LabelAttributeName: field,
+            DefaultPublicationStatus: needPublish ?PublicationStatus.Draft:PublicationStatus.Published,
+            Attributes: [..attr]
+        );
+        return entity;
+    } 
+    
     public static LoadedEntity ToLoadedEntity(this Entity entity)
     {
         var attributes = entity.Attributes.Select(x => x.ToLoaded(entity.TableName)).ToArray();
@@ -118,7 +215,8 @@ public static class EntityHelper
     }
     public static SqlKata.Query PublishedAt(this LoadedEntity entity, long recordId)
     {
-        return entity.Basic().Where(entity.PrimaryKey, recordId)
+        return entity.Basic()
+            .Where(entity.PrimaryKey, recordId)
             .Select(DefaultAttributeNames.PublishedAt.Camelize());
     }
     public static Result<SqlKata.Query> SingleQuery(

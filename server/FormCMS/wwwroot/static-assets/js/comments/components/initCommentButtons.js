@@ -10,7 +10,7 @@ export function initCommentButtons(dataList, render) {
     
     commentContainers?.forEach(commentContainer => {
         const id = commentContainer.getAttribute('__record_id');
-        const activityBar = commentContainer.querySelector(':scope > [data-component="activity-bar"]');
+        const activityBar = commentContainer.querySelector(':scope > [data-component="engagement-bar"]');
         
         const replyButton = activityBar.querySelector(':scope > [data-component="comment-reply"]');
         if (replyButton) replyButton.addEventListener('click', () => replyComment(commentContainer, id,  render));

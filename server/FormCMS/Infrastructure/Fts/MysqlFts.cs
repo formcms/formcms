@@ -1,11 +1,13 @@
 using System.Data;
+using FormCMS.Utils.LoadBalancing;
 using MySqlConnector;
 
 namespace FormCMS.Infrastructure.Fts;
 
-public class MysqlFts(MySqlConnection conn) : IFullTextSearch
+public class MysqlFts(MySqlConnection primary,MySqlConnection[] replicas, ILogger<MysqlFts> logger) : IFullTextSearch
 {
-    private MySqlConnection GetConnection()
+    private readonly RoundRobinBalancer<MySqlConnection,MySqlConnection> _balancer = new (primary, replicas);
+    private MySqlConnection GetConnection(MySqlConnection conn)
     {
         if (conn.State != ConnectionState.Open)
         {
@@ -46,7 +48,7 @@ public class MysqlFts(MySqlConnection conn) : IFullTextSearch
                                       AND index_name = @index;
                                     """;
 
-            await using (var checkCmd = new MySqlCommand(checkSql, GetConnection()))
+            await using (var checkCmd = new MySqlCommand(checkSql, GetConnection(primary)))
             {
                 checkCmd.Parameters.AddWithValue("@table", table);
                 checkCmd.Parameters.AddWithValue("@index", indexName);
@@ -62,7 +64,7 @@ public class MysqlFts(MySqlConnection conn) : IFullTextSearch
                        ADD FULLTEXT `{indexName}` ({field});
                        """;
 
-            await using var cmd = new MySqlCommand(sql, GetConnection());
+            await using var cmd = new MySqlCommand(sql, GetConnection(primary));
             await cmd.ExecuteNonQueryAsync(ct);           
         }
     }
@@ -90,7 +92,7 @@ public class MysqlFts(MySqlConnection conn) : IFullTextSearch
                    ON DUPLICATE KEY UPDATE {updates}
                    """;
 
-        await using var cmd = new MySqlCommand(sql, GetConnection());
+        await using var cmd = new MySqlCommand(sql, GetConnection(_balancer.Next));
 
         foreach (var kv in item)
         {
@@ -111,7 +113,7 @@ public class MysqlFts(MySqlConnection conn) : IFullTextSearch
         var where = string.Join(" AND ", keyValues.Keys.Select(k => $"{k}=@{k}"));
         var sql = $"DELETE FROM {tableName} WHERE {where}";
 
-        await using var cmd = new MySqlCommand(sql, GetConnection());
+        await using var cmd = new MySqlCommand(sql, GetConnection(primary));
 
         foreach (var kv in keyValues)
         {
@@ -173,7 +175,7 @@ public class MysqlFts(MySqlConnection conn) : IFullTextSearch
                    OFFSET @offset;
                    """;
 
-        await using var cmd = new MySqlCommand(sql, GetConnection());
+        await using var cmd = new MySqlCommand(sql, GetConnection(_balancer.Next));
 
         // Bind FTS parameters
         foreach (var f in ftsFields)
@@ -208,5 +210,14 @@ public class MysqlFts(MySqlConnection conn) : IFullTextSearch
         }
 
         return results.ToArray();
+    }
+    public void Dispose()
+    {
+        primary.Dispose();
+        foreach (var replica in replicas)
+        {
+            replica.Dispose();
+        }
+        logger.LogTrace("MysqlFts disposed.");
     }
 }

@@ -7,7 +7,7 @@ public record SearchHit(Record Document, double Score);
 public record FtsField(string Name, string Query, int Weight);
 
 // Full-text search abstraction
-public interface IFullTextSearch
+public interface IFullTextSearch: IDisposable
 {
     Task IndexAsync(string tableName, string[] keyColumns,string[] ftsColumns, Record record);
 

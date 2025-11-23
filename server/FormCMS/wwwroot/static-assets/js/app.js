@@ -1,5 +1,5 @@
-import {trackVisit} from "./services/activityService.js";
-import {renderActivityBar} from "./activities/activity.js";
+import {trackVisit} from "./services/engagementService.js";
+import {renderEngagementBar} from "./engagements/engagement.js";
 import {loadCookieBanner} from "./cookies/cookies.js";
 import {renderComments} from "./comments/comment.js";
 import {formatHtmlElement} from "./formatter/formatter.js";
@@ -15,7 +15,7 @@ loadCookieBanner()
 
 render(document);
 function render(ele){
-    renderActivityBar(ele);
+    renderEngagementBar(ele);
     renderComments(ele, render);
     formatHtmlElement(ele);
     renderPagination(ele, render);

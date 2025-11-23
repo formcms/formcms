@@ -14,7 +14,7 @@ export const topList = {
                     <a href="/page/{{recordId}}" data-title="true" class="block">
                         <h3 class="text-lg font-serif font-extrabold text-gray-800 dark:text-gray-200 hover:text-blue-600 dark:hover:text-blue-400 transition-colors duration-200">{{title}}</h3>
                     </a>
-                    <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-2" data-component="activity-bar" data-gjs-type="activity-bar">
+                    <div class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-2" data-component="engagement-bar" data-gjs-type="engagement-bar">
                         <button data-component="share-button" class="group cursor-pointer flex items-center gap-1 min-w-[50px] hover:text-blue-500 dark:hover:text-blue-400 transition-colors duration-200">
                             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" viewBox="2.5 3.5 14 14" class="h-4 w-4 text-gray-500 dark:text-gray-400">
                                 <path d="M9.58464 5.25L10.418 8.16667C9.58464 8.16667 7.91797 8.16667 6.2513 9.83333C4.77816 11.3065 4.16797 13.5833 4.16797 15.6667C5.0013 14.4167 6.12316 13.0544 7.08464 12.3333C8.30547 11.4177 9.58464 11.0833 10.418 11.0833L9.58464 14.4167L15.8346 9.83333L9.58464 5.25Z" stroke-linejoin="round"></path>

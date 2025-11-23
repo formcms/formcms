@@ -51,79 +51,10 @@ public class SchemaApiClient (HttpClient client)
         string linkAttribute = ""
     )
         => EnsureEntity(
-            CreateSimpleEntity(entityName, field, needPublish, lookup, junction, collection, linkAttribute)
+            EntityHelper.CreateSimpleEntity(entityName, field, needPublish).AddLookUp(lookup).AddCollection(collection,linkAttribute).AddJunction(junction)
         );
 
-    public Entity CreateSimpleEntity(
-        string entityName, 
-        string field, 
-        bool needPublish,
-        string lookup = "",
-        string junction = "",
-        string collection = "", 
-        string linkAttribute = "")
-    {
-        var attr = new List<Attribute>([
-            new Attribute
-            (
-                Field: field,
-                Header: field
-            )
-
-        ]);
-        if (!string.IsNullOrWhiteSpace(lookup))
-        {
-            attr.Add(new Attribute
-            (
-                Field: lookup,
-                Options: lookup,
-                Header: lookup,
-                InList: true,
-                InDetail: true,
-                DataType: DataType.Lookup,
-                DisplayType: DisplayType.Lookup
-            ));
-        }
-
-        if (!string.IsNullOrWhiteSpace(junction))
-        {
-            attr.Add(new Attribute
-            (
-                Field: junction,
-                Options: junction,
-                Header: junction,
-                DataType: DataType.Junction,
-                DisplayType: DisplayType.Picklist,
-                InDetail: true
-            ));
-        }
-
-        if (!string.IsNullOrWhiteSpace(collection))
-        {
-            attr.Add(new Attribute
-            (
-                Field: collection,
-                Options: $"{collection}.{linkAttribute}",
-                Header: junction,
-                DataType: DataType.Collection,
-                DisplayType: DisplayType.EditTable,
-                InDetail: true
-            ));
-        }
-
-        var entity = new Entity
-        (
-            Name: entityName,
-            TableName: entityName,
-            DisplayName: entityName,
-            DefaultPageSize: EntityConstants.DefaultPageSize,
-            PrimaryKey: "id",
-            LabelAttributeName: field,
-            DefaultPublicationStatus: needPublish ?PublicationStatus.Draft:PublicationStatus.Published,
-            Attributes: [..attr]
-        );
-        return entity;
-    }
+   
 
     public Task<Result<Schema>> EnsureEntity(string entityName, string labelAttribute, bool needPublish,params Attribute[] attributes)
     {

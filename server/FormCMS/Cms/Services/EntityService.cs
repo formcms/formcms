@@ -17,39 +17,13 @@ using Task = System.Threading.Tasks.Task;
 namespace FormCMS.Cms.Services;
 
 public sealed class EntityService(
-    IRelationDbDao relationDbDao,
-    KateQueryExecutor executor,
     IEntitySchemaService entitySchemaSvc,
     IAssetService assetService,
     IServiceProvider provider,
-    KeyValueCache<long> maxRecordIdCache,
     HookRegistry hookRegistry,
-    PluginRegistry pluginRegistry
+    ShardGroup shardGroup
 ) : IEntityService
 {
-    
-    public async Task<Result<LoadedEntity>> GetEntityAndValidateRecordId(
-        string entityName,
-        long recordId,
-        CancellationToken ct
-    )
-    {
-        var entity = pluginRegistry.PluginEntities.TryGetValue(entityName, out var pluginEntity)
-            ? pluginEntity
-            : (await entitySchemaSvc.AllEntities(ct)).FirstOrDefault(x => x.Name == entityName);
-        
-        if (entity is null) throw new ResultException("Entity not found");
-
-        var maxId = await maxRecordIdCache.GetOrSet(entityName,
-            async _ => await relationDbDao.MaxId(entity.TableName, entity.PrimaryKey, ct), ct);
-
-        if (recordId < 1 || recordId > maxId)
-        {
-            return Result.Fail("Record id is out of range");
-        }
-        return entity.ToLoadedEntity();
-    }
-
     public async Task<ListResponse?> ListWithAction(
         string name,
         ListResponseMode mode,
@@ -76,7 +50,7 @@ public sealed class EntityService(
                 x.Field == entity.PrimaryKey ||
                 x.Field == DefaultColumnNames.UpdatedAt.Camelize()
                 || x.InList && x.DataType.IsLocal());
-        var items = await executor.Many(entity.AllQueryForTree(attributes), ct);
+        var items = await shardGroup.PrimaryDao.Many(entity.AllQueryForTree(attributes), ct);
         return items.ToTree(entity.PrimaryKey, linkField);
     }
 
@@ -101,7 +75,7 @@ public sealed class EntityService(
 
         var query = ctx.Entity.ByIdsQuery(
             attr.Select(x => x.AddTableModifier()), [ctx.Id], null);
-        var record = await executor.Single(query, ct) ??
+        var record = await shardGroup.PrimaryDao.Single(query, ct) ??
                      throw new ResultException($"not find record by [{id}]");
 
         await LoadItems(attr, [record], ct);
@@ -133,18 +107,18 @@ public sealed class EntityService(
         }
 
         var query = entity.SavePublicationStatus(id, record).Ok();
-        await executor.Exec(query, false, ct);
+        await shardGroup.PrimaryDao.Exec(query, ct);
     }
 
     public async Task<LookupListResponse> LookupList(string name, string startsVal, CancellationToken ct = default)
     {
         var (entity, sorts, pagination, attributes) = await GetLookupContext(name, ct);
-        var count = await executor.Count(entity.Basic(), ct);
+        var count = await shardGroup.PrimaryDao.Count(entity.Basic(), ct);
         if (count < entity.DefaultPageSize)
         {
             //not enough for one page, search in a client
             var query = entity.ListQuery([], sorts, pagination, null, attributes, null);
-            var items = await executor.Many(query, ct);
+            var items = await shardGroup.PrimaryDao.Many(query, ct);
             return new LookupListResponse(false, items);
         }
 
@@ -157,7 +131,7 @@ public sealed class EntityService(
         }
 
         var queryWithFilters = entity.ListQuery(filters, sorts, pagination, null, attributes, null);
-        var filteredItems = await executor.Many(queryWithFilters, ct);
+        var filteredItems = await shardGroup.PrimaryDao.Many(queryWithFilters, ct);
         return new LookupListResponse(true, filteredItems);
     }
 
@@ -172,7 +146,7 @@ public sealed class EntityService(
             new JunctionPreDelArgs(ctx.Entity, ctx.Id, ctx.Attribute, items));
 
         var query = ctx.Junction.Delete(ctx.Id, res.RefItems);
-        var ret = await executor.Exec(query, false, ct);
+        var ret = await shardGroup.PrimaryDao.Exec(query, ct);
         return ret;
     }
 
@@ -187,7 +161,7 @@ public sealed class EntityService(
             new JunctionPreAddArgs(ctx.Entity, ctx.Id, ctx.Attribute, items));
         var query = ctx.Junction.Insert(ctx.Id, res.RefItems);
 
-        var ret = await executor.Exec(query, true, ct);
+        var ret = await shardGroup.PrimaryDao.ExecuteLong(query, ct);
         return ret;
     }
 
@@ -195,7 +169,7 @@ public sealed class EntityService(
     {
         var (_, _, junction, id) = await GetJunctionCtx(name, sid, attr, ct);
         var query = junction.GetTargetIds([id]);
-        var records = await executor.Many(query, ct);
+        var records = await shardGroup.PrimaryDao.Many(query, ct);
         return records.Select(x => x[junction.TargetAttribute.Field]).ToArray();
     }
 
@@ -220,9 +194,9 @@ public sealed class EntityService(
             ? junction.GetNotRelatedItemsCount(filters, [id])
             : junction.GetRelatedItemsCount(filters, [id]);
 
-        var items = await executor.Many(listQuery, ct);
+        var items = await shardGroup.PrimaryDao.Many(listQuery, ct);
         await LoadItems(attrs, items, ct);
-        return new ListResponse(items, await executor.Count(countQuery, ct));
+        return new ListResponse(items, await shardGroup.PrimaryDao.Count(countQuery, ct));
     }
 
     public async Task<Record> CollectionInsert(string name, string sid, string attr, JsonElement element,
@@ -245,11 +219,11 @@ public sealed class EntityService(
             .ToArray();
 
         var listQuery = collection.List(filters, sorts, validPagination, null, attributes, [id], null);
-        var items = await executor.Many(listQuery, ct);
+        var items = await shardGroup.PrimaryDao.Many(listQuery, ct);
         await LoadItems(attributes, items, ct);
 
         var countQuery = collection.Count(filters, [id]);
-        return new ListResponse(items, await executor.Count(countQuery, ct));
+        return new ListResponse(items, await shardGroup.PrimaryDao.Count(countQuery, ct));
     }
 
 
@@ -279,16 +253,16 @@ public sealed class EntityService(
         var countQuery = entity.CountQuery([..res.RefFilters], null);
         return mode switch
         {
-            ListResponseMode.Count => new ListResponse([], await executor.Count(countQuery, ct)),
+            ListResponseMode.Count => new ListResponse([], await shardGroup.PrimaryDao.Count(countQuery, ct)),
             ListResponseMode.Items => new ListResponse(await RetrieveItems(), 0),
-            _ => new ListResponse(await RetrieveItems(), await executor.Count(countQuery, ct))
+            _ => new ListResponse(await RetrieveItems(), await shardGroup.PrimaryDao.Count(countQuery, ct))
         };
 
 
         async Task<Record[]> RetrieveItems()
         {
             var listQuery = entity.ListQuery([..res.RefFilters], [..res.RefSorts], res.RefPagination, null, attributes, null);
-            var items = await executor.Many(listQuery, ct);
+            var items = await shardGroup.PrimaryDao.Many(listQuery, ct);
             await LoadItems(attributes, items, ct);
             return items;
         }
@@ -320,7 +294,7 @@ public sealed class EntityService(
 
         var query = lookup.LookupTitleQuery(ids);
 
-        var targetRecords = await executor.Many(query, token);
+        var targetRecords = await shardGroup.PrimaryDao.Many(query, token);
         foreach (var lookupRecord in targetRecords)
         {
             var lookupId = lookupRecord[lookup.TargetEntity.PrimaryKey];
@@ -350,19 +324,19 @@ public sealed class EntityService(
             throw new ResultException($"Failed to get id value with primary key [${entity.PrimaryKey}]");
         }
 
-        using var trans = await relationDbDao.BeginTransaction();
+        using var trans = await shardGroup.PrimaryDao.BeginTransaction();
         try
         {
             var query = entity.UpdateQuery(id, record).Ok();
 
-            var affected = await executor.Exec(query, false, ct);
+            var affected = await shardGroup.PrimaryDao.Exec(query, ct);
             if (affected == 0)
             {
                 throw new ResultException(
                     "Error: Concurrent Update Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
             }
 
-            var oldLinks = await executor.Many(AssetLinks.GetAssetIdsByEntityAndRecordId(entity.Name, id), ct);
+            var oldLinks = await shardGroup.PrimaryDao.Many(AssetLinks.GetAssetIdsByEntityAndRecordId(entity.Name, id), ct);
             await assetService.UpdateAssetsLinks(oldLinks,entity.GetAssets(record), entity.Name, id, ct);
             trans.Commit();
 
@@ -386,11 +360,11 @@ public sealed class EntityService(
             new EntityPreAddArgs(entity, record));
         record = res.RefRecord;
 
-        var trans = await relationDbDao.BeginTransaction();
+        var trans = await shardGroup.PrimaryDao.BeginTransaction();
         try
         {
 
-            var id = await executor.Exec(entity.Insert(record), true, ct);
+            var id = await shardGroup.PrimaryDao.ExecuteLong(entity.Insert(record), ct);
 
             await assetService.UpdateAssetsLinks([],entity.GetAssets(record), entity.Name, id, ct);
             record[entity.PrimaryKey] = id;
@@ -421,17 +395,17 @@ public sealed class EntityService(
         }
 
 
-        var transaction = await relationDbDao.BeginTransaction();
+        var transaction = await shardGroup.PrimaryDao.BeginTransaction();
         try
         {
-            var affected = await executor.Exec(entity.DeleteQuery(id, record).Ok(), false, ct);
+            var affected = await shardGroup.PrimaryDao.Exec(entity.DeleteQuery(id, record).Ok(), ct);
             if (affected == 0)
             {
                 throw new ResultException(
                     "Error: Concurrent Write Detected. Someone else has modified this item since you last accessed it. Please refresh the data and try again.");
             }
 
-            var oldLinks = await executor.Many(AssetLinks.GetAssetIdsByEntityAndRecordId(entity.Name, id), ct);
+            var oldLinks = await  shardGroup.PrimaryDao.Many(AssetLinks.GetAssetIdsByEntityAndRecordId(entity.Name, id), ct);
             await assetService.UpdateAssetsLinks(oldLinks,[], entity.Name, id, ct);
 
             transaction.Commit();

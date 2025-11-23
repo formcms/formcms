@@ -10,20 +10,19 @@ namespace FormCMS.AuditLogging.Services;
 
 public class AuditLogService(
     IIdentityService identityService,
-    KateQueryExecutor executor,
-    IRelationDbDao dao
+    ShardGroup shardGroup
     ):IAuditLogService
 {
     public  Task<Record[]> GetActionCounts(int daysAgo,CancellationToken ct )
     {
         EnsureHasPermission();
-        return executor.Many(AuditLogHelper.GetDailyActionCount(dao.CastDate,daysAgo), ct);
+        return shardGroup.PrimaryDao.Many(AuditLogHelper.GetDailyActionCount(shardGroup.PrimaryDao.CastDate,daysAgo), ct);
     }
     public async Task<AuditLog> Single(long id, CancellationToken ct = default)
     {
         EnsureHasPermission();
         var query = AuditLogHelper.ById(id);
-        var item = await executor.Single(query, ct)?? throw new ResultException("No record found");;
+        var item = await shardGroup.PrimaryDao.Single(query, ct)?? throw new ResultException("No record found");;
         return item.ToObject<AuditLog>().Ok();
     }
     
@@ -32,8 +31,8 @@ public class AuditLogService(
         EnsureHasPermission();
         var (filters, sorts) = QueryStringParser.Parse(args);
         var query = AuditLogHelper.List(offset, limit);
-        var items = await executor.Many(query, AuditLogHelper.Columns,filters,sorts,ct);
-        var count = await executor.Count(AuditLogHelper.Count(),AuditLogHelper.Columns,filters,ct);
+        var items = await shardGroup.PrimaryDao.Many(query, AuditLogHelper.Columns,filters,sorts,ct);
+        var count = await shardGroup.PrimaryDao.Count(AuditLogHelper.Count(),AuditLogHelper.Columns,filters,ct);
         return new ListResponse(items,count);
     }
 
@@ -51,7 +50,7 @@ public class AuditLogService(
             Payload: record,
             CreatedAt: DateTime.Now
         );
-        return executor.Exec(log.Insert(),true);
+        return shardGroup.PrimaryDao.ExecuteLong(log.Insert());
     }
 
    

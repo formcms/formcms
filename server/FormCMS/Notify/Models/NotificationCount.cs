@@ -27,20 +27,16 @@ public static class NotificationCountExtensions
         DefaultColumnNames.UpdatedAt.CreateCamelColumn(ColumnType.UpdatedTime)
     ];
     
-    public static Query ReadAll(string userId)
+    public static Query ResetCount(string userId)
     {
         var query = new Query(TableName)
             .Where(nameof(NotificationCount.UserId).Camelize(), userId);
         return query.AsUpdate([nameof(NotificationCount.UnreadCount).Camelize()], [0]);
     }
-    
+
     public static Query UnreadCount(string userId)
-    {
-        var query = new Query(TableName)
+        => new Query(TableName)
             .Select(nameof(NotificationCount.UnreadCount).Camelize())
-            .Where(nameof(NotificationCount.UserId).Camelize(), userId)
-            ;
-            
-        return query;
-    }
+            .Where(nameof(NotificationCount.UserId).Camelize(), userId);
+
 }

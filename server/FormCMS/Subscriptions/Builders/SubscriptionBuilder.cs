@@ -1,18 +1,11 @@
 ﻿using System.Text.Json;
 using System.Text.Json.Serialization;
-using FormCMS.Auth.Models;
-using FormCMS.Auth.Services;
-using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Subscriptions.Handlers;
 using FormCMS.Subscriptions.Models;
 using FormCMS.Subscriptions.Services;
-using FormCMS.Utils.DataModels;
-using FormCMS.Utils.RecordExt;
-using FormCMS.Utils.ResultExt;
-using Humanizer;
 using BillingService = FormCMS.Subscriptions.Services.BillingService;
 
 namespace FormCMS.Subscriptions.Builders
@@ -37,7 +30,7 @@ namespace FormCMS.Subscriptions.Builders
                 );
         }
 
-        public async Task<WebApplication> UseStripeSubscriptions(WebApplication app)
+        public async Task UseStripeSubscriptions(WebApplication app, IServiceScope scope)
         {
             //handler
             var options = app.Services.GetRequiredService<SystemSettings>();
@@ -47,16 +40,13 @@ namespace FormCMS.Subscriptions.Builders
             app.Services.GetRequiredService<HookRegistry>().RegisterSubscriptionsHooks();
             app.Services.GetRequiredService<PluginRegistry>().RegisterSubscriptionPlugin();
             
-            
-            var scope = app.Services.CreateScope();
-            await scope.ServiceProvider.GetRequiredService<DatabaseMigrator>().EnsureSubscriptionTables();
+            await scope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao.EnsureSubscriptionTables();
 
             logger.LogInformation("""
                                   *********************************************************
                                   Using Subscription  Services
                                   *********************************************************
                                   """);
-            return app;
         }
     }
 }

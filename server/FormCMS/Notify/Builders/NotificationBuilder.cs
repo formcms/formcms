@@ -1,19 +1,25 @@
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Notify.Handlers;
 using FormCMS.Notify.Services;
+using FormCMS.Utils.Builders;
 
 namespace FormCMS.Notify.Builders;
 
 public class NotificationBuilder(ILogger<NotificationBuilder> logger)
 {
-    public static IServiceCollection AddNotify(IServiceCollection services)
+    public static IServiceCollection AddNotify(IServiceCollection services,
+        ShardConfig[]? shardManagerConfig = null)
     {
         services.AddSingleton<NotificationBuilder>();
         services.AddScoped<INotificationService,NotificationService>();
+        services.AddScoped(sp => new NotificationContext(shardManagerConfig is null
+            ? new ShardRouter([sp.GetRequiredService<ShardGroup>()])
+            : sp.CreateShardRouter(shardManagerConfig)));
+
         return services;
     }
 
-    public async Task<WebApplication> UseNotification(WebApplication app)
+    public async Task UseNotification(WebApplication app, IServiceScope scope)
     {
         //handler
         var systemSettings = app.Services.GetRequiredService<SystemSettings>();
@@ -21,8 +27,11 @@ public class NotificationBuilder(ILogger<NotificationBuilder> logger)
         apiGroup.MapGroup("notifications").MapNotificationHandler();
         
         //db
-        using var scope = app.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<DatabaseMigrator>().EnsureNotifyTable();
+        var ctx = scope.ServiceProvider.GetRequiredService<NotificationContext>();
+        await ctx.UserNotificationShardRouter.ExecuteAll(async dao =>
+        {
+            await dao.EnsureNotifyTable();
+        });
      
         logger.LogInformation(
             $"""
@@ -30,6 +39,5 @@ public class NotificationBuilder(ILogger<NotificationBuilder> logger)
              Using Notification Plugin
              *********************************************************
              """); 
-        return app;
     }
 }

@@ -6,7 +6,7 @@ using SqlKata.Execution;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public class MySqlDao(ILogger<MySqlDao> logger, MySqlConnection connection) : IRelationDbDao
+public class MySqlDao( MySqlConnection connection,ILogger<MySqlDao> logger) : IPrimaryDao,IDisposable
 {
     private TransactionManager? _transactionManager;
     private readonly MySqlCompiler _compiler = new ();
@@ -68,7 +68,7 @@ public class MySqlDao(ILogger<MySqlDao> logger, MySqlConnection connection) : IR
             {
                 updateAtField = column.Name;
             }
-            parts.Add($"`{column.Name}` {ColTypeToString(column.Type)}");
+            parts.Add($"`{column.Name}` {ColTypeToString(column)}");
         }
 
         var sql = $"""
@@ -95,7 +95,7 @@ public class MySqlDao(ILogger<MySqlDao> logger, MySqlConnection connection) : IR
     {
         var parts = cols.Select(x =>
             $"""
-            ALTER TABLE `{table}` ADD COLUMN `{x.Name}` {ColTypeToString(x.Type)}
+            ALTER TABLE `{table}` ADD COLUMN `{x.Name}` {ColTypeToString(x)}
             """
         );
         var sql = string.Join("; ", parts);
@@ -179,8 +179,6 @@ public class MySqlDao(ILogger<MySqlDao> logger, MySqlConnection connection) : IR
         command.Transaction = _transactionManager?.Transaction() as MySqlTransaction;
         await command.ExecuteNonQueryAsync(ct);
     }
-
-
 
     public async Task<bool> UpdateOnConflict(string tableName, Record data, string[] keyFields, CancellationToken ct)
     {
@@ -394,18 +392,20 @@ public class MySqlDao(ILogger<MySqlDao> logger, MySqlConnection connection) : IR
         };
     }
 
-    private static string ColTypeToString(ColumnType t)
+    private static string ColTypeToString(Column col)
     {
-        return t switch
+        
+        return col.Type switch
         {
             ColumnType.Id => "BIGINT AUTO_INCREMENT PRIMARY KEY",
+            ColumnType.StringPrimaryKey => $"VARCHAR({col.Length}) PRIMARY KEY",
             ColumnType.Int => "BIGINT",
             ColumnType.Boolean => "BOOLEAN DEFAULT FALSE",
             ColumnType.Text => "MEDIUMTEXT",
-            ColumnType.String => "VARCHAR(255)",
+            ColumnType.String => $"VARCHAR({col.Length})",
             ColumnType.Datetime => "DATETIME",
             ColumnType.CreatedTime or ColumnType.UpdatedTime => "DATETIME DEFAULT CURRENT_TIMESTAMP",
-            _ => throw new NotSupportedException($"Type {t} is not supported")
+            _ => throw new NotSupportedException($"Type {col.Type} is not supported")
         };
     }
 
@@ -421,5 +421,10 @@ public class MySqlDao(ILogger<MySqlDao> logger, MySqlConnection connection) : IR
             "datetime" => ColumnType.Datetime,
             _ => ColumnType.String
         };
+    }
+
+    public void Dispose()
+    {
+        connection.Dispose();
     }
 }

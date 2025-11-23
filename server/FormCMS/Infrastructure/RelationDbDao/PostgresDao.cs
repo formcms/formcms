@@ -7,7 +7,7 @@ using SqlKata.Execution;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connection):IRelationDbDao
+public class PostgresDao( NpgsqlConnection connection,ILogger<PostgresDao> logger):IPrimaryDao
 {
     private TransactionManager? _transaction;
     private readonly Compiler _compiler = new PostgresCompiler();
@@ -73,7 +73,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
 
             //double quota " is necessary, otherwise postgres will change the field name to lowercase
             parts.Add($"""
-                       "{column.Name}" {ColTypeToString(column.Type)}
+                       "{column.Name}" {ColTypeToString(column)}
                        """);
         }
         var sql = $"""
@@ -107,7 +107,7 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
     {
         var parts = cols.Select(x =>
             $"""
-            Alter Table "{table}" ADD COLUMN "{x.Name}" {ColTypeToString(x.Type)}
+            Alter Table "{table}" ADD COLUMN "{x.Name}" {ColTypeToString(x)}
             """
         );
         var sql = string.Join(";", parts.ToArray());
@@ -153,6 +153,11 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         command.CommandText = sql;
         command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
         await command.ExecuteNonQueryAsync(ct);
+    }
+
+    public Task CreatePrimaryKey(string table, string[] fields, CancellationToken ct)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task<bool> UpdateOnConflict(string tableName, Record data, string[] keyFields, CancellationToken ct)
@@ -241,8 +246,8 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
                 var paramName = $"@p{paramIndex}";
                 rowParams.Add(paramName);
 
-                var value = record.TryGetValue(field, out var val) ? val : DBNull.Value;
-                parameters.Add(new NpgsqlParameter(paramName, GetNpgsqlDbType(value)) { Value = value ?? DBNull.Value });
+                var value = record.TryGetValue(field, out var val) && val is not null ? val : DBNull.Value;
+                parameters.Add(new NpgsqlParameter(paramName, GetNpgsqlDbType(value)) { Value = value});
 
                 paramIndex++;
             }
@@ -396,20 +401,21 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
         };
     }
 
-    private static string ColTypeToString(ColumnType t)
+    private static string ColTypeToString(Column col)
     {
-        return t switch
+        return col.Type switch
         {
             ColumnType.Id => "BIGSERIAL PRIMARY KEY",
+            ColumnType.StringPrimaryKey => $"varchar({col.Length}) PRIMARY KEY",
             ColumnType.Int => "BIGINT",
             ColumnType.Boolean => "BOOLEAN DEFAULT FALSE",
             
             ColumnType.Text => "TEXT",
-            ColumnType.String => "varchar(255)",
+            ColumnType.String => $"varchar({col.Length})",
             
             ColumnType.Datetime => "TIMESTAMP",
             ColumnType.CreatedTime or ColumnType.UpdatedTime=> "TIMESTAMP  DEFAULT timezone('UTC', now())",
-            _ => throw new NotSupportedException($"Type {t} is not supported")
+            _ => throw new NotSupportedException($"Type {col.Type} is not supported")
         };
     }
 
@@ -425,5 +431,10 @@ public class PostgresDao(ILogger<PostgresDao> logger, NpgsqlConnection connectio
             "timestamp" => ColumnType.Datetime,
             _ => ColumnType.String
         };
+    }
+
+    void IDisposable.Dispose()
+    {
+        connection.Dispose();
     }
 }

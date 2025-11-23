@@ -14,16 +14,16 @@ FormCMS's Comments Plugin enables adding a comments feature to any entity, enhan
 After configuring, click `Save and Publish` to enable the comments feature. The Comments Plugin is designed for `Detail Pages`, where comments are associated with an `Entity Name` and `RecordId` (automatically retrieved from the page URL parameters).  
 
 ### Comment Interactions
-Authenticated users can add, edit, delete, like, and reply to comments. The Comments Plugin sends events for these actions, which are handled by other plugins. For example:  
-- The Notification Plugin processes these events to send notice to the comment's creator.  
-- The Engage Activity Plugin uses these events to update the record's engagement score.  
+Authenticated users can add, edit, delete, like, and reply to comments. The Comments Plugin sends events for these actions, which are handled by other plugins. For example:
+- The Notification Plugin processes these events to send notice to the comment's creator.
+- The Engagement Plugin uses these events to update the record's engagement score.
 
 ### Integrating Comments with GraphQL
-Each `Detail Page` is linked to a FormCMS GraphQL query. To include comments:  
-- Add the `Comments` field to your GraphQL query.  
-- The Comments Plugin automatically attaches comment data to the query results.  
+Each `Detail Page` is linked to a FormCMS GraphQL query. To include comments:
+- Add the `Comments` field to your GraphQL query.
+- The Comments Plugin automatically attaches comment data to the query results.
 
-### Update Score and Daily Activity
+### Update Score and Daily Engagement
 
 * Each comment contributes to increasing the record's popularity score.
 * The admin panel displays the daily comment count.

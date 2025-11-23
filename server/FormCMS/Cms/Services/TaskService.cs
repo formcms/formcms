@@ -13,8 +13,10 @@ namespace FormCMS.Cms.Services;
 
 public class TaskService(
     IIdentityService identityService,
-    KateQueryExecutor executor,
+    
     IFileStore store,
+    ShardGroup shardGroup,
+    
     HttpClient httpClient
 ) : ITaskService
 { 
@@ -28,20 +30,18 @@ public class TaskService(
     public async Task DeleteTaskFile(long id,CancellationToken ct)
     {
         EnsureHasPermission();
-        var record =await executor.Single(TaskHelper.ById(id),ct)?? throw new ResultException("Task not found");
+        var record =await shardGroup.PrimaryDao.Single(TaskHelper.ById(id),ct)?? throw new ResultException("Task not found");
         var task = record.ToObject<SystemTask>().Ok();
         await store.Del(task.GetPaths().Zip,ct);
         
         var query = TaskHelper.UpdateTaskStatus(new SystemTask(Id: id, TaskStatus: TaskStatus.Archived));
-        await executor.Exec(query,false,ct);
+        await shardGroup.PrimaryDao.Exec(query,ct);
     }
-
-   
 
     public async Task<string> GetTaskFileUrl(long id, CancellationToken ct)
     {
         EnsureHasPermission();
-        var record =await executor.Single(TaskHelper.ById(id),ct)?? throw new ResultException("Task not found");
+        var record =await shardGroup.PrimaryDao.Single(TaskHelper.ById(id),ct)?? throw new ResultException("Task not found");
         var task = record.ToObject<SystemTask>().Ok();
         return store.GetUrl(task.GetPaths().Zip);
     }
@@ -52,7 +52,7 @@ public class TaskService(
         var task = TaskHelper.InitTask(TaskType.EmitMessage, identityService.GetUserAccess()?.Name ?? "");
         task = task with { TaskSettings = setting.ToJson() };
         var query = TaskHelper.AddTask(task);
-        return executor.Exec(query,true);
+        return shardGroup.PrimaryDao.ExecuteLong(query);
     }
    
     public async Task<long> AddImportTask(IFormFile file)
@@ -60,7 +60,7 @@ public class TaskService(
         EnsureHasPermission();
         var task = TaskHelper.InitTask(TaskType.Import, identityService.GetUserAccess()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
-        var id = await executor.Exec(query,true);
+        var id = await shardGroup.PrimaryDao.ExecuteLong(query);
 
         await using var stream = new FileStream(task.GetPaths().FullZip, FileMode.Create);
         await file.CopyToAsync(stream);
@@ -84,10 +84,10 @@ public class TaskService(
         var url = $"https://github.com/FormCMS/FormCMS/raw/refs/heads/doc/etc/{title}-demo-data-{version}.zip";
         var task = TaskHelper.InitTask(TaskType.Import, identityService.GetUserAccess()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
-        var id = await executor.Exec(query,true);
+        var id = await shardGroup.PrimaryDao.ExecuteLong(query);
 
         await using var stream = new FileStream(task.GetPaths().FullZip, FileMode.Create);
-        byte[] fileBytes = await httpClient.GetByteArrayAsync(url);
+        var fileBytes = await httpClient.GetByteArrayAsync(url);
         stream.Write(fileBytes, 0, fileBytes.Length);
         return id;
     }
@@ -97,7 +97,7 @@ public class TaskService(
         EnsureHasPermission();
         var task = TaskHelper.InitTask(TaskType.Export, identityService.GetUserAccess()?.Name ?? "");
         var query = TaskHelper.AddTask(task);
-        return executor.Exec(query,true);
+        return shardGroup.PrimaryDao.ExecuteLong(query);
     }
 
     public async Task<ListResponse> List(StrArgs args,int? offset, int? limit, CancellationToken ct)
@@ -105,11 +105,10 @@ public class TaskService(
         EnsureHasPermission();
         var (filters, sorts) = QueryStringParser.Parse(args);
         var query = TaskHelper.List(offset, limit);
-        var items = await executor.Many(query, TaskHelper.Columns,filters,sorts,ct);
-        var count = await executor.Count(TaskHelper.Query(),TaskHelper.Columns,filters,ct);
+        var items = await shardGroup.PrimaryDao.Many(query, TaskHelper.Columns,filters,sorts,ct);
+        var count = await shardGroup.PrimaryDao.Count(TaskHelper.Query(),TaskHelper.Columns,filters,ct);
         return new ListResponse(items,count);
     }
-
 
     private void EnsureHasPermission()
     {

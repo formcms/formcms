@@ -6,7 +6,7 @@ using SqlKata.Execution;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) : IRelationDbDao
+public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) : IPrimaryDao
 {
     private readonly Compiler _compiler = new SqliteCompiler();
     private TransactionManager? _transaction;
@@ -122,6 +122,11 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
         await using var command = new SqliteCommand(sql, GetConnection());
         command.Transaction = _transaction?.Transaction() as SqliteTransaction;
         await command.ExecuteNonQueryAsync(ct);
+    }
+
+    public Task CreatePrimaryKey(string table, string[] fields, CancellationToken ct)
+    {
+        throw new NotImplementedException();
     }
 
     public async Task<bool> UpdateOnConflict(string tableName, Record data, string[] keyFields, CancellationToken ct)
@@ -300,6 +305,7 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
 
             ColumnType.Text => "TEXT",
             ColumnType.String => "TEXT",
+            ColumnType.StringPrimaryKey => "TEXT",
 
             ColumnType.Datetime => "INTEGER",
             ColumnType.CreatedTime or ColumnType.UpdatedTime => "integer default (datetime('now'))",
@@ -315,5 +321,10 @@ public sealed class SqliteDao(SqliteConnection conn, ILogger<SqliteDao> logger) 
             "integer" => ColumnType.Int,
             _ => ColumnType.Text
         };
+    }
+
+    public void Dispose()
+    {
+        conn.Dispose();
     }
 }

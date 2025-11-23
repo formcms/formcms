@@ -6,6 +6,7 @@ namespace FormCMS.Cms.Services;
 
 public interface IEntitySchemaService: IEntityVectorResolver
 {
+    Task<Result<LoadedEntity>> ValidateEntity(string entityName, CancellationToken ct);
     Task<Result<LoadedEntity>> LoadEntity(string name, PublicationStatus?status, CancellationToken ct);
     Task<Entity?> GetTableDefine(string table, CancellationToken ct);
     Task<Schema> SaveTableDefine(Schema schema, bool asPublished, CancellationToken ct);
@@ -15,5 +16,4 @@ public interface IEntitySchemaService: IEntityVectorResolver
     ValueTask<ImmutableArray<Entity>> AllEntities(CancellationToken ct );
     Task Delete(Schema schema, CancellationToken ct);
     Task<Schema> Save(Schema schema, bool asPublished, CancellationToken ct);
-    Task SaveTableDefine(Entity entity,bool asPublished, CancellationToken ct);
 }

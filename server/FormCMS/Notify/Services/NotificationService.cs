@@ -8,41 +8,39 @@ using FormCMS.Utils.ResultExt;
 using Humanizer;
 
 namespace FormCMS.Notify.Services;
+public record NotificationContext(ShardRouter UserNotificationShardRouter);
 
 public class NotificationService(
-    DatabaseMigrator migrator,
+    NotificationContext ctx,
     IIdentityService  identityService,
-    IUserManageService userManageService,
-    KateQueryExecutor executor
-
+    IUserManageService userManageService
     ):INotificationService
 {
-    public async Task EnsureNotificationTables()
-    {
-        await migrator.MigrateTable(Notifications.TableName, Notifications.Columns);
-    }
-
     public async Task<ListResponse> List(StrArgs args, int? offset, int? limit, CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User is not logged in");
+        var followKate = ctx.UserNotificationShardRouter.ReplicaDao(userId);
         var (filters, sorts) = QueryStringParser.Parse(args);
         var query = Notifications.List(userId, offset, limit);
-        var items = await executor.Many(query, Notifications.Columns,filters,sorts,ct);
+        var items = await followKate.Many(query, Notifications.Columns,filters,sorts,ct);
         await LoadSender(items, ct);
         
         var countQuery = Notifications.Count(userId);
-        var count = await executor.Count(countQuery,Notifications.Columns,filters,ct);
+        var count = await followKate.Count(countQuery,Notifications.Columns,filters,ct);
+
+        var leadKate = ctx.UserNotificationShardRouter.PrimaryDao(userId);
+        await leadKate.Exec(Notifications.ReadAll(userId), ct);
+        await leadKate.Exec(NotificationCountExtensions.ResetCount(userId), ct);
         
-        await executor.Exec(Notifications.ReadAll(userId), false,ct);
-        await executor.Exec(NotificationCountExtensions.ReadAll(userId), false, ct);
         return new ListResponse(items,count); 
     }
     
     public  Task<long> UnreadCount(CancellationToken ct)
     {
-        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("User not logged in");
+        var userId = identityService.GetUserAccess()?.Id 
+                     ?? throw new ResultException("User not logged in");
         var query = NotificationCountExtensions.UnreadCount(userId);
-        return executor.Exec(query, true,ct);
+        return ctx.UserNotificationShardRouter.ReplicaDao(userId).ReadLong(query, ct);
     }
 
     private async Task LoadSender(Record[] notifications,CancellationToken ct)

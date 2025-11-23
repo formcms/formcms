@@ -23,15 +23,13 @@ public class ImportWorker(
 ) : TaskWorker(serviceScopeFactory: scopeFactory, logger: logger,delaySeconds: options.DelaySeconds)
 {
     protected override async Task DoTask(
-        IServiceScope serviceScope, KateQueryExecutor destinationExecutor,
+        IServiceScope serviceScope, IPrimaryDao dao,
         SystemTask task, CancellationToken ct)
     {
         task.GetPaths().ExtractTaskFile();
         
         var sourceConnection = task.GetPaths().CreateConnection();
         var sourceDao = new SqliteDao(sourceConnection, new Logger<SqliteDao>(logFactory));
-        var sourceExecutor = new KateQueryExecutor(sourceDao, new KateQueryExecutorOption(300));
-        var destMigrator = serviceScope.ServiceProvider.GetRequiredService<DatabaseMigrator>();
 
         var (allSchemas, allEntities, entityNameToEntity, allJunctions) = await LoadData();
         var attributeToLookupEntity = GetAttributeToLookup();
@@ -49,10 +47,8 @@ public class ImportWorker(
 
         async Task ImportAssets()
         {
-            await destMigrator.MigrateTable(Assets.TableName, Assets.Columns.EnsureColumn(DefaultColumnNames.ImportKey,ColumnType.String));
-            await KateQueryExecutor.GetPageDataAndInsert(
-                sourceExecutor,
-                destinationExecutor,
+            await dao.MigrateTable(Assets.TableName, Assets.Columns.EnsureColumn(DefaultColumnNames.ImportKey,ColumnType.String));
+            await sourceDao.GetPageDataAndInsert(dao,
                 Assets.TableName,
                 nameof(Asset.Id).Camelize(),
                 Assets.XEntity.Attributes.Select(x => x.Field),
@@ -80,9 +76,8 @@ public class ImportWorker(
 
         async Task ImportAssetLinks()
         {
-            await KateQueryExecutor.GetPageDataAndInsert(
-                sourceExecutor,
-                destinationExecutor,
+            await sourceDao.GetPageDataAndInsert(
+                dao,
                 AssetLinks.TableName,
                 nameof(Asset.Id).Camelize(),
                 AssetLinks.Entity.Attributes.Select(x => x.Field),
@@ -120,7 +115,7 @@ public class ImportWorker(
             foreach (var (key, ids) in entityNameToRecordArray)
             {
                 var entity = entityNameToEntity[key];
-                var dictImportKeyToId = await destinationExecutor.LoadDict(
+                var dictImportKeyToId = await dao.LoadDict(
                     new Query(entity.TableName).WhereIn(DefaultColumnNames.ImportKey.Camelize(),ids),
                     DefaultColumnNames.ImportKey.Camelize(),
                     entity.PrimaryKey,
@@ -131,7 +126,7 @@ public class ImportWorker(
             }
 
             var assetIds = records.Select(x => x.StrOrEmpty(nameof(AssetLink.AssetId).Camelize()));
-            var dictAssetImportKeyToId = await destinationExecutor.LoadDict(
+            var dictAssetImportKeyToId = await dao.LoadDict(
                     new Query(Assets.TableName).WhereIn(DefaultColumnNames.ImportKey.Camelize(),assetIds),
                 DefaultColumnNames.ImportKey.Camelize(),
                 nameof(Asset.Id).Camelize(),
@@ -150,7 +145,7 @@ public class ImportWorker(
 
         async Task<(ImmutableArray<Schema>, ImmutableArray<LoadedEntity>, ImmutableDictionary<string, LoadedEntity>,ImmutableArray<Junction>)> LoadData()
         {
-            var records = await sourceExecutor.Many(SchemaHelper.ByNameAndType(null, null, null), ct);
+            var records = await sourceDao.Many(SchemaHelper.ByNameAndType(null, null, null), ct);
             var schemas = records.Select(x => SchemaHelper.RecordToSchema(x).Ok()).ToArray();
             var entities = schemas
                 .Where(x => x.Type == SchemaType.Entity)
@@ -204,7 +199,7 @@ public class ImportWorker(
 
         async Task ImportSchemas()
         {
-            await destMigrator.MigrateTable(SchemaHelper.TableName,
+            await dao.MigrateTable(SchemaHelper.TableName,
                 SchemaHelper.Columns.EnsureColumn(DefaultColumnNames.ImportKey, ColumnType.String));
 
             foreach (var t in allSchemas)
@@ -212,7 +207,7 @@ public class ImportWorker(
                 //insert a new version
                 var schema = t;
                 var findRecord =
-                    await destinationExecutor.Single(SchemaHelper.ByNameAndType(schema.Type, [schema.Name], null), ct);
+                    await dao.Single(SchemaHelper.ByNameAndType(schema.Type, [schema.Name], null), ct);
                 if (findRecord is not null)
                 {
                     var find = SchemaHelper.RecordToSchema(findRecord).Ok();
@@ -228,7 +223,7 @@ public class ImportWorker(
 
                 var resetQuery = schema.ResetLatest();
                 var save = schema.Save();
-                await destinationExecutor.ExecBatch([(resetQuery,false), (save,false)], ct);
+                await dao.ExecBatch([(resetQuery,false), (save,false)], ct);
             }
         }
         
@@ -303,7 +298,7 @@ public class ImportWorker(
             var attrs = entity.Attributes.Where(x => x.DataType.IsLocal());
             var cols = attrs.ToColumns(entityNameToEntity.ToDictionary());
             var fields = cols.Select(x => x.Name).ToArray();
-            await destMigrator.MigrateTable(entity.TableName, cols
+            await dao.MigrateTable(entity.TableName, cols
                 .EnsureColumn(DefaultColumnNames.Deleted, ColumnType.Boolean)
                 .EnsureColumn(DefaultColumnNames.ImportKey, ColumnType.String)
             );
@@ -319,18 +314,18 @@ public class ImportWorker(
 
                 var query = new Query(entity.TableName).Select(fields);
 
-                var records = await sourceExecutor.Many(query.Clone().Where(parentField, null), ct);
+                var records = await sourceDao.Many(query.Clone().Where(parentField, null), ct);
 
                 while (records.Length > 0)
                 {
                     var ids = records.Select(x => x[entity.PrimaryKey]).ToArray();
                     await PreInsert(entity, records);
-                    await destinationExecutor.Upsert(entity.TableName,
+                    await dao.Upsert(entity.TableName,
                         DefaultColumnNames.ImportKey.Camelize(),
                         records);
 
                     var levelQuery = query.Clone().WhereIn(parentField, ids);
-                    records = await sourceExecutor.Many(levelQuery, ct);
+                    records = await sourceDao.Many(levelQuery, ct);
                 }
             }
 
@@ -340,18 +335,18 @@ public class ImportWorker(
                 var query = new Query(entity.TableName)
                     .OrderBy(entity.PrimaryKey)
                     .Select(fields).Limit(limit);
-                var records = await sourceExecutor.Many(query, ct);
+                var records = await sourceDao.Many(query, ct);
 
                 while (true)
                 {
                     await PreInsert(entity, records);
-                    await destinationExecutor.Upsert(entity.TableName,
+                    await dao.Upsert(entity.TableName,
                         DefaultColumnNames.ImportKey.Camelize(),
                         records);
                     if (records.Length < limit) break;
 
                     var lastId = records.Last()[entity.PrimaryKey];
-                    records = await sourceExecutor.Many(query.Clone().Where(entity.PrimaryKey, ">", lastId), ct);
+                    records = await sourceDao.Many(query.Clone().Where(entity.PrimaryKey, ">", lastId), ct);
                 }
             }
         }
@@ -392,7 +387,7 @@ public class ImportWorker(
                         continue;
 
                     var vals = records.Select(x => x.StrOrEmpty(attribute.Field));
-                    var dictImportKeyToId = await destinationExecutor.LoadDict(
+                    var dictImportKeyToId = await dao.LoadDict(
                         new Query(lookupEntity.TableName).WhereIn(DefaultColumnNames.ImportKey.Camelize(), vals),
                         DefaultColumnNames.ImportKey.Camelize(),
                         lookupEntity.PrimaryKey,

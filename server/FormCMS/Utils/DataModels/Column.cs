@@ -7,6 +7,7 @@ namespace FormCMS.Utils.DataModels;
 public enum ColumnType
 {
     Id,     //primary key and auto increase
+    StringPrimaryKey,     //primary key but not auto increase
     Int ,
     Boolean,
     
@@ -18,11 +19,11 @@ public enum ColumnType
     String, //has length limit 255 
 }
 
-public record Column(string Name, ColumnType Type);
+public record Column(string Name, ColumnType Type, int Length = 255);
 
 public static class ColumnHelper
 {
-    public static Column CreateCamelColumn<T,TValue>(Expression<Func<T, TValue>> expression)
+    public static Column CreateCamelColumn<T,TValue>(Expression<Func<T, TValue>> expression, int length = 255)
     {
         var name = expression.GetName().Camelize();
         var columnType = typeof(TValue) switch
@@ -33,11 +34,11 @@ public static class ColumnHelper
             { } t when t == typeof(DateTime)=> ColumnType.Datetime,
             _=>ColumnType.Int
         };
-        return new Column(name, columnType);
+        return new Column(name, columnType, length);
     }
 
-    public static Column CreateCamelColumn<T>(Expression<Func<T, object>> expression, ColumnType columnType)
-        => new (expression.GetName().Camelize(), columnType);
+    public static Column CreateCamelColumn<T>(Expression<Func<T, object>> expression, ColumnType columnType,int length = 255)
+        => new (expression.GetName().Camelize(), columnType, length);
 
     public static Column CreateCamelColumn(this Enum enumValue, ColumnType columnType)
         => new(enumValue.Camelize(), columnType);

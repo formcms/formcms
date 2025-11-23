@@ -61,9 +61,13 @@ public static class SchemaHelper
     public static SqlKata.Query ById(long id)
         => BaseQuery().Where(nameof(Schema.Id).Camelize(), id);
 
-    public static SqlKata.Query ByIds(IEnumerable<object> ids)
-        => BaseQuery().WhereIn(nameof(Schema.Id).Camelize(), ids)
-            .Select(nameof(Schema.Id).Camelize(), nameof(Schema.Name).Camelize());
+    public static SqlKata.Query BySchemaIds(IEnumerable<string> ids)
+        => BaseQuery().WhereIn(nameof(Schema.SchemaId).Camelize(), ids)
+            .Select(
+                nameof(Schema.Id).Camelize(), 
+                nameof(Schema.SchemaId).Camelize(),
+                nameof(Schema.Name).Camelize()
+                );
     
     public static SqlKata.Query BySchemaId(string schemaId)
         => BaseQuery()

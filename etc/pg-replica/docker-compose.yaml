@@ -1,0 +1,43 @@
+version: '3.8'
+
+services:
+  postgres-master:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: cmsuser
+      POSTGRES_PASSWORD: Admin12345678!
+      POSTGRES_DB: cms
+    ports:
+      - "5432:5432"
+    volumes:
+      - master-data:/var/lib/postgresql/data
+      - ./init-master.sh:/docker-entrypoint-initdb.d/init-master.sh
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "cmsuser"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-replica:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: cmsuser
+      POSTGRES_PASSWORD: Admin12345678!
+      POSTGRES_DB: cms
+    ports:
+      - "5433:5432"
+    volumes:
+      - replica-data:/var/lib/postgresql/data
+      - ./init-replica.sh:/docker-entrypoint-initdb.d/init-replica.sh
+    depends_on:
+      postgres-master:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "cmsuser"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  master-data:
+  replica-data:

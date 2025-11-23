@@ -18,7 +18,7 @@ public class AccountService<TUser, TRole,TCtx>(
     RoleManager<TRole> roleManager,
     IProfileService profileService,
     TCtx context,
-    KateQueryExecutor queryExecutor
+    ShardGroup shardGroup
 ) : IAccountService
     where TUser : IdentityUser, new()
     where TRole : IdentityRole, new()
@@ -28,7 +28,7 @@ public class AccountService<TUser, TRole,TCtx>(
     public async Task<string[]> GetEntities(CancellationToken ct)
     {
         var query = SchemaHelper.ByNameAndType(SchemaType.Entity, null, null);
-        var records= await queryExecutor.Many(query,ct);
+        var records= await shardGroup.PrimaryDao.Many(query,ct);
         var entityName = records.Select(x => (string)x[nameof(Entity.Name).Camelize()]).ToArray();
         return [..entityName, Assets.XEntity.Name];
     }
@@ -127,21 +127,27 @@ public class AccountService<TUser, TRole,TCtx>(
         ).CanAccessAdmin() )];
     }
 
-    public async Task<Result> EnsureUser(string email, string password, string[] roles)
+    public async Task<Result> EnsureUser(string email, string password, string[] roles, bool ignoreExistingUser = true)
     {
-        var result = await EnsureRoles(roles);
-        if (result.IsFailed)
+        if (roles.Length > 0)
         {
-            return Result.Fail(result.Errors);
+            var result = await EnsureRoles(roles);
+            if (result.IsFailed)
+            {
+                return Result.Fail(result.Errors);
+            }
         }
 
-        var user = await userManager.FindByEmailAsync(email);
-        if (user is not null)
+        if (ignoreExistingUser)
         {
-            return Result.Ok();
+            var find = await userManager.FindByEmailAsync(email);
+            if (find is not null)
+            {
+                return Result.Ok();
+            }
         }
 
-        user = new TUser
+        var user = new TUser
         {
             Email = email,
             UserName = email,
@@ -152,6 +158,11 @@ public class AccountService<TUser, TRole,TCtx>(
         if (!res.Succeeded)
         {
             return Fail(res);
+        }
+
+        if (roles.Length == 0)
+        {
+            return Result.Ok();
         }
 
         res = await userManager.AddToRolesAsync(user, roles);

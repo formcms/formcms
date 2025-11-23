@@ -1,39 +1,49 @@
 using FormCMS.Comments.Handlers;
+using FormCMS.Comments.Models;
 using FormCMS.Comments.Services;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Utils.Builders;
 
 namespace FormCMS.Comments.Builders;
 
 public class CommentBuilder(ILogger<CommentBuilder> logger)
 {
-    public static IServiceCollection AddComments(IServiceCollection services)
+    public static IServiceCollection AddComments(IServiceCollection services, ShardConfig[]? config = null)
     {
         services.AddSingleton<CommentBuilder>();
         services.AddScoped<ICommentsService, CommentsService>();
         services.AddScoped<ICommentsQueryPlugin, CommentsQueryPlugin>();
+        services.AddScoped(sp =>
+            new CommentsContext(config is null
+                ? new ShardRouter([sp.GetRequiredService<ShardGroup>()])
+                : sp.CreateShardRouter(config)));
         return services;
     }
 
-    public async Task<WebApplication> UseComments(WebApplication app)
+    public  Task UseComments(WebApplication app, IServiceScope scope)
     {
+        logger.LogInformation(
+            """
+             *********************************************************
+             Using Comment Plugin
+             *********************************************************
+             """);
+        
         var options = app.Services.GetRequiredService<SystemSettings>();
         var apiGroup = app.MapGroup(options.RouteOptions.ApiBaseUrl);
         apiGroup.MapGroup("comments").MapCommentHandlers();
         
         app.Services.GetRequiredService<PluginRegistry>().RegisterCommentPlugins();
         app.Services.GetRequiredService<HookRegistry>().RegisterCommentsHooks();
-        
-        var scope = app.Services.CreateScope();
-        await scope.ServiceProvider.GetRequiredService<DatabaseMigrator>().EnsureCommentsTable();
-        
-        logger.LogInformation(
-            $"""
-             *********************************************************
-             Using Comment Plugin
-             *********************************************************
-             """);
-        return app;
+
+        return scope.ServiceProvider.GetRequiredService<CommentsContext>()
+            .Router
+            .ExecuteAll(async dao =>
+                {
+                    await dao.EnsureCommentsTable();
+                }
+            );
     }
 }

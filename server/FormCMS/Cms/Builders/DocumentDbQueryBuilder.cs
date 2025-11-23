@@ -15,11 +15,11 @@ public class DocumentDbQueryBuilder(ILogger<DocumentDbQueryBuilder> logger, Quer
         return services;
     }
 
-    public WebApplication UseDocumentDbQuery(WebApplication app)
+    public Task UseDocumentDbQuery(WebApplication app)
     {
         Print();
         RegisterHooks(app);
-        return app;
+        return Task.CompletedTask;
     }
 
     private void RegisterHooks(WebApplication app)

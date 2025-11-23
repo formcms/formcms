@@ -1,6 +1,5 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
-using FormCMS.Activities.Models;
 using FormCMS.AuditLogging.Models;
 using FormCMS.Auth.Handlers;
 using NJsonSchema;
@@ -9,6 +8,7 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Core.Assets;
 using FormCMS.Core.Identities;
 using FormCMS.Core.Tasks;
+using FormCMS.Engagements.Models;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Notify.Models;
 using FormCMS.Subscriptions.Models;
@@ -54,17 +54,17 @@ foreach (var app in apps)
     TsGenerator.GenerateCode<UserAccess>($"../../../{app}/libs/FormCmsAdminSdk/auth/types/userAccess.ts");
     TsGenerator.GenerateCode<RoleAccess>($"../../../{app}/libs/FormCmsAdminSdk/auth/types/roleAccess.ts");
 
-    //activity
+    //engagement
     TsGenerator.GenerateCode<DailyActionCount>(
         $"../../../{app}/libs/FormCmsAdminSdk/auditLog/types/dailyActionCount.ts");
-    TsGenerator.GenerateCode<Activity>($"../../../{app}/libs/FormCmsAdminSdk/activity/types/activity.ts");
-    TsGenerator.GenerateCode<Bookmark>($"../../../{app}/libs/FormCmsAdminSdk/activity/types/bookmark.ts");
+    TsGenerator.GenerateCode<EngagementStatus>($"../../../{app}/libs/FormCmsAdminSdk/engagements/types/engagement.ts");
+    TsGenerator.GenerateCode<Bookmark>($"../../../{app}/libs/FormCmsAdminSdk/engagements/types/bookmark.ts");
     TsGenerator.GenerateCode<BookmarkFolder>(
-        $"../../../{app}/libs/FormCmsAdminSdk/activity/types/bookmarkFolder.ts");
-    TsGenerator.GenerateCode<DailyActivityCount>(
-        $"../../../{app}/libs/FormCmsAdminSdk/activity/types/dailyActivityCount.ts");
+        $"../../../{app}/libs/FormCmsAdminSdk/engagements/types/bookmarkFolder.ts");
+    TsGenerator.GenerateCode<DailyEngagementCount>(
+        $"../../../{app}/libs/FormCmsAdminSdk/engagements/types/dailyEngagementCount.ts");
     TsGenerator.GenerateCode<PageVisitCount>(
-        $"../../../{app}/libs/FormCmsAdminSdk/activity/types/pageVisitCount.ts");
+        $"../../../{app}/libs/FormCmsAdminSdk/engagements/types/pageVisitCount.ts");
     TsGenerator.GenerateCode<Notification>(
         $"../../../{app}/libs/FormCmsAdminSdk/notifications/types/notification.ts");
     
