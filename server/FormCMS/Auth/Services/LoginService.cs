@@ -5,12 +5,14 @@ using GraphQL;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
+using NUlid;
 
 namespace FormCMS.Auth.Services;
 
 public class LoginService<TUser>(    
     IHttpContextAccessor contextAccessor,
     SignInManager<TUser> signInManager,
+    IAccountService accountService,
     UserManager<TUser> userManager
     )
     : ILoginService
@@ -18,6 +20,38 @@ public class LoginService<TUser>(
 {
     public async Task Login(string usernameOrEmail, string password, HttpContext context)
     {
+        if (usernameOrEmail == Constants.GuestUserPrefix)
+        {
+            var roleAccess =await accountService.GetSingleRole(Roles.Guest);
+            var claims = new List<Claim>
+            {
+                new (ClaimTypes.NameIdentifier, $"guest:{Ulid.NewUlid()}"),
+            };
+            claims.AddRange(from entity in roleAccess.RestrictedReadWriteEntities ?? []
+                select new Claim(AccessScope.RestrictedAccess, entity));
+
+            claims.AddRange(from entity in roleAccess.RestrictedReadonlyEntities ?? []
+                select new Claim(AccessScope.RestrictedRead, entity));
+            
+            var identity = new ClaimsIdentity(
+                claims,
+                IdentityConstants.ApplicationScheme
+            );
+
+            var principal = new ClaimsPrincipal(identity);
+
+            await contextAccessor.HttpContext.SignInAsync(
+                IdentityConstants.ApplicationScheme,
+                principal,
+                new AuthenticationProperties
+                {
+                    IsPersistent = true,
+                    ExpiresUtc = DateTimeOffset.UtcNow.AddDays(7)
+                });
+           
+            return;
+        }
+        
         var user = usernameOrEmail.IndexOf('@') > -1
             ? await userManager.FindByEmailAsync(usernameOrEmail)
             : await userManager.FindByNameAsync(usernameOrEmail);

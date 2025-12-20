@@ -34,6 +34,7 @@
       <InternalsVisibleTo Include="FormCMS.Course.Tests" />
     </ItemGroup>
     <ItemGroup>
+      <Folder Include="obj\" />
       <Folder Include="wwwroot\" />
     </ItemGroup>
     <ItemGroup>

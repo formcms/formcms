@@ -156,6 +156,7 @@ public class Program
         {
             await app.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]).Ok();
             await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
+            await app.EnsureCmsUser("guest@cms.com", "Guest1!", [Roles.Guest]).Ok();
             await app.EnsureCmsUser("user1@cms.com", "Admin1!", [Roles.Admin]).Ok();
             await app.EnsureCmsUser("user2@cms.com", "Admin1!", [Roles.Admin]).Ok();
             await app.EnsureCmsUser("user3@cms.com", "Admin1!", [Roles.Admin]).Ok();

@@ -14,5 +14,6 @@ public static class Roles
     /// schema: only entity and view, only his own schema
     /// </summary>
     public const string Admin = "admin";
+    public const string Guest = "guest";
     
 }
