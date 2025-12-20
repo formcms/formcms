@@ -318,6 +318,24 @@ public static class EntityHelper
         return query;
     }
 
+    public static (Record, Record) SplitRecord(this LoadedEntity e, Record record)
+    {
+        var (parent,  subItems) = (new Dictionary<string,object>(), new Dictionary<string,object>());
+        foreach (var loadedAttribute in e.Attributes)
+        {
+            if (!record.TryGetValue(loadedAttribute.Field, out var value)) continue;
+            if (loadedAttribute.DataType == DataType.Collection)
+            {
+                subItems[loadedAttribute.Field] = value;
+            }
+            else
+            {
+                parent[loadedAttribute.Field] = value;
+            }
+        }
+        return (parent, subItems);
+    }
+
     public static SqlKata.Query Insert(this LoadedEntity e, Record item)
     {
         //omit auto generated value
@@ -458,9 +476,8 @@ public static class EntityHelper
         }
     }
 
-    public static Result<Record> Parse (this LoadedEntity entity, JsonElement element)
+    public static Result<Record> Normalize(this LoadedEntity entity, Record rec)
     {
-        var rec = element.ToDictionary();
         foreach (var attribute in entity.Attributes)
         {
             if (!rec.TryGetValue(attribute.Field, out var value)) continue;
@@ -468,7 +485,7 @@ public static class EntityHelper
             
             if (attribute.Lookup is not null && value is Record record)
             {
-                 value = record[attribute.Lookup.TargetEntity.PrimaryKeyAttribute.Field];
+                value = record[attribute.Lookup.TargetEntity.PrimaryKeyAttribute.Field];
             }
             var (_,fail, obj,errors) = Converter.DisplayObjToDbObj(dataType, attribute.DisplayType, value);
             if (fail)
@@ -477,7 +494,13 @@ public static class EntityHelper
             }
             rec[attribute.Field] = obj;
         }
-        return rec;
+        return Result.Ok(rec); 
+    }
+
+    public static Result<Record> Parse (this LoadedEntity entity, JsonElement element)
+    {
+        var rec = element.ToDictionary();
+        return entity.Normalize(rec);
     }
 
     internal static SqlKata.Query GetCommonCountQuery(this LoadedEntity e, IEnumerable<ValidFilter> filters)
