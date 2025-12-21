@@ -20,7 +20,7 @@ public class LoginService<TUser>(
 {
     public async Task Login(string usernameOrEmail, string password, HttpContext context)
     {
-        if (usernameOrEmail == Constants.GuestUserPrefix)
+        if (usernameOrEmail == Constants.GuestUserPrefix && contextAccessor.HttpContext != null)
         {
             var roleAccess =await accountService.GetSingleRole(Roles.Guest);
             var claims = new List<Claim>

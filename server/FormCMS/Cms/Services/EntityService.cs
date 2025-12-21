@@ -369,19 +369,19 @@ public sealed class EntityService(
             await assetService.UpdateAssetsLinks([],entity.GetAssets(parent), entity.Name, id, ct);
             record[entity.PrimaryKey] = id;
             
-            foreach (var collectionField in entity.Attributes.Where(x=>x.DataType == DataType.Collection))
+            foreach (var collectionField in entity.Attributes.Where(x=>x.Collection is not null))
             {
                 if (!subItems.TryGetValue(collectionField.Field, out var val) ||
                     val is not object[] collectionValues) continue;
                 
                 var collection = collectionField.Collection;
-                var targetEntity = collection.TargetEntity;
+                var targetEntity = collection!.TargetEntity;
                 
                 foreach (var obj in collectionValues)
                 {
                     var item = obj as Record ?? throw new ResultException($"Failed to cast {obj} to Dictionary<string, object>");
                     item = targetEntity.Normalize(item).Ok();
-                    item[collectionField.Collection.LinkAttribute.Field] = id;
+                    item[collection.LinkAttribute.Field] = id;
                     var subId = await shardGroup.PrimaryDao.ExecuteLong(targetEntity.Insert(item),ct);
                     await assetService.UpdateAssetsLinks([],entity.GetAssets(item), targetEntity.Name, subId, ct);
                 }
