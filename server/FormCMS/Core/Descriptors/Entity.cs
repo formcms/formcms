@@ -504,7 +504,7 @@ public static class EntityHelper
         if (IsRegex(attribute.Validation))
         {
             if (value == null || !Regex.IsMatch(strValue ?? string.Empty, attribute.Validation))
-                return Result.Fail($"{attribute.Header} format is invalid");
+                return Result.Fail($"Value of [{attribute.Header}]  is invalid");
 
             return Result.Ok();
         }

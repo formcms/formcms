@@ -37,7 +37,14 @@ public static class Converter
         {
             if (variable.Value is not null)
             {
-                dictionary.Add(variable.Name, variable.Value?.ToString());
+                if (variable.Value is object[] arr)
+                {
+                    dictionary.Add(variable.Name, arr.Select(x => x.ToString()).ToArray());
+                }
+                else
+                {
+                    dictionary.Add(variable.Name, variable.Value?.ToString());
+                }
             }
         }
 

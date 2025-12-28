@@ -40,7 +40,7 @@ public static class Assets
         LabelAttributeName: nameof(Asset.Name).Camelize(),
         PrimaryKey:nameof(Asset.Id).Camelize(),
         Attributes:[
-            new Attribute(nameof(Asset.Id).Camelize()),
+            new Attribute(nameof(Asset.Id).Camelize(), DataType:DataType.Int),
             new Attribute(nameof(Asset.Path).Camelize()),
             new Attribute(nameof(Asset.Url).Camelize()),
             new Attribute(nameof(Asset.Name).Camelize()),

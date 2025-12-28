@@ -301,7 +301,7 @@ public sealed class EntitySchemaService(
 
     private static Result EnsureTableNotExist(Schema schema, Column[] columns)
     {
-        var creatingNewEntity = schema.Id == 0;
+        var creatingNewEntity = schema.SchemaId is not null && schema.SchemaId.Length == 0;
         var tableExists = columns.Length > 0;
 
         return creatingNewEntity && tableExists
