@@ -2,7 +2,6 @@ using FormCMS.Auth.Models;
 using FormCMS.Cms.Builders;
 using FormCMS.Cms.Workers;
 using FormCMS.Core.Auth;
-using FormCMS.Engagements.Workers;
 using FormCMS.Infrastructure.Buffers;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.Fts;
@@ -45,6 +44,8 @@ public class Program
                          ?? throw new Exception("ApiInfo:Url not found");
 
         var ftsSettings = builder.Configuration.GetSection(nameof(FtsSettings)).Get<FtsSettings>();
+        builder.Services.AddReverseProxy()
+            .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 
         builder.AddServiceDefaults();
         builder.WebHost.ConfigureKestrel(option => option.Limits.MaxRequestBodySize = 15 * 1024 * 1024);
@@ -78,7 +79,7 @@ public class Program
         await EnsureDbCreatedAsync();
         await app.UseCmsAsync();
         await EnsureUserCreatedAsync();
-
+        app.MapReverseProxy();
         await app.RunAsync();
         return;
 
