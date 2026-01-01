@@ -32,6 +32,11 @@ public sealed class PageService(
             throw;
         }
 
+        if (!ctx.needRenderHandleBar)
+        {
+            return ctx.CurrentPage.Html;
+        }
+
         if (nodeId is not null)
         {
             return await RenderPartialPage(ctx.LoadPartialContext(nodeId), sourceId, span ?? new Span(), strArgs, ct);
@@ -167,7 +172,7 @@ public sealed class PageService(
         first.SetAttributeValue(SpanConstants.HasPreviousPage, $$$"""{{{{{SpanConstants.HasPreviousPage}}}}}""");
     }
 
-    private record PageProcessingContext(Page CurrentPage, HtmlDocument Document)
+    private record PageProcessingContext(Page CurrentPage, HtmlDocument Document, bool needRenderHandleBar)
     {
         public PartialPageContext LoadPartialContext(string elementId)
         {
@@ -189,8 +194,13 @@ public sealed class PageService(
         var publicationStatus = PublicationStatusHelper.GetSchemaStatus(arguments);
         var pageSchema = await pageResolver.GetPage(pageName, matchPrefix, publicationStatus, cancellationToken);
 
+        var page = pageSchema.Settings.Page!;
+        if (string.IsNullOrWhiteSpace(page.Components))
+        {
+            return new PageProcessingContext(page, null, false);
+        }
         var document = new HtmlDocument();
-        document.LoadHtml(pageSchema.Settings.Page!.Html);
-        return new PageProcessingContext(pageSchema.Settings.Page!, document);
+        document.LoadHtml(page.Html);
+        return new PageProcessingContext(page, document, true);
     }
 }
