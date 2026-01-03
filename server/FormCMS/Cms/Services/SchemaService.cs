@@ -136,9 +136,8 @@ public sealed class SchemaService(
         return await Save(res.RefSchema, asPublished,ct);
     }
 
-    public async Task Delete(long id, CancellationToken ct)
+    public async Task Delete(Schema schema, CancellationToken ct)
     {
-        var schema = await ById(id,ct)?? throw new ResultException($"Schema [{id}] not found");
         await hook.SchemaPreDel.Trigger(provider, new SchemaPreDelArgs(schema));
         await shardGroup.PrimaryDao.Exec(SchemaHelper.SoftDelete(schema.SchemaId),ct);
     }

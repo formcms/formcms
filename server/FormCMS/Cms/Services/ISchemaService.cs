@@ -30,7 +30,7 @@ public interface ISchemaService
     Task<Schema> Save(Schema schema, bool asPublished, CancellationToken ct);
 
     Task<Schema> AddOrUpdateByNameWithAction(Schema schema,bool asPublished, CancellationToken ct);
-    Task Delete(long id, CancellationToken ct);
+    Task Delete(Schema schema, CancellationToken ct);
 
     Task EnsureTopMenuBar(CancellationToken ct);
 

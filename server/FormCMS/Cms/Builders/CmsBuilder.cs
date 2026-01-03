@@ -279,8 +279,10 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 "doc",
                 "files",
                 "favicon.ico",
+                "vite.ico",
                 "css",
                 "js",
+                "assets",
                 settings.RouteOptions.ApiBaseUrl
             }.Concat(settings.KnownPaths);
             

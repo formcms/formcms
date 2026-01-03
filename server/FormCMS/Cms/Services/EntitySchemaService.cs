@@ -63,7 +63,7 @@ public sealed class EntitySchemaService(
 
     public async Task Delete(Schema schema, CancellationToken ct)
     {
-        await schemaSvc.Delete(schema.Id, ct);
+        await schemaSvc.Delete(schema, ct);
         if (schema.Settings.Entity is not null) await schemaSvc.RemoveEntityInTopMenuBar(schema.Settings.Entity, ct);
         await entityCache.Remove("", ct);
     }
