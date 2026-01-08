@@ -29,7 +29,6 @@ public interface ISchemaService
     Task<Schema> SaveWithAction(Schema schema,bool asPublished, CancellationToken ct);
     Task<Schema> Save(Schema schema, bool asPublished, CancellationToken ct);
 
-    Task<Schema> AddOrUpdateByNameWithAction(Schema schema,bool asPublished, CancellationToken ct);
     Task Delete(Schema schema, CancellationToken ct);
 
     Task EnsureTopMenuBar(CancellationToken ct);

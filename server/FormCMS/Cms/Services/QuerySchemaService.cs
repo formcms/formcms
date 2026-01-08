@@ -4,6 +4,7 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Core.Plugins;
 using FormCMS.Utils.ResultExt;
 using GraphQLParser.AST;
+using Microsoft.Extensions.Primitives;
 using Converter = FormCMS.Utils.GraphTypeConverter.Converter;
 using Query = FormCMS.Core.Descriptors.Query;
 using Schema = FormCMS.Core.Descriptors.Schema;
@@ -11,6 +12,7 @@ using Schema = FormCMS.Core.Descriptors.Schema;
 namespace FormCMS.Cms.Services;
 
 public sealed class QuerySchemaService(
+    IHttpContextAccessor httpContextAccessor,
     ISchemaService schemaSvc,
     IEntitySchemaService entitySchemaSvc,
     KeyValueCache<LoadedQuery> queryCache,
@@ -18,20 +20,28 @@ public sealed class QuerySchemaService(
     SystemSettings systemSettings
 ) : IQuerySchemaService
 {
+    private string GetHeader(string key)
+    {
+        var ret  = new StringValues("");
+        httpContextAccessor.HttpContext?.Request.Headers.TryGetValue(key, out ret);
+        return ret.ToString();
+    }
+
     public async Task<LoadedQuery> ByGraphQlRequest(Query query, GraphQLField[] fields)
     {
-        if (string.IsNullOrWhiteSpace(query.Name))
+        var ct = CancellationToken.None;
+        var queryName = GetHeader("x-name");
+        var schemaId = GetHeader("x-schema-id");
+        
+        if (string.IsNullOrWhiteSpace(queryName)) 
         {
-            return await ToLoadedQuery(query, fields, null);
+            return await ToLoadedQuery(query, fields, null,ct);
         }
-
-        var schema = await schemaSvc.ByNameOrDefault(query.Name, SchemaType.Query, null, CancellationToken.None);
-        if (schema == null || schema.Settings.Query != null && schema.Settings.Query.Source != query.Source)
-        {
-            await SaveQuery(query, null);
-        }
-
-        return await ToLoadedQuery(query, fields, null);
+        
+        query= query with{Name =  queryName};
+        var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query),SchemaId:schemaId);
+        await schemaSvc.SaveWithAction(schema, false, ct);
+        return await ToLoadedQuery(query, fields, null,ct);
     }
 
     public async Task<LoadedQuery> GetSetCacheByName(string name, PublicationStatus? status,
@@ -53,23 +63,6 @@ public sealed class QuerySchemaService(
             var fields = Converter.GetRootGraphQlFields(settingsQuery.Source).Ok();
             return await ToLoadedQuery(settingsQuery, fields, status, token);
         }
-    }
-
-
-    public async Task SaveQuery(Query query, PublicationStatus? status, CancellationToken ct = default)
-    {
-        query = query with
-        {
-            IdeUrl =
-            $"{systemSettings.GraphQlPath}?query={Uri.EscapeDataString(query.Source)}"
-        };
-        if (!registry.PluginEntities.ContainsKey(query.EntityName))
-        {
-            await VerifyQuery(query, status, ct);
-        }
-
-        var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query));
-        await schemaSvc.AddOrUpdateByNameWithAction(schema, false, ct);
     }
 
     public async Task Delete(Schema schema, CancellationToken ct)

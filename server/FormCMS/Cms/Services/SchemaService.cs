@@ -124,18 +124,6 @@ public sealed class SchemaService(
         return schema;
     }
 
-    public async Task<Schema> AddOrUpdateByNameWithAction(Schema schema,bool asPublished, CancellationToken ct)
-    {
-        var find = await ByNameOrDefault(schema.Name, schema.Type, null, ct);
-        if (find is not null)
-        {
-            schema = schema with { SchemaId = find.SchemaId};
-        }
-
-        var res = await hook.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(schema));
-        return await Save(res.RefSchema, asPublished,ct);
-    }
-
     public async Task Delete(Schema schema, CancellationToken ct)
     {
         await hook.SchemaPreDel.Trigger(provider, new SchemaPreDelArgs(schema));
@@ -211,6 +199,4 @@ public sealed class SchemaService(
             await Save(menuBarSchema,true, ct);
         }
     }
-
-   
 }
