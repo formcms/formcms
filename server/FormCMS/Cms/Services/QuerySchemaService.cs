@@ -12,7 +12,6 @@ using Schema = FormCMS.Core.Descriptors.Schema;
 namespace FormCMS.Cms.Services;
 
 public sealed class QuerySchemaService(
-    IHttpContextAccessor httpContextAccessor,
     ISchemaService schemaSvc,
     IEntitySchemaService entitySchemaSvc,
     KeyValueCache<LoadedQuery> queryCache,
@@ -20,27 +19,9 @@ public sealed class QuerySchemaService(
     SystemSettings systemSettings
 ) : IQuerySchemaService
 {
-    private string GetHeader(string key)
-    {
-        var ret  = new StringValues("");
-        httpContextAccessor.HttpContext?.Request.Headers.TryGetValue(key, out ret);
-        return ret.ToString();
-    }
-
     public async Task<LoadedQuery> ByGraphQlRequest(Query query, GraphQLField[] fields)
     {
         var ct = CancellationToken.None;
-        var queryName = GetHeader("x-name");
-        var schemaId = GetHeader("x-schema-id");
-        
-        if (string.IsNullOrWhiteSpace(queryName)) 
-        {
-            return await ToLoadedQuery(query, fields, null,ct);
-        }
-        
-        query= query with{Name =  queryName};
-        var schema = new Schema(query.Name, SchemaType.Query, new Settings(Query: query),SchemaId:schemaId);
-        await schemaSvc.SaveWithAction(schema, false, ct);
         return await ToLoadedQuery(query, fields, null,ct);
     }
 
@@ -58,11 +39,31 @@ public sealed class QuerySchemaService(
         {
             var schema = await schemaSvc.ByNameOrDefault(name, SchemaType.Query, status, token) ??
                          throw new ResultException($"Cannot find query by name [{name}]");
+            
             var settingsQuery = schema.Settings.Query ??
                                 throw new ResultException($"Query [{name}] has invalid query format");
-            var fields = Converter.GetRootGraphQlFields(settingsQuery.Source).Ok();
-            return await ToLoadedQuery(settingsQuery, fields, status, token);
+
+            var parseRes = Converter.ParseSource(settingsQuery.Source).Ok();
+            return await ToLoadedQuery(settingsQuery, parseRes.fields, status, token);
         }
+    }
+    
+    private Query ParseQuerySource(string source, string name, string entityName, IArgument[] arguments, string[]requiredVariables) 
+    {
+        var res = QueryHelper.ParseArguments(arguments);
+        if (res.IsFailed)
+        {
+            throw new ResultException(string.Join(";", res.Errors.Select(x=>x.Message)));
+        }
+        var (sorts,filters,pagination,distinct) = res.Value;
+        return new Query(
+            Name: name, 
+            EntityName: entityName, 
+            Sorts: [..sorts],Source: source,
+            Filters:[..filters],
+            ReqVariables:[..requiredVariables],
+            Distinct: distinct,
+            Pagination:pagination);
     }
 
     public async Task Delete(Schema schema, CancellationToken ct)
@@ -72,6 +73,15 @@ public sealed class QuerySchemaService(
         {
             await queryCache.Remove(schema.Settings.Query.Name, ct);
         }
+    }
+
+    public Task<Schema> Save(Schema schema, CancellationToken ct)
+    {
+        var source = schema.Settings.Query!.Source;
+        var parseResult = Converter.ParseSource(source).Ok();
+        var query = ParseQuerySource(source,schema.Settings.Query.Name,parseResult.entitName,parseResult.arguments,parseResult.requiredVariables);
+        schema = schema with{Settings = schema.Settings with{Query = query}};
+        return schemaSvc.SaveWithAction(schema, false,ct);
     }
 
     public string GraphQlClientUrl()
@@ -95,22 +105,6 @@ public sealed class QuerySchemaService(
         var (validFilter, plugFilters) =
             await query.Filters.ToValidFilters(entity, status, registry.PluginVariables, entitySchemaSvc).Ok();
         return query.ToLoadedQuery(entity, selection, sorts, validFilter, plugFilters);
-    }
-
-    private async Task VerifyQuery(Query? query, PublicationStatus? status, CancellationToken ct = default)
-    {
-        if (query is null)
-        {
-            throw new ResultException("query is null");
-        }
-
-        var entity = await entitySchemaSvc.LoadEntity(query.EntityName, status, ct).Ok();
-        await query.Filters.ToValidFilters(entity, status, registry.PluginVariables, entitySchemaSvc).Ok();
-
-        var fields = Converter.GetRootGraphQlFields(query.Source).Ok();
-        var nodes = ParseGraphNodes(fields, "");
-        await LoadAttributes(nodes, entity, null, status, ct);
-        await query.Sorts.ToValidSorts(entity, entitySchemaSvc, status).Ok();
     }
 
     private static GraphNode[] ParseGraphNodes(IEnumerable<GraphQLField> fields, string prefix)

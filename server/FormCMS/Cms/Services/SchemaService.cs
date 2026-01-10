@@ -79,7 +79,7 @@ public sealed class SchemaService(
 
     public async Task<Result> NameNotTakenByOther(Schema schema, CancellationToken ct)
     {
-        var query = SchemaHelper.ByNameAndTypeAndNotId(schema.Name, schema.Type, schema.SchemaId);
+        var query = SchemaHelper.ByNameAndTypeAndNotId(schema.Name, schema.Type, schema.SchemaId??"");
         var count = await shardGroup.PrimaryDao.Count(query, ct);
         return count == 0 ? Result.Ok() : Result.Fail($"the schema name {schema.Name} was taken by other schema");
     }

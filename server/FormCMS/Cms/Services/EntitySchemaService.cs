@@ -23,7 +23,9 @@ public sealed class EntitySchemaService(
     ISchemaService schemaSvc,
     KeyValueCache<ImmutableArray<Entity>> entityCache,
     
-    IServiceProvider provider
+    IServiceProvider provider,
+    ILogger<EntitySchemaService> logger
+    
 ) : IEntitySchemaService
 {
     public async Task<Result<LoadedEntity>> ValidateEntity( string entityName, CancellationToken ct )
@@ -135,17 +137,20 @@ public sealed class EntitySchemaService(
         try
         {
             schema = await schemaSvc.Save(schema, asPublished, ct);
+            logger.LogInformation($"{schema.Name}:Save schema ok");
             await CreateMainTable(schema.Settings.Entity!, cols, ct);
+            logger.LogInformation($"{schema.Name}:Save define ok");
             await schemaSvc.EnsureEntityInTopMenuBar(schema.Settings.Entity!, ct);
+            logger.LogInformation($"{schema.Name}:Add menu ok");
             
             var loadedEntity = await LoadAttributes(schema.Settings.Entity!.ToLoadedEntity(),null, ct).Ok();
             await CreateLookupForeignKey(loadedEntity, ct);
+            logger.LogInformation($"{schema.Name}:save lookup ok");
             await CreateCollectionForeignKey(loadedEntity, ct);
+            logger.LogInformation($"{schema.Name}:save collection ok");
             await CreateJunctions(loadedEntity, ct);
+            logger.LogInformation($"{schema.Name}:save junction ok");
             tx.Commit();
-            await entityCache.Remove("", ct);
-            await hook.SchemaPostSave.Trigger(provider, new SchemaPostSaveArgs(schema));
-            return schema;
         }
         catch(Exception ex )
         {
@@ -153,6 +158,12 @@ public sealed class EntitySchemaService(
             throw ex is ResultException ? ex: new ResultException(ex.Message,inner:ex);
         }
 
+        await hook.SchemaPostSave.Trigger(provider, new SchemaPostSaveArgs(schema));
+        logger.LogInformation($"{schema.Name}:trigger hook ok");
+        
+        await entityCache.Remove("", ct);
+        return schema;
+        
         Schema WithDefaultAttr(Schema s)
         {
             var e = s.Settings.Entity ?? throw new ResultException("invalid entity payload");

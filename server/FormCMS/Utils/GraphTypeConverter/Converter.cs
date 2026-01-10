@@ -1,5 +1,7 @@
 using GraphQLParser.AST;
 using FluentResults;
+using FormCMS.Cms.Graph;
+using FormCMS.Core.Descriptors;
 using GraphQL.Validation;
 using Microsoft.Extensions.Primitives;
 
@@ -8,6 +10,21 @@ namespace FormCMS.Utils.GraphTypeConverter;
 //convert graphQL type to common c# types
 public static class Converter
 {
+    private static string[] GetRequiredNames(this GraphQLVariablesDefinition? variables)
+    {
+        var ret = new List<string>();
+
+        foreach (var def in variables.Items)
+        {
+            if (def.Type is GraphQLNonNullType)
+            {
+                ret.Add(def.Variable.Name.StringValue);
+            }
+        }
+
+        return ret.ToArray();
+    }
+    
     public static string[] GetRequiredNames(this Variables? variables)
     {
         if (variables == null)
@@ -51,24 +68,33 @@ public static class Converter
         return dictionary;
     }
 
-    public static Result<GraphQLField[]> GetRootGraphQlFields(string s)
+    public static Result<(string entitName, GraphQLField[] fields, IArgument[] arguments, string[] requiredVariables)> ParseSource(string s)
     {
         var document = GraphQLParser.Parser.Parse(s);
-        var def = document.Definitions.FirstOrDefault();
-        if (def is null)
+        var node = document.Definitions.FirstOrDefault();
+        if (node is null)
         {
             return Result.Fail("can not find root ASTNode");
         }
 
-        if (def is not GraphQLOperationDefinition op)
+        if (node is not GraphQLOperationDefinition op)
         {
             return Result.Fail("root ASTNode is not operation definition");
         }
-
-        var sub = op.SelectionSet.Selections.OfType<GraphQLField>().ToArray();
-        return sub is [{ SelectionSet: not null }]
-            ? sub[0].SelectionSet!.Selections.OfType<GraphQLField>().ToArray()
-            : sub;
+        var requiredVariables = op.Variables.GetRequiredNames();
+ 
+        var roots = op.SelectionSet.Selections.OfType<GraphQLField>().ToArray();
+        if (roots.Length != 1)
+        {
+            return Result.Fail("root ASTNode must have exactly one selection");
+        }
+        
+        var entityNode = roots[0];
+        var fields = entityNode.SelectionSet!.Selections.OfType<GraphQLField>().ToArray();
+        var arguments = entityNode.Arguments?.OfType<GraphQLArgument>()
+            .Select(x=> new GraphArgument(x)).ToArray()??[];
+        
+        return (entityNode.Name.ToString(), fields, arguments, requiredVariables );
     }
 
     public static string?[] ToPrimitiveStrings(GraphQLListValue vals, string variablePrefix)

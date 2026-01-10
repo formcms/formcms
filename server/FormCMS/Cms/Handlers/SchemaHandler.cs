@@ -44,12 +44,14 @@ public static class SchemaHandler
         app.MapPost("/", (
             ISchemaService schemaSvc,
             IEntitySchemaService entitySchemaSvc,
+            IQuerySchemaService querySchemaSvc,
             Schema dto,
             bool? publish,
             CancellationToken ct
         ) => dto.Type switch
         {
             SchemaType.Entity => entitySchemaSvc.Save(dto,publish??false, ct),
+            SchemaType.Query => querySchemaSvc.Save(dto,ct),
             _ => schemaSvc.SaveWithAction(dto,publish??false, ct)
         });
         
