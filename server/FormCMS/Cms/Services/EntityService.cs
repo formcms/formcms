@@ -363,7 +363,7 @@ public sealed class EntityService(
         using var trans = await shardGroup.PrimaryDao.BeginTransaction();
         try
         {
-            var (parent,subItems) = entity.SplitRecord(record);
+            var (parent,collectionItems,junctionItems) = entity.SplitRecord(record);
             var id = await shardGroup.PrimaryDao.ExecuteLong(entity.Insert(parent), ct);
 
             await assetService.UpdateAssetsLinks([],entity.GetAssets(parent), entity.Name, id, ct);
@@ -371,7 +371,7 @@ public sealed class EntityService(
             
             foreach (var collectionField in entity.Attributes.Where(x=>x.Collection is not null))
             {
-                if (!subItems.TryGetValue(collectionField.Field, out var val) ||
+                if (!collectionItems.TryGetValue(collectionField.Field, out var val) ||
                     val is not object[] collectionValues) continue;
                 
                 var collection = collectionField.Collection;
@@ -385,6 +385,15 @@ public sealed class EntityService(
                     var subId = await shardGroup.PrimaryDao.ExecuteLong(targetEntity.Insert(item),ct);
                     await assetService.UpdateAssetsLinks([],entity.GetAssets(item), targetEntity.Name, subId, ct);
                 }
+            }
+
+            foreach (var junctionField in entity.Attributes.Where(x=>x.Junction is not null))
+            {
+                var junction=junctionField.Junction;
+                if (!junctionItems.TryGetValue(junctionField.Field, out var val) ||
+                    val is not object[] values) continue;
+                var items  = values.Select(x => x as Dictionary<string, object>).ToArray();
+                await shardGroup.PrimaryDao.ExecuteLong(junction.Insert(new ValidValue(L:id), items),ct);
             }
             
             trans.Commit();

@@ -318,22 +318,32 @@ public static class EntityHelper
         return query;
     }
 
-    public static (Record, Record) SplitRecord(this LoadedEntity e, Record record)
+    public static (Record parent, Record collectionItems, Record junctionItems) SplitRecord(this LoadedEntity e, Record record)
     {
-        var (parent,  subItems) = (new Dictionary<string,object>(), new Dictionary<string,object>());
+        var (parent,  collectionItems, junctionItems) =  
+            (new Dictionary<string,object>(), new Dictionary<string,object>(),new Dictionary<string,object>());
         foreach (var loadedAttribute in e.Attributes)
         {
             if (!record.TryGetValue(loadedAttribute.Field, out var value)) continue;
-            if (loadedAttribute.DataType == DataType.Collection)
+            switch (loadedAttribute.DataType)
             {
-                subItems[loadedAttribute.Field] = value;
-            }
-            else
-            {
-                parent[loadedAttribute.Field] = value;
+                case DataType.Collection:
+                    collectionItems[loadedAttribute.Field] = value;
+                    break;
+                case DataType.Junction:
+                    junctionItems[loadedAttribute.Field] = value;
+                    break;
+                case DataType.Int:
+                case DataType.Datetime:
+                case DataType.Text:
+                case DataType.String:
+                case DataType.Lookup:
+                default:
+                    parent[loadedAttribute.Field] = value;
+                    break;
             }
         }
-        return (parent, subItems);
+        return (parent, collectionItems, junctionItems);
     }
 
     public static SqlKata.Query Insert(this LoadedEntity e, Record item)

@@ -48,6 +48,7 @@ public class AdminPanelSchemaService(
             InDetail: attribute.InDetail,
             IsDefault: attribute.IsDefault,
             Options: attribute.Options,
+            Validation:attribute.Validation,
             Junction: ToXEntity(attribute.Junction?.TargetEntity),
             Lookup: ToXEntity(attribute.Lookup?.TargetEntity),
             Collection: ToXEntity(attribute.Collection?.TargetEntity)

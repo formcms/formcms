@@ -13,6 +13,7 @@ public record XAttr(
     bool InDetail ,
     bool IsDefault ,
     string Options ,
+    string Validation,
     XEntity? Junction = null,
     XEntity? Lookup = null,
     XEntity? Collection = null
@@ -27,7 +28,8 @@ public static class XAttrExtensions
         bool inList = true,
         bool inDetail = true,
         bool isDefault = false,
-        string options = ""
+        string options = "",
+        string validation = ""
         )
     {
         var name = expression.GetName();
@@ -42,7 +44,7 @@ public static class XAttrExtensions
             _ => DisplayType.Text
         };
         
-        return new XAttr(name, header,displayType.Value,inList,inDetail,isDefault,options);
+        return new XAttr(name, header,displayType.Value,inList,inDetail,isDefault,options,validation);
     }
     
     private static string GetName<TClass,TValue>(this Expression<Func<TClass, TValue>> e)
