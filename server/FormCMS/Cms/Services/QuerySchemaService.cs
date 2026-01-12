@@ -4,7 +4,6 @@ using FormCMS.Core.Descriptors;
 using FormCMS.Core.Plugins;
 using FormCMS.Utils.ResultExt;
 using GraphQLParser.AST;
-using Microsoft.Extensions.Primitives;
 using Converter = FormCMS.Utils.GraphTypeConverter.Converter;
 using Query = FormCMS.Core.Descriptors.Query;
 using Schema = FormCMS.Core.Descriptors.Schema;
@@ -48,7 +47,7 @@ public sealed class QuerySchemaService(
         }
     }
     
-    private Query ParseQuerySource(string source, string name, string entityName, IArgument[] arguments, string[]requiredVariables) 
+    private Query ParseQuerySource(string source, string name, string entityName, IArgument[] arguments, Variable[]variables) 
     {
         var res = QueryHelper.ParseArguments(arguments);
         if (res.IsFailed)
@@ -61,7 +60,7 @@ public sealed class QuerySchemaService(
             EntityName: entityName, 
             Sorts: [..sorts],Source: source,
             Filters:[..filters],
-            ReqVariables:[..requiredVariables],
+            Variables:[..variables],
             Distinct: distinct,
             Pagination:pagination);
     }
@@ -79,7 +78,8 @@ public sealed class QuerySchemaService(
     {
         var source = schema.Settings.Query!.Source;
         var parseResult = Converter.ParseSource(source).Ok();
-        var query = ParseQuerySource(source,schema.Settings.Query.Name,parseResult.entitName,parseResult.arguments,parseResult.requiredVariables);
+        var query = ParseQuerySource(source, schema.Settings.Query.Name, parseResult.entitName, parseResult.arguments,
+            parseResult.variables);
         schema = schema with{Settings = schema.Settings with{Query = query}};
         return schemaSvc.SaveWithAction(schema, false,ct);
     }

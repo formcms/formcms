@@ -56,7 +56,7 @@ public static class Resolvers
             Pagination: pagination,
             Filters: [..filters], 
             Sorts: [..sorts], 
-            ReqVariables: [..context.Variables.GetRequiredNames()],
+            Variables: [..context.Variables.ToQueryVariables()],
             Distinct: distinct
         );
         

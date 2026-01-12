@@ -53,6 +53,10 @@ public sealed class PageService(
         Span span, CancellationToken ct)
     {
         var ctx = await LoadPage(name, true, strArgs, ct);
+        if (!ctx.needRenderHandleBar)
+        {
+            return ctx.CurrentPage.Html;
+        }
         if (nodeId is not null)
         {
             return await RenderPartialPage(ctx.LoadPartialContext(nodeId), sourceId, span, strArgs, ct);
