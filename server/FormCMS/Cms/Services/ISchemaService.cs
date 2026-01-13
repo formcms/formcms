@@ -18,6 +18,7 @@ public interface ISchemaService
     Task<Schema?> ByIdWithAction(long id, CancellationToken ct);
     Task<Schema?> ById(long id, CancellationToken ct);
 
+    Task<Schema> BySchemaIdWithAction(string schemaId, CancellationToken ct);
     Task<Schema[]> History(string schemaId, CancellationToken ct);
 
     Task<Result> NameNotTakenByOther(Schema schema, CancellationToken ct);
