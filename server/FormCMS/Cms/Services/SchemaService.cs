@@ -50,7 +50,16 @@ public sealed class SchemaService(
         await hook.SchemaPostGetSingle.Trigger(provider, new SchemaPostGetSingleArgs(schema));
         return schema;
     }
-    
+
+    public async Task<Schema> BySchemaId(string schemaId, CancellationToken ct)
+    {
+        var query = SchemaHelper.BySchemaId(schemaId);
+        var item = await shardGroup.PrimaryDao.Single(query, ct);
+        var schema = SchemaHelper.RecordToSchema(item).Ok();
+        await hook.SchemaPostGetSingle.Trigger(provider, new SchemaPostGetSingleArgs(schema));
+        return schema;
+    }
+
     public async Task<Schema[]> History(string schemaId, CancellationToken ct = default)
     {
         var query = SchemaHelper.BySchemaId(schemaId);

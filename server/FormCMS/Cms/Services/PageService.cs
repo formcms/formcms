@@ -11,11 +11,13 @@ namespace FormCMS.Cms.Services;
 
 public sealed class PageService(
     SystemSettings systemSettings,
+    ISchemaService schemaService,
     IQueryService querySvc,
     IPageResolver pageResolver,
     PageTemplate template
 ) : IPageService
 {
+    
     public async Task<string> Get(string name, StrArgs strArgs, string? nodeId, long? sourceId, Span? span,
         CancellationToken ct)
     {
@@ -36,7 +38,7 @@ public sealed class PageService(
 
         if (page.Source == PageConstants.PageSourceAi)
         {
-            return await RenderAiPage(page, strArgs, "",ct);
+            return Handlebars.Compile(page.Html)(await GetAiPageData(page, strArgs, "",ct));
         }
         
         var data = new Dictionary<string, object>();
@@ -51,7 +53,7 @@ public sealed class PageService(
         return RenderPage(pageCtx, data, ct);
     }
 
-    private async Task<string> RenderAiPage(Page page, StrArgs strArgs, string path, CancellationToken ct)
+    private async Task<Record> GetAiPageData(Page page, StrArgs strArgs, string path, CancellationToken ct)
     {
         var data = new Dictionary<string, object>();
         var metadata = JsonSerializer.Deserialize<PageMetadata>(page.Metadata, new JsonSerializerOptions
@@ -77,8 +79,8 @@ public sealed class PageService(
                 data[query.FieldName] =
                     await querySvc.ListWithAction(query.QueryName, new Span(), new Pagination(), strArgs, ct);
             }
-        }
-        return Handlebars.Compile(page.Html)(data); 
+        } 
+        return data;
     }
 
     public async Task<string> GetDetail(string name, string path, StrArgs strArgs, string? nodeId, long? sourceId,
@@ -87,7 +89,7 @@ public sealed class PageService(
         var page = await LoadPage(name, true, strArgs, ct);
         if (page.Source == PageConstants.PageSourceAi)
         {
-            return await RenderAiPage(page, strArgs, path,ct);
+            return Handlebars.Compile(page.Html)(await GetAiPageData(page, strArgs, path,ct));
         }
         var ctx = LoadContext(page);
         if (nodeId is not null)
@@ -123,6 +125,12 @@ public sealed class PageService(
         }
         await LoadData(pageCtx, strArgs, data, ct);
         return RenderPage(pageCtx, data, ct);
+    }
+
+    public async Task<Record> GetAiPageData(string schemaId, CancellationToken ct)
+    {
+        var schema = await schemaService.BySchemaId(schemaId,ct);
+        return await GetAiPageData(schema.Settings.Page, new StrArgs(), "", ct);
     }
 
     private async Task<string> RenderPartialPage(PartialPageContext ctx, long? sourceId, Span span, StrArgs args,

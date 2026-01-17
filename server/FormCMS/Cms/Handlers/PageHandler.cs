@@ -51,6 +51,7 @@ public static class PageHandler
             await context.Html(html, ct);
         });
 
+        
         app.MapGet(prefix + "/{slug}", async (
             IPageService pageService,
             HttpContext context,
@@ -60,7 +61,6 @@ public static class PageHandler
             long ? source,
             string? first,
             string? last,
-            bool? replace,
             CancellationToken ct
         ) =>
         {
