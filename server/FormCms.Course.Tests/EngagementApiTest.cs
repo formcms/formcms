@@ -24,7 +24,7 @@ public class EngagementApiTest(AppFactory factory)
     {
         //create home page
         var schema = new Schema("home", SchemaType.Page, new Settings(
-            Page: new Page("home", "",null, "home", "", "", "")
+            Page: new Page("home", "",null, "home","" ,"","", "", "")
         ));
         await factory.SchemaApi.Save(schema);
         

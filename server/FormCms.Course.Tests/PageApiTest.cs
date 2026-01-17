@@ -26,7 +26,7 @@ public class PageApiTest
                       --{{{{{TestFieldNames.Title.Camelize()}}}}}--
                       """;
         var schema = new Schema(_query + "/{id}", SchemaType.Page, new Settings(
-            Page: new Page(_query + "/{id}", "", _query, html, "", "", "")
+            Page: new Page(_query + "/{id}", "", _query, html, "","","", "", "")
         ));
         
         await Factory.SchemaApi.Save(schema).Ok();
@@ -50,7 +50,7 @@ public class PageApiTest
     {
         var html = "--{{id}}--";
         var schema = new Schema(_query + "/{id}", SchemaType.Page, new Settings(
-            Page: new Page(_query + "/{id}", "", _query, html, "", "", "")
+            Page: new Page(_query + "/{id}", "", _query, html,"","", "", "", "")
         ));
         await Factory.SchemaApi.Save(schema).Ok();
         var s =await Factory.PageApi.GetDetailPage(_query,"2").Ok();
@@ -70,7 +70,7 @@ public class PageApiTest
                        <body>
                        """;
         var schema = new Schema(_query, SchemaType.Page, new Settings(
-            Page: new Page(_query, "", null, html, "", "", "")
+            Page: new Page(_query, "", null, html,"","", "", "", "")
         ));
         await Factory.SchemaApi.Save(schema).Ok();
         html =await Factory.PageApi.GetLandingPage(_query).Ok();
