@@ -30,9 +30,8 @@ public sealed class PageService(
         {
             if (name == PageConstants.Home)
             {
-                return """ <a href="/admin">Go to Admin Panel</a><br/> <a href="/schema">Go to Schema Builder</a> """;
+                return """ <a href="/admin">Go to Admin Panel</a><br/> <a href="/mate">Go to Schema Builder</a> """;
             }
-
             throw;
         }
 
