@@ -9,4 +9,5 @@ public interface IPageService
 
     Task<string> GetDetail(string name, string slug, StrArgs strArgs, string? nodeId, long? sourceId,
         Span span, CancellationToken ct);
+    Task<Record> GetAiPageData(string name,CancellationToken ct);
 }

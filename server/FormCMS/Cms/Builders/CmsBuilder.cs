@@ -269,6 +269,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 .MapQueryHandlers()
                 .CacheOutput(SystemSettings.QueryCachePolicyName);
 
+            apiGroup.MapGroup("/page-data").MapPageData();
             // if an auth component is not use, the handler will use fake profile service
             apiGroup.MapIdentityHandlers();
             apiGroup.MapGroup("/tasks").MapTasksHandler();
@@ -279,8 +280,10 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 "doc",
                 "files",
                 "favicon.ico",
+                "vite.ico",
                 "css",
                 "js",
+                "assets",
                 settings.RouteOptions.ApiBaseUrl
             }.Concat(settings.KnownPaths);
             

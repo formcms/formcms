@@ -41,7 +41,6 @@ public class EngagementsBuilder(ILogger<EngagementsBuilder> logger)
 
             if (engagementStatusConfigs == null || engagementStatusConfigs.Length == 0)
             {
-                logger.LogWarning("No EngagementStatusConfigs provided, using single default shard");
                 return new EngagementContext(
                     new ShardRouter([defaultShard]),
                     engagementCountConfig == null ? defaultShard : sp.CreateShard(engagementCountConfig));

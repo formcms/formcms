@@ -1,29 +1,30 @@
 using GraphQLParser.AST;
 using FluentResults;
+using FormCMS.Cms.Graph;
+using FormCMS.Core.Descriptors;
 using GraphQL.Validation;
 using Microsoft.Extensions.Primitives;
+using Variable = FormCMS.Core.Descriptors.Variable;
 
 namespace FormCMS.Utils.GraphTypeConverter;
 
 //convert graphQL type to common c# types
 public static class Converter
 {
-    public static string[] GetRequiredNames(this Variables? variables)
+    private static Variable[] ToQueryVariables(this GraphQLVariablesDefinition? variables)
     {
-        if (variables == null)
-        {
-            return [];
-        }
-        
-        var ret = new List<string>();
-        foreach (var variable in variables)
-        {
-            if (variable.Definition.Type is GraphQLNonNullType)
-            {
-                ret.Add(variable.Name);
-            }
-        }
-        return ret.ToArray();
+        return variables is null
+            ? []
+            : variables.Items
+                .Select(def => new Variable(def.Variable.Name.StringValue, def.Type is GraphQLNonNullType)).ToArray();
+    }
+    
+    public static Variable[] ToQueryVariables(this Variables? variables)
+    {
+        return variables == null
+            ? []
+            : variables.Select(variable => new Variable(variable.Name, variable.Definition.Type is GraphQLNonNullType))
+                .ToArray();
     }
     public static StrArgs ToPairArray(this Variables? variables)
     {
@@ -37,31 +38,51 @@ public static class Converter
         {
             if (variable.Value is not null)
             {
-                dictionary.Add(variable.Name, variable.Value?.ToString());
+                if (variable.Value is object[] arr)
+                {
+                    dictionary.Add(variable.Name, arr.Select(x => x.ToString()).ToArray());
+                }
+                else
+                {
+                    dictionary.Add(variable.Name, variable.Value?.ToString());
+                }
             }
         }
 
         return dictionary;
     }
 
-    public static Result<GraphQLField[]> GetRootGraphQlFields(string s)
+    public static Result<(string entitName, GraphQLField[] fields, IArgument[] arguments, Variable[] variables)> ParseSource(string s)
     {
         var document = GraphQLParser.Parser.Parse(s);
-        var def = document.Definitions.FirstOrDefault();
-        if (def is null)
+        var node = document.Definitions.FirstOrDefault();
+        if (node is null)
         {
             return Result.Fail("can not find root ASTNode");
         }
 
-        if (def is not GraphQLOperationDefinition op)
+        if (node is not GraphQLOperationDefinition op)
         {
             return Result.Fail("root ASTNode is not operation definition");
         }
+ 
+        var roots = op.SelectionSet.Selections.OfType<GraphQLField>().ToArray();
+        if (roots.Length != 1)
+        {
+            return Result.Fail("root ASTNode must have exactly one selection");
+        }
+        
+        var entityNode = roots[0];
+        var fields = entityNode.SelectionSet!.Selections.OfType<GraphQLField>().ToArray();
+        var arguments = entityNode.Arguments?.OfType<GraphQLArgument>()
+            .Select(x=> new GraphArgument(x)).ToArray()??[];
 
-        var sub = op.SelectionSet.Selections.OfType<GraphQLField>().ToArray();
-        return sub is [{ SelectionSet: not null }]
-            ? sub[0].SelectionSet!.Selections.OfType<GraphQLField>().ToArray()
-            : sub;
+        var entityName = entityNode.Name.ToString();
+        if (entityName.EndsWith("List"))
+        {
+            entityName = entityName.Remove(entityName.Length - "List".Length);
+        }
+        return (entityName, fields, arguments, op.Variables.ToQueryVariables() );
     }
 
     public static string?[] ToPrimitiveStrings(GraphQLListValue vals, string variablePrefix)

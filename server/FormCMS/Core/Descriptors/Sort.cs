@@ -89,7 +89,12 @@ public static class SortHelper
                 if (current.Field.StartsWith(QueryConstants.VariablePrefix))
                 {
                     var vals = args.ResolveVariable(current.Field, QueryConstants.VariablePrefix);
-                    if (vals ==StringValues.Empty) return Result.Fail($"Failed to resolve sort field {current.Field}");
+                    if (vals == StringValues.Empty)
+                    {
+                        //no variable found, use primary key
+                        vals = entity.PrimaryKey;
+
+                    }
 
                     var field = vals.ToString();
                     if(string.IsNullOrWhiteSpace(field)) return Result.Fail($"Failed to resolve sort field {current.Field}");

@@ -5,13 +5,14 @@ using FormCMS.Utils.DataModels;
 
 namespace FormCMS.Core.Descriptors;
 
+public sealed record Variable(string Name, bool IsRequired);
 public sealed record Query(
     string Name,
     string EntityName,
     string Source,
     ImmutableArray<Filter> Filters,
     ImmutableArray<Sort> Sorts,
-    ImmutableArray<string> ReqVariables,
+    ImmutableArray<Variable> Variables,
     bool Distinct,
     string IdeUrl = "",
     Pagination? Pagination= null
@@ -27,7 +28,7 @@ public sealed record LoadedQuery(
     ImmutableArray<ValidFilter> Filters, 
     ImmutableArray<ValidFilter> PluginFilters, 
     ImmutableArray<ValidSort> Sorts,
-    ImmutableArray<string> ReqVariables,
+    ImmutableArray<Variable> ReqVariables,
     bool Distinct
 );
 
@@ -54,7 +55,7 @@ public static class QueryHelper
             Name: query.Name,
             Source: query.Source,
             Pagination: query.Pagination,
-            ReqVariables: query.ReqVariables,
+            ReqVariables: query.Variables,
             Entity: entity,
             Selection: [..selection],
             Sorts: [..sorts],
@@ -66,7 +67,7 @@ public static class QueryHelper
 
     public static void VerifyVariable(this LoadedQuery query, StrArgs args)
     {
-        foreach (var key in query.ReqVariables.Where(key => !args.ContainsKey(key)))
+        foreach (var key in query.ReqVariables.Where(x => x.IsRequired && !args.ContainsKey(x.Name)))
         {
             throw new  ResultException($"Variable {key} doesn't exist");
         }

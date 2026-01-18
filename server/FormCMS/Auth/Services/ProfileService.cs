@@ -71,7 +71,7 @@ public class ProfileService<TUser>(
         throw new ResultException("You don't have permission to write [" + entityName + "]");
     }
 
-    public Models.AccessLevel MustGetReadLevel(string entityName)
+    public AccessLevel MustGetReadLevel(string entityName)
     {
         if (HasRole(Roles.Sa) || CanFullReadOnly(entityName) || CanFullReadWrite(entityName))
         {

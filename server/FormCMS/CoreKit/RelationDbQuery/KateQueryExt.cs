@@ -112,7 +112,12 @@ public static class KateQueryExt
     {
         foreach (var sort in sorts)
         {
+            
             var vector = sort.Vector;
+            if (string.IsNullOrWhiteSpace(vector.Attribute.Field))
+            {
+                continue;
+            }
             if (sort.Order == SortOrder.Desc)
             {
                 query.OrderByDesc(vector.Attribute.AddTableModifier(vector.TableAlias));

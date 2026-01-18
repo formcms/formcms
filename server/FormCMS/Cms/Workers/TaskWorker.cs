@@ -35,7 +35,6 @@ public abstract class TaskWorker(
     async Task CheckoutTask(CancellationToken ct)
     {
         var taskType = GetTaskType();
-        logger.LogInformation("Checking {t} tasks...", taskType);
         
         using var scope = serviceScopeFactory.CreateScope();
         var dao = scope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao;

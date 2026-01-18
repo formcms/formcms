@@ -42,6 +42,24 @@ public sealed class SchemaService(
         return schema;
     }
     
+    public async Task<Schema?> BySchemaIdWithAction(string id, CancellationToken ct = default)
+    {
+        var query = SchemaHelper.BySchemaId(id);
+        var item = await shardGroup.PrimaryDao.Single(query, ct);
+        var schema = SchemaHelper.RecordToSchema(item).Ok();
+        await hook.SchemaPostGetSingle.Trigger(provider, new SchemaPostGetSingleArgs(schema));
+        return schema;
+    }
+
+    public async Task<Schema> BySchemaId(string schemaId, CancellationToken ct)
+    {
+        var query = SchemaHelper.BySchemaId(schemaId);
+        var item = await shardGroup.PrimaryDao.Single(query, ct);
+        var schema = SchemaHelper.RecordToSchema(item).Ok();
+        await hook.SchemaPostGetSingle.Trigger(provider, new SchemaPostGetSingleArgs(schema));
+        return schema;
+    }
+
     public async Task<Schema[]> History(string schemaId, CancellationToken ct = default)
     {
         var query = SchemaHelper.BySchemaId(schemaId);
@@ -79,7 +97,7 @@ public sealed class SchemaService(
 
     public async Task<Result> NameNotTakenByOther(Schema schema, CancellationToken ct)
     {
-        var query = SchemaHelper.ByNameAndTypeAndNotId(schema.Name, schema.Type, schema.SchemaId);
+        var query = SchemaHelper.ByNameAndTypeAndNotId(schema.Name, schema.Type, schema.SchemaId??"");
         var count = await shardGroup.PrimaryDao.Count(query, ct);
         return count == 0 ? Result.Ok() : Result.Fail($"the schema name {schema.Name} was taken by other schema");
     }
@@ -124,21 +142,8 @@ public sealed class SchemaService(
         return schema;
     }
 
-    public async Task<Schema> AddOrUpdateByNameWithAction(Schema schema,bool asPublished, CancellationToken ct)
+    public async Task Delete(Schema schema, CancellationToken ct)
     {
-        var find = await ByNameOrDefault(schema.Name, schema.Type, null, ct);
-        if (find is not null)
-        {
-            schema = schema with { SchemaId = find.SchemaId};
-        }
-
-        var res = await hook.SchemaPreSave.Trigger(provider, new SchemaPreSaveArgs(schema));
-        return await Save(res.RefSchema, asPublished,ct);
-    }
-
-    public async Task Delete(long id, CancellationToken ct)
-    {
-        var schema = await ById(id,ct)?? throw new ResultException($"Schema [{id}] not found");
         await hook.SchemaPreDel.Trigger(provider, new SchemaPreDelArgs(schema));
         await shardGroup.PrimaryDao.Exec(SchemaHelper.SoftDelete(schema.SchemaId),ct);
     }
@@ -212,6 +217,4 @@ public sealed class SchemaService(
             await Save(menuBarSchema,true, ct);
         }
     }
-
-   
 }

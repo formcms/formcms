@@ -19,6 +19,10 @@ public static class SchemaHandler
             ISchemaService svc, int id, CancellationToken ct
         ) => await svc.ByIdWithAction(id, ct) ?? throw new ResultException($"Cannot find schema {id}"));
 
+        app.MapGet("schema/{id}", async (
+            ISchemaService svc, string id, CancellationToken ct
+        ) => await svc.BySchemaIdWithAction(id, ct));
+
         app.MapGet("/history/{schemaId}", (
             ISchemaService svc, string schemaId, CancellationToken ct
         ) => svc.History(schemaId, ct));
@@ -44,12 +48,14 @@ public static class SchemaHandler
         app.MapPost("/", (
             ISchemaService schemaSvc,
             IEntitySchemaService entitySchemaSvc,
+            IQuerySchemaService querySchemaSvc,
             Schema dto,
             bool? publish,
             CancellationToken ct
         ) => dto.Type switch
         {
             SchemaType.Entity => entitySchemaSvc.Save(dto,publish??false, ct),
+            SchemaType.Query => querySchemaSvc.Save(dto,ct),
             _ => schemaSvc.SaveWithAction(dto,publish??false, ct)
         });
         
@@ -87,7 +93,7 @@ public static class SchemaHandler
             {
                 SchemaType.Entity => entitySchemaSvc.Delete(schema, ct),
                 SchemaType.Query => querySchemaSvc.Delete(schema, ct),
-                _ => schemaSvc.Delete(id, ct)
+                _ => schemaSvc.Delete(schema, ct)
             };
             await task;
         });

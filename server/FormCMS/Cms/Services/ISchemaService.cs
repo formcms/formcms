@@ -18,6 +18,8 @@ public interface ISchemaService
     Task<Schema?> ByIdWithAction(long id, CancellationToken ct);
     Task<Schema?> ById(long id, CancellationToken ct);
 
+    Task<Schema> BySchemaIdWithAction(string schemaId, CancellationToken ct);
+    Task<Schema> BySchemaId(string schemaId, CancellationToken ct);
     Task<Schema[]> History(string schemaId, CancellationToken ct);
 
     Task<Result> NameNotTakenByOther(Schema schema, CancellationToken ct);
@@ -29,8 +31,7 @@ public interface ISchemaService
     Task<Schema> SaveWithAction(Schema schema,bool asPublished, CancellationToken ct);
     Task<Schema> Save(Schema schema, bool asPublished, CancellationToken ct);
 
-    Task<Schema> AddOrUpdateByNameWithAction(Schema schema,bool asPublished, CancellationToken ct);
-    Task Delete(long id, CancellationToken ct);
+    Task Delete(Schema schema, CancellationToken ct);
 
     Task EnsureTopMenuBar(CancellationToken ct);
 

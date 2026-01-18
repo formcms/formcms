@@ -1,3 +1,5 @@
+using FormCMS.Auth.Models;
+
 namespace FormCMS.Core.Identities;
 
 public sealed record UserAccess(
@@ -17,12 +19,18 @@ public sealed record UserAccess(
 public static class UserAccessExtensions
 {
     public static UserAccess CanAccessAdmin(this UserAccess user)
-        => user with
+    {
+        if (user.Roles.Contains(Roles.Guest))
         {
-            CanAccessAdmin = user.Roles.Length != 0
-                             || user.ReadonlyEntities.Length != 0
-                             || user.RestrictedReadonlyEntities.Length != 0
-                             || user.ReadWriteEntities.Length != 0
-                             || user.RestrictedReadWriteEntities.Length != 0
+            return user;
+        }
+
+        return user with
+        {
+            CanAccessAdmin = user.Roles.Length != 0 || user.ReadonlyEntities.Length != 0
+                                                    || user.RestrictedReadonlyEntities.Length != 0
+                                                    || user.ReadWriteEntities.Length != 0
+                                                    || user.RestrictedReadWriteEntities.Length != 0
         };
+    }
 }

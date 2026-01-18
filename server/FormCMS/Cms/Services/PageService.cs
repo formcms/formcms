@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FormCMS.Utils.PageRender;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.ResultExt;
@@ -10,51 +11,93 @@ namespace FormCMS.Cms.Services;
 
 public sealed class PageService(
     SystemSettings systemSettings,
+    ISchemaService schemaService,
     IQueryService querySvc,
     IPageResolver pageResolver,
     PageTemplate template
 ) : IPageService
 {
+    
     public async Task<string> Get(string name, StrArgs strArgs, string? nodeId, long? sourceId, Span? span,
         CancellationToken ct)
     {
-        PageProcessingContext ctx;
+        Page page;
         try
         {
-            ctx = await LoadPage(name, false, strArgs, ct);
+            page = await LoadPage(name, false, strArgs, ct);
         }
         catch
         {
             if (name == PageConstants.Home)
             {
-                return """ <a href="/admin">Go to Admin Panel</a><br/> <a href="/schema">Go to Schema Builder</a> """;
+                return """ <a href="/admin">Go to Admin Panel</a><br/> <a href="/mate">Go to Schema Builder</a> """;
             }
             throw;
         }
 
+        if (page.Source == PageConstants.PageSourceAi)
+        {
+            return Handlebars.Compile(page.Html)(await GetAiPageData(page, strArgs, "",ct));
+        }
+        
+        var data = new Dictionary<string, object>();
+        var ctx = LoadContext(page);
         if (nodeId is not null)
         {
             return await RenderPartialPage(ctx.LoadPartialContext(nodeId), sourceId, span ?? new Span(), strArgs, ct);
         }
 
         var pageCtx = ctx.ParseDataNodes();
-
-        var data = new Dictionary<string, object>();
         await LoadData(pageCtx, strArgs, data, ct);
         return RenderPage(pageCtx, data, ct);
     }
 
-    public async Task<string> GetDetail(string name, string slug, StrArgs strArgs, string? nodeId, long? sourceId,
+    private async Task<Record> GetAiPageData(Page page, StrArgs strArgs, string path, CancellationToken ct)
+    {
+        var data = new Dictionary<string, object>();
+        var metadata = JsonSerializer.Deserialize<PageMetadata>(page.Metadata, new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true
+        });
+        foreach (var query in metadata.ArchitecturePlan.SelectedQueries)
+        {
+            if (!string.IsNullOrWhiteSpace(path))
+            {
+                foreach (var keyValuePair in query.Args.Where(keyValuePair => keyValuePair.Value == PageConstants.PageQueryArgFromPath))
+                {
+                    strArgs[keyValuePair.Key] = path;
+                }
+            }
+
+            if (query.Type == PageConstants.PageQueryTypeSingle)
+            {
+                data[query.FieldName] = await querySvc.SingleWithAction(query.QueryName, strArgs, ct);
+            }
+            else
+            {
+                data[query.FieldName] =
+                    await querySvc.ListWithAction(query.QueryName, new Span(), new Pagination(), strArgs, ct);
+            }
+        } 
+        return data;
+    }
+
+    public async Task<string> GetDetail(string name, string path, StrArgs strArgs, string? nodeId, long? sourceId,
         Span span, CancellationToken ct)
     {
-        var ctx = await LoadPage(name, true, strArgs, ct);
+        var page = await LoadPage(name, true, strArgs, ct);
+        if (page.Source == PageConstants.PageSourceAi)
+        {
+            return Handlebars.Compile(page.Html)(await GetAiPageData(page, strArgs, path,ct));
+        }
+        var ctx = LoadContext(page);
         if (nodeId is not null)
         {
             return await RenderPartialPage(ctx.LoadPartialContext(nodeId), sourceId, span, strArgs, ct);
         }
 
         var routerName = ctx.CurrentPage.Name.Split("/").Last()[1..^1]; // remove '{' and '}'
-        strArgs[routerName] = slug;
+        strArgs[routerName] = path;
 
         var pageCtx = ctx.ParseDataNodes();
         foreach (var node in pageCtx.DataNodes.Where(x => string.IsNullOrWhiteSpace(x.Query)))
@@ -69,7 +112,7 @@ public sealed class PageService(
             data = string.IsNullOrWhiteSpace(ctx.CurrentPage.Query)
                 ? new Dictionary<string, object>()
                 : await querySvc.SingleWithAction(ctx.CurrentPage.Query, strArgs, ct) ??
-                  throw new ResultException($"Could not data with {routerName} [{slug}]");
+                  throw new ResultException($"Could not data with {routerName} [{path}]");
         }
         catch (Exception e)
         {
@@ -81,6 +124,12 @@ public sealed class PageService(
         }
         await LoadData(pageCtx, strArgs, data, ct);
         return RenderPage(pageCtx, data, ct);
+    }
+
+    public async Task<Record> GetAiPageData(string schemaId, CancellationToken ct)
+    {
+        var schema = await schemaService.BySchemaId(schemaId,ct);
+        return await GetAiPageData(schema.Settings.Page, new StrArgs(), "", ct);
     }
 
     private async Task<string> RenderPartialPage(PartialPageContext ctx, long? sourceId, Span span, StrArgs args,
@@ -183,14 +232,20 @@ public sealed class PageService(
 
     private record PartialPageContext(Page CurrentPage, HtmlNode Element, DataNode[] DataNodes);
 
-    private async Task<PageProcessingContext> LoadPage(string pageName, bool matchPrefix, StrArgs arguments,
+    private async Task<Page> LoadPage(string pageName, bool matchPrefix, StrArgs arguments,
         CancellationToken cancellationToken)
     {
         var publicationStatus = PublicationStatusHelper.GetSchemaStatus(arguments);
         var pageSchema = await pageResolver.GetPage(pageName, matchPrefix, publicationStatus, cancellationToken);
 
+        var page = pageSchema.Settings.Page!;
+        return page;
+    }
+
+    private PageProcessingContext LoadContext(Page page)
+    {
         var document = new HtmlDocument();
-        document.LoadHtml(pageSchema.Settings.Page!.Html);
-        return new PageProcessingContext(pageSchema.Settings.Page!, document);
+        document.LoadHtml(page.Html);
+        return new PageProcessingContext(page, document);
     }
 }

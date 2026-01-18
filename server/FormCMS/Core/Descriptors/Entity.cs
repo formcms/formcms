@@ -318,6 +318,34 @@ public static class EntityHelper
         return query;
     }
 
+    public static (Record parent, Record collectionItems, Record junctionItems) SplitRecord(this LoadedEntity e, Record record)
+    {
+        var (parent,  collectionItems, junctionItems) =  
+            (new Dictionary<string,object>(), new Dictionary<string,object>(),new Dictionary<string,object>());
+        foreach (var loadedAttribute in e.Attributes)
+        {
+            if (!record.TryGetValue(loadedAttribute.Field, out var value)) continue;
+            switch (loadedAttribute.DataType)
+            {
+                case DataType.Collection:
+                    collectionItems[loadedAttribute.Field] = value;
+                    break;
+                case DataType.Junction:
+                    junctionItems[loadedAttribute.Field] = value;
+                    break;
+                case DataType.Int:
+                case DataType.Datetime:
+                case DataType.Text:
+                case DataType.String:
+                case DataType.Lookup:
+                default:
+                    parent[loadedAttribute.Field] = value;
+                    break;
+            }
+        }
+        return (parent, collectionItems, junctionItems);
+    }
+
     public static SqlKata.Query Insert(this LoadedEntity e, Record item)
     {
         //omit auto generated value
@@ -416,51 +444,19 @@ public static class EntityHelper
     
     public static Result ValidateLocalAttributes(this LoadedEntity e,Record record)
     {
-        var interpreter = new Interpreter().Reference(typeof(Regex));
         var result = Result.Ok();
         foreach (var localAttribute in e.Attributes.Where(x=>x.DataType.IsLocal() && !string.IsNullOrWhiteSpace(x.Validation)))
         {
-            if (!Validate(localAttribute).Try(out var err))
+            if (!Validate(localAttribute,record).Try(out var err))
             {
                 result.WithErrors(err);
             }
         }
         return result;
-        
-        Result Validate(LoadedAttribute attribute)
-        {
-            record.TryGetValue(attribute.Field, out var value);
-            var typeOfAttribute = attribute.DataType switch
-            {
-                DataType.Int => typeof(int),
-                DataType.Datetime => typeof(DateTime),
-                _=> typeof(string)
-            };
-
-            try
-            {
-                var res = interpreter.Eval(attribute.Validation,
-                    new Parameter(attribute.Field, typeOfAttribute, value));
-                return res switch
-                {
-                    true => Result.Ok(),
-                    "" => Result.Ok(),
-
-                    false => Result.Fail($"Validation failed for {attribute.Header}"),
-                    string errMsg => Result.Fail(errMsg),
-                    _ => Result.Fail($"Validation failed for {attribute.Header}, expression should return string or bool result"),
-                };
-            }
-            catch (Exception ex)
-            {
-                return Result.Fail($"validate fail for {attribute.Header}, Validate Rule is not correct, ex = {ex.Message}");
-            }
-        }
     }
 
-    public static Result<Record> Parse (this LoadedEntity entity, JsonElement element)
+    public static Result<Record> Normalize(this LoadedEntity entity, Record rec)
     {
-        var rec = element.ToDictionary();
         foreach (var attribute in entity.Attributes)
         {
             if (!rec.TryGetValue(attribute.Field, out var value)) continue;
@@ -468,7 +464,7 @@ public static class EntityHelper
             
             if (attribute.Lookup is not null && value is Record record)
             {
-                 value = record[attribute.Lookup.TargetEntity.PrimaryKeyAttribute.Field];
+                value = record[attribute.Lookup.TargetEntity.PrimaryKeyAttribute.Field];
             }
             var (_,fail, obj,errors) = Converter.DisplayObjToDbObj(dataType, attribute.DisplayType, value);
             if (fail)
@@ -477,7 +473,13 @@ public static class EntityHelper
             }
             rec[attribute.Field] = obj;
         }
-        return rec;
+        return Result.Ok(rec); 
+    }
+
+    public static Result<Record> Parse (this LoadedEntity entity, JsonElement element)
+    {
+        var rec = element.ToDictionary();
+        return entity.Normalize(rec);
     }
 
     internal static SqlKata.Query GetCommonCountQuery(this LoadedEntity e, IEnumerable<ValidFilter> filters)
@@ -485,5 +487,83 @@ public static class EntityHelper
         var query = e.Basic();
         query.ApplyFilters(filters);
         return query;
+    }
+    
+    static Result Validate(LoadedAttribute attribute , Record record)
+    {
+        if (attribute.DataType != DataType.Text && attribute.DataType != DataType.String)
+        {
+            return Result.Ok();
+        }
+        
+        record.TryGetValue(attribute.Field, out var value);
+
+        // normalize value to string when needed
+        string? strValue = value?.ToString();
+
+        // 1️⃣ required
+        if (string.Equals(attribute.Validation, "required", StringComparison.OrdinalIgnoreCase))
+        {
+            if (value == null || string.IsNullOrWhiteSpace(strValue))
+                return Result.Fail($"{attribute.Header} is required");
+
+            return Result.Ok();
+        }
+
+        // 2️⃣ regex
+        if (IsRegex(attribute.Validation))
+        {
+            if (value == null || !Regex.IsMatch(strValue ?? string.Empty, attribute.Validation))
+                return Result.Fail($"Value of [{attribute.Header}]  is invalid");
+
+            return Result.Ok();
+        }
+
+        try
+        {
+            var interpreter = new Interpreter()
+                .Reference(typeof(Regex));
+
+            var res = interpreter.Eval(
+                attribute.Validation,
+                new Parameter(attribute.Field, typeof(string), value)
+            );
+
+            return res switch
+            {
+                true or "" => Result.Ok(),
+                false => Result.Fail($"Validation failed for {attribute.Header}"),
+                string errMsg => Result.Fail(errMsg),
+                _ => Result.Fail(
+                    $"Validation failed for {attribute.Header}, expression must return bool or string"
+                ),
+            };
+        }
+        catch (Exception ex)
+        {
+            return Result.Fail(
+                $"Validate fail for {attribute.Header}, rule is invalid, ex = {ex.Message}"
+            );
+        }
+    }
+
+    static bool IsRegex(string? validation)
+    {
+        if (string.IsNullOrWhiteSpace(validation))
+            return false;
+
+        // heuristic: regex usually contains at least one metachar
+        if (!Regex.IsMatch(validation, @"[\^\$\.\*\+\?\(\)\[\]\{\}\|\\]"))
+            return false;
+
+        try
+        {
+            _ = new Regex(validation);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }

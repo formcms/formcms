@@ -23,7 +23,6 @@ builder.Services.AddOutputCache(cacheOption =>
 builder.Services.AddPostgresCms(connectionString);
 builder.Services.AddDbContext<CmsDbContext>(options => options.UseNpgsql(connectionString));
 builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(new AuthConfig());
-builder.Services.AddActivity();
 var app = builder.Build();
 
 await app.UseCmsAsync();

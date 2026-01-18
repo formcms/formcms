@@ -27,6 +27,7 @@ public record Schema(
     string Name ,
     SchemaType Type ,
     Settings Settings,
+    string Description = "",
     
     long Id = 0,
     string SchemaId ="",
@@ -49,6 +50,7 @@ public static class SchemaHelper
         ColumnHelper.CreateCamelColumn<Schema,Enum>(x => x.PublicationStatus),
         ColumnHelper.CreateCamelColumn<Schema,bool>(x => x.IsLatest),
         ColumnHelper.CreateCamelColumn<Schema, string>(x => x.CreatedBy),
+        ColumnHelper.CreateCamelColumn<Schema, string>(x => x.Description),
         
         ColumnHelper.CreateCamelColumn<Schema>(x => x.Settings, ColumnType.Text),
 
@@ -122,6 +124,7 @@ public static class SchemaHelper
                 nameof(Schema.Settings).Camelize(),
                 nameof(Schema.CreatedAt).Camelize(),
                 nameof(Schema.CreatedBy).Camelize(),
+                nameof(Schema.Description).Camelize(),
                 nameof(Schema.IsLatest).Camelize()
             }.Select(x=>x.Camelize()))
             .Where(DefaultColumnNames.Deleted.Camelize(), false);
@@ -171,6 +174,7 @@ public static class SchemaHelper
             nameof(Schema.Type),
             nameof(Schema.Settings),
             nameof(Schema.CreatedBy),
+            nameof(Schema.Description),
         ];
         var record = RecordExtensions.FormObject(schema, whiteList: fields);
         return new SqlKata.Query(TableName).AsInsert(record, true);

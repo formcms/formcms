@@ -360,14 +360,42 @@ public sealed class EntityService(
             new EntityPreAddArgs(entity, record));
         record = res.RefRecord;
 
-        var trans = await shardGroup.PrimaryDao.BeginTransaction();
+        using var trans = await shardGroup.PrimaryDao.BeginTransaction();
         try
         {
+            var (parent,collectionItems,junctionItems) = entity.SplitRecord(record);
+            var id = await shardGroup.PrimaryDao.ExecuteLong(entity.Insert(parent), ct);
 
-            var id = await shardGroup.PrimaryDao.ExecuteLong(entity.Insert(record), ct);
-
-            await assetService.UpdateAssetsLinks([],entity.GetAssets(record), entity.Name, id, ct);
+            await assetService.UpdateAssetsLinks([],entity.GetAssets(parent), entity.Name, id, ct);
             record[entity.PrimaryKey] = id;
+            
+            foreach (var collectionField in entity.Attributes.Where(x=>x.Collection is not null))
+            {
+                if (!collectionItems.TryGetValue(collectionField.Field, out var val) ||
+                    val is not object[] collectionValues) continue;
+                
+                var collection = collectionField.Collection;
+                var targetEntity = collection!.TargetEntity;
+                
+                foreach (var obj in collectionValues)
+                {
+                    var item = obj as Record ?? throw new ResultException($"Failed to cast {obj} to Dictionary<string, object>");
+                    item = targetEntity.Normalize(item).Ok();
+                    item[collection.LinkAttribute.Field] = id;
+                    var subId = await shardGroup.PrimaryDao.ExecuteLong(targetEntity.Insert(item),ct);
+                    await assetService.UpdateAssetsLinks([],entity.GetAssets(item), targetEntity.Name, subId, ct);
+                }
+            }
+
+            foreach (var junctionField in entity.Attributes.Where(x=>x.Junction is not null))
+            {
+                var junction=junctionField.Junction;
+                if (!junctionItems.TryGetValue(junctionField.Field, out var val) ||
+                    val is not object[] values) continue;
+                var items  = values.Select(x => x as Dictionary<string, object>).ToArray();
+                await shardGroup.PrimaryDao.ExecuteLong(junction.Insert(new ValidValue(L:id), items),ct);
+            }
+            
             trans.Commit();
 
             await hookRegistry.EntityPostAdd.Trigger(provider, new EntityPostAddArgs(entity, record));
@@ -395,7 +423,7 @@ public sealed class EntityService(
         }
 
 
-        var transaction = await shardGroup.PrimaryDao.BeginTransaction();
+        using var transaction = await shardGroup.PrimaryDao.BeginTransaction();
         try
         {
             var affected = await shardGroup.PrimaryDao.Exec(entity.DeleteQuery(id, record).Ok(), ct);
