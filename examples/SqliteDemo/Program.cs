@@ -13,6 +13,8 @@ using SqliteDemo;
 using EventHandler = FormCMS.Engagements.Workers.EventHandler;
 
 var webBuilder = WebApplication.CreateBuilder(args);
+webBuilder.Services.AddReverseProxy()
+    .LoadFromConfig(webBuilder.Configuration.GetSection("ReverseProxy"));
 
 webBuilder.Services.AddOutputCache();
 
@@ -62,8 +64,24 @@ webBuilder.Services.AddHostedService<DataPublishingWorker>();
 
 webBuilder.Services.AddHostedService<FFMpegWorker>();
 
+webBuilder.Services.AddCors(options =>
+{
+    options.AddPolicy(
+        "5173",
+        policy =>
+        {
+            policy.WithOrigins("http://127.0.0.1:5173")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        });
+});
 var webApp = webBuilder.Build();
 
+if (webApp.Environment.IsDevelopment())
+{
+    webApp.UseCors("5173");
+}
 //ensure identity tables are created
 using var scope = webApp.Services.CreateScope();
 var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
@@ -76,4 +94,5 @@ await webApp.UseCmsAsync();
 await webApp.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]).Ok();
 await webApp.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
 
+webApp.MapReverseProxy();
 await webApp.RunAsync();
