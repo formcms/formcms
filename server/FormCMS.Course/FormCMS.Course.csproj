@@ -90,4 +90,9 @@
       <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output8.ts" />
       <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output9.ts" />
     </ItemGroup>
+
+<ItemGroup>
+  <Content Remove="wwwroot\favicon.ico" />
+</ItemGroup>
+
 </Project>
