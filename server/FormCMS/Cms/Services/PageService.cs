@@ -59,7 +59,7 @@ public sealed class PageService(
         {
             PropertyNameCaseInsensitive = true
         });
-        foreach (var query in metadata.ArchitecturePlan.SelectedQueries)
+        foreach (var query in metadata.Architecture.SelectedQueries)
         {
             if (!string.IsNullOrWhiteSpace(path))
             {

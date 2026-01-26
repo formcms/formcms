@@ -18,4 +18,8 @@
       <Folder Include="wwwroot\files\" />
     </ItemGroup>
 
+    <ItemGroup>
+      <ProjectReference Include="..\..\server\FormCMS\FormCMS.csproj" />
+    </ItemGroup>
+
 </Project>

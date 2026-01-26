@@ -13,7 +13,7 @@ public sealed record Page(
     string Components,
     string Styles);
 
-public record ArchitecturePlan(
+public record Architecture(
     List<SelectedQuery> SelectedQueries
 );
 
@@ -26,7 +26,7 @@ public record SelectedQuery(
 );
 
 
-public sealed record PageMetadata(ArchitecturePlan ArchitecturePlan);
+public sealed record PageMetadata(Architecture Architecture);
 
 public class PageConstants
 {
