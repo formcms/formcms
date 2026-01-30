@@ -37,7 +37,8 @@ public sealed class PageService(
 
         if (page.Source == PageConstants.PageSourceAi)
         {
-            return Handlebars.Compile(page.Html)(await GetAiPageData(page, strArgs, "",ct));
+            var aiData = await GetAiPageData(page, strArgs, "", ct);
+            return HandlebarsConfiguration.Instance.Compile(page.Html)(aiData); 
         }
         
         var data = new Dictionary<string, object>();

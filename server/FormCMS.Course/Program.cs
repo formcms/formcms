@@ -77,9 +77,9 @@ public class Program
 
         // use formCms 
         await EnsureDbCreatedAsync();
+        app.MapReverseProxy();
         await app.UseCmsAsync();
         await EnsureUserCreatedAsync();
-        app.MapReverseProxy();
         await app.RunAsync();
         return;
 
@@ -151,6 +151,10 @@ public class Program
             using var scope = app.Services.CreateScope();
             var ctx = scope.ServiceProvider.GetRequiredService<CmsDbContext>();
             await ctx.Database.EnsureCreatedAsync();
+            if (dbProvider == Constants.Sqlite)
+            {
+                await ctx.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=DELETE;");
+            }
         }
 
         async Task EnsureUserCreatedAsync()
@@ -191,7 +195,13 @@ public class Program
         {
             _ = dbProvider switch
             {
-                Constants.Sqlite => builder.Services.AddSqliteCms(dbConnStr, followConnStrings: replicaConnStrs),
+                Constants.Sqlite => builder.Services.AddSqliteCms(dbConnStr, followConnStrings: replicaConnStrs,action:
+                    settings =>
+                    {
+                        settings.MapCmsHomePage = false;
+                        settings.FallBackIndex = true;
+                        settings.KnownPaths = ["index.html"];
+                    }),
                 Constants.Postgres => builder.Services.AddPostgresCms(dbConnStr, followConnStrings: replicaConnStrs),
                 Constants.SqlServer => builder.Services.AddSqlServerCms(dbConnStr, followConnStrings: replicaConnStrs),
                 Constants.Mysql => builder.Services.AddMysqlCms(dbConnStr, followConnStrings: replicaConnStrs),

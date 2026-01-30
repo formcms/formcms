@@ -36,7 +36,7 @@
     </ItemGroup>
     <ItemGroup>
       <Folder Include="obj\" />
-      <Folder Include="wwwroot\" />
+      <Folder Include="wwwroot\home\" />
     </ItemGroup>
     <ItemGroup>
         <None Update="cms.db">

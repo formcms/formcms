@@ -217,11 +217,16 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                         Mappings =
                         {
                             [".m3u8"] = "application/vnd.apple.mpegurl",
-                            [".ts"] = "video/mp2t" 
+                            [".ts"] = "video/mp2t"
                         }
                     }
                 }
-                );
+            );
+            if (settings.FallBackIndex)
+            {
+                app.MapFallbackToFile("index.html");
+            }
+
             UseAdminPanel();
             UseRedirects();
             UsePortal();
