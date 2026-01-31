@@ -2,7 +2,7 @@
 
 ## Getting Started
 
-- **Fork the Repository**: Start by forking the [FormCMS repository](https://github.com/FormCMS/FluentCMS) to your own GitHub account.
+- **Fork the Repository**: Start by forking the [FormCMS repository](https://github.com/FormCMS/FormCMS) to your own GitHub account.
 
 - **Clone the Forked Repository**: 
   ```bash
