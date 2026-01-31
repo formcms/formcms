@@ -13,25 +13,24 @@ public sealed record Page(
     string Components,
     string Styles);
 
-public record Architecture(
+public record PageArchitecture(
     List<SelectedQuery> SelectedQueries
 );
+public record PagePlan(string EntityName);
 
 public record SelectedQuery(
     string FieldName,
     string QueryName,
-    string Description,
     string Type, //list or single,
     Dictionary<string, string> Args // Values: 'fromPath' | 'fromQuery'
 );
 
-
-public sealed record PageMetadata(Architecture Architecture);
+public sealed record PageMetadata(PageArchitecture Architecture, PagePlan Plan, bool EnableTopList);
 
 public class PageConstants
 {
     public const string Home = "home";
-    public const string PageName = "pageName";
+    public const string PageFieldToplist = "topList";
     public const string PageSourceAi = "ai";
     public const string PageQueryTypeSingle = "single";
     public const string PageQueryArgFromPath = "fromPath";

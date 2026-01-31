@@ -67,7 +67,7 @@ public class Program
 
         var app = builder.Build();
         app.MapDefaultEndpoints();
-
+        app.MapGet("/", () => Results.File("index.html", "text/html"));
         if (app.Environment.IsDevelopment())
         {
             app.MapScalarApiReference();
@@ -199,7 +199,6 @@ public class Program
                     settings =>
                     {
                         settings.MapCmsHomePage = false;
-                        settings.FallBackIndex = true;
                         settings.KnownPaths = ["index.html"];
                     }),
                 Constants.Postgres => builder.Services.AddPostgresCms(dbConnStr, followConnStrings: replicaConnStrs),

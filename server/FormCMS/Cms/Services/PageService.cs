@@ -1,3 +1,4 @@
+using System.Reactive.Joins;
 using System.Text.Json;
 using FormCMS.Utils.PageRender;
 using FormCMS.Core.Descriptors;
@@ -5,6 +6,7 @@ using FormCMS.Utils.ResultExt;
 using FormCMS.Utils.StrArgsExt;
 using HandlebarsDotNet;
 using HtmlAgilityPack;
+using Humanizer;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace FormCMS.Cms.Services;
@@ -38,7 +40,8 @@ public sealed class PageService(
         if (page.Source == PageConstants.PageSourceAi)
         {
             var aiData = await GetAiPageData(page, strArgs, "", ct);
-            return HandlebarsConfiguration.Instance.Compile(page.Html)(aiData); 
+            var html = ReplaceTitle(page);
+            return HandlebarsConfiguration.Instance.Compile(html)(aiData); 
         }
         
         var data = new Dictionary<string, object>();
@@ -79,9 +82,22 @@ public sealed class PageService(
                 data[query.FieldName] =
                     await querySvc.ListWithAction(query.QueryName, new Span(), new Pagination(), strArgs, ct);
             }
-        } 
+        }
+
+        if (metadata.EnableTopList && !string.IsNullOrEmpty(metadata.Plan.EntityName))
+        {
+            StrArgs args  = new()
+            {
+                [nameof(PagePlan.EntityName).Camelize()] = metadata.Plan.EntityName
+            };
+            data[PageConstants.PageFieldToplist] = await querySvc.ListWithAction(
+                PageConstants.PageFieldToplist, new Span(),
+                new Pagination(), args, ct);
+        }
         return data;
     }
+
+    private string ReplaceTitle(Page page) => page.Html.Replace("---title---", page.Title);
 
     public async Task<string> GetDetail(string name, string path, StrArgs strArgs, string? nodeId, long? sourceId,
         Span span, CancellationToken ct)
@@ -89,8 +105,11 @@ public sealed class PageService(
         var page = await LoadPage(name, true, strArgs, ct);
         if (page.Source == PageConstants.PageSourceAi)
         {
-            return Handlebars.Compile(page.Html)(await GetAiPageData(page, strArgs, path,ct));
+            var aiPageData = await GetAiPageData(page, strArgs, path, ct);
+            var html = ReplaceTitle(page);
+            return Handlebars.Compile(html)(aiPageData);
         }
+        
         var ctx = LoadContext(page);
         if (nodeId is not null)
         {

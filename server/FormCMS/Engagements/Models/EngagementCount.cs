@@ -78,9 +78,9 @@ public static class EngagementCountHelper
 
     public static Query TopCountItems(string entityName, int offset, int limit)
         => new Query(TableName)
-            .Select(nameof(TopCountItem.EntityName).Camelize())
-            .Select(nameof(TopCountItem.RecordId).Camelize())
-            .Select(nameof(TopCountItem.Count).Camelize())
+            .Select(nameof(EngagementCount.EntityName).Camelize())
+            .Select(nameof(EngagementCount.RecordId).Camelize())
+            .Select(nameof(EngagementCount.Count).Camelize())
             
             .Where(nameof(EngagementCount.EngagementType).Camelize(), Constants.ScoreActivityType)
             .Where(nameof(EngagementCount.EntityName).Camelize(), entityName)

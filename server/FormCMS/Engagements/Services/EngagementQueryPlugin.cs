@@ -10,9 +10,9 @@ namespace FormCMS.Engagements.Services;
 public class EngagementQueryPlugin(
     EngagementSettings settings,
     EngagementContext ctx,
-    IQueryService queryService,
     IEntitySchemaService  entitySchemaService,
-    IEngagementCollectService engagementCollectService 
+    IEngagementCollectService engagementCollectService, 
+    IContentTagService contentTagService
     ):IEngagementQueryPlugin
 {
     private readonly Dictionary<string,string> _countFieldToCountType = settings
@@ -25,29 +25,12 @@ public class EngagementQueryPlugin(
         var entity = allEntities.FirstOrDefault(x=>x.Name == entityName)?? throw new Exception($"Entity {entityName} not found");
         var items = await ctx.EngagementCountShardGroup.ReplicaDao.Many(EngagementCountHelper.TopCountItems(entityName, offset,limit), ct);
         var ids = items
-            .Select(x => x[nameof(TopCountItem.RecordId).Camelize()].ToString())
+            .Select(x => x[nameof(EngagementCount.RecordId).Camelize()].ToString())
             .ToArray();
-        if (ids.Length == 0) return items;
-        
-        var strAgs = new StrArgs
-        {
-            [entity.TagsQueryParam] = ids
-        };
-        if (string.IsNullOrWhiteSpace(entity.TagsQuery)) throw new Exception($"Tags query of [{entityName}] should not be empty");
-        
-        var records = await queryService.ListWithAction(entity.TagsQuery, new Span(),new Pagination(),strAgs,ct);
-        var dict = records.ToDictionary(x => x[entity.PrimaryKey].ToString()!);
-        string[] types = [..settings.CommandToggleActivities, ..settings.CommandRecordActivities];
 
-        for (var i = 0; i < items.Length; i++)
-        {
-            var item = items[i];
-            var id = item.StrOrEmpty(nameof(TopCountItem.RecordId).Camelize());
-            TopCountItemHelper.LoadMetaData(entity.ToLoadedEntity(),item, dict[id]);
-            item[nameof(TopCountItem.Counts).Camelize()] = await engagementCollectService.GetEngagementCounts(entityName, id,types,ct);
-            item[nameof(TopCountItem.I).Camelize()] = i + 1 + offset;
-        }
-        return items;
+        var loadedEntity = entity.ToLoadedEntity();
+        var tags = await contentTagService.GetContentTags(loadedEntity, ids, ct);
+        return tags.Select(x => RecordExtensions.FormObject(x,blackList: [nameof(ContentTag.Data)])).ToArray();
     }  
     
     public async Task LoadCounts(LoadedEntity entity, GraphNode[] nodes, Record[] records, CancellationToken ct)

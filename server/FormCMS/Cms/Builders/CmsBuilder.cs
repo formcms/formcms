@@ -222,10 +222,6 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                     }
                 }
             );
-            if (settings.FallBackIndex)
-            {
-                app.MapFallbackToFile("index.html");
-            }
 
             UseAdminPanel();
             UseRedirects();
