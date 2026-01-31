@@ -6,7 +6,7 @@
 
 - **Clone the Forked Repository**: 
   ```bash
-  git clone https://github.com/fluent-cms/fluent-cms.git
+  git clone https://github.com/formcms/formcms.git
 
 - **Create a New Branch**: For each feature or fix, create a new branch:
   ```bash
