@@ -2,17 +2,6 @@
 
 FormCMS is a cutting-edge, open-source Content Management System designed to revolutionize web development through AI. By automating the most tedious parts of development—schema design, data seeding, API creation, and UI building—FormCMS allows you to build complex, production-ready applications in minutes rather than weeks.
 
-
-# Architecture & Overview of the components:
-
-| Repos             | Overview                                                                | 
-| ----------------- | ----------------------------------------------------------------------- | 
-| Formmatte         | schema + UI builder that produces JSON schema/config  AI                | 
-| formcms (backend) | Generic CMS backend (Put your entities, GraphQL/REST, assets, etc.)     | 
-| FormCmsAdminSdk   | React SDK that talks to the backend, handles admin state and APIs       |
-| FormCmsAdminApp   | Example React admin panel using the SDK                                 | 
-| FormCmsPortal     | Portal to combine formmate + FormCMS backend + admin, plus docs/demo    | 
-
 ---
 
 ## ✨ Why FormCMS?
@@ -104,7 +93,7 @@ npx prisma db push
 ### 4. Start Development Server
 ```bash
 # From formmate root
-npm install
+npm run build:shared
 npm run dev
 ```
 Visit **http://127.0.0.1:5173** to start building!
