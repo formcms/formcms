@@ -4,31 +4,36 @@ FormCMS is a cutting-edge, open-source Content Management System designed to rev
 
 ---
 
-## ⚡ Powering Your Workflow with AI
+## ✨ Why FormCMS?
 
-FormCMS isn't just a place to store content; it's an AI-driven development partner. 
+<table>
+<tr>
+<td align="center" width="33%">
+<h3>🤖 AI-Powered</h3>
+<p>Generate schemas, data, GraphQL queries, and full UI pages using natural language prompts. Let AI handle the tedious work while you focus on creativity.</p>
+</td>
+<td align="center" width="33%">
+<h3>💬 Built-in Engagement</h3>
+<p>Add engagement bars (views, likes, bookmarks, shares) and user avatars to any page with AI prompts. Social features are first-class citizens, not afterthoughts.</p>
+</td>
+<td align="center" width="33%">
+<h3>🚀 Scalable & Performant</h3>
+<p>P95 latency under 200ms, 2,400+ QPS throughput. Handle millions of posts with CDN caching and billions of user activities with horizontal sharding.</p>
+</td>
+</tr>
+</table>
 
-### 1. Generate Entity (Schema)
-Forget manual table definitions. Simply describe your business domain (e.g., "I need a system to manage a digital library with books, authors, and rentals"), and FormCMS's AI will:
-- Design the normalized database schema.
-- Establish relationships (Many-to-One, Many-to-Many).
-- Configure appropriate data types (Strings, Numbers, Lookups, Junctions).
+---
 
-### 2. Generate Data (Seeding)
-Tired of "Lorem Ipsum"? Use AI to generate realistic, high-quality sample data:
-- Populate your database with meaningful records.
-- Preserve relational integrity across entities.
-- Test your UI with data that looks and feels real.
+## ⚡ What You Can Do with AI
 
-### 3. Generate Query (API)
-Writing GraphQL can be complex. In FormCMS, you can:
-- Prompt the AI to build logic: "Give me all books published after 2020 by authors with more than 5 stars."
-- The AI generates the GraphQL query and converts it into a secure, high-performance REST endpoint automatically.
+FormCMS acts as your AI-driven development partner. Describe what you want, and it builds it:
 
-### 4. Generate Page (UI)
-Go from prompt to page instantly:
-- "Build a landing page for my library that sections books by genre and features a search bar."
-- AI generates the HTML/CSS using semantic structures and bridges it with your data queries.
+- **Generate the Full Stack**: Entities (schemas), Seed Data, GraphQL Queries, and UI Pages from natural language.
+- **Add Engagement Instantly**: "Add a like button" or "Show user avatar" simply works.
+- **Manage & Iterate**: View version history and manage artifacts in the visual portal.
+
+📖 **[See Wiki for full capabilities →](https://github.com/formcms/formcms/wiki/Building-a-System.md)**
 
 ---
 
@@ -55,14 +60,12 @@ Try the live demo at [formcms.com/mate](https://formcms.com/mate).
 Get the project running locally in 4 steps.
 
 ### 1. Clone Repositories
-You'll need both the core CMS and the AI agent.
 ```bash
-git clone https://github.com/formcms/formcms
-git clone https://github.com/formcms/formmate
+git clone git@github.com:formcms/formcms.git
+git clone git@github.com:formcms/formmate.git
 ```
 
 ### 2. Start Backend (FormCMS)
-Run the core CMS with the SQLite demo.
 ```bash
 cd formcms/examples/SqliteDemo
 dotnet run
@@ -70,25 +73,24 @@ dotnet run
 _Verify that `http://127.0.0.1:5000` is accessible._
 
 ### 3. Configure Environment (FormMate)
-Open a new terminal and set up the AI agent with your Gemini API key.
 ```bash
 cd formmate/packages/backend
 cp .env.example .env
 ```
-Edit `.env` and add your key (you can get a free one [here](https://aistudio.google.com/app/apikey)):
+Edit `.env` and add your Gemini API key (get a free one [here](https://aistudio.google.com/app/apikey)):
 ```ini
 GEMINI_API_KEY=your_key_here
 ```
 
 ### 4. Start Development Server
-Run the FormMate agent.
 ```bash
 # From formmate root
+npm install
 npm run dev
 ```
 Visit **http://127.0.0.1:5173** to start building!
 
-> **Note:** Please use `127.0.0.1` instead of `localhost` to ensure cookies are shared correctly.
+> **Note:** Use `127.0.0.1` instead of `localhost` to ensure cookies are shared correctly.
 
 ### 💡 Try it out
 Once running, try these prompts:
@@ -96,33 +98,45 @@ Once running, try these prompts:
 - "Add sample data for the book entity"
 - "Create a query to display all available books"
 
----
-
-## 🏗️ Architecture
-
-FormCMS is built on a modern, decoupled architecture designed for performance and flexibility.
-
-```mermaid
-graph TD
-    A[formmate] -->|AI-Generated Schema & UI| B[FormCMS Ecosystem]
-    C[FormCmsAdminApp] -->|Management & Editing| D[formcms Backend]
-    E[Portal / Frontend] -->|Consumes APIs| D
-```
-
-### 1. **formmate** (AI Schema & UI Builder)
-The "brain" of the ecosystem. This tool leverages LLMs to architect your data models and design your UI. It translates your natural language requirements into technical configurations that the system understands.
-
-### 2. **formcms** (Backend Engine)
-The core high-performance engine built with **ASP.NET Core (C#)**.
-- **REST & GraphQL**: Automatically exposes APIs for every entity you define.
-- **Normalized Storage**: Optimized for speed (Sqlite, Postgres, SQL Server, MySQL supported).
-- **Scale**: Designed to handle millions of records and high-concurrency environments.
-
-### 3. **FormCmsAdminApp** (Management Dashboard)
-A sleek, **React-based** administrative interface.
-- Manage your entities, queries, and pages.
-- Visual editors for relationships and data.
-- Built-in audit logging and publication workflows.
+📖 **[See Wiki for detailed setup instructions →](https://github.com/formcms/formcms/wiki/Setup.md)**
 
 ---
 
+## 📚 Documentation
+
+For detailed documentation, please refer to our **[Wiki](https://github.com/formcms/formcms/wiki/Home.md)** (source of truth):
+
+| Documentation | Description |
+|---------------|-------------|
+| [Setup Guide](https://github.com/formcms/formcms/wiki/Setup.md) | Development and production environment setup |
+| [Architecture](https://github.com/formcms/formcms/wiki/Architecture.md) | Component architecture and system design |
+| [Orchestrator Strategy](https://github.com/formcms/formcms/wiki/Orchestrator-Strategy.md) | Multi-agent pipeline design and debugging approach |
+| [Performance & Scalability](https://github.com/formcms/formcms/wiki/Performance-Scalability.md) | Benchmarks and scaling strategies |
+
+---
+
+## 🏗️ Architecture Overview
+
+
+
+| Component | Description |
+|-----------|-------------|
+| **formmate** | AI-powered schema & UI builder |
+| **formcms** | High-performance CMS backend (ASP.NET Core) |
+| **AdminApp** | React admin panel for content management |
+| **Portal** | User portal for history, likes, and bookmarks |
+
+📖 **[See Wiki for detailed architecture →](https://github.com/formcms/formcms/wiki/Architecture.md)**
+
+---
+
+## ⚡ Performance
+
+| Metric | Performance |
+|--------|-------------|
+| **P95 Latency** | < 200ms |
+| **Throughput** | 2,400+ QPS per node |
+| **Complex Queries** | 5-table joins over 1M rows |
+| **Database Support** | SQLite, PostgreSQL, SQL Server, MySQL |
+
+📖 **[See Wiki for performance details →](https://github.com/formcms/formcms/wiki/Performance-Scalability.md)**
