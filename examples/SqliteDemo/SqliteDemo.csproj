@@ -8,7 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="FormCMS" Version="0.6.3" />
+        <PackageReference Include="FormCMS" Version="0.6.4" />
         <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0"/>
         <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
@@ -17,9 +17,4 @@
     <ItemGroup>
       <Folder Include="wwwroot\files\" />
     </ItemGroup>
-
-    <ItemGroup>
-      <ProjectReference Include="..\..\server\FormCMS\FormCMS.csproj" />
-    </ItemGroup>
-
 </Project>
