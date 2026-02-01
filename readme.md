@@ -84,13 +84,21 @@ dotnet run
 _Verify that `http://127.0.0.1:5000` is accessible._
 
 ### 3. Configure Environment (FormMate)
+Open a new terminal and set up the AI agent with your Gemini API key.
 ```bash
-cd formmate/packages/backend
+npm i #install dependencies
+cd packages/backend
 cp .env.example .env
 ```
 Edit `.env` and add your Gemini API key (get a free one [here](https://aistudio.google.com/app/apikey)):
 ```ini
 GEMINI_API_KEY=your_key_here
+```
+
+Initialize the database and Prisma client:
+```bash
+npx prisma generate
+npx prisma db push
 ```
 
 ### 4. Start Development Server
