@@ -77,10 +77,14 @@ public sealed class QuerySchemaService(
     public Task<Schema> Save(Schema schema, CancellationToken ct)
     {
         var source = schema.Settings.Query!.Source;
-        var parseResult = Converter.ParseSource(source).Ok();
-        var query = ParseQuerySource(source, schema.Settings.Query.Name, parseResult.entitName, parseResult.arguments,
-            parseResult.variables);
-        schema = schema with{Settings = schema.Settings with{Query = query}};
+        if (!string.IsNullOrWhiteSpace(source))
+        {
+            var parseResult = Converter.ParseSource(source).Ok();
+            var query = ParseQuerySource(source, schema.Settings.Query.Name, parseResult.entitName,
+                parseResult.arguments,
+                parseResult.variables);
+            schema = schema with { Settings = schema.Settings with { Query = query } };
+        }
         return schemaSvc.SaveWithAction(schema, false,ct);
     }
 

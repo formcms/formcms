@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FormCMS | The Future of Content Management</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+        }
+
+        .glow {
+            box-shadow: 0 0 40px -10px rgba(139, 92, 246, 0.5);
+        }
+
+        .demo-card:hover .demo-overlay {
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body class="bg-[#0a0a0c] text-white selection:bg-purple-500/30 overflow-x-hidden">
+
+    <!-- Gradient Orbs -->
+    <div class="fixed top-0 left-0 w-full h-full overflow-hidden -z-10 bg-[#0a0a0c]">
+        <div class="absolute -top-[10%] -left-[10%] w-[50%] h-[50%] bg-purple-600/20 blur-[120px] rounded-full"></div>
+        <div class="absolute -bottom-[10%] -right-[10%] w-[40%] h-[40%] bg-blue-600/10 blur-[120px] rounded-full"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed top-0 w-full glass border-b border-white/5 z-50 px-6 py-4">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <a href="/" class="flex items-center gap-3">
+                <img src="/assets/logo.png" alt="FormCMS Logo" class="w-10 h-10 glow rounded-xl">
+                <span class="text-xl font-bold tracking-tight">Form<span class="text-purple-500">CMS</span></span>
+            </a>
+            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
+                <a href="#merits" class="hover:text-white transition-colors">Features</a>
+                <a href="#demos" class="hover:text-white transition-colors">Demos</a>
+                <a href="https://github.com/FormCms/FormCms"
+                    class="bg-white text-black px-5 py-2 rounded-full font-bold hover:bg-gray-200 transition-all">Get
+                    Started</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-32 pb-20 px-6 md:pt-48 md:pb-32 text-center" x-data="{ loaded: false }"
+        x-init="setTimeout(() => loaded = true, 100)">
+        <div class="max-w-4xl mx-auto" :class="loaded ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'"
+            class="transition-all duration-1000 ease-out">
+            <div
+                class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-bold mb-8">
+                <span class="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span>
+                v1.0 is now live
+            </div>
+            <h1 class="text-5xl md:text-8xl font-bold tracking-tighter mb-8 leading-tight">
+                Design with <span
+                    class="bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-blue-400">Intelligence.</span>
+            </h1>
+            <p class="text-gray-400 text-lg md:text-xl leading-relaxed max-w-2xl mx-auto mb-12">
+                The first agentic content management system. Build, scale, and engage your audience with AI at the core.
+            </p>
+            <div class="flex flex-col md:flex-row items-center justify-center gap-4">
+                <a href="#demos"
+                    class="w-full md:w-auto px-10 py-4 bg-white text-black rounded-full font-bold text-lg hover:scale-105 transition-all glow">Explore
+                    Demos</a>
+                <a href="https://github.com/formcms/formcms/wiki"
+                    class="w-full md:w-auto px-10 py-4 glass border border-white/10 rounded-full font-bold text-lg hover:bg-white/5 transition-all">Documentation</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Merits -->
+    <section id="merits" class="py-24 px-6 relative overflow-hidden">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-20">
+                <h2 class="text-3xl md:text-5xl font-bold mb-6">Built for Modern Teams</h2>
+                <p class="text-gray-400">Everything you need to ship world-class experiences.</p>
+            </div>
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- AI Powered -->
+                <div
+                    class="group p-8 rounded-3xl glass border border-white/5 hover:border-purple-500/30 transition-all duration-500 hover:glow bg-gradient-to-br hover:from-purple-500/5 hover:to-transparent">
+                    <div
+                        class="w-14 h-14 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-8 border border-purple-500/20 group-hover:bg-purple-500/20 transition-all">
+                        <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">AI Powered</h3>
+                    <p class="text-gray-400 leading-relaxed">Agentic workflows that draft, optimize, and organize your
+                        content autonomously. Less management, more creation.</p>
+                </div>
+                <!-- Engagement -->
+                <div
+                    class="group p-8 rounded-3xl glass border border-white/5 hover:border-blue-500/30 transition-all duration-500 hover:glow bg-gradient-to-br hover:from-blue-500/5 hover:to-transparent">
+                    <div
+                        class="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-8 border border-blue-500/20 group-hover:bg-blue-500/20 transition-all">
+                        <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Built-in Engagement</h3>
+                    <p class="text-gray-400 leading-relaxed">Instant sharing, book marking, and interaction tools baked
+                        directly into every page. Reach your users where they are.</p>
+                </div>
+                <!-- Scalable -->
+                <div
+                    class="group p-8 rounded-3xl glass border border-white/5 hover:border-green-500/30 transition-all duration-500 hover:glow bg-gradient-to-br hover:from-green-500/5 hover:to-transparent">
+                    <div
+                        class="w-14 h-14 bg-green-500/10 rounded-2xl flex items-center justify-center mb-8 border border-green-500/20 group-hover:bg-green-500/20 transition-all">
+                        <svg class="w-8 h-8 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Scalable</h3>
+                    <p class="text-gray-400 leading-relaxed">From a single blog to enterprise-grade applications. Our
+                        robust SQLite architecture scales with your needs.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demos -->
+    <section id="demos" class="py-24 px-6 bg-white/[0.02]">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
+                <div class="max-w-xl">
+                    <h2 class="text-3xl md:text-5xl font-bold mb-6">Stunning Visual Styles</h2>
+                    <p class="text-gray-400">Choose from professionally designed templates or let AI craft a unique look
+                        just for you.</p>
+                </div>
+                <button
+                    class="bg-white/5 border border-white/10 px-8 py-3 rounded-xl font-bold hover:bg-white/10 transition-colors">View
+                    Library</button>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Modern -->
+                <div
+                    class="demo-card group relative aspect-[3/4] rounded-3xl overflow-hidden glass border border-white/10 cursor-pointer">
+                    <img src="/assets/demo-modern.png" alt="Modern Editorial"
+                        class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div
+                        class="demo-overlay absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 transition-opacity duration-300 p-8 flex flex-col justify-end">
+                        <h4 class="text-2xl font-bold mb-2">Modern Editorial</h4>
+                        <p class="text-sm text-gray-300 mb-6">Perfect for high-impact magazines and digital newsrooms.
+                        </p>
+                        <a href="/modern"
+                           class="block w-full py-3 bg-white text-black rounded-xl font-bold text-sm text-center">Preview
+                            Style</a>
+                    </div>
+                    <div
+                        class="absolute top-6 left-6 px-3 py-1 bg-white text-black text-[10px] font-black uppercase tracking-widest rounded-full">
+                        Modern</div>
+                </div>
+
+                <!-- Classical -->
+                <div
+                    class="demo-card group relative aspect-[3/4] rounded-3xl overflow-hidden glass border border-white/10 cursor-pointer">
+                    <img src="/assets/demo-classical.png" alt="Classical Newspaper"
+                        class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div
+                        class="demo-overlay absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 transition-opacity duration-300 p-8 flex flex-col justify-end">
+                        <h4 class="text-2xl font-bold mb-2">Classical Newspaper</h4>
+                        <p class="text-sm text-gray-300 mb-6">A sophisticated, text-heavy aesthetic for thoughtful
+                            pieces.</p>
+                        <a href="/classical"
+                            class="block w-full py-3 bg-white text-black rounded-xl font-bold text-sm text-center">Preview
+                            Style</a>
+                    </div>
+                    <div
+                        class="absolute top-6 left-6 px-3 py-1 bg-[#8b4513] text-white text-[10px] font-black uppercase tracking-widest rounded-full">
+                        Classical</div>
+                </div>
+
+                <!-- Minimal -->
+                <div
+                    class="demo-card group relative aspect-[3/4] rounded-3xl overflow-hidden glass border border-white/10 cursor-pointer">
+                    <img src="/assets/demo-minimal.png" alt="Minimalist Visual"
+                        class="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                    <div
+                        class="demo-overlay absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 transition-opacity duration-300 p-8 flex flex-col justify-end">
+                        <h4 class="text-2xl font-bold mb-2">Minimalist Visual</h4>
+                        <p class="text-sm text-gray-300 mb-6">Focus on photography and clean whitespace for portfolios.
+                        </p>
+                        <a href="/minimal"
+                           class="block w-full py-3 bg-white text-black rounded-xl font-bold text-sm text-center">Preview
+                            Style</a>
+                    </div>
+                    <div
+                        class="absolute top-6 left-6 px-3 py-1 bg-gray-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full">
+                        Minimal</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-20 px-6 border-t border-white/5">
+        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+            <div class="flex items-center gap-3">
+                <img src="/assets/logo.png" alt="FormCMS Logo" class="w-8 h-8">
+                <span class="text-lg font-bold tracking-tight text-gray-400">Form<span
+                        class="text-gray-500">CMS</span></span>
+            </div>
+            <p class="text-sm text-gray-500">© 2026 FormCMS. Designed for the intelligence era.</p>
+            <div class="flex gap-6 text-gray-400">
+                <a href="https://github.com/formcms/formcms/wiki" class="hover:text-white transition-colors">Technical Guide</a>
+                <a href="https://github.com/FormCms/FormCms/" class="hover:text-white transition-colors"><svg class="w-5 h-5" fill="currentColor"
+                        viewBox="0 0 24 24">
+                        <path
+                            d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                    </svg></a>
+                <a href="https://www.linkedin.com/in/jason-jingshun-chen-05b90a29" class="hover:text-white transition-colors"><svg class="w-5 h-5" fill="currentColor"
+                        viewBox="0 0 24 24">
+                        <path
+                            d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.212-.616v.06a4.923 4.923 0 003.946 4.84 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
+                    </svg></a>
+            </div>
+        </div>
+    </footer>
+
+</body>
+
+</html>

@@ -313,8 +313,6 @@ public class EngagementsCollectService(
     }
     private async Task UpdateScore(LoadedEntity entity,EngagementCount[] counts, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(entity.TagsQuery)) return;
-        
         foreach (var a in counts)
         {
             await UpdateOneScore(a);
@@ -420,11 +418,6 @@ public class EngagementsCollectService(
     }
     private async Task<EngagementStatus[]> LoadContentTags(LoadedEntity entity, EngagementStatus[] statuses, CancellationToken ct)
     {
-        if (string.IsNullOrWhiteSpace(entity.TagsQuery))
-        {
-            return statuses;
-        }
-        
         var ids = statuses
             .Where(x=>x.IsActive)
             .Select(x => x.RecordId.ToString())

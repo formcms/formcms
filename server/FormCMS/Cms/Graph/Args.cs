@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text.RegularExpressions;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
@@ -45,8 +46,8 @@ public static class Args
         {
             DisplayType.Number => new QueryArgument<ListGraphType<IntGraphType>>(),
             DisplayType.LocalDatetime => new QueryArgument<ListGraphType<DateGraphType>>(),
-            DisplayType.Dropdown => new QueryArgument(new ListGraphType(GetAttributeOptionEnum(attr))),
-            DisplayType.Multiselect => new QueryArgument(new ListGraphType(GetAttributeOptionEnum(attr))),
+            DisplayType.Dropdown when IsValidEnum(attr.Options) => new QueryArgument(new ListGraphType(GetAttributeOptionEnum(attr))),
+            DisplayType.Multiselect when IsValidEnum(attr.Options) => new QueryArgument(new ListGraphType(GetAttributeOptionEnum(attr))),
             _ => new QueryArgument<ListGraphType<StringGraphType>>()
         };
 
@@ -57,6 +58,13 @@ public static class Args
             a.GetLookupTarget(out var t) && graphMap.TryGetValue(t, out var info)
                 ? info.Entity.Attributes.FirstOrDefault(x=>x.Field==info.Entity.PrimaryKey)?.DisplayType ?? DisplayType.Number
                 : DisplayType.Number;
+    }
+
+    private static bool IsValidEnum(string options)
+    {
+        if (string.IsNullOrWhiteSpace(options)) return false;
+        var parts = options.Split(',');
+        return parts.All(p => Regex.IsMatch(p, "^[_a-zA-Z][_a-zA-Z0-9]*$"));
     }
 
     private static EnumerationGraphType GetSortFieldEnumGraphType(Entity entity)
