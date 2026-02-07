@@ -447,9 +447,10 @@ public static class EntityHelper
         var result = Result.Ok();
         foreach (var localAttribute in e.Attributes.Where(x=>x.DataType.IsLocal() && !string.IsNullOrWhiteSpace(x.Validation)))
         {
-            if (!Validate(localAttribute,record).Try(out var err))
+            var res = Validate(localAttribute, record);
+            if (res.IsFailed)
             {
-                result.WithErrors(err);
+                return result.WithError(string.Join(",", res.Errors.Select(x => x.Message)));
             }
         }
         return result;

@@ -1,18 +1,16 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UserSecretsId>d841da5d-7f5d-4e5f-ba15-fb4c0f33abc3</UserSecretsId>
-        <LangVersion>13</LangVersion>
+        <LangVersion>14</LangVersion>
         <RootNamespace>FormCMS.App</RootNamespace>
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Aspire.Confluent.Kafka" Version="9.0.0" />
-        <PackageReference Include="Aspire.MongoDB.Driver" Version="9.0.0" />
-        <PackageReference Include="Aspire.NATS.Net" Version="9.0.0" />
+        <PackageReference Include="Aspire.NATS.Net" Version="13.1.0" />
         <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
     </ItemGroup>
@@ -38,5 +36,8 @@
       <_ContentIncludedByDefault Remove="wwwroot\admin\index.html" />
       <_ContentIncludedByDefault Remove="wwwroot\static-assets\js\pagination.js" />
       <_ContentIncludedByDefault Remove="wwwroot\static-assets\templates\template.html" />
-    </ItemGroup> 
+    </ItemGroup>
+    <ItemGroup>
+        <Content Remove="wwwroot\favicon.ico" />
+    </ItemGroup>
 </Project>

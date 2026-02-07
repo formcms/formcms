@@ -25,11 +25,11 @@ webBuilder.WebHost.ConfigureKestrel(option => option.Limits.MaxRequestBodySize =
 var connectionString = webBuilder.Configuration.GetConnectionString("postgres")!;
 
 // communication between web app and worker app
-webBuilder.AddNatsClient(connectionName:"nats");
 webBuilder.Services.AddSingleton<IStringMessageProducer, NatsMessageBus>();
 
 webBuilder.Services.AddOutputCache();
 webBuilder.Services.AddPostgresCms(connectionString);
+
 //add permission control service 
 webBuilder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
 webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, AppDbContext>(new AuthConfig(KeyAuthConfig:new KeyAuthConfig(apiKey)));
@@ -37,7 +37,6 @@ webBuilder.Services.AddCmsAuth<CmsUser, IdentityRole, AppDbContext>(new AuthConf
 webBuilder.Services.AddAuditLog();
 webBuilder.Services.AddEngagement();
 webBuilder.Services.AddComments();
-webBuilder.Services.AddVideo();
 webBuilder.Services.AddCrudMessageProducer(["course"]);
 
 webBuilder.Services.AddSearch(FtsProvider.Postgres, connectionString);
@@ -46,69 +45,70 @@ webBuilder.Services.AddSearch(FtsProvider.Postgres, connectionString);
 webBuilder.Services.Configure<StripeSettings>(webBuilder.Configuration.GetSection("Stripe"));
 webBuilder.Services.AddSubscriptions();
 
+// For distributed deployments, it's recommended to run ActivityEventHandler in a separate hosted service.
+// In this case, we register ActivityEventHandler within the web application to share the in-memory channel bus.
+webBuilder.Services.AddHostedService<EventHandler>();
+
+webBuilder.Services.AddHostedService<FFMpegWorker>();
+
+webBuilder.Services.AddSingleton( new FtsSettings(["course"]));
+webBuilder.Services.AddHostedService<FtsIndexingMessageHandler>();
+
+webBuilder.Services.AddSingleton(new EmitMessageWorkerOptions(30));
+webBuilder.Services.AddHostedService<EmitMessageHandler>();
+
+webBuilder.Services.AddSingleton(new ExportWorkerOptions(30));
+webBuilder.Services.AddHostedService<ExportWorker>();
+
+webBuilder.Services.AddSingleton(new ImportWorkerOptions(30));
+webBuilder.Services.AddHostedService<ImportWorker>();
+
+webBuilder.Services.AddSingleton(new DataPublishingWorkerOptions(30));
+webBuilder.Services.AddHostedService<DataPublishingWorker>();
+
+webBuilder.Services.AddHostedService<FFMpegWorker>();
 var webApp = webBuilder.Build();
 
 //ensure identity tables are created
 using var scope = webApp.Services.CreateScope();
 var ctx = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-await  ctx.Database.EnsureCreatedAsync();
+try
+{
+
+    await ctx.Database.EnsureCreatedAsync();
+//use cms' CRUD 
+    await webApp.UseCmsAsync();
+}
+catch (Exception ex)
+{
+    Console.WriteLine(ex.Message);
+}
+
+webApp.MapGet("/api/system/config", async () =>
+{
+    if (!File.Exists("appsettings.json")) return Results.NotFound();
+    var json = await File.ReadAllTextAsync("appsettings.json");
+    return Results.Content(json, "application/json");
+});
+
+webApp.MapPut("/api/system/config", async (HttpRequest request, IHostApplicationLifetime lifetime) =>
+{
+    using var reader = new StreamReader(request.Body);
+    var json = await reader.ReadToEndAsync();
+    await File.WriteAllTextAsync("appsettings.json", json);
+    
+    // Trigger graceful shutdown
+    lifetime.StopApplication();
+    
+    return Results.Ok();
+});
+
+
+
+webApp.UseCors("5173");
+//ensure identity tables are created
 
 //use cms' CRUD 
 await webApp.UseCmsAsync();
 
-//add two default admin users
-await webApp.EnsureCmsUser("sadmin@cms.com", "Admin1!", [Roles.Sa]).Ok();
-await webApp.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Admin]).Ok();
-
-var workerBuilder = Host.CreateApplicationBuilder(args);
-
-//worker and web are two independent instances, still need to add cms services
-workerBuilder.Services.AddPostgresCms(connectionString);
-workerBuilder.Services.AddEngagement();
-workerBuilder.Services.AddComments();
-workerBuilder.Services.AddSearch(FtsProvider.Postgres, connectionString);
-
-// communication between web app and worker app
-// web app -> worker
-workerBuilder.AddNatsClient(connectionName:"nats");
-workerBuilder.Services.AddSingleton<IStringMessageConsumer, NatsMessageBus>();
-// worker call rest api to notify web
-workerBuilder.Services.AddSingleton(new CmsRestClientSettings( "http://localhost:5119", apiKey));
-
-workerBuilder.Services.AddSingleton(EngagementSettingsExtensions.DefaultEngagementSettings);
-workerBuilder.Services.AddHostedService<EventHandler>();
-
-workerBuilder.Services.AddHostedService<FFMpegWorker>();
-
-
-workerBuilder.Services.AddSingleton( new FtsSettings(["course"]));
-workerBuilder.Services.AddHostedService<FtsIndexingMessageHandler>();
-
-workerBuilder.Services.AddSingleton(new EmitMessageWorkerOptions(30));
-workerBuilder.Services.AddHostedService<EmitMessageHandler>();
-
-workerBuilder.Services.AddSingleton(new ExportWorkerOptions(30));
-workerBuilder.Services.AddHostedService<ExportWorker>();
-
-workerBuilder.Services.AddSingleton(new ImportWorkerOptions(30));
-workerBuilder.Services.AddHostedService<ImportWorker>();
-
-workerBuilder.Services.AddSingleton(new DataPublishingWorkerOptions(30));
-workerBuilder.Services.AddHostedService<DataPublishingWorker>();
-
-workerBuilder.Services.AddSingleton<IStringMessageProducer, NatsMessageBus>();
-var workerApp = workerBuilder.Build();
-var hookRegistry = workerApp.Services.GetRequiredService<HookRegistry>();
-var pluginRegistry = workerApp.Services.GetRequiredService<PluginRegistry>();
-var settings = workerApp.Services.GetRequiredService<EngagementSettings>();
-hookRegistry.RegisterEngagementHooks();
-hookRegistry.RegisterCommentsHooks();
-
-pluginRegistry.RegisterEngagementPlugins(settings);
-pluginRegistry.RegisterCommentPlugins();
-
-
-await Task.WhenAll(
-    webApp.RunAsync(),
-    workerApp.RunAsync()
-);
+await webApp.RunAsync();

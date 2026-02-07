@@ -57,6 +57,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<ListResponseMode>);
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<SchemaType>);
         services.ConfigureHttpJsonOptions(AddCamelEnumConverter<PublicationStatus>);
+        services.ConfigureHttpJsonOptions(AddCamelEnumConverter<DatabaseProvider>);
         services.AddSingleton(systemSettings);
 
         services.AddScoped<ShardGroup>(sp =>  sp.CreateShard( 
