@@ -2,24 +2,18 @@ using FormCMS.Auth.Models;
 using FormCMS.Auth.Services;
 using FormCMS.Cms.Builders;
 using FormCMS.Infrastructure.RelationDbDao;
-using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace FormCMS.Builders;
 
-
-public record MonolithicCmsSettings(
-    DatabaseProvider DatabaseProvider,
-    string ConnectionString
-);
-
-public static class MonolithicCmsBuilder
+public static class Builder
 {
-    public static void AddMonolithicCms(this IHostApplicationBuilder builder)
+    public static void AddStandaloneCms(this IHostApplicationBuilder builder)
     {
-        var settings = FormCmsSettingsStore.Load();
+        builder.Services.AddScoped<ISystemSetupService, SystemSetupService>();
+        builder.Services.AddScoped<ISpaService, SpaService>();
+        var settings = SettingsStore.Load();
         if (settings is null)
         {
             return;
@@ -77,35 +71,4 @@ public static class MonolithicCmsBuilder
                 b => b.Expire(TimeSpan.FromSeconds(1)));
         });
     }
-    public static void MapConfigEndpoints(this WebApplication app)
-    {
-        app.MapGet("/api/system/is-ready",
-            () => FormCmsSettingsStore.Load() != null); 
-
-        app.MapGet("/api/system/config",
-            (IProfileService profileService) => !profileService.HasRole(Roles.Sa)
-                ? throw new ResultException("No Permission")
-                : FormCmsSettingsStore.Load());
-        
-        app.MapPut("/api/system/config", (
-            IProfileService profileService,
-                IHostApplicationLifetime lifetime,
-            [FromBody] MonolithicCmsSettings settings
-            ) =>
-        {
-            var old = FormCmsSettingsStore.Load();
-            if (old is not null && !profileService.HasRole(Roles.Sa))
-            {
-                throw new ResultException("No Permission");
-            }
-            FormCmsSettingsStore.Save(settings);
-            Task.Run(async () =>
-            {
-                await Task.Delay(500);
-                lifetime.StopApplication();
-            });
-            return Task.FromResult(Results.Ok());
-        });
-    } 
-  
 }

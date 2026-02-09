@@ -44,3 +44,29 @@ riderModule.iml
 *.user
 /examples/WebApiExamples/Properties/launchSettings.json
 /.gitignore
+
+# User uploads and generated static assets
+**/wwwroot/files/
+**/wwwroot/static-assets/
+
+# IDE settings
+.idea/
+
+# Build results
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# Local databases
+*.db
+*.db-shm
+*.db-wal
+formcms.settings.json
+
+# Terraform
+.terraform/
+*.tfvars
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl

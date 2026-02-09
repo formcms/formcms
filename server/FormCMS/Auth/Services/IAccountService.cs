@@ -6,6 +6,7 @@ namespace FormCMS.Auth.Services;
 //manage user, role
 public interface IAccountService
 {
+    Task<bool> HasUser(CancellationToken ct = default);
     Task<string[]> GetEntities(CancellationToken ct);
     Task<UserAccess> GetSingleUser(string id,CancellationToken ct);
     Task<UserAccess[]> GetUsers(CancellationToken ct);

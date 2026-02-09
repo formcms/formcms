@@ -3,11 +3,11 @@ namespace FormCMS.Builders;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-public static class FormCmsSettingsStore
+public static class SettingsStore
 {
     private const string FileName = "formcms.settings.json";
 
-    public static void Save(MonolithicCmsSettings settings)
+    public static void Save(Settings settings)
     {
         var root = new JsonObject
         {
@@ -23,12 +23,12 @@ public static class FormCmsSettingsStore
         );
     }
 
-    public static MonolithicCmsSettings? Load()
+    public static Settings? Load()
     {
         if (!File.Exists(FileName))
             return null;
 
         var json = JsonNode.Parse(File.ReadAllText(FileName));
-        return json?["FormCms"]?.Deserialize<MonolithicCmsSettings>();
+        return json?["FormCms"]?.Deserialize<Settings>();
     }
 }

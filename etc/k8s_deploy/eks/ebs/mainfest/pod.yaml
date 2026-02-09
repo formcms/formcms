@@ -1,0 +1,18 @@
+---
+#Pod definition with PVC as a Volume
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: webserver
+spec:
+  containers:
+    - name: nginx-container
+      image: nginx:latest
+      volumeMounts:
+      - mountPath: "/usr/share/nginx/html"
+        name: test-volume
+  volumes:
+    - name: test-volume
+      persistentVolumeClaim:
+        claimName: ebs-claim

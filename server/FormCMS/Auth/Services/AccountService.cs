@@ -25,6 +25,11 @@ public class AccountService<TUser, TRole,TCtx>(
     where TCtx : IdentityDbContext<TUser>
 
 {
+    public async Task<bool> HasUser(CancellationToken ct = default)
+    {
+        return await context.UserRoles.AnyAsync(ct) && await context.Users.AnyAsync(ct);
+    }
+
     public async Task<string[]> GetEntities(CancellationToken ct)
     {
         var query = SchemaHelper.ByNameAndType(SchemaType.Entity, null, null);

@@ -129,13 +129,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
 
         void AddPageTemplateServices()
         {
-            services.AddSingleton<PageTemplate>(p =>
-            {
-                var provider = p.GetRequiredService<IWebHostEnvironment>().WebRootFileProvider;
-                var mainPage = provider.GetFileInfo(systemSettings.TemplatesRoot+"/templates/template.html");
-                var subsPage = provider.GetFileInfo(systemSettings.TemplatesRoot+"/templates/subs.html");
-                return new PageTemplate(mainPage.PhysicalPath!,subsPage.PhysicalPath!);
-            });
+            services.AddSingleton<PageTemplate>(_ => new PageTemplate());
         }
 
         void AddChannelMessageBus()
@@ -276,21 +270,8 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             apiGroup.MapIdentityHandlers();
             apiGroup.MapGroup("/tasks").MapTasksHandler();
 
-            var knownPath = new []
-            {
-                "admin",
-                "doc",
-                "files",
-                "favicon.ico",
-                "vite.ico",
-                "css",
-                "js",
-                "assets",
-                settings.RouteOptions.ApiBaseUrl
-            }.Concat(settings.KnownPaths);
-            
             app.MapGroup(settings.RouteOptions.PageBaseUrl)
-                .MapPages([..knownPath])
+                .MapPages(settings.KnownPaths)
                 .CacheOutput(SystemSettings.PageCachePolicyName);
             if (settings.MapCmsHomePage)
                 app.MapHomePage().CacheOutput(SystemSettings.PageCachePolicyName);

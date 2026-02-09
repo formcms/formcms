@@ -68,6 +68,8 @@
     <ItemGroup>
       <_ContentIncludedByDefault Remove="wwwroot\schema-ui\toast\jquery.toast.min.css" />
       <_ContentIncludedByDefault Remove="wwwroot\schema-ui\toast\jquery.toast.min.js" />
+      <_ContentIncludedByDefault Remove="wwwroot\static-assets\templates\subs.html" />
+      <_ContentIncludedByDefault Remove="wwwroot\static-assets\templates\template.html" />
     </ItemGroup>
 
     <PropertyGroup>
