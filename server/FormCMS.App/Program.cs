@@ -2,7 +2,7 @@ using FormCMS;
 using FormCMS.Builders;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.AddStandaloneCms();
+builder.AddMonoApp();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(
@@ -22,6 +22,11 @@ if (await app.EnsureDbCreatedAsync())
 {
     app.MapSpas();
     await app.UseCmsAsync();
+}
+else
+{
+    // System not ready - redirect to settings page
+    app.MapGet("/", () => Results.Redirect("/mate/settings"));
 }
 app.Run();
 return;

@@ -9,7 +9,7 @@ namespace FormCMS.Builders;
 
 public static class Builder
 {
-    public static void AddStandaloneCms(this IHostApplicationBuilder builder)
+    public static void AddMonoApp(this IHostApplicationBuilder builder)
     {
         builder.Services.AddScoped<ISystemSetupService, SystemSetupService>();
         builder.Services.AddScoped<ISpaService, SpaService>();
