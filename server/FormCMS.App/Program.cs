@@ -17,18 +17,17 @@ builder.Services.AddCors(options =>
 });
 var app = builder.Build();
 app.UseCors("5173");
-app.MapConfigEndpoints();
-if (await app.EnsureDbCreatedAsync())
+await app.MapConfigEndpoints();
+var settings = SettingsStore.Load();
+if (!string.IsNullOrWhiteSpace(settings?.MasterPassword) && await app.EnsureDbCreatedAsync())
 {
     app.MapSpas();
     await app.UseCmsAsync();
 }
 else
 {
-    // System not ready - redirect to settings page
-    app.MapGet("/", () => Results.Redirect("/mate/settings"));
+    app.MapGet("/", () => Results.Redirect("/mate"));
 }
-app.Run();
-return;
 
+app.Run();
 

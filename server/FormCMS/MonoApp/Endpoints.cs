@@ -5,24 +5,38 @@ namespace FormCMS.Builders;
 
 public static class Endpoints
 {
-    public static void MapConfigEndpoints(this WebApplication app)
+    public static async Task MapConfigEndpoints(this WebApplication app)
     {
         app.MapGet("/api/system/is-ready",
             async ([FromServices] ISystemSetupService setupService, CancellationToken ct) =>
             {
-                var (isReady, hasUser) = await setupService.GetSystemStatus(ct);
-                return new { IsReady = isReady, HasUser = hasUser };
+                var (databaseReady, hasMasterPassword, hasUser) = await setupService.GetSystemStatus(ct);
+                return new { DatabaseReady = databaseReady, HasMasterPassword = hasMasterPassword, HasUser = hasUser };
             });
 
-        app.MapGet("/api/system/config",
-            ([FromServices] ISystemSetupService setupService) => setupService.GetConfig());
+        app.MapPost("/api/system/config",
+            ([FromServices] ISystemSetupService setupService,
+             [FromBody] MasterPasswordRequest request) =>
+            {
+                var config = setupService.GetConfig(request.MasterPassword);
+                return config is not null ? Results.Ok(config) : Results.NotFound();
+            });
 
-        app.MapPut("/api/system/config", async (
+        app.MapPut("/api/system/config/database", async (
             [FromServices] ISystemSetupService setupService,
-            [FromBody] Settings settings
+            [FromBody] DatabaseConfigRequest request
         ) =>
         {
-            await setupService.UpdateConfig(settings);
+            await setupService.UpdateDatabaseConfig(request.DatabaseProvider, request.ConnectionString, request.MasterPassword);
+            return Results.Ok();
+        });
+
+        app.MapPut("/api/system/config/master-password", async (
+            [FromServices] ISystemSetupService setupService,
+            [FromBody] MasterPasswordRequest request
+        ) =>
+        {
+            await setupService.UpdateMasterPassword(request.MasterPassword, request.OldMasterPassword);
             return Results.Ok();
         });
 

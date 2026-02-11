@@ -223,7 +223,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             UsePortal();
         }
 
-        UseApiRouters();
+        await UseApiRouters();
         UseGraphql();
         UseExceptionHandler();
         app.Services.GetRequiredService<IFileStore>().Start(app);
@@ -250,7 +250,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             app.UseGraphQLGraphiQL(settings.GraphQlPath);
         }
 
-        void UseApiRouters()
+        async Task UseApiRouters()
         {
             var apiGroup = app.MapGroup(settings.RouteOptions.ApiBaseUrl);
             apiGroup.MapGroup("/entities").MapEntityHandlers();
@@ -273,6 +273,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             app.MapGroup(settings.RouteOptions.PageBaseUrl)
                 .MapPages(settings.KnownPaths)
                 .CacheOutput(SystemSettings.PageCachePolicyName);
+            
             if (settings.MapCmsHomePage)
                 app.MapHomePage().CacheOutput(SystemSettings.PageCachePolicyName);
         }

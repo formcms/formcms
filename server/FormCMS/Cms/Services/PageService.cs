@@ -8,6 +8,7 @@ using HandlebarsDotNet;
 using HtmlAgilityPack;
 using Humanizer;
 using Microsoft.AspNetCore.WebUtilities;
+using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
 
 namespace FormCMS.Cms.Services;
 
@@ -23,20 +24,7 @@ public sealed class PageService(
     public async Task<string> Get(string name, StrArgs strArgs, string? nodeId, long? sourceId, Span? span,
         CancellationToken ct)
     {
-        Page page;
-        try
-        {
-            page = await LoadPage(name, false, strArgs, ct);
-        }
-        catch
-        {
-            if (name == PageConstants.Home)
-            {
-                return """ <a href="/admin">Go to Admin Panel</a><br/> <a href="/mate">Go to Schema Builder</a> """;
-            }
-            throw;
-        }
-
+        var page = await LoadPage(name, false, strArgs, ct);
         if (page.Source == PageConstants.PageSourceAi)
         {
             var aiData = await GetAiPageData(page, strArgs, "", ct);

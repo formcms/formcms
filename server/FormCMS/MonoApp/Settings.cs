@@ -11,4 +11,6 @@ public record Settings(
     Spa[] Spas = null
 );
 
-public record SuperAdminRequest(string Email, string Password);
+public record SuperAdminRequest(string Email, string Password, string MasterPassword);
+public record DatabaseConfigRequest(DatabaseProvider DatabaseProvider, string ConnectionString, string MasterPassword);
+public record MasterPasswordRequest(string MasterPassword, string? OldMasterPassword = null);
