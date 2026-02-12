@@ -19,7 +19,7 @@ var app = builder.Build();
 app.UseCors("5173");
 await app.MapConfigEndpoints();
 var settings = SettingsStore.Load();
-if (!string.IsNullOrWhiteSpace(settings?.MasterPassword) && await app.EnsureDbCreatedAsync())
+if (settings is not null && await app.EnsureDbCreatedAsync())
 {
     app.MapSpas();
     await app.UseCmsAsync();

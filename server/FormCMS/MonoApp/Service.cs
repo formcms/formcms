@@ -10,10 +10,9 @@ namespace FormCMS.Builders;
 
 public interface ISystemSetupService
 {
-    Task<(bool DatabaseReady, bool HasMasterPassword, bool HasUser)> GetSystemStatus(CancellationToken ct);
-    Settings? GetConfig(string masterPassword);
-    Task UpdateDatabaseConfig(DatabaseProvider databaseProvider, string connectionString, string masterPassword);
-    Task UpdateMasterPassword(string masterPassword, string? oldMasterPassword = null);
+    Task<(bool DatabaseReady, bool HasHasSuperAdmin)> GetSystemStatus(CancellationToken ct);
+    Settings? GetConfig();
+    Task UpdateDatabaseConfig(DatabaseProvider databaseProvider, string connectionString);
     Task SetupSuperAdmin(SuperAdminRequest request, CancellationToken ct);
     Task AddSpa(IFormFile file, string path, string dir);
     Spa[] GetSpas();
@@ -26,72 +25,67 @@ public class SystemSetupService(
     IWebHostEnvironment environment
 ) : ISystemSetupService
 {
-    public async Task<(bool DatabaseReady, bool HasMasterPassword, bool HasUser)> GetSystemStatus(CancellationToken ct)
+    public async Task<(bool DatabaseReady, bool HasHasSuperAdmin)> GetSystemStatus(CancellationToken ct)
     {
         var settings = SettingsStore.Load();
         
         // Check if database is configured
-        bool databaseReady = settings is not null;
-        
-        // Check if master password is set
-        bool hasMasterPassword = !string.IsNullOrWhiteSpace(settings?.MasterPassword);
+        bool databaseReady = false;
+        if (settings is not null)
+        {
+            try
+            {
+                ValidateDatabaseConnection(settings.DatabaseProvider, settings.ConnectionString);
+                databaseReady = true;
+            }
+            catch
+            {
+                // ignored
+            }
+        }
         
         // Check if user exists (only if database is ready)
-        bool hasUser = false;
+        bool hasSuperAdmin = false;
         if (databaseReady)
         {
             var accountService = serviceProvider.GetRequiredService<IAccountService>();
-            hasUser = await accountService.HasUser(ct);
+            try
+            {
+                hasSuperAdmin = await accountService.HasUser(ct);
+            }
+            catch
+            {
+                // ignored
+            }
         }
 
-        return (databaseReady, hasMasterPassword, hasUser);
+        return (databaseReady, hasSuperAdmin);
     }
 
-    public Settings? GetConfig(string masterPassword)
+    public Settings? GetConfig()
     {
-        VerifyMasterPassword(masterPassword);
+        return SettingsStore.Load();
+    }
+
+    public Task UpdateDatabaseConfig(DatabaseProvider databaseProvider, string connectionString)
+    {
+        // Check if database is already configured
         var settings = SettingsStore.Load();
-        if (settings is null) return null;
-        
-        // Mask sensitive fields before returning
-        return settings with { MasterPassword = "***" };
-    }
-
-    public Task UpdateDatabaseConfig(DatabaseProvider databaseProvider, string connectionString, string masterPassword)
-    {
-        VerifyMasterPassword(masterPassword);
-        
-        // Load existing settings or create new
-        var settings = SettingsStore.Load() ?? new Settings(
-            DatabaseProvider: databaseProvider,
-            ConnectionString: connectionString,
-            MasterPassword: ""
-        );
-
-        // Update only database fields
-        settings = settings with
+        if (!string.IsNullOrWhiteSpace(settings?.ConnectionString))
         {
-            DatabaseProvider = databaseProvider,
-            ConnectionString = connectionString
-        };
+            throw new ResultException("Database is already configured.");
+        }
+
+        // Create new settings
+        settings = new Settings(
+            DatabaseProvider: databaseProvider,
+            ConnectionString: connectionString
+        );
 
         // Validate database connection
         try
         {
-            var optionsBuilder = new DbContextOptionsBuilder<CmsDbContext>();
-            _ = databaseProvider switch
-            {
-                DatabaseProvider.Sqlite => optionsBuilder.UseSqlite(connectionString),
-                DatabaseProvider.Postgres => optionsBuilder.UseNpgsql(connectionString),
-                DatabaseProvider.SqlServer => optionsBuilder.UseSqlServer(connectionString),
-                DatabaseProvider.Mysql => optionsBuilder.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString)),
-                _ => throw new Exception("Database provider not found")
-            };
-
-            using (var context = new CmsDbContext(optionsBuilder.Options))
-            {
-                context.Database.CanConnect();
-            }
+            ValidateDatabaseConnection(databaseProvider, connectionString);
         }
         catch (Exception ex)
         {
@@ -103,42 +97,10 @@ public class SystemSetupService(
         return Task.CompletedTask;
     }
 
-    public Task UpdateMasterPassword(string masterPassword, string? oldMasterPassword = null)
-    {
-        // Load existing settings
-        var settings = SettingsStore.Load();
-        if (settings is null)
-        {
-            throw new ResultException("Cannot set master password before database is configured");
-        }
 
-        // If a master password already exists, verify the old one first
-        if (!string.IsNullOrWhiteSpace(settings.MasterPassword))
-        {
-            if (string.IsNullOrWhiteSpace(oldMasterPassword))
-            {
-                throw new ResultException("Current master password is required to change it");
-            }
-            VerifyMasterPassword(oldMasterPassword);
-        }
-
-        // Hash the new master password
-        var hasher = new PasswordHasher<object>();
-        var hashedPassword = hasher.HashPassword(null, masterPassword);
-
-        // Update only master password field
-        settings = settings with { MasterPassword = hashedPassword };
-
-        SettingsStore.Save(settings);
-        RestartApp();
-        return Task.CompletedTask;
-    }
 
     public async Task SetupSuperAdmin(SuperAdminRequest request, CancellationToken ct)
     {
-        // Verify master password before creating super admin
-        VerifyMasterPassword(request.MasterPassword);
-        
         var accountService = serviceProvider.GetRequiredService<IAccountService>();
         if (await accountService.HasUser(ct))
         {
@@ -251,21 +213,7 @@ public class SystemSetupService(
         return Task.CompletedTask;
     }
 
-    private void VerifyMasterPassword(string masterPassword)
-    {
-        var settings = SettingsStore.Load();
-        if (settings is null || string.IsNullOrWhiteSpace(settings.MasterPassword))
-        {
-            throw new ResultException("Master password is not configured");
-        }
 
-        var hasher = new PasswordHasher<object>();
-        var result = hasher.VerifyHashedPassword(null, settings.MasterPassword, masterPassword);
-        if (result == PasswordVerificationResult.Failed)
-        {
-            throw new ResultException("Invalid master password");
-        }
-    }
 
     private void EnsurePermission()
     {
@@ -273,6 +221,26 @@ public class SystemSetupService(
         if (profileService is not null && !profileService.HasRole(Roles.Sa))
         {
             throw new ResultException("No Permission");
+        }
+    }
+
+    private void ValidateDatabaseConnection(DatabaseProvider databaseProvider, string connectionString)
+    {
+        var optionsBuilder = new DbContextOptionsBuilder<CmsDbContext>();
+        _ = databaseProvider switch
+        {
+            DatabaseProvider.Sqlite => optionsBuilder.UseSqlite(connectionString),
+            DatabaseProvider.Postgres => optionsBuilder.UseNpgsql(connectionString),
+            DatabaseProvider.SqlServer => optionsBuilder.UseSqlServer(connectionString),
+            DatabaseProvider.Mysql => optionsBuilder.UseMySql(connectionString,
+                ServerVersion.AutoDetect(connectionString)),
+            _ => throw new Exception("Database provider not found")
+        };
+
+        using var context = new CmsDbContext(optionsBuilder.Options);
+        if (!context.Database.CanConnect())
+        {
+            throw new Exception("Cannot connect to database.");
         }
     }
 

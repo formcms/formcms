@@ -7,10 +7,9 @@ public record Spa(string Path, string Dir);
 public record Settings(
     DatabaseProvider DatabaseProvider,
     string ConnectionString,
-    string MasterPassword = null,
+
     Spa[] Spas = null
 );
 
-public record SuperAdminRequest(string Email, string Password, string MasterPassword);
-public record DatabaseConfigRequest(DatabaseProvider DatabaseProvider, string ConnectionString, string MasterPassword);
-public record MasterPasswordRequest(string MasterPassword, string? OldMasterPassword = null);
+public record SuperAdminRequest(string Email, string Password);
+public record DatabaseConfigRequest(DatabaseProvider DatabaseProvider, string ConnectionString);

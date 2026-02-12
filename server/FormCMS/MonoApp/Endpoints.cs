@@ -10,15 +10,14 @@ public static class Endpoints
         app.MapGet("/api/system/is-ready",
             async ([FromServices] ISystemSetupService setupService, CancellationToken ct) =>
             {
-                var (databaseReady, hasMasterPassword, hasUser) = await setupService.GetSystemStatus(ct);
-                return new { DatabaseReady = databaseReady, HasMasterPassword = hasMasterPassword, HasUser = hasUser };
-            });
+                var (databaseReady, hasSuperAdmin) = await setupService.GetSystemStatus(ct);
+                return new { DatabaseReady = databaseReady, HasSuperAdmin = hasSuperAdmin };
+            }).CacheOutput(x => x.NoCache());
 
         app.MapPost("/api/system/config",
-            ([FromServices] ISystemSetupService setupService,
-             [FromBody] MasterPasswordRequest request) =>
+            ([FromServices] ISystemSetupService setupService) =>
             {
-                var config = setupService.GetConfig(request.MasterPassword);
+                var config = setupService.GetConfig();
                 return config is not null ? Results.Ok(config) : Results.NotFound();
             });
 
@@ -27,16 +26,7 @@ public static class Endpoints
             [FromBody] DatabaseConfigRequest request
         ) =>
         {
-            await setupService.UpdateDatabaseConfig(request.DatabaseProvider, request.ConnectionString, request.MasterPassword);
-            return Results.Ok();
-        });
-
-        app.MapPut("/api/system/config/master-password", async (
-            [FromServices] ISystemSetupService setupService,
-            [FromBody] MasterPasswordRequest request
-        ) =>
-        {
-            await setupService.UpdateMasterPassword(request.MasterPassword, request.OldMasterPassword);
+            await setupService.UpdateDatabaseConfig(request.DatabaseProvider, request.ConnectionString);
             return Results.Ok();
         });
 
