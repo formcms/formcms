@@ -23,8 +23,10 @@ public static class Builder
         builder.AddOutputCachePolicy();
         CmsBuilder.AddCms(builder.Services, settings.DatabaseProvider, settings.ConnectionString);
         CmsWorkerBuilder.AddWorker(builder.Services, settings.DatabaseProvider, settings.ConnectionString,
-            new TaskTimingSeconds(60,60,60,60));
+            new TaskTimingSeconds(300,300,300,300));
         builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(new AuthConfig());
+        builder.Services.AddEngagement();
+        builder.Services.AddComments();
         builder.Services.AddAuditLog();
     }
     

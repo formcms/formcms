@@ -21,10 +21,15 @@ using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.PageRender;
 using FormCMS.Utils.ResultExt;
 using GraphQL;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.AspNetCore.StaticFiles;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Schema = FormCMS.Cms.Graph.Schema;
 
 namespace FormCMS.Cms.Builders;
@@ -202,27 +207,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         await Seed(scope);
         
         PrintVersion();
-        if (settings.EnableClient)
-        {
-            app.UseStaticFiles(
-                new StaticFileOptions
-                {
-                    ContentTypeProvider = new FileExtensionContentTypeProvider
-                    {
-                        Mappings =
-                        {
-                            [".m3u8"] = "application/vnd.apple.mpegurl",
-                            [".ts"] = "video/mp2t"
-                        }
-                    }
-                }
-            );
-
-            UseAdminPanel();
-            UseRedirects();
-            UsePortal();
-        }
-
+        
         await UseApiRouters();
         UseGraphql();
         UseExceptionHandler();
@@ -230,19 +215,6 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
 
         return;
 
-        void UseRedirects()
-        {
-            var rewriteOptions = app.Services.GetRequiredService<RewriteOptions>();
-            if (settings.AdminRoot.StartsWith(SystemSettings.FormCmsContentRoot))
-            {
-                rewriteOptions.AddRedirect(@"^admin$", settings.AdminRoot);
-            }
-            if (settings.PortalRoot.StartsWith(SystemSettings.FormCmsContentRoot))
-            {
-                rewriteOptions.AddRedirect(@"^portal$", settings.PortalRoot);
-            }
-            rewriteOptions.AddRedirect(@"^schema$", settings.SchemaRoot + "/list.html");
-        }
 
         void UseGraphql()
         {
@@ -278,38 +250,6 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 app.MapHomePage().CacheOutput(SystemSettings.PageCachePolicyName);
         }
 
-        void UsePortal()
-        {
-            app.MapWhen(context => context.Request.Path.StartsWithSegments(settings.PortalRoot),
-                subApp =>
-                {
-                    subApp.UseRouting();
-                    subApp.UseEndpoints(endpoints =>
-                    {
-                        endpoints.MapFallbackToFile("portal", $"{settings.PortalRoot}/index.html");
-                        endpoints.MapFallbackToFile($"{settings.PortalRoot}/{{*path:nonfile}}",
-                            $"{settings.PortalRoot}/index.html");
-                    });
-                });    
-        }
-        void UseAdminPanel()
-        {
-            app.MapWhen(
-                context => context.Request.Path.StartsWithSegments(settings.AdminRoot),
-                subApp =>
-                {
-                    subApp.UseRouting();
-                    subApp.UseEndpoints(endpoints =>
-                    {
-                        endpoints.MapFallbackToFile(settings.AdminRoot, $"{settings.AdminRoot}/index.html");
-                        endpoints.MapFallbackToFile(
-                            $"{settings.AdminRoot}/{{*path:nonfile}}",
-                            $"{settings.AdminRoot}/index.html"
-                        );
-                    });
-                }
-            );
-        }
 
         async Task Seed(IServiceScope scope)
         {
@@ -350,7 +290,6 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 *********************************************************
                 Using {title}, Version {informationalVersion?.Split("+").First()}
                 Database Provider: {settings.DatabaseProvider}, Replicas: {settings.ReplicaCount}
-                Client App is Enabled :{settings.EnableClient}
                 Use CMS' home page: {settings.MapCmsHomePage}
                 GraphQL Client Path: {settings.GraphQlPath}
                 RouterOption: API Base URL={settings.RouteOptions.ApiBaseUrl} Page Base URL={settings.RouteOptions.PageBaseUrl}

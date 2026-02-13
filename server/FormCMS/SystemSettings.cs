@@ -27,7 +27,6 @@ public sealed class SystemSettings
     public string PortalRoot { get; set; } = FormCmsContentRoot + "/portal";
     public string TemplatesRoot { get; set; } = FormCmsContentRoot + "/static-assets";
     public bool AllowAnonymousAccessGraphQl { get; set; } = false;
-    public bool EnableClient { get; set; } = true;
     public bool MapCmsHomePage { get; set; } = true;
     public string GraphQlPath { get; set; } = "/graph";
     public TimeSpan EntitySchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);

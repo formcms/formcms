@@ -15,8 +15,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS.Course.AppHost", "s
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS.Course", "server\FormCMS.Course\FormCMS.Course.csproj", "{FBBAEDB6-802D-453A-A1E4-22C2095F8068}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS.Course.DistributeTest", "server\FormCMS.Course.DistributeTest\FormCMS.Course.DistributeTest.csproj", "{40C9B759-4740-4C44-84D1-C3971519DF7E}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqliteDemo", "examples\SqliteDemo\SqliteDemo.csproj", "{1A868F91-5908-4693-9A1A-5C37ECD6D834}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SqlServerCmsApp", "examples\SqlServerDemo\SqlServerCmsApp\SqlServerCmsApp.csproj", "{FEDF81EF-08D1-44C4-9CF5-43D6C0FD8C05}"

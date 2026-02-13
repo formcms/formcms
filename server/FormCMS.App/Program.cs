@@ -15,8 +15,12 @@ builder.Services.AddCors(options =>
                 .AllowCredentials();
         });
 });
+builder.Services.AddReverseProxy()
+    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+
 var app = builder.Build();
 app.UseCors("5173");
+app.MapReverseProxy();
 await app.MapConfigEndpoints();
 var settings = SettingsStore.Load();
 if (settings is not null && await app.EnsureDbCreatedAsync())

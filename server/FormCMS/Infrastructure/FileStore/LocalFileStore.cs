@@ -70,7 +70,7 @@ public class LocalFileStore(
             }
 
             await using var fileStream = new FileStream(dest, FileMode.Create, FileAccess.Write);
-            await file.CopyToAsync(fileStream);
+            await file.CopyToAsync(fileStream, ct);
         }
     }
 

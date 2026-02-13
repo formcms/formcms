@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
@@ -61,17 +61,17 @@
         <None Include="../../readme.md" Pack="true" PackagePath="\readme.md" />
     </ItemGroup>
 
+    
     <ItemGroup>
       <Folder Include="wwwroot\static-assets\imgs\" />
     </ItemGroup>
-
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\toast\jquery.toast.min.css" />
-      <_ContentIncludedByDefault Remove="wwwroot\schema-ui\toast\jquery.toast.min.js" />
-      <_ContentIncludedByDefault Remove="wwwroot\static-assets\templates\subs.html" />
-      <_ContentIncludedByDefault Remove="wwwroot\static-assets\templates\template.html" />
-    </ItemGroup>
-
+    
+<!--    <ItemGroup>-->
+<!--        <Content Include="wwwroot\**\*">-->
+<!--            <Pack>true</Pack>-->
+<!--            <CopyToOutputDirectory>Never</CopyToOutputDirectory>-->
+<!--        </Content>-->
+<!--    </ItemGroup>-->
     <PropertyGroup>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net10.0</TargetFramework>

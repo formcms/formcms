@@ -14,7 +14,6 @@ public class IdentityService(
     PluginRegistry registry
 ) : IIdentityService
 {
-    private const string DefaultUrl = "/_content/FormCMS/static-assets/imgs/avatar.jpg";
 
     public UserAccess? GetUserAccess()
     {
@@ -23,8 +22,11 @@ public class IdentityService(
         
         string[] roles = [..contextUser.FindAll(ClaimTypes.Role).Select(x => x.Value)];
         var avatarUrl = contextUser.FindFirstValue(nameof(CmsUser.AvatarPath).Camelize());
-        avatarUrl = !string.IsNullOrEmpty(avatarUrl) ? store.GetUrl(avatarUrl) : DefaultUrl;
-        
+        avatarUrl = !string.IsNullOrEmpty(avatarUrl) ? store.GetUrl(avatarUrl) : null;
+
+        string[] menus = roles.Contains(Roles.Sa) || roles.Contains(Roles.Admin)
+            ? [..registry.FeatureMenus]
+            : [];
         var user = new UserAccess
         (
             Id: contextUser.FindFirstValue(ClaimTypes.NameIdentifier) ?? "",
@@ -36,9 +38,7 @@ public class IdentityService(
             RestrictedReadWriteEntities: [..contextUser.FindAll(AccessScope.RestrictedAccess).Select(x => x.Value)],
             ReadonlyEntities: [..contextUser.FindAll(AccessScope.FullRead).Select(x => x.Value)],
             RestrictedReadonlyEntities: [..contextUser.FindAll(AccessScope.RestrictedRead).Select(x => x.Value)],
-            AllowedMenus: roles.Contains(Roles.Sa) || roles.Contains(Roles.Admin)
-                ? [..registry.FeatureMenus]
-                : []
+            AllowedMenus: menus
         );
         return user.CanAccessAdmin();
     }
