@@ -1,46 +1,70 @@
 using FormCMS.Auth.Models;
-using FormCMS.Auth.Services;
 using FormCMS.Cms.Builders;
-using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.RelationDbDao;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace FormCMS.Builders;
+namespace FormCMS.MonoApp;
 
 public static class Builder
 {
-    public static void AddMonoApp(this IHostApplicationBuilder builder)
+    public static MonoSettings? AddMonoApp(this IHostApplicationBuilder builder,string dataPath)
     {
-        builder.Services.AddScoped<ISystemSetupService, SystemSetupService>();
-        builder.Services.AddScoped<ISpaService, SpaService>();
-        var monoSettings = SettingsStore.Load();
-        if (monoSettings is null)
+        var monoRuntime = new MonoRunTime();
+        var storePath = Directory.GetCurrentDirectory();
+        if (!string.IsNullOrWhiteSpace(dataPath))
         {
-            return;
+            storePath = Path.Combine(dataPath, "config");
+            monoRuntime.AppRoot = Path.Combine(dataPath, "apps");
         }
-        builder.AddDbContext(monoSettings.DatabaseProvider,monoSettings.ConnectionString);
-        builder.AddOutputCachePolicy();
-        CmsBuilder.AddCms(builder.Services, monoSettings.DatabaseProvider, monoSettings.ConnectionString, settings =>
+        
+        var settingsStore = new SettingsStore(storePath);
+        Console.WriteLine("---------------------------------");
+        Console.WriteLine($"dataPath: {dataPath}");
+        Console.WriteLine($"storePath: {storePath}");
+        Console.WriteLine($"appPath: {monoRuntime.AppRoot}");
+        Console.WriteLine("---------------------------------");
+        
+        builder.Services.AddSingleton(monoRuntime);
+        builder.Services.AddSingleton(settingsStore);
+        builder.Services.AddScoped<ISystemSetupService, SystemSetupService>();
+        
+        var monoMonoSettings = settingsStore.Load();
+        if (monoMonoSettings is null)
         {
-            settings.MapCmsHomePage = monoSettings.Spas != null && monoSettings.Spas.FirstOrDefault(x => x.Path == "/") == null;
-            var store = builder.Configuration.GetValue<string>("FORMCMS_STORE_PATH");
-            if (!string.IsNullOrWhiteSpace(store))
+            return null;
+        }
+        
+        builder.Services.AddSingleton(monoMonoSettings);
+        
+        builder.Services.AddScoped<ISpaService, SpaService>();
+        builder.AddDbContext(monoMonoSettings.DatabaseProvider,monoMonoSettings.ConnectionString);
+        builder.AddOutputCachePolicy();
+        CmsBuilder.AddCms(builder.Services, monoMonoSettings.DatabaseProvider, monoMonoSettings.ConnectionString, settings =>
+        {
+            settings.MapCmsHomePage = monoMonoSettings.Spas != null && monoMonoSettings.Spas.FirstOrDefault(x => x.Path == "/") == null;
+            if (!string.IsNullOrWhiteSpace(dataPath))
             {
-                settings.LocalFileStoreOptions.PathPrefix = store;
+                settings.LocalFileStoreOptions.PathPrefix = Path.Combine(dataPath,"files") ;
+                
+                Console.WriteLine("---------------------------------");
+                Console.WriteLine($"pathPrefix: {settings.LocalFileStoreOptions.PathPrefix}");
+                Console.WriteLine("---------------------------------");
             }
         });
-        CmsWorkerBuilder.AddWorker(builder.Services, monoSettings.DatabaseProvider, monoSettings.ConnectionString,
+        
+        CmsWorkerBuilder.AddWorker(builder.Services, monoMonoSettings.DatabaseProvider, monoMonoSettings.ConnectionString,
             new TaskTimingSeconds(300,300,300,300));
         builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(new AuthConfig());
         builder.Services.AddEngagement();
         builder.Services.AddComments();
         builder.Services.AddAuditLog();
+        return  monoMonoSettings;
     }
     
     public static async Task<bool> EnsureDbCreatedAsync(this IHost app)
     {
-        var monoSettings = SettingsStore.Load();
+        var monoSettings = app.Services.GetRequiredService<MonoSettings>();
         try
         {
             using var scope = app.Services.CreateScope();

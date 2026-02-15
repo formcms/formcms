@@ -242,14 +242,10 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             apiGroup.MapIdentityHandlers();
             apiGroup.MapGroup("/tasks").MapTasksHandler();
 
-            app.MapGroup(settings.RouteOptions.PageBaseUrl)
-                .MapPages(settings.KnownPaths)
-                .CacheOutput(SystemSettings.PageCachePolicyName);
-            
+            app.UsePages(settings.RouteOptions.PageBaseUrl,settings.KnownPaths);
             if (settings.MapCmsHomePage)
-                app.MapHomePage().CacheOutput(SystemSettings.PageCachePolicyName);
+                app.UseHomePage();
         }
-
 
         async Task Seed(IServiceScope scope)
         {

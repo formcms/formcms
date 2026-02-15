@@ -6,80 +6,114 @@ namespace FormCMS.Cms.Handlers;
 
 public static class PageHandler
 {
-    public static RouteHandlerBuilder MapHomePage(this IEndpointRouteBuilder app)
+    public static IApplicationBuilder UseHomePage(this IApplicationBuilder app)
     {
-        return app.MapGet("/", async (
-            IPageService pageService,
-            HttpContext context,
-            string? node,
-            long ? source,
-            string? first,
-            string? last,
-            CancellationToken ct
-        ) =>
+        return app.Use(async (context, next) =>
         {
-            var html = await pageService.Get(PageConstants.Home, context.Args(), 
-                nodeId:node,
-                sourceId:source,
-                span: new Span(first,last),
-                ct: ct);
-            if (string.IsNullOrWhiteSpace(html)) 
-                return Results.NotFound();
-            await context.Html(html , ct);
-            return Results.Empty;
+
+            var path = context.Request.Path.Value?.Trim('/');
+            if (string.IsNullOrEmpty(path))
+            {
+                await next();
+                return;
+            }
+
+            var pageService = context.RequestServices.GetRequiredService<IPageService>();
+            var html = await pageService.Get(
+                path,
+                context.Args(),
+                ct: context.RequestAborted
+            );
+
+            if (!string.IsNullOrWhiteSpace(html))
+            {
+                await context.Html(html, context.RequestAborted);
+                return;
+            }
+
+            // 🔥 Important: continue pipeline
+            await next();
         });
     }
 
-    public static RouteGroupBuilder MapPages(this RouteGroupBuilder app, params string[] knownUrls)
+    public static IApplicationBuilder UsePages(this IApplicationBuilder app, string prefix, string []know)
     {
-        var excludedUrls = string.Join("|", knownUrls.Select(x => x.Replace("/", "")));
-        var prefix = $"/{{page:regex(^(?!({excludedUrls})).*)}}";
-        
-        app.MapGet(prefix, async (
-            IPageService pageService,
-            HttpContext context,
-            string page,
-            string? node,
-            long ? source,
-            string? first,
-            string? last,
-            CancellationToken ct
-        ) =>
+        prefix = prefix.Trim('/');
+        HashSet<string> set = new HashSet<string>(know);
+        return app.Use(async (context, next) =>
         {
-            var html = await pageService.Get(page, context.Args(),
-                nodeId:node,
-                sourceId:source,
-                span: new Span(first,last),
-                ct: ct);
-            if (string.IsNullOrWhiteSpace(html)) 
-                return Results.NotFound();
-            await context.Html(html, ct);
-            return Results.Empty;
-        });
+            var path = context.Request.Path.Value?.Trim('/');
 
-        
-        app.MapGet(prefix + "/{slug}", async (
-            IPageService pageService,
-            HttpContext context,
-            string page,
-            string slug,
-            string? node,
-            long ? source,
-            string? first,
-            string? last,
-            CancellationToken ct
-        ) =>
-        {
-            var html = await pageService.GetDetail(page, slug, context.Args(),
-                nodeId:node,
-                sourceId:source,
-                span: new Span(first,last),
-                ct:ct);
-            if (string.IsNullOrWhiteSpace(html)) 
-                return Results.NotFound();
-            await context.Html(html, ct);
-            return Results.Empty;
+            if (string.IsNullOrEmpty(path) || !set.Contains(path))
+            {
+                await next();
+                return;
+            }
+
+            // Must start with prefix
+            if (!path.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase))
+            {
+                await next();
+                return;
+            }
+
+            var remaining = path.Substring(prefix.Length).Trim('/');
+            if (string.IsNullOrEmpty(remaining))
+            {
+                await next();
+                return;
+            }
+
+            var segments = remaining.Split('/', StringSplitOptions.RemoveEmptyEntries);
+
+            var pageService = context.RequestServices.GetRequiredService<IPageService>();
+
+            string? html = null;
+
+            if (segments.Length == 1)
+            {
+                // /prefix/page
+                var page = segments[0];
+
+                html = await pageService.Get(
+                    page,
+                    context.Args(),
+                    nodeId: context.Request.Query["node"],
+                    sourceId: long.TryParse(context.Request.Query["source"], out var s) ? s : null,
+                    span: new Span(
+                        context.Request.Query["first"],
+                        context.Request.Query["last"]
+                    ),
+                    ct: context.RequestAborted
+                );
+            }
+            else if (segments.Length >= 2)
+            {
+                // /prefix/page/slug
+                var page = segments[0];
+                var slug = segments[1];
+
+                html = await pageService.GetDetail(
+                    page,
+                    slug,
+                    context.Args(),
+                    nodeId: context.Request.Query["node"],
+                    sourceId: long.TryParse(context.Request.Query["source"], out var s) ? s : null,
+                    span: new Span(
+                        context.Request.Query["first"],
+                        context.Request.Query["last"]
+                    ),
+                    ct: context.RequestAborted
+                );
+            }
+
+            if (!string.IsNullOrWhiteSpace(html))
+            {
+                await context.Html(html, context.RequestAborted);
+                return;
+            }
+
+            await next();
         });
-        return app;
     }
 }

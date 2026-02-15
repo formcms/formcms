@@ -1,68 +1,48 @@
 using Microsoft.Extensions.FileProviders;
 
-namespace FormCMS.Builders;
+namespace FormCMS.MonoApp;
 
 public interface ISpaService
 {
-    void MapSpas(IApplicationBuilder app);
+    void MapSpas(WebApplication app);
 }
 
-public class SpaService(IWebHostEnvironment env) : ISpaService
+public class SpaService : ISpaService
 {
-    public void MapSpas(IApplicationBuilder app)
+    public void MapSpas(WebApplication app)
     {
-        var settings = SettingsStore.Load();
-        if (settings?.Spas is null)
+        var monoSettings = app.Services.GetRequiredService<MonoSettings>();
+        var monoRuntime = app.Services.GetRequiredService<MonoRunTime>();
+        foreach (var spa in monoSettings.Spas??[])
         {
-            return;
-        }
-
-        var systemSettings = app.ApplicationServices.GetRequiredService<SystemSettings>();
-        systemSettings.KnownPaths = [..systemSettings.KnownPaths, ..settings.Spas.Select(s => s.Path)];
-        var knownPaths = systemSettings.KnownPaths.Select(p => p.StartsWith("/") ? p : "/" + p).ToList();
-
-        foreach (var spa in settings.Spas)
-        {
-            var path = spa.Path.StartsWith("/") ? spa.Path : "/" + spa.Path;
-            var dir = Path.Combine(env.WebRootPath, spa.Dir);
+            var dir = Path.Combine(monoRuntime.AppRoot, spa.Dir);
             if (!Directory.Exists(dir))
             {
                 continue;
             }
-            
             app.UseStaticFiles(new StaticFileOptions
             {
-                FileProvider = new PhysicalFileProvider(dir),
-                RequestPath = path == "/" ? "" : path
-            });
-
-            if (path == "/")
+                RequestPath = spa.Path == "/" ? "" : spa.Path,
+                FileProvider = new PhysicalFileProvider(dir)
+            });  
+            
+            if (spa.Path == "/")
             {
-                app.MapWhen(context => 
-                        !knownPaths.Any(kp => context.Request.Path.StartsWithSegments(kp)),
-                    subApp =>
-                    {
-                        subApp.UseRouting();
-                        subApp.UseEndpoints(endpoints =>
-                        {
-                            endpoints.MapFallbackToFile("index.html");
-                            endpoints.MapFallbackToFile("{*path:nonfile}", "index.html");
-                        });
-                    });
+                app.MapFallback(async context =>
+                {
+                    context.Response.ContentType = "text/html";
+                    await context.Response.SendFileAsync(
+                        Path.Combine(dir, "index.html"));
+                });
             }
             else
             {
-                app.MapWhen(context => context.Request.Path.StartsWithSegments(path),
-                    subApp =>
-                    {
-                        subApp.UseRouting();
-                        subApp.UseEndpoints(endpoints =>
-                        {
-                            var indexPath = $"{path.TrimEnd('/')}/index.html";
-                            endpoints.MapFallbackToFile(path, indexPath);
-                            endpoints.MapFallbackToFile($"{path.TrimEnd('/')}/{{*path:nonfile}}", indexPath);
-                        });
-                    });
+                app.MapFallback($"{spa.Path}/{{*path:nonfile}}", async context =>
+                {
+                    context.Response.ContentType = "text/html";
+                    await context.Response.SendFileAsync(
+                        Path.Combine(dir, "index.html"));
+                });
             }
         }
     }

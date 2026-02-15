@@ -34,17 +34,10 @@ public sealed class SystemSettings
     public int ReplicaCount { get; set; }
     public string[] KnownPaths { get; set; } = [
         "api",
-        "admin",
-        "doc",
         "files",
-        "favicon.ico",
-        "vite.ico",
-        "css",
-        "js",
-        "assets",
-        "_content"
     ];
 
+    
     public LocalFileStoreOptions LocalFileStoreOptions { get; } = new(
         pathPrefix: Path.Join(Directory.GetCurrentDirectory(), "wwwroot/files"),
         urlPrefix: "/files");

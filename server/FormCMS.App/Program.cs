@@ -1,8 +1,10 @@
 using FormCMS;
-using FormCMS.Builders;
+using FormCMS.MonoApp;
 
 var builder = WebApplication.CreateBuilder(args);
-builder.AddMonoApp();
+var dataPath = builder.Configuration.GetValue<string>("FORMCMS_DATA_PATH")??"";
+var settings = builder.AddMonoApp(dataPath);
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(
@@ -15,23 +17,17 @@ builder.Services.AddCors(options =>
                 .AllowCredentials();
         });
 });
-builder.Services.AddReverseProxy()
-    .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
+builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
 builder.WebHost.ConfigureKestrel(options =>  options.Limits.MaxRequestBodySize = 10_000_000);
 var app = builder.Build();
 app.UseCors("5173");
 app.MapReverseProxy();
 await app.MapConfigEndpoints();
-var settings = SettingsStore.Load();
+
 if (!string.IsNullOrWhiteSpace(settings?.ConnectionString)   && await app.EnsureDbCreatedAsync())
 {
-    
-    app.MapSpas();
     await app.UseCmsAsync();
-}
-else
-{
-    app.MapGet("/", () => Results.Redirect("/mate"));
+    app.MapSpas();
 }
 
 app.Run();

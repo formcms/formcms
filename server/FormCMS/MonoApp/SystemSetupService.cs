@@ -3,15 +3,13 @@ using FormCMS.Auth.Models;
 using FormCMS.Auth.Services;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.ResultExt;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace FormCMS.Builders;
+namespace FormCMS.MonoApp;
 
 public interface ISystemSetupService
 {
     Task<(bool DatabaseReady, bool HasHasSuperAdmin)> GetSystemStatus(CancellationToken ct);
-    Settings? GetConfig();
     Task UpdateDatabaseConfig(DatabaseProvider databaseProvider, string connectionString);
     Task SetupSuperAdmin(SuperAdminRequest request, CancellationToken ct);
     Task AddSpa(IFormFile file, string path, string dir);
@@ -20,15 +18,15 @@ public interface ISystemSetupService
 }
 
 public class SystemSetupService(
+    SettingsStore settingsStore,
+    MonoRunTime runTime,
     IServiceProvider serviceProvider,
-    IHostApplicationLifetime lifetime,
-    IWebHostEnvironment environment
+    IHostApplicationLifetime lifetime
 ) : ISystemSetupService
 {
     public async Task<(bool DatabaseReady, bool HasHasSuperAdmin)> GetSystemStatus(CancellationToken ct)
     {
-        var settings = SettingsStore.Load();
-        
+        var settings = settingsStore.Load();
         // Check if database is configured
         bool databaseReady = false;
         if (settings is not null&& !string.IsNullOrWhiteSpace(settings.ConnectionString))
@@ -62,22 +60,17 @@ public class SystemSetupService(
         return (databaseReady, hasSuperAdmin);
     }
 
-    public Settings? GetConfig()
-    {
-        return SettingsStore.Load();
-    }
-
     public Task UpdateDatabaseConfig(DatabaseProvider databaseProvider, string connectionString)
     {
         // Check if database is already configured
-        var settings = SettingsStore.Load();
+        var settings = settingsStore.Load();
         if (!string.IsNullOrWhiteSpace(settings?.ConnectionString))
         {
             throw new ResultException("Database is already configured.");
         }
 
         // Create new settings
-        settings = new Settings(
+        settings = new MonoSettings(
             DatabaseProvider: databaseProvider,
             ConnectionString: connectionString
         );
@@ -92,7 +85,7 @@ public class SystemSetupService(
             throw new ResultException($"Database validation failed: {ex.Message}");
         }
 
-        SettingsStore.Save(settings);
+        settingsStore.Save(settings);
         RestartApp();
         return Task.CompletedTask;
     }
@@ -120,7 +113,7 @@ public class SystemSetupService(
         if (!Path.GetExtension(file.FileName).Equals(".zip", StringComparison.OrdinalIgnoreCase))
             throw new ResultException("Only .zip files are allowed.");
 
-        var targetDir = Path.Combine(environment.WebRootPath, dir);
+        var targetDir = Path.Combine(runTime.AppRoot, dir);
         if (Directory.Exists(targetDir))
         {
             Directory.Delete(targetDir, true);
@@ -167,7 +160,7 @@ public class SystemSetupService(
                 File.Delete(tempZipPath);
         }
 
-        var settings = SettingsStore.Load();
+        var settings = settingsStore.Load();
         if (settings != null)
         {
             var spas = settings.Spas?.ToList() ?? new List<Spa>();
@@ -175,7 +168,7 @@ public class SystemSetupService(
             spas.Add(new Spa(path, dir));
             
             var newSettings = settings with { Spas = spas.ToArray() };
-            SettingsStore.Save(newSettings);
+            settingsStore.Save(newSettings);
         }
 
         RestartApp();
@@ -184,14 +177,14 @@ public class SystemSetupService(
     public Spa[] GetSpas()
     {
         EnsurePermission();
-        var settings = SettingsStore.Load();
+        var settings = settingsStore.Load();
         return settings?.Spas ?? [];
     }
 
     public Task DeleteSpa(string path)
     {
         EnsurePermission();
-        var settings = SettingsStore.Load();
+        var settings = settingsStore.Load();
         if (settings?.Spas == null) return Task.CompletedTask;
 
         var spa = settings.Spas.FirstOrDefault(s => s.Path == path);
@@ -201,9 +194,9 @@ public class SystemSetupService(
         spas.Remove(spa);
         
         var newSettings = settings with { Spas = spas.ToArray() };
-        SettingsStore.Save(newSettings);
+        settingsStore.Save(newSettings);
 
-        var targetDir = Path.Combine(environment.WebRootPath, spa.Dir);
+        var targetDir = Path.Combine(runTime.AppRoot, spa.Dir);
         if (Directory.Exists(targetDir))
         {
             Directory.Delete(targetDir, true);

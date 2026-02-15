@@ -1,18 +1,17 @@
-namespace FormCMS.Builders;
+namespace FormCMS.MonoApp;
 
 using System.Text.Json;
 using System.Text.Json.Nodes;
 
-public static class SettingsStore
+public  class SettingsStore(string path)
 {
-    private static string FileName => Environment.GetEnvironmentVariable("FORMCMS_CONFIG_PATH") 
-                                      ?? "formcms.settings.json";
+    private  string FileName => Path.Combine(path , "formcms.settings.json");
 
-    public static void Save(Settings settings)
+    public void Save(MonoSettings monoSettings)
     {
         var root = new JsonObject
         {
-            ["FormCms"] = JsonSerializer.SerializeToNode(settings)
+            ["FormCms"] = JsonSerializer.SerializeToNode(monoSettings)
         };
 
         File.WriteAllText(
@@ -24,12 +23,12 @@ public static class SettingsStore
         );
     }
 
-    public static Settings? Load()
+    public MonoSettings? Load()
     {
         if (!File.Exists(FileName))
             return null;
 
         var json = JsonNode.Parse(File.ReadAllText(FileName));
-        return json?["FormCms"]?.Deserialize<Settings>();
+        return json?["FormCms"]?.Deserialize<MonoSettings>();
     }
 }
