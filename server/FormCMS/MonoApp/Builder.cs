@@ -1,6 +1,7 @@
 using FormCMS.Auth.Models;
 using FormCMS.Auth.Services;
 using FormCMS.Cms.Builders;
+using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.RelationDbDao;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -13,16 +14,23 @@ public static class Builder
     {
         builder.Services.AddScoped<ISystemSetupService, SystemSetupService>();
         builder.Services.AddScoped<ISpaService, SpaService>();
-        var settings = SettingsStore.Load();
-        if (settings is null)
+        var monoSettings = SettingsStore.Load();
+        if (monoSettings is null)
         {
             return;
-            
         }
-        builder.AddDbContext(settings.DatabaseProvider,settings.ConnectionString);
+        builder.AddDbContext(monoSettings.DatabaseProvider,monoSettings.ConnectionString);
         builder.AddOutputCachePolicy();
-        CmsBuilder.AddCms(builder.Services, settings.DatabaseProvider, settings.ConnectionString);
-        CmsWorkerBuilder.AddWorker(builder.Services, settings.DatabaseProvider, settings.ConnectionString,
+        CmsBuilder.AddCms(builder.Services, monoSettings.DatabaseProvider, monoSettings.ConnectionString, settings =>
+        {
+            settings.MapCmsHomePage = monoSettings.Spas != null && monoSettings.Spas.FirstOrDefault(x => x.Path == "/") == null;
+            var store = builder.Configuration.GetValue<string>("FORMCMS_STORE_PATH");
+            if (!string.IsNullOrWhiteSpace(store))
+            {
+                settings.LocalFileStoreOptions.PathPrefix = store;
+            }
+        });
+        CmsWorkerBuilder.AddWorker(builder.Services, monoSettings.DatabaseProvider, monoSettings.ConnectionString,
             new TaskTimingSeconds(300,300,300,300));
         builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(new AuthConfig());
         builder.Services.AddEngagement();
@@ -32,11 +40,16 @@ public static class Builder
     
     public static async Task<bool> EnsureDbCreatedAsync(this IHost app)
     {
+        var monoSettings = SettingsStore.Load();
         try
         {
             using var scope = app.Services.CreateScope();
             var ctx = scope.ServiceProvider.GetRequiredService<CmsDbContext>();
             await ctx.Database.EnsureCreatedAsync();
+            if (monoSettings?.DatabaseProvider == DatabaseProvider.Sqlite)
+            {
+                await ctx.Database.ExecuteSqlRawAsync("PRAGMA journal_mode=DELETE;");
+            }
             return true;
         }
         catch (Exception e)

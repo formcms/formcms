@@ -23,7 +23,10 @@ public static class PageHandler
                 sourceId:source,
                 span: new Span(first,last),
                 ct: ct);
+            if (string.IsNullOrWhiteSpace(html)) 
+                return Results.NotFound();
             await context.Html(html , ct);
+            return Results.Empty;
         });
     }
 
@@ -48,7 +51,10 @@ public static class PageHandler
                 sourceId:source,
                 span: new Span(first,last),
                 ct: ct);
+            if (string.IsNullOrWhiteSpace(html)) 
+                return Results.NotFound();
             await context.Html(html, ct);
+            return Results.Empty;
         });
 
         
@@ -69,7 +75,10 @@ public static class PageHandler
                 sourceId:source,
                 span: new Span(first,last),
                 ct:ct);
+            if (string.IsNullOrWhiteSpace(html)) 
+                return Results.NotFound();
             await context.Html(html, ct);
+            return Results.Empty;
         });
         return app;
     }

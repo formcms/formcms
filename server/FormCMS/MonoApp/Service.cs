@@ -31,7 +31,7 @@ public class SystemSetupService(
         
         // Check if database is configured
         bool databaseReady = false;
-        if (settings is not null)
+        if (settings is not null&& !string.IsNullOrWhiteSpace(settings.ConnectionString))
         {
             try
             {
@@ -224,25 +224,48 @@ public class SystemSetupService(
         }
     }
 
-    private void ValidateDatabaseConnection(DatabaseProvider databaseProvider, string connectionString)
+    private void ValidateDatabaseConnection(
+        DatabaseProvider databaseProvider,
+        string connectionString)
     {
-        var optionsBuilder = new DbContextOptionsBuilder<CmsDbContext>();
-        _ = databaseProvider switch
+        try
         {
-            DatabaseProvider.Sqlite => optionsBuilder.UseSqlite(connectionString),
-            DatabaseProvider.Postgres => optionsBuilder.UseNpgsql(connectionString),
-            DatabaseProvider.SqlServer => optionsBuilder.UseSqlServer(connectionString),
-            DatabaseProvider.Mysql => optionsBuilder.UseMySql(connectionString,
-                ServerVersion.AutoDetect(connectionString)),
-            _ => throw new Exception("Database provider not found")
-        };
+            var optionsBuilder = new DbContextOptionsBuilder<CmsDbContext>();
 
-        using var context = new CmsDbContext(optionsBuilder.Options);
-        if (!context.Database.CanConnect())
+            _ = databaseProvider switch
+            {
+                DatabaseProvider.Sqlite =>
+                    optionsBuilder.UseSqlite(connectionString),
+
+                DatabaseProvider.Postgres =>
+                    optionsBuilder.UseNpgsql(connectionString),
+
+                DatabaseProvider.SqlServer =>
+                    optionsBuilder.UseSqlServer(connectionString),
+
+                DatabaseProvider.Mysql =>
+                    optionsBuilder.UseMySql(
+                        connectionString,
+                        ServerVersion.AutoDetect(connectionString)),
+
+                _ => throw new InvalidOperationException(
+                    $"Unsupported database provider: {databaseProvider}")
+            };
+
+            using var context = new CmsDbContext(optionsBuilder.Options);
+
+            // Force a real connection attempt
+            context.Database.OpenConnection();
+            context.Database.CloseConnection();
+        }
+        catch (Exception ex)
         {
-            throw new Exception("Cannot connect to database.");
+            throw new Exception(
+                $"Failed to connect to database ({databaseProvider}). Reason: {ex.Message}",
+                ex);
         }
     }
+ 
 
     private void RestartApp()
     {

@@ -14,14 +14,7 @@ public static class Endpoints
                 return new { DatabaseReady = databaseReady, HasSuperAdmin = hasSuperAdmin };
             }).CacheOutput(x => x.NoCache());
 
-        app.MapPost("/api/system/config",
-            ([FromServices] ISystemSetupService setupService) =>
-            {
-                var config = setupService.GetConfig();
-                return config is not null ? Results.Ok(config) : Results.NotFound();
-            });
-
-        app.MapPut("/api/system/config/database", async (
+        app.MapPost("/api/system/setup-database", async (
             [FromServices] ISystemSetupService setupService,
             [FromBody] DatabaseConfigRequest request
         ) =>

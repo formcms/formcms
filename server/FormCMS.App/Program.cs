@@ -17,14 +17,15 @@ builder.Services.AddCors(options =>
 });
 builder.Services.AddReverseProxy()
     .LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
-
+builder.WebHost.ConfigureKestrel(options =>  options.Limits.MaxRequestBodySize = 10_000_000);
 var app = builder.Build();
 app.UseCors("5173");
 app.MapReverseProxy();
 await app.MapConfigEndpoints();
 var settings = SettingsStore.Load();
-if (settings is not null && await app.EnsureDbCreatedAsync())
+if (!string.IsNullOrWhiteSpace(settings?.ConnectionString)   && await app.EnsureDbCreatedAsync())
 {
+    
     app.MapSpas();
     await app.UseCmsAsync();
 }

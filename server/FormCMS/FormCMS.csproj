@@ -59,11 +59,22 @@
 
     <ItemGroup>
         <None Include="../../readme.md" Pack="true" PackagePath="\readme.md" />
+        <None Remove="wwwroot\static-assets\**" />
     </ItemGroup>
 
     
     <ItemGroup>
-      <Folder Include="wwwroot\static-assets\imgs\" />
+      <Compile Remove="wwwroot\static-assets\**" />
+    </ItemGroup>
+
+    
+    <ItemGroup>
+      <EmbeddedResource Remove="wwwroot\static-assets\**" />
+    </ItemGroup>
+
+    
+    <ItemGroup>
+      <Content Remove="wwwroot\static-assets\**" />
     </ItemGroup>
     
 <!--    <ItemGroup>-->

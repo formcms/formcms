@@ -20,13 +20,7 @@ public sealed class SystemSettings
 {
     public const string PageCachePolicyName = "CmsPageCachePolicy";
     public const string QueryCachePolicyName = "CmsQueryCachePolicy";
-    public const string FormCmsContentRoot = "/_content/FormCMS";
 
-    public string AdminRoot { get; set; } = FormCmsContentRoot + "/admin";
-    public string SchemaRoot { get; set; } = FormCmsContentRoot + "/schema-ui";
-    public string PortalRoot { get; set; } = FormCmsContentRoot + "/portal";
-    public string TemplatesRoot { get; set; } = FormCmsContentRoot + "/static-assets";
-    public bool AllowAnonymousAccessGraphQl { get; set; } = false;
     public bool MapCmsHomePage { get; set; } = true;
     public string GraphQlPath { get; set; } = "/graph";
     public TimeSpan EntitySchemaExpiration { get; set; } = TimeSpan.FromMinutes(1);

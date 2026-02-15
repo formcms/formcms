@@ -25,6 +25,7 @@ public sealed class PageService(
         CancellationToken ct)
     {
         var page = await LoadPage(name, false, strArgs, ct);
+        if (page is null) return string.Empty;
         if (page.Source == PageConstants.PageSourceAi)
         {
             var aiData = await GetAiPageData(page, strArgs, "", ct);
@@ -91,6 +92,8 @@ public sealed class PageService(
         Span span, CancellationToken ct)
     {
         var page = await LoadPage(name, true, strArgs, ct);
+        if (page is null) return string.Empty;
+        
         if (page.Source == PageConstants.PageSourceAi)
         {
             var aiPageData = await GetAiPageData(page, strArgs, path, ct);
@@ -126,7 +129,7 @@ public sealed class PageService(
         {
             if (e is ResultException { Code: ErrorCodes.NOT_ENOUGH_ACCESS_LEVEL })
             {
-                return template.BuildSubsPage(systemSettings.PortalRoot + "/sub/view");
+                return template.BuildSubsPage( "/portal/sub/view");
             }
             throw;
         }
@@ -240,14 +243,21 @@ public sealed class PageService(
 
     private record PartialPageContext(Page CurrentPage, HtmlNode Element, DataNode[] DataNodes);
 
-    private async Task<Page> LoadPage(string pageName, bool matchPrefix, StrArgs arguments,
+    private async Task<Page?> LoadPage(string pageName, bool matchPrefix, StrArgs arguments,
         CancellationToken cancellationToken)
     {
-        var publicationStatus = PublicationStatusHelper.GetSchemaStatus(arguments);
-        var pageSchema = await pageResolver.GetPage(pageName, matchPrefix, publicationStatus, cancellationToken);
+        try
+        {
+            var publicationStatus = PublicationStatusHelper.GetSchemaStatus(arguments);
+            var pageSchema = await pageResolver.GetPage(pageName, matchPrefix, publicationStatus, cancellationToken);
 
-        var page = pageSchema.Settings.Page!;
-        return page;
+            var page = pageSchema.Settings.Page!;
+            return page;
+        }
+        catch (Exception e)
+        {
+            return null;
+        }
     }
 
     private PageProcessingContext LoadContext(Page page)
