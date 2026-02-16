@@ -64,17 +64,12 @@ public static class WebApplicationExt
 
         var searchBuilder = app.Services.GetService<SearchBuilder>();
         if (searchBuilder != null) await searchBuilder.UseSearch(app, scope);
-
-        app.UseRewriter(app.Services.GetRequiredService<RewriteOptions>());
+        await app.Services.GetRequiredService<IAuthBuilder>().EnsureSysRoles(app);
     }
 
     public static async Task<Result> EnsureCmsUser(
         this WebApplication app, string email, string password, string[] role
     ) => await app.Services.GetRequiredService<IAuthBuilder>().EnsureCmsUser(app, email, password, role);
-
-    public static IServiceCollection AddDocumentDbQuery(
-        this IServiceCollection services, IEnumerable<QueryCollectionLinks> queryCollectionLinks
-    ) => DocumentDbQueryBuilder.AddDocumentDbQuery(services, queryCollectionLinks);
 
     public static IServiceCollection AddPostgresCms(
         this IServiceCollection services, string connectionString, Action<SystemSettings>? action = null,

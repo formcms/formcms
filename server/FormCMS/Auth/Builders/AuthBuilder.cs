@@ -96,6 +96,27 @@ public sealed class AuthBuilder<TCmsUser>(ILogger<AuthBuilder<TCmsUser>> logger)
         return app;
     }
 
+    public async Task<Result> EnsureSystemRoles(
+        WebApplication app,
+        string email,
+        string password,
+        string[] role
+    )
+    {
+        using var scope = app.Services.CreateScope();
+        return await scope
+            .ServiceProvider.GetRequiredService<IAccountService>()
+            .EnsureUser(email, password, role);
+    }
+
+    public async Task<Result> EnsureSysRoles( WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        return await scope
+            .ServiceProvider.GetRequiredService<IAccountService>()
+            .EnsureRoles([Roles.Admin, Roles.Sa,Roles.Guest]);
+    }
+
     public async Task<Result> EnsureCmsUser(
         WebApplication app,
         string email,
@@ -107,6 +128,17 @@ public sealed class AuthBuilder<TCmsUser>(ILogger<AuthBuilder<TCmsUser>> logger)
         return await scope
             .ServiceProvider.GetRequiredService<IAccountService>()
             .EnsureUser(email, password, role);
+    }
+    
+    public async Task<Result> EnsureRoles(
+        WebApplication app,
+        string[] roles
+    )
+    {
+        using var scope = app.Services.CreateScope();
+        return await scope
+            .ServiceProvider.GetRequiredService<IAccountService>()
+            .EnsureRoles(roles);
     }
 
     private void Print()

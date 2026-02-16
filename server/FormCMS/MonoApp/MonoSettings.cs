@@ -13,7 +13,8 @@ public record MonoSettings(
     DatabaseProvider DatabaseProvider,
     string ConnectionString,
 
-    Spa[]? Spas = null
+    Spa[]? Spas = null,
+    string[]? CorsOrigins = null
 );
 
 public record SuperAdminRequest(string Email, string Password);

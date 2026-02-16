@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FormCMS.Auth.Models;
+using FormCMS.Utils.FancyId;
 using FormCMS.Utils.ResultExt;
 using GraphQL;
 using Microsoft.AspNetCore.Authentication;
@@ -23,15 +24,25 @@ public class LoginService<TUser>(
         if (usernameOrEmail == Constants.GuestUserPrefix && contextAccessor.HttpContext != null)
         {
             var roleAccess =await accountService.GetSingleRole(Roles.Guest);
+            var (nameId, email) = GuestIdentityFactory.Create();
+
             var claims = new List<Claim>
             {
-                new (ClaimTypes.NameIdentifier, $"guest:{Ulid.NewUlid()}"),
+                new (ClaimTypes.NameIdentifier, nameId),
+                new (ClaimTypes.Email, email),
             };
+            
             claims.AddRange(from entity in roleAccess.RestrictedReadWriteEntities ?? []
                 select new Claim(AccessScope.RestrictedAccess, entity));
 
             claims.AddRange(from entity in roleAccess.RestrictedReadonlyEntities ?? []
                 select new Claim(AccessScope.RestrictedRead, entity));
+            
+            claims.AddRange(from entity in roleAccess.ReadonlyEntities ?? []
+                select new Claim(AccessScope.FullRead, entity));
+            
+            claims.AddRange(from entity in roleAccess.ReadWriteEntities ?? []
+                select new Claim(AccessScope.FullAccess, entity));
             
             var identity = new ClaimsIdentity(
                 claims,

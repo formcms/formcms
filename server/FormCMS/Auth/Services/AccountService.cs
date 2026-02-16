@@ -132,6 +132,7 @@ public class AccountService<TUser, TRole,TCtx>(
         ).CanAccessAdmin() )];
     }
 
+   
     public async Task<Result> EnsureUser(string email, string password, string[] roles, bool ignoreExistingUser = true)
     {
         if (roles.Length > 0)
@@ -329,7 +330,7 @@ public class AccountService<TUser, TRole,TCtx>(
         return Result.Ok();
     }
     
-    private async Task<Result> EnsureRoles(string[] roles)
+    public async Task<Result> EnsureRoles(string[] roles)
     {
         foreach (var roleName in roles)
         {

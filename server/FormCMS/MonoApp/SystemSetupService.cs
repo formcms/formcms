@@ -16,6 +16,8 @@ public interface ISystemSetupService
     Spa[] GetSpas();
     Task DeleteSpa(string path);
     Task UpdateSpaPath(string oldPath, string newPath);
+    Task UpdateCorsOrigins(string[] origins);
+    string[] GetCorsOrigins();
 }
 
 public class SystemSetupService(
@@ -228,6 +230,25 @@ public class SystemSetupService(
 
         RestartApp();
         return Task.CompletedTask;
+    }
+
+    public Task UpdateCorsOrigins(string[] origins)
+    {
+        EnsurePermission();
+        var settings = settingsStore.Load();
+        if (settings == null) throw new ResultException("Settings not found");
+
+        var newSettings = settings with { CorsOrigins = origins };
+        settingsStore.Save(newSettings);
+        RestartApp();
+        return Task.CompletedTask;
+    }
+
+    public string[] GetCorsOrigins()
+    {
+        EnsurePermission();
+        var settings = settingsStore.Load();
+        return settings?.CorsOrigins ?? [];
     }
 
     private void EnsurePermission()

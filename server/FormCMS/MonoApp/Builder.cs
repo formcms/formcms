@@ -8,8 +8,10 @@ namespace FormCMS.MonoApp;
 
 public static class Builder
 {
+    private const string MonoCors = "MonoCors";
     public static MonoSettings? AddMonoApp(this IHostApplicationBuilder builder,string dataPath)
     {
+        
         var monoRuntime = new MonoRunTime();
         var storePath = Directory.GetCurrentDirectory();
         if (!string.IsNullOrWhiteSpace(dataPath))
@@ -30,10 +32,26 @@ public static class Builder
         builder.Services.AddScoped<ISystemSetupService, SystemSetupService>();
         
         var monoMonoSettings = settingsStore.Load();
+        
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy(
+                MonoCors,
+                policy =>
+                {
+                    var origins = monoMonoSettings?.CorsOrigins?.Select(x => x.Trim('/')) 
+                                  ??[];
+                    policy.WithOrigins(origins.ToArray())
+                        .AllowAnyHeader()
+                        .AllowAnyMethod()
+                        .AllowCredentials();
+                });
+        }); 
+
         if (monoMonoSettings is null)
         {
             return null;
-        }
+        }        
         
         builder.Services.AddSingleton(monoMonoSettings);
         
@@ -60,6 +78,11 @@ public static class Builder
         builder.Services.AddComments();
         builder.Services.AddAuditLog();
         return  monoMonoSettings;
+    }
+
+    public static void UseMonoCors(this WebApplication app)
+    {
+        app.UseCors(MonoCors);
     }
     
     public static async Task<bool> EnsureDbCreatedAsync(this IHost app)

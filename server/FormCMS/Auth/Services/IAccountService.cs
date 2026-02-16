@@ -11,6 +11,7 @@ public interface IAccountService
     Task<UserAccess> GetSingleUser(string id,CancellationToken ct);
     Task<UserAccess[]> GetUsers(CancellationToken ct);
     Task<string[]> GetRoles(CancellationToken ct);
+    Task<Result> EnsureRoles(string[] roles);
     Task<Result> EnsureUser(string email, string password, string[] roles, bool ignoreExisting = true);
     Task DeleteUser(string id);
     Task SaveUser(UserAccess userAccess);
