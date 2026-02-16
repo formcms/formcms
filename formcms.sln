@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113 d17.12
+# Visual Studio Version 18
+VisualStudioVersion = 18.3.11505.172 d18.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS", "server\FormCMS\FormCMS.csproj", "{D96BB1DD-4E2B-4DFB-B8A0-73854275AB5A}"
 EndProject
@@ -59,10 +59,6 @@ Global
 		{FBBAEDB6-802D-453A-A1E4-22C2095F8068}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FBBAEDB6-802D-453A-A1E4-22C2095F8068}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FBBAEDB6-802D-453A-A1E4-22C2095F8068}.Release|Any CPU.Build.0 = Release|Any CPU
-		{40C9B759-4740-4C44-84D1-C3971519DF7E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{40C9B759-4740-4C44-84D1-C3971519DF7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{40C9B759-4740-4C44-84D1-C3971519DF7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{40C9B759-4740-4C44-84D1-C3971519DF7E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{1A868F91-5908-4693-9A1A-5C37ECD6D834}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{1A868F91-5908-4693-9A1A-5C37ECD6D834}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{1A868F91-5908-4693-9A1A-5C37ECD6D834}.Release|Any CPU.ActiveCfg = Release|Any CPU

@@ -6,10 +6,10 @@ using SqlKata.Execution;
 
 namespace FormCMS.Infrastructure.RelationDbDao;
 
-public class MySqlDao( MySqlConnection connection,ILogger<MySqlDao> logger) : IPrimaryDao,IDisposable
+public class MySqlDao(MySqlConnection connection, ILogger<MySqlDao> logger) : IPrimaryDao, IDisposable
 {
     private TransactionManager? _transactionManager;
-    private readonly MySqlCompiler _compiler = new ();
+    private readonly MySqlCompiler _compiler = new();
 
     private MySqlConnection GetConnection()
     {
@@ -394,7 +394,7 @@ public class MySqlDao( MySqlConnection connection,ILogger<MySqlDao> logger) : IP
 
     private static string ColTypeToString(Column col)
     {
-        
+
         return col.Type switch
         {
             ColumnType.Id => "BIGINT AUTO_INCREMENT PRIMARY KEY",

@@ -279,10 +279,7 @@ public class SystemSetupService(
                 DatabaseProvider.SqlServer =>
                     optionsBuilder.UseSqlServer(connectionString),
 
-                DatabaseProvider.Mysql =>
-                    optionsBuilder.UseMySql(
-                        connectionString,
-                        ServerVersion.AutoDetect(connectionString)),
+                DatabaseProvider.Mysql =>optionsBuilder.UseMySQL(connectionString),
 
                 _ => throw new InvalidOperationException(
                     $"Unsupported database provider: {databaseProvider}")

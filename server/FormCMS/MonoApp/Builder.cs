@@ -3,7 +3,6 @@ using FormCMS.Cms.Builders;
 using FormCMS.Infrastructure.RelationDbDao;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-
 namespace FormCMS.MonoApp;
 
 public static class Builder
@@ -118,7 +117,7 @@ public static class Builder
             DatabaseProvider.SqlServer => builder.Services.AddDbContext<CmsDbContext>(options =>
                 options.UseSqlServer(dbConnStr)),
             DatabaseProvider.Mysql => builder.Services.AddDbContext<CmsDbContext>(options =>
-                options.UseMySql( dbConnStr, ServerVersion.AutoDetect(dbConnStr))),
+              options.UseMySQL(dbConnStr)),
             _ => throw new Exception("Database provider not found")
         };
     }

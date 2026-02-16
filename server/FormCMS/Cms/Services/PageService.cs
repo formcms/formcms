@@ -1,4 +1,4 @@
-using System.Reactive.Joins;
+
 using System.Text.Json;
 using FormCMS.Utils.PageRender;
 using FormCMS.Core.Descriptors;
@@ -8,12 +8,10 @@ using HandlebarsDotNet;
 using HtmlAgilityPack;
 using Humanizer;
 using Microsoft.AspNetCore.WebUtilities;
-using Pomelo.EntityFrameworkCore.MySql.Storage.Internal;
 
 namespace FormCMS.Cms.Services;
 
 public sealed class PageService(
-    SystemSettings systemSettings,
     ISchemaService schemaService,
     IQueryService querySvc,
     IPageResolver pageResolver,
