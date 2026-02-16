@@ -77,6 +77,7 @@ public static class Builder
         builder.Services.AddEngagement();
         builder.Services.AddComments();
         builder.Services.AddAuditLog();
+        builder.Services.AddNotify();
         return  monoMonoSettings;
     }
 

@@ -10,14 +10,18 @@ using NUlid;
 
 namespace FormCMS.Auth.Services;
 
-public class LoginService<TUser>(    
+public class LoginService<TUser,TRole>(    
     IHttpContextAccessor contextAccessor,
     SignInManager<TUser> signInManager,
     IAccountService accountService,
-    UserManager<TUser> userManager
+    UserManager<TUser> userManager,
+    RoleManager<TRole> roleManager
     )
     : ILoginService
     where TUser : CmsUser, new()
+    where TRole : IdentityRole, new()
+
+
 {
     public async Task Login(string usernameOrEmail, string password, HttpContext context)
     {
@@ -111,6 +115,21 @@ public class LoginService<TUser>(
         };
         
         var res = await userManager.CreateAsync(user, password);
+        if (!res.Succeeded)
+        {
+            throw new ResultException(string.Join(",", res.Errors.Select(x => x.Description)));
+        }
+        
+        if (!await roleManager.RoleExistsAsync(Roles.User))
+        {
+            res = await roleManager.CreateAsync(new TRole { Name = Roles.User });
+            if (!res.Succeeded)
+            {
+                throw new ResultException(string.Join(",", res.Errors.Select(x => x.Description)));
+            }
+        }
+        
+        res = await userManager.AddToRolesAsync(user, [Roles.User]);
         if (!res.Succeeded)
         {
             throw new ResultException(string.Join(",", res.Errors.Select(x => x.Description)));
