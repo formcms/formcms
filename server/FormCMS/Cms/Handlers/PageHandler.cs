@@ -12,7 +12,7 @@ public static class PageHandler
         {
 
             var path = context.Request.Path.Value?.Trim('/');
-            if (string.IsNullOrEmpty(path))
+            if (!string.IsNullOrEmpty(path))
             {
                 await next();
                 return;
@@ -20,7 +20,7 @@ public static class PageHandler
 
             var pageService = context.RequestServices.GetRequiredService<IPageService>();
             var html = await pageService.Get(
-                path,
+                "home",
                 context.Args(),
                 ct: context.RequestAborted
             );
@@ -44,14 +44,14 @@ public static class PageHandler
         {
             var path = context.Request.Path.Value?.Trim('/');
 
-            if (string.IsNullOrEmpty(path) || !set.Contains(path))
+            if (string.IsNullOrEmpty(path) || set.Contains(path))
             {
                 await next();
                 return;
             }
 
             // Must start with prefix
-            if (!path.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(prefix) && !path.StartsWith(prefix + "/", StringComparison.OrdinalIgnoreCase))
             {
                 await next();
                 return;

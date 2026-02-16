@@ -15,6 +15,7 @@ public interface ISystemSetupService
     Task AddSpa(IFormFile file, string path, string dir);
     Spa[] GetSpas();
     Task DeleteSpa(string path);
+    Task UpdateSpaPath(string oldPath, string newPath);
 }
 
 public class SystemSetupService(
@@ -206,7 +207,28 @@ public class SystemSetupService(
         return Task.CompletedTask;
     }
 
+    public Task UpdateSpaPath(string oldPath, string newPath)
+    {
+        EnsurePermission();
+        var settings = settingsStore.Load();
+        if (settings?.Spas == null)
+            throw new ResultException("No SPAs configured.");
 
+        var spas = settings.Spas.ToList();
+        var index = spas.FindIndex(s => s.Path == oldPath);
+        if (index < 0)
+            throw new ResultException($"SPA with path '{oldPath}' not found.");
+
+        if (spas.Any(s => s.Path == newPath && s.Path != oldPath))
+            throw new ResultException($"A SPA with path '{newPath}' already exists.");
+
+        spas[index] = spas[index] with { Path = newPath };
+        var newSettings = settings with { Spas = spas.ToArray() };
+        settingsStore.Save(newSettings);
+
+        RestartApp();
+        return Task.CompletedTask;
+    }
 
     private void EnsurePermission()
     {

@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
-namespace FormCMS.App;
+namespace FormCMS.MonoApp;
 
 
 internal class DbContext : IdentityDbContext<IdentityUser>

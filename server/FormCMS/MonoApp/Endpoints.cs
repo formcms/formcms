@@ -52,6 +52,16 @@ public static class Endpoints
             await setupService.DeleteSpa(path);
             return Results.Ok();
         });
+
+        app.MapPut("/api/system/spas", async (
+            [FromServices] ISystemSetupService setupService,
+            [FromQuery] string oldPath,
+            [FromQuery] string newPath
+        ) =>
+        {
+            await setupService.UpdateSpaPath(oldPath, newPath);
+            return Results.Ok();
+        });
     }
 
     public static void MapSpas(this WebApplication app)

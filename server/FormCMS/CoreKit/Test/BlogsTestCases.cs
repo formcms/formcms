@@ -5,7 +5,7 @@ namespace FormCMS.CoreKit.Test;
 
 /*
     These query test cases are designed to run against both
-    DocumentDB (configured in FormCMS.App.Test) and RelationDB (configured in FormCMS.Blog.Test).
+    DocumentDB (configured in FormCMS.MonoApp.Test) and RelationDB (configured in FormCMS.Blog.Test).
 
     Note: Test cases for additional features supported by RelationDB
     (e.g., query arguments for sort, filter, and pagination on subfields)

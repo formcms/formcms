@@ -42,7 +42,7 @@ public static class Builder
         builder.AddOutputCachePolicy();
         CmsBuilder.AddCms(builder.Services, monoMonoSettings.DatabaseProvider, monoMonoSettings.ConnectionString, settings =>
         {
-            settings.MapCmsHomePage = monoMonoSettings.Spas != null && monoMonoSettings.Spas.FirstOrDefault(x => x.Path == "/") == null;
+            settings.MapCmsHomePage = monoMonoSettings.Spas?.FirstOrDefault(x => x.Path == "/") == null;
             if (!string.IsNullOrWhiteSpace(dataPath))
             {
                 settings.LocalFileStoreOptions.PathPrefix = Path.Combine(dataPath,"files") ;

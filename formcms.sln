@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS", "server\FormCMS\F
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCms.Course.Tests", "server\FormCms.Course.Tests\FormCms.Course.Tests.csproj", "{AB78C514-3519-41D1-9234-9E9151B1A548}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS.App", "server\FormCMS.App\FormCMS.App.csproj", "{026D0D09-ED38-4244-9417-FF74562C0A9B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS.MonoApp", "server\FormCMS.MonoApp\FormCMS.MonoApp.csproj", "{026D0D09-ED38-4244-9417-FF74562C0A9B}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FormCMS.Course.ServiceDefaults", "server\FormCMS.Course.ServiceDefaults\FormCMS.Course.ServiceDefaults.csproj", "{2D4A4323-F357-4ADD-A5A8-46563CE77B8C}"
 EndProject
