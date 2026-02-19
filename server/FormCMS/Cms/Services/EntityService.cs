@@ -393,7 +393,7 @@ public sealed class EntityService(
                 if (!junctionItems.TryGetValue(junctionField.Field, out var val) ||
                     val is not object[] values) continue;
                 var items  = values.Select(x => x as Dictionary<string, object>).ToArray();
-                await shardGroup.PrimaryDao.ExecuteLong(junction.Insert(new ValidValue(L:id), items),ct);
+                await shardGroup.PrimaryDao.ExecuteLong(junction!.Insert(new ValidValue(L:id), items!),ct);
             }
             
             trans.Commit();

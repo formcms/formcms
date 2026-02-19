@@ -50,7 +50,7 @@ public sealed class PageService(
         {
             PropertyNameCaseInsensitive = true
         });
-        foreach (var query in metadata.Architecture.SelectedQueries)
+        foreach (var query in metadata?.Architecture?.SelectedQueries ?? [])
         {
             if (!string.IsNullOrWhiteSpace(path))
             {
@@ -62,7 +62,7 @@ public sealed class PageService(
 
             if (query.Type == PageConstants.PageQueryTypeSingle)
             {
-                data[query.FieldName] = await querySvc.SingleWithAction(query.QueryName, strArgs, ct);
+                data[query.FieldName] = (await querySvc.SingleWithAction(query.QueryName, strArgs, ct))??new Dictionary<string,object>();
             }
             else
             {
@@ -138,7 +138,7 @@ public sealed class PageService(
     public async Task<Record> GetAiPageData(string schemaId, CancellationToken ct)
     {
         var schema = await schemaService.BySchemaId(schemaId,ct);
-        return await GetAiPageData(schema.Settings.Page, new StrArgs(), "", ct);
+        return await GetAiPageData(schema.Settings.Page!, new StrArgs(), "", ct);
     }
 
     private async Task<string> RenderPartialPage(PartialPageContext ctx, long? sourceId, Span span, StrArgs args,
@@ -252,7 +252,7 @@ public sealed class PageService(
             var page = pageSchema.Settings.Page!;
             return page;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return null;
         }

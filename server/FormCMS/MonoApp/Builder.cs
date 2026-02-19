@@ -99,7 +99,7 @@ public static class Builder
             }
             return true;
         }
-        catch (Exception e)
+        catch (Exception)
         {
             return false;
         }

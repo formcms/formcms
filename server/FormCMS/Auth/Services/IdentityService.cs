@@ -33,7 +33,7 @@ public class IdentityService(
             Name: contextUser.Identity.Name ?? "",
             Email: contextUser.FindFirstValue(ClaimTypes.Email) ??"",
             Roles: roles,
-            AvatarUrl:  avatarUrl,
+            AvatarUrl:  avatarUrl??"",
             ReadWriteEntities: [..contextUser.FindAll(AccessScope.FullAccess).Select(x => x.Value)],
             RestrictedReadWriteEntities: [..contextUser.FindAll(AccessScope.RestrictedAccess).Select(x => x.Value)],
             ReadonlyEntities: [..contextUser.FindAll(AccessScope.FullRead).Select(x => x.Value)],

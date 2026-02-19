@@ -93,7 +93,7 @@ public static class SchemaHandler
             {
                 SchemaType.Entity => entitySchemaSvc.Delete(schema, ct),
                 SchemaType.Query => querySchemaSvc.Delete(schema, ct),
-                _ => schemaSvc.Delete(schema, ct)
+                _ => schemaSvc.Delete(schema: schema!, ct: ct)
             };
             await task;
         });
