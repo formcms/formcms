@@ -13,7 +13,7 @@ FormCMS is a cutting-edge, open-source Content Management System designed to rev
 <p>Generate schemas, data, GraphQL queries, and full UI pages using natural language prompts. Let AI handle the tedious work while you focus on creativity.</p>
 </td>
 <td align="center" width="33%">
-<h3>🎨 Frontend-Friendly</h3>
+<h3>🎨 Zero Backend Required</h3>
 <p>No .NET or backend experience needed. Run FormCMS with Docker, build your app with React and AI — that's it.</p>
 </td>
 <td align="center" width="33%">

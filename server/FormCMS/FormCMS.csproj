@@ -61,38 +61,15 @@
 
     <ItemGroup>
         <None Include="../../readme.md" Pack="true" PackagePath="\readme.md" />
-        <None Remove="wwwroot\static-assets\**" />
     </ItemGroup>
-
-    
-    <ItemGroup>
-      <Compile Remove="wwwroot\static-assets\**" />
-    </ItemGroup>
-
-    
-    <ItemGroup>
-      <EmbeddedResource Remove="wwwroot\static-assets\**" />
-    </ItemGroup>
-
-    
-    <ItemGroup>
-      <Content Remove="wwwroot\static-assets\**" />
-    </ItemGroup>
-    
-<!--    <ItemGroup>-->
-<!--        <Content Include="wwwroot\**\*">-->
-<!--            <Pack>true</Pack>-->
-<!--            <CopyToOutputDirectory>Never</CopyToOutputDirectory>-->
-<!--        </Content>-->
-<!--    </ItemGroup>-->
     <PropertyGroup>
         <PackageReadmeFile>readme.md</PackageReadmeFile>
         <TargetFramework>net10.0</TargetFramework>
         <PackageId>FormCMS</PackageId>
-        <Version>0.6.4</Version>
+        <Version>0.6.5</Version>
         <Authors>Jason Chen</Authors>
         <Company>FormCms</Company>
-        <Description>A headless CMS with GraphQL API and drag-and-drop page designer.</Description>
+        <Description>AI powered CMS </Description>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
         <PackageProjectUrl>https://github.com/FormCms/FormCms/tree/main/server/FormCMS</PackageProjectUrl>
         <RepositoryUrl>https://github.com/FormCMS/FormCms</RepositoryUrl>
