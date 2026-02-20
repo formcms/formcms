@@ -181,8 +181,7 @@ public class Program
                     options.UseNpgsql(dbConnStr)),
                 Constants.SqlServer => builder.Services.AddDbContext<CmsDbContext>(options =>
                     options.UseSqlServer(dbConnStr)),
-                Constants.Mysql => builder.Services.AddDbContext<CmsDbContext>(options =>
-                    options.UseMySql( dbConnStr, ServerVersion.AutoDetect(dbConnStr))),
+              
                 _ => throw new Exception("Database provider not found")
             };
         }
