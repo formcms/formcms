@@ -53,9 +53,7 @@ public static class ServiceProviderExtensions
     public static IPrimaryDao CreateDao(this IServiceProvider sp, DatabaseProvider databaseProvider, string connectionString)
         => databaseProvider switch
         {
-            DatabaseProvider.Mysql => new MySqlDao(
-                new MySqlConnection(connectionString),
-                sp.GetRequiredService<ILogger<MySqlDao>>()),
+           
             DatabaseProvider.Sqlite => new SqliteDao(
                 new SqliteConnection(connectionString),
                 sp.GetRequiredService<ILogger<SqliteDao>>()),
@@ -65,6 +63,10 @@ public static class ServiceProviderExtensions
             DatabaseProvider.SqlServer => new SqlServerDao(
                 new SqlConnection(connectionString),
                 sp.GetRequiredService<ILogger<SqlServerDao>>()),
+            DatabaseProvider.Mysql =>
+            new MySqlDao(
+               new MySqlConnection(connectionString),
+               sp.GetRequiredService<ILogger<MySqlDao>>()),
             _ => throw new NotImplementedException(),
         };
 }

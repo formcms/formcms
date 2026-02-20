@@ -1,7 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <RootNamespace>CmsApp</RootNamespace>
@@ -9,11 +9,11 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Aspire.NATS.Net" Version="9.3.1" />
+        <PackageReference Include="Aspire.NATS.Net" Version="13.1.1" />
         <PackageReference Include="FormCMS" Version="0.6.4" />
-        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
-        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
+        <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.0.3" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.3" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.3" />
     </ItemGroup>
 
 </Project>

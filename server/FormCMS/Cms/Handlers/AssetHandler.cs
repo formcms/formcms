@@ -17,14 +17,7 @@ public static class AssetHandler
 
         app.MapGet(
             "/base",
-            (IAssetService s, HttpContext context) =>
-            {
-                var prefix = s.GetBaseUrl();
-                return prefix.StartsWith("http")
-                    ? prefix
-                    : $"{context.Request.Scheme}://{context.Request.Host}{prefix}";
-            }
-        );
+            (IAssetService s, HttpContext context) => s.GetBaseUrl());
 
         app.MapGet(
             "/",

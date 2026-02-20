@@ -1,4 +1,4 @@
-using System.Reactive.Joins;
+
 using System.Text.Json;
 using FormCMS.Utils.PageRender;
 using FormCMS.Core.Descriptors;
@@ -12,7 +12,6 @@ using Microsoft.AspNetCore.WebUtilities;
 namespace FormCMS.Cms.Services;
 
 public sealed class PageService(
-    SystemSettings systemSettings,
     ISchemaService schemaService,
     IQueryService querySvc,
     IPageResolver pageResolver,
@@ -23,20 +22,8 @@ public sealed class PageService(
     public async Task<string> Get(string name, StrArgs strArgs, string? nodeId, long? sourceId, Span? span,
         CancellationToken ct)
     {
-        Page page;
-        try
-        {
-            page = await LoadPage(name, false, strArgs, ct);
-        }
-        catch
-        {
-            if (name == PageConstants.Home)
-            {
-                return """ <a href="/admin">Go to Admin Panel</a><br/> <a href="/mate">Go to Schema Builder</a> """;
-            }
-            throw;
-        }
-
+        var page = await LoadPage(name, false, strArgs, ct);
+        if (page is null) return string.Empty;
         if (page.Source == PageConstants.PageSourceAi)
         {
             var aiData = await GetAiPageData(page, strArgs, "", ct);
@@ -63,7 +50,7 @@ public sealed class PageService(
         {
             PropertyNameCaseInsensitive = true
         });
-        foreach (var query in metadata.Architecture.SelectedQueries)
+        foreach (var query in metadata?.Architecture?.SelectedQueries ?? [])
         {
             if (!string.IsNullOrWhiteSpace(path))
             {
@@ -75,7 +62,7 @@ public sealed class PageService(
 
             if (query.Type == PageConstants.PageQueryTypeSingle)
             {
-                data[query.FieldName] = await querySvc.SingleWithAction(query.QueryName, strArgs, ct);
+                data[query.FieldName] = (await querySvc.SingleWithAction(query.QueryName, strArgs, ct))??new Dictionary<string,object>();
             }
             else
             {
@@ -103,6 +90,8 @@ public sealed class PageService(
         Span span, CancellationToken ct)
     {
         var page = await LoadPage(name, true, strArgs, ct);
+        if (page is null) return string.Empty;
+        
         if (page.Source == PageConstants.PageSourceAi)
         {
             var aiPageData = await GetAiPageData(page, strArgs, path, ct);
@@ -138,7 +127,7 @@ public sealed class PageService(
         {
             if (e is ResultException { Code: ErrorCodes.NOT_ENOUGH_ACCESS_LEVEL })
             {
-                return template.BuildSubsPage(systemSettings.PortalRoot + "/sub/view");
+                return template.BuildSubsPage( "/portal/sub/view");
             }
             throw;
         }
@@ -149,7 +138,7 @@ public sealed class PageService(
     public async Task<Record> GetAiPageData(string schemaId, CancellationToken ct)
     {
         var schema = await schemaService.BySchemaId(schemaId,ct);
-        return await GetAiPageData(schema.Settings.Page, new StrArgs(), "", ct);
+        return await GetAiPageData(schema.Settings.Page!, new StrArgs(), "", ct);
     }
 
     private async Task<string> RenderPartialPage(PartialPageContext ctx, long? sourceId, Span span, StrArgs args,
@@ -252,14 +241,21 @@ public sealed class PageService(
 
     private record PartialPageContext(Page CurrentPage, HtmlNode Element, DataNode[] DataNodes);
 
-    private async Task<Page> LoadPage(string pageName, bool matchPrefix, StrArgs arguments,
+    private async Task<Page?> LoadPage(string pageName, bool matchPrefix, StrArgs arguments,
         CancellationToken cancellationToken)
     {
-        var publicationStatus = PublicationStatusHelper.GetSchemaStatus(arguments);
-        var pageSchema = await pageResolver.GetPage(pageName, matchPrefix, publicationStatus, cancellationToken);
+        try
+        {
+            var publicationStatus = PublicationStatusHelper.GetSchemaStatus(arguments);
+            var pageSchema = await pageResolver.GetPage(pageName, matchPrefix, publicationStatus, cancellationToken);
 
-        var page = pageSchema.Settings.Page!;
-        return page;
+            var page = pageSchema.Settings.Page!;
+            return page;
+        }
+        catch (Exception)
+        {
+            return null;
+        }
     }
 
     private PageProcessingContext LoadContext(Page page)

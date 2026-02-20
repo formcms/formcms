@@ -23,17 +23,14 @@ public static class CmsWorkerBuilder
     )
     {
         taskTimingSeconds ??= new TaskTimingSeconds(60, 30, 30, 30);
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            return services;
+        }
         var parts = connectionString.Split(";").Where(x => !x.StartsWith("Password"));
 
         services.AddSingleton(new ResizeOptions(1200, 90));
         services.AddSingleton<SkiaSharpResizer>();
-
-        services.AddSingleton(
-            new LocalFileStoreOptions(
-                Path.Join(Directory.GetCurrentDirectory(), "wwwroot/files"),
-                "/files"
-            )
-        );
         services.AddSingleton<IFileStore, LocalFileStore>();
 
         services.AddSingleton(new ExportWorkerOptions(taskTimingSeconds.ExportDelay));

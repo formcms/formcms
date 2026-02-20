@@ -68,7 +68,7 @@ public static class SortHelper
             //sort: [id, nameDesc]
             return s.EndsWith(SortOrder.Desc)
                 ? new Sort(s[..^SortOrder.Desc.Length], SortOrder.Desc)
-                : new Sort(s, SortOrder.Asc);
+                : new Sort(s[..^SortOrder.Asc.Length], SortOrder.Asc);
         }
     }
     

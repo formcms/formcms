@@ -48,19 +48,19 @@ webBuilder.Services.AddHostedService<EventHandler>();
 webBuilder.Services.AddHostedService<FFMpegWorker>();
 
 webBuilder.Services.AddSingleton( new FtsSettings(["course"]));
-// webBuilder.Services.AddHostedService<FtsIndexingMessageHandler>();
+webBuilder.Services.AddHostedService<FtsIndexingMessageHandler>();
 
 webBuilder.Services.AddSingleton(new EmitMessageWorkerOptions(30));
-// webBuilder.Services.AddHostedService<EmitMessageHandler>();
+webBuilder.Services.AddHostedService<EmitMessageHandler>();
 
 webBuilder.Services.AddSingleton(new ExportWorkerOptions(30));
-// webBuilder.Services.AddHostedService<ExportWorker>();
+webBuilder.Services.AddHostedService<ExportWorker>();
 
 webBuilder.Services.AddSingleton(new ImportWorkerOptions(30));
-// webBuilder.Services.AddHostedService<ImportWorker>();
+webBuilder.Services.AddHostedService<ImportWorker>();
 
 webBuilder.Services.AddSingleton(new DataPublishingWorkerOptions(30));
-// webBuilder.Services.AddHostedService<DataPublishingWorker>();
+webBuilder.Services.AddHostedService<DataPublishingWorker>();
 
 webBuilder.Services.AddHostedService<FFMpegWorker>();
 

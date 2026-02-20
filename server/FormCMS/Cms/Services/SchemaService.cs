@@ -42,7 +42,7 @@ public sealed class SchemaService(
         return schema;
     }
     
-    public async Task<Schema?> BySchemaIdWithAction(string id, CancellationToken ct = default)
+    public async Task<Schema> BySchemaIdWithAction(string id, CancellationToken ct = default)
     {
         var query = SchemaHelper.BySchemaId(id);
         var item = await shardGroup.PrimaryDao.Single(query, ct);

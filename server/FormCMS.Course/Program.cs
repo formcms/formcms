@@ -53,7 +53,6 @@ public class Program
         AddDbContext();
         AddOutputCachePolicy();
         TryUserRedis();
-        TryAzureBlobStore();
         AddCms();
         AddCmsFeatures();
         AddMessageProducer();
@@ -61,7 +60,6 @@ public class Program
 
         if (builder.Environment.IsDevelopment())
         {
-            builder.Services.AddOpenApi();
             AddCorsPolicy();
         }
 
@@ -71,7 +69,6 @@ public class Program
         if (app.Environment.IsDevelopment())
         {
             app.MapScalarApiReference();
-            app.MapOpenApi();
             app.UseCors(Cors);
         }
 
@@ -184,8 +181,7 @@ public class Program
                     options.UseNpgsql(dbConnStr)),
                 Constants.SqlServer => builder.Services.AddDbContext<CmsDbContext>(options =>
                     options.UseSqlServer(dbConnStr)),
-                Constants.Mysql => builder.Services.AddDbContext<CmsDbContext>(options =>
-                    options.UseMySql( dbConnStr, ServerVersion.AutoDetect(dbConnStr))),
+              
                 _ => throw new Exception("Database provider not found")
             };
         }
@@ -208,14 +204,7 @@ public class Program
             };
         }
 
-        void TryAzureBlobStore()
-        {
-            var azureBlobStoreOptions = builder.Configuration
-                .GetSection(nameof(AzureBlobStoreOptions)).Get<AzureBlobStoreOptions>();
-            if (azureBlobStoreOptions is null) return;
-            builder.Services.AddSingleton(azureBlobStoreOptions);
-            builder.Services.AddSingleton<IFileStore, AzureBlobStore>();
-        }
+       
 
         AuthConfig GetAuthConfig()
         {

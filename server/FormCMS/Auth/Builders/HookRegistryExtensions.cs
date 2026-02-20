@@ -11,19 +11,17 @@ public static class HookRegistryExtensions
         SchemaAuthUtil.RegisterHooks(hookRegistry);
         EntityAuthUtil.RegisterHooks(hookRegistry);
         AssetAuthUtil.RegisterHooks(hookRegistry);
-        if (!settings.AllowAnonymousAccessGraphQl)
+
+        hookRegistry.QueryPreSingle.RegisterDynamic("*", (IProfileService svc, QueryPreSingleArgs args) =>
         {
-            hookRegistry.QueryPreSingle.RegisterDynamic("*", (IProfileService svc,QueryPreSingleArgs args) =>
-            {
-                if (args.Query.Name == "") svc.MustHasAnyRole([Roles.Sa,Roles.Admin]);
-                return args;
-            });
-                
-            hookRegistry.QueryPreList.RegisterDynamic("*", (IProfileService svc,QueryPreListArgs args) =>
-            {
-                if (args.Query.Name == "") svc.MustHasAnyRole([Roles.Sa,Roles.Admin]);
-                return args;
-            });
-        }
+            if (args.Query.Name == "") svc.MustHasAnyRole([Roles.Sa, Roles.Admin]);
+            return args;
+        });
+
+        hookRegistry.QueryPreList.RegisterDynamic("*", (IProfileService svc, QueryPreListArgs args) =>
+        {
+            if (args.Query.Name == "") svc.MustHasAnyRole([Roles.Sa, Roles.Admin]);
+            return args;
+        });
     }
 }

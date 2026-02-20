@@ -13,8 +13,8 @@ FormCMS is a cutting-edge, open-source Content Management System designed to rev
 <p>Generate schemas, data, GraphQL queries, and full UI pages using natural language prompts. Let AI handle the tedious work while you focus on creativity.</p>
 </td>
 <td align="center" width="33%">
-<h3>💬 Built-in Engagement</h3>
-<p>Add engagement bars (views, likes, bookmarks, shares) and user avatars to any page with AI prompts. Social features are first-class citizens, not afterthoughts.</p>
+<h3>🎨 Zero Backend Required</h3>
+<p>No .NET or backend experience needed. Run FormCMS with Docker, build your app with React and AI — that's it.</p>
 </td>
 <td align="center" width="33%">
 <h3>🚀 Scalable & Performant</h3>
@@ -55,50 +55,28 @@ Try the live demo at [formcms.com/mate](https://formcms.com/mate).
 
 ---
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Docker)
 
-Get the project running locally in 4 steps.
+The easiest way to get FormCMS running. **No backend setup, no .NET, no database installation required.**
 
-### 1. Clone Repositories
+Pull and run from [Docker Hub](https://hub.docker.com/repository/docker/jaike/formcms-mono):
+
 ```bash
-git clone git@github.com:formcms/formcms.git
-git clone git@github.com:formcms/formmate.git
+docker run -d \
+  --name formcms \
+  -p 5000:5000 \
+  -v formcms_data:/data \
+  -e DATABASE_PROVIDER=0 \
+  -e "CONNECTION_STRING=Data Source=/data/cms.db" \
+  jaike/formcms-mono:latest
 ```
 
-### 2. Start Backend (FormCMS)
-```bash
-cd formcms/examples/SqliteDemo
-dotnet run
-```
-_Verify that `http://127.0.0.1:5000` is accessible._
+Then open **http://localhost:5000/mate** in your browser and follow the setup wizard.
 
-### 3. Configure Environment (FormMate)
-Open a new terminal and set up the AI agent with your Gemini API key.
-```bash
-npm i #install dependencies
-cd packages/backend
-cp .env.example .env
-```
-Edit `.env` and add your Gemini API key (get a free one [here](https://aistudio.google.com/app/apikey)):
-```ini
-GEMINI_API_KEY=your_key_here
-```
+> **📌 That's it!** You have a fully functional AI-powered CMS. Start building your app with React, Vite, or any frontend framework.
 
-Initialize the database and Prisma client:
-```bash
-npx prisma generate
-npx prisma db push
-```
+For production deployment with PostgreSQL, see the [Docker Hub page](https://hub.docker.com/repository/docker/jaike/formcms-mono) for a full `docker-compose.yml` example.
 
-### 4. Start Development Server
-```bash
-# From formmate root
-npm run build:shared
-npm run dev
-```
-Visit **http://127.0.0.1:5173** to start building!
-
-> **Note:** Use `127.0.0.1` instead of `localhost` to ensure cookies are shared correctly.
 
 ### 💡 Try it out
 Once running, try these prompts:
@@ -106,17 +84,35 @@ Once running, try these prompts:
 - "Add sample data for the book entity"
 - "Create a query to display all available books"
 
-📖 **[See Wiki for detailed setup instructions →](https://github.com/formcms/formcms/wiki/Setup.md)**
+🛠️ **Want to contribute or run from source?** See the [Development Setup Guide →](https://github.com/formcms/formcms/wiki/Setup.md)
+
+---
+
+## 🎨 For Frontend Developers
+
+**You don't need .NET or any backend experience to use FormCMS.** Just run the Docker image and start building your frontend with the tools you already know:
+
+- Use **React + Vite** to build your app
+- Use **AI (e.g., Antigravity, Cursor)** to generate schemas, queries, and pages
+- FormCMS provides the backend, APIs, and admin panel — all running inside Docker
+
+📖 **[See the Vite + React + Antigravity example →](https://github.com/formcms/formcms/wiki/Vite-React-Antigravity-Example)**
+
+### 🏗️ Built with FormCMS
+
+| App | Description |
+|-----|-------------|
+| **[Zen Health Tracker](https://zen.formcms.com/)** | A full health tracking app built in hours using FormCMS + AI coding agent — zero manual coding. |
 
 ---
 
 ## 📚 Documentation
 
-For detailed documentation, please refer to our **[Wiki](https://github.com/formcms/formcms/wiki/Home.md)** (source of truth):
+For detailed documentation, please refer to our **[Wiki](https://github.com/formcms/formcms/wiki)** (source of truth):
 
 | Documentation | Description |
 |---------------|-------------|
-| [Setup Guide](https://github.com/formcms/formcms/wiki/Setup.md) | Development and production environment setup |
+| [Setup Guide](https://github.com/formcms/formcms/wiki/Setup.md) | Development environment setup |
 | [Architecture](https://github.com/formcms/formcms/wiki/Architecture.md) | Component architecture and system design |
 | [Orchestrator Strategy](https://github.com/formcms/formcms/wiki/Orchestrator-Strategy.md) | Multi-agent pipeline design and debugging approach |
 | [Performance & Scalability](https://github.com/formcms/formcms/wiki/Performance-Scalability.md) | Benchmarks and scaling strategies |
@@ -148,3 +144,17 @@ For detailed documentation, please refer to our **[Wiki](https://github.com/form
 | **Database Support** | SQLite, PostgreSQL, SQL Server, MySQL |
 
 📖 **[See Wiki for performance details →](https://github.com/formcms/formcms/wiki/Performance-Scalability.md)**
+
+---
+
+## 🗺️ Roadmap
+
+FormCMS is actively evolving toward a vision of **no-code app building with AI**. Here's what's coming:
+
+| Phase | Focus | Key Features |
+|-------|-------|-------------|
+| **Enhanced AI** | Smarter generation | Natural language → schema, AI-suggested relationships, auto-generated CRUD & queries |
+| **Visual Builder** | No-code editing | Drag-and-drop page builder, visual schema editor, real-time preview, theme templates |
+| **Marketplace** | Community ecosystem | Pre-built app templates, community components, one-click install |
+
+> **The Vision:** Describe your app in plain English → AI generates the entire backend (entities, queries, pages) → deploy with one click. No code required.

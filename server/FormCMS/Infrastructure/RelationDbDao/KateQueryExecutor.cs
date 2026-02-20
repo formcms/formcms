@@ -181,10 +181,11 @@ public static class KateQueryExtensions
     public static Task<Record?> Single(
         this IReplicaDao dao,
         Query query, CancellationToken ct
-    ) => dao.ExecuteKateQuery(async (db, tx)
-        => await db.FirstOrDefaultAsync(query: query, transaction: tx,
-            cancellationToken: ct) as Record
-    );
+    ) => dao.ExecuteKateQuery(async (db, tx) =>
+    {
+        var item = await db.FirstOrDefaultAsync(query: query, transaction: tx, cancellationToken: ct);
+        return item is null ? null : (Record)new Dictionary<string, object>((Record)item);
+    });
 
     public static Task<Record[]> Many(
         this IReplicaDao dao,
@@ -195,7 +196,7 @@ public static class KateQueryExtensions
             query: query,
             transaction: tx,
             cancellationToken: ct);
-        return items.Select(x => (Record)x).ToArray();
+        return items.Select(x => (Record)new Dictionary<string, object>((Record)x)).ToArray();
     });
 
     //resolve filter depends on provider

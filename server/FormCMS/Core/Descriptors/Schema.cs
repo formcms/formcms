@@ -50,7 +50,7 @@ public static class SchemaHelper
         ColumnHelper.CreateCamelColumn<Schema,Enum>(x => x.PublicationStatus),
         ColumnHelper.CreateCamelColumn<Schema,bool>(x => x.IsLatest),
         ColumnHelper.CreateCamelColumn<Schema, string>(x => x.CreatedBy),
-        ColumnHelper.CreateCamelColumn<Schema, string>(x => x.Description),
+        ColumnHelper.CreateCamelColumn<Schema>(x => x.Description, ColumnType.Text),
         
         ColumnHelper.CreateCamelColumn<Schema>(x => x.Settings, ColumnType.Text),
 

@@ -48,12 +48,6 @@ public static class ResultExt
         return ok;
     }
 
-    public static bool Try(this Result res, out List<IError>? err)
-    {
-        (var ok, _, err) = res;
-        return ok;
-    }
-    
      public static async Task<Result<TTarget[]>> ShortcutMap<TSource, TTarget>(this IEnumerable<TSource> items,Func<TSource,Task<Result<TTarget>> > mapper)
      {
          var ret = new List<TTarget>();

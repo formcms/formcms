@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FormCMS.Auth.Models;
+using FormCMS.Utils.FancyId;
 using FormCMS.Utils.ResultExt;
 using GraphQL;
 using Microsoft.AspNetCore.Authentication;
@@ -9,29 +10,43 @@ using NUlid;
 
 namespace FormCMS.Auth.Services;
 
-public class LoginService<TUser>(    
+public class LoginService<TUser,TRole>(    
     IHttpContextAccessor contextAccessor,
     SignInManager<TUser> signInManager,
     IAccountService accountService,
-    UserManager<TUser> userManager
+    UserManager<TUser> userManager,
+    RoleManager<TRole> roleManager
     )
     : ILoginService
     where TUser : CmsUser, new()
+    where TRole : IdentityRole, new()
+
+
 {
     public async Task Login(string usernameOrEmail, string password, HttpContext context)
     {
         if (usernameOrEmail == Constants.GuestUserPrefix && contextAccessor.HttpContext != null)
         {
             var roleAccess =await accountService.GetSingleRole(Roles.Guest);
+            var (nameId, email) = GuestIdentityFactory.Create();
+
             var claims = new List<Claim>
             {
-                new (ClaimTypes.NameIdentifier, $"guest:{Ulid.NewUlid()}"),
+                new (ClaimTypes.NameIdentifier, nameId),
+                new (ClaimTypes.Email, email),
             };
+            
             claims.AddRange(from entity in roleAccess.RestrictedReadWriteEntities ?? []
                 select new Claim(AccessScope.RestrictedAccess, entity));
 
             claims.AddRange(from entity in roleAccess.RestrictedReadonlyEntities ?? []
                 select new Claim(AccessScope.RestrictedRead, entity));
+            
+            claims.AddRange(from entity in roleAccess.ReadonlyEntities ?? []
+                select new Claim(AccessScope.FullRead, entity));
+            
+            claims.AddRange(from entity in roleAccess.ReadWriteEntities ?? []
+                select new Claim(AccessScope.FullAccess, entity));
             
             var identity = new ClaimsIdentity(
                 claims,
@@ -100,6 +115,21 @@ public class LoginService<TUser>(
         };
         
         var res = await userManager.CreateAsync(user, password);
+        if (!res.Succeeded)
+        {
+            throw new ResultException(string.Join(",", res.Errors.Select(x => x.Description)));
+        }
+        
+        if (!await roleManager.RoleExistsAsync(Roles.User))
+        {
+            res = await roleManager.CreateAsync(new TRole { Name = Roles.User });
+            if (!res.Succeeded)
+            {
+                throw new ResultException(string.Join(",", res.Errors.Select(x => x.Description)));
+            }
+        }
+        
+        res = await userManager.AddToRolesAsync(user, [Roles.User]);
         if (!res.Succeeded)
         {
             throw new ResultException(string.Join(",", res.Errors.Select(x => x.Description)));

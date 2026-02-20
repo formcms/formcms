@@ -1,28 +1,18 @@
 <Project Sdk="Microsoft.NET.Sdk.Web">
 
     <PropertyGroup>
-        <TargetFramework>net9.0</TargetFramework>
+        <TargetFramework>net10.0</TargetFramework>
         <Nullable>enable</Nullable>
         <ImplicitUsings>enable</ImplicitUsings>
         <UserSecretsId>f83629bb-6db1-4710-aba9-0886d38e4cc6</UserSecretsId>
         <RootNamespace>FormCMS.Course</RootNamespace>
+        <LangVersion>14</LangVersion>
     </PropertyGroup>
 
     <ItemGroup>
-      <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.0" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.0" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.0">
-        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-        <PrivateAssets>all</PrivateAssets>
-      </PackageReference>
-      <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="9.0.0" />
-      <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.0" />
-      <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.2" />
       <PackageReference Include="Aspire.StackExchange.Redis.DistributedCaching" Version="9.0.0" />
-      <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
       <PackageReference Include="NSwag.AspNetCore" Version="14.2.0" />
       <PackageReference Include="NSwag.CodeGeneration.TypeScript" Version="14.2.0" />
-      <PackageReference Include="OpenTelemetry.Api" Version="1.11.2" />
       <PackageReference Include="Scalar.AspNetCore" Version="1.2.72" />
       <PackageReference Include="Yarp.ReverseProxy" Version="2.3.0" />
     </ItemGroup>
@@ -43,54 +33,7 @@
             <CopyToOutputDirectory>Always</CopyToOutputDirectory>
         </None>
     </ItemGroup>
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output.m3u8" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output0.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output1.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output10.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output11.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output12.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output13.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output14.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output15.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output16.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output17.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output18.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output19.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output2.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output20.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output21.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output22.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output23.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output24.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output25.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output26.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output27.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output28.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output29.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output3.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output30.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output31.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output32.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output33.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output34.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output35.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output36.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output37.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output38.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output39.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output4.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output40.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output41.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output42.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output43.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output5.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output6.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output7.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output8.ts" />
-      <_ContentIncludedByDefault Remove="wwwroot\files\2025-07\6RR7Z4BFRYBGAG4F0R70.mp4.hls\output9.ts" />
-    </ItemGroup>
-
+   
 <ItemGroup>
   <Content Remove="wwwroot\favicon.ico" />
 </ItemGroup>

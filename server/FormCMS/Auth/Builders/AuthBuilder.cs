@@ -65,7 +65,7 @@ public sealed class AuthBuilder<TCmsUser>(ILogger<AuthBuilder<TCmsUser>> logger)
         services.AddAuthorization();
 
         services.AddScoped<IUserClaimsPrincipalFactory<CmsUser>, CustomPrincipalFactory>();
-        services.AddScoped<ILoginService, LoginService<TUser>>();
+        services.AddScoped<ILoginService, LoginService<TUser,TRole>>();
         services.AddScoped<IIdentityService, IdentityService>();
         services.AddScoped<IUserManageService, UserManageService<TUser>>();
         services.AddScoped<IProfileService, ProfileService<TUser>>();
@@ -96,6 +96,27 @@ public sealed class AuthBuilder<TCmsUser>(ILogger<AuthBuilder<TCmsUser>> logger)
         return app;
     }
 
+    public async Task<Result> EnsureSystemRoles(
+        WebApplication app,
+        string email,
+        string password,
+        string[] role
+    )
+    {
+        using var scope = app.Services.CreateScope();
+        return await scope
+            .ServiceProvider.GetRequiredService<IAccountService>()
+            .EnsureUser(email, password, role);
+    }
+
+    public async Task<Result> EnsureSysRoles( WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        return await scope
+            .ServiceProvider.GetRequiredService<IAccountService>()
+            .EnsureRoles([Roles.Admin, Roles.Sa,Roles.Guest, Roles.User]);
+    }
+
     public async Task<Result> EnsureCmsUser(
         WebApplication app,
         string email,
@@ -107,6 +128,17 @@ public sealed class AuthBuilder<TCmsUser>(ILogger<AuthBuilder<TCmsUser>> logger)
         return await scope
             .ServiceProvider.GetRequiredService<IAccountService>()
             .EnsureUser(email, password, role);
+    }
+    
+    public async Task<Result> EnsureRoles(
+        WebApplication app,
+        string[] roles
+    )
+    {
+        using var scope = app.Services.CreateScope();
+        return await scope
+            .ServiceProvider.GetRequiredService<IAccountService>()
+            .EnsureRoles(roles);
     }
 
     private void Print()

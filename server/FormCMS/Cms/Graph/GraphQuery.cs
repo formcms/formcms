@@ -21,10 +21,7 @@ public sealed class GraphQuery : ObjectGraphType
         IQueryService queryService, 
         PluginRegistry registry)
     {
-        if (!systemSettings.AllowAnonymousAccessGraphQl)
-        {
-            profileService.MustHasAnyRole([Roles.Admin, Roles.Sa]);
-        }
+        profileService.MustHasAnyRole([Roles.Admin, Roles.Sa]);
         
         var entities = entitySchemaService.AllEntities(CancellationToken.None).GetAwaiter().GetResult().ToList();
         entities.AddRange(registry.PluginEntities.Values);

@@ -29,7 +29,7 @@ public class EngagementQueryPlugin(
             .ToArray();
 
         var loadedEntity = entity.ToLoadedEntity();
-        var tags = await contentTagService.GetContentTags(loadedEntity, ids, ct);
+        var tags = await contentTagService.GetContentTags(loadedEntity, ids!, ct);
         return tags.Select(x => RecordExtensions.FormObject(x,blackList: [nameof(ContentTag.Data)])).ToArray();
     }  
     

@@ -76,11 +76,7 @@ public static class Args
         var arr = entity.Attributes.Where(x=>x.DataType.IsLocal()).ToArray();
         foreach (var attribute in arr)
         {
-            type.Add(new EnumValueDefinition(attribute.Field, attribute.Field));
-        }
-
-        foreach (var attribute in arr)
-        {
+            type.Add(new EnumValueDefinition(attribute.Field + SortOrder.Asc, attribute.Field + SortOrder.Asc));
             type.Add(new EnumValueDefinition(attribute.Field + SortOrder.Desc, attribute.Field + SortOrder.Desc));
         }
 
