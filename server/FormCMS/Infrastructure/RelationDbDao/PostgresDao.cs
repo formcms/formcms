@@ -433,6 +433,33 @@ public class PostgresDao( NpgsqlConnection connection,ILogger<PostgresDao> logge
         };
     }
 
+    public async Task RenameTable(string oldName, string newName, CancellationToken ct = default)
+    {
+        var sql = $"""ALTER TABLE "{oldName}" RENAME TO "{newName}";""";
+        await using var command = GetConnection().CreateCommand();
+        command.CommandText = sql;
+        command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
+        await command.ExecuteNonQueryAsync(ct);
+    }
+
+    public async Task RenameColumn(string table, string oldName, string newName, CancellationToken ct = default)
+    {
+        var sql = $"""ALTER TABLE "{table}" RENAME COLUMN "{oldName}" TO "{newName}";""";
+        await using var command = GetConnection().CreateCommand();
+        command.CommandText = sql;
+        command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
+        await command.ExecuteNonQueryAsync(ct);
+    }
+
+    public async Task DropForeignKey(string table, string fkName, CancellationToken ct = default)
+    {
+        var sql = $"""ALTER TABLE "{table}" DROP CONSTRAINT IF EXISTS "{fkName}";""";
+        await using var command = GetConnection().CreateCommand();
+        command.CommandText = sql;
+        command.Transaction = _transaction?.Transaction() as NpgsqlTransaction;
+        await command.ExecuteNonQueryAsync(ct);
+    }
+
     void IDisposable.Dispose()
     {
         connection.Dispose();

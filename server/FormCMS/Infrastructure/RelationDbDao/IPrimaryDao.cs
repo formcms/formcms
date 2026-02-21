@@ -13,4 +13,7 @@ public interface IPrimaryDao:IReplicaDao
     Task<bool> UpdateOnConflict(string tableName, Record data, string []keyField, CancellationToken ct);
     Task BatchUpdateOnConflict(string tableName, Record[]records, string[] keyField, CancellationToken ct);
     Task<long> Increase(string tableName, Record keyConditions, string valueField,long initVal, long delta, CancellationToken ct);
+    Task RenameTable(string oldName, string newName, CancellationToken ct = default);
+    Task RenameColumn(string table, string oldName, string newName, CancellationToken ct = default);
+    Task DropForeignKey(string table, string fkName, CancellationToken ct = default);
 }
