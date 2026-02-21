@@ -11,161 +11,226 @@ namespace FormCMS.Utils.RecordExt;
 
 public static class RecordExtensions
 {
-    private static readonly JsonSerializerOptions JsonSerializerOptions = new JsonSerializerOptions
+    private static readonly JsonSerializerOptions JsonSerializerOptions = new()
     {
         PropertyNameCaseInsensitive = true,
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.CamelCase) }
     };
 
-    public static long LongOrZero(this Record record, string fieldName)
+    // ================================
+    // Basic Helpers
+    // ================================
+
+    extension(Record record)
     {
-        var value = record[fieldName];
-        if (value is JsonElement { ValueKind: JsonValueKind.Number } jsonElement)
+        public long LongOrZero(string fieldName)
         {
-            return jsonElement.GetInt64();
+            if (!record.TryGetValue(fieldName, out var value) || value is null)
+                return 0;
+
+            if (value is JsonElement { ValueKind: JsonValueKind.Number } je)
+                return je.GetInt64();
+
+            return Convert.ToInt64(value);
         }
-        return Convert.ToInt64(value);
+
+        public string StrOrEmpty(string field)
+            => record.TryGetValue(field, out var o) && o is not null
+                ? o.ToString() ?? string.Empty
+                : string.Empty;
+
+        public string ToToken()
+            => Base64UrlEncoder.Encode(JsonSerializer.Serialize(record, JsonSerializerOptions));
+
+        public Result<T> ToObject<T>(bool badJsonAsDefault = false)
+        {
+            var type = typeof(T);
+            var ctor = type.GetConstructors().FirstOrDefault();
+
+            if (ctor is null)
+                return Result.Fail($"Type {type.Name} does not have a public constructor.");
+
+            var parameters = ctor.GetParameters();
+            var args = new object?[parameters.Length];
+
+            foreach (var p in parameters)
+            {
+                var name = p.Name?.Camelize();
+                if (name is null || !record.TryGetValue(name, out var value))
+                    continue;
+
+                args[p.Position] = TryConvert(value, p.ParameterType, badJsonAsDefault);
+            }
+
+            return (T)ctor.Invoke(args);
+        }
     }
-
-    public static string StrOrEmpty(this Record r, string field)
-        =>(r.TryGetValue(field, out var o) && o is not null)?o.ToString() ?? string.Empty:string.Empty;
-
-
-    public static string ToToken(this Record r)
-        => Base64UrlEncoder.Encode(JsonSerializer.Serialize(r, JsonSerializerOptions));
 
     public static Record FromToken(string token)
     {
-        var recordStr = Base64UrlEncoder.Decode(token);
-        var item = JsonSerializer.Deserialize<JsonElement>(recordStr,JsonSerializerOptions);
-        return item.ToDictionary();
+        var json = Base64UrlEncoder.Decode(token);
+        var element = JsonSerializer.Deserialize<JsonElement>(json, JsonSerializerOptions);
+        return element.ToDictionary();
     }
 
-    public static Result<T> ToObject<T>(this Record r)
+    // ================================
+    // Object Mapping
+    // ================================
+
+    private static object? TryConvert(object? value, Type targetType, bool badJsonAsDefault)
     {
-        var constructor = typeof(T).GetConstructors().FirstOrDefault();
-        if (constructor == null)
-            return Result.Fail($"Type {typeof(T).Name} does not have a suitable constructor.");
+        if (value is null)
+            return GetDefault(targetType);
 
-        var parameters = constructor.GetParameters();
-        var args = new object?[parameters.Length];
+        var underlying = Nullable.GetUnderlyingType(targetType) ?? targetType;
 
-        foreach (var parameter in parameters)
+        // Enum
+        if (underlying.IsEnum)
+            return ParseEnum(value, underlying);
+
+        // JSON string → complex object
+        if (value is string str && ShouldDeserialize(underlying))
+            return Deserialize(str, underlying, badJsonAsDefault);
+
+        // Primitive conversion
+        return ChangeTypeSafe(value, underlying);
+    }
+
+    private static object? ParseEnum(object value, Type enumType)
+    {
+        if (value is string s)
+            return Enum.Parse(enumType, s, ignoreCase: true);
+
+        return Enum.ToObject(enumType, value);
+    }
+
+    private static bool ShouldDeserialize(Type type)
+    {
+        if (type == typeof(string))
+            return false;
+
+        if (typeof(Record).IsAssignableFrom(type))
+            return true;
+
+        return type.IsClass;
+    }
+
+    private static object? Deserialize(string json, Type type, bool badJsonAsDefault)
+    {
+        try
         {
-            var propertyName = parameter.Name?.Camelize();
-            if (propertyName == null || !r.TryGetValue(propertyName, out var value))
+            return JsonSerializer.Deserialize(json, type, JsonSerializerOptions);
+        }
+        catch
+        {
+            if (badJsonAsDefault)
+                return GetDefault(type);
+
+            throw;
+        }
+    }
+
+    private static object? ChangeTypeSafe(object value, Type type)
+    {
+        try
+        {
+            return Convert.ChangeType(value, type);
+        }
+        catch
+        {
+            return GetDefault(type);
+        }
+    }
+
+    private static object? GetDefault(Type type)
+        => type.IsValueType ? Activator.CreateInstance(type) : null;
+
+    // ================================
+    // Record Creation
+    // ================================
+
+    public static Record FormObject(
+        object input,
+        HashSet<string>? whiteList = null,
+        HashSet<string>? blackList = null)
+    {
+        if (input is null)
+            throw new ArgumentNullException(nameof(input));
+
+        var dict = new Dictionary<string, object?>();
+
+        foreach (var prop in input.GetType()
+                                  .GetProperties(BindingFlags.Public | BindingFlags.Instance))
+        {
+            if (whiteList is not null && !whiteList.Contains(prop.Name))
                 continue;
 
-            args[parameter.Position] = TryConvert(value, parameter.ParameterType);
-        }
+            if (blackList is not null && blackList.Contains(prop.Name))
+                continue;
 
-        return (T)constructor.Invoke(args);
-    }
+            var key = prop.Name.Camelize();
+            var value = prop.GetValue(input);
 
-    private static object? TryConvert(object? value, Type targetType)
-    {
-        if (value == null)
-        {
-            // Handle nullable types
-            if (!targetType.IsValueType || Nullable.GetUnderlyingType(targetType) != null)
-                return null;
-
-            // For non-nullable value types, return default
-            return Activator.CreateInstance(targetType);
-        }
-
-        // Handle enum from string
-        if (value is string enumStr && targetType.IsEnum)
-        {
-            return Enum.Parse(targetType, enumStr, ignoreCase: true);
-        }
-
-        // Handle JSON string to object deserialization
-        if (value is string jsonStr &&
-            (typeof(Record).IsAssignableFrom(targetType) ||
-             (targetType.IsClass && targetType != typeof(string))))
-        {
-            return JsonSerializer.Deserialize(jsonStr, targetType, JsonSerializerOptions);
-        }
-
-        // Handle Nullable<T> unwrapping
-        var underlyingType = Nullable.GetUnderlyingType(targetType) ?? targetType;
-        return Convert.ChangeType(value, underlyingType);
-    }
-
-    public static Record FormObject(object input, HashSet<string>? whiteList = null, HashSet<string>? blackList = null)
-    {
-        if (input == null) throw new ArgumentNullException(nameof(input));
-        var dict = new Dictionary<string, object>();
-        
-        foreach (var property in input.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance))
-        {
-            if (whiteList != null && !whiteList.Contains(property.Name)) continue;
-            if (blackList != null && blackList.Contains(property.Name)) continue;
-            var value = property.GetValue(input);
-            try {
-                dict[property.Name.Camelize()] = value switch
+            try
+            {
+                dict[key] = value switch
                 {
-                    null => null!,
-                    Enum valueEnum => valueEnum.Camelize(),
-                    _ when typeof(Record).IsAssignableFrom(property.PropertyType) || 
-                           property.PropertyType.IsClass && property.PropertyType != typeof(string)
+                    null => null,
+                    Enum e => e.Camelize(),
+                    _ when typeof(Record).IsAssignableFrom(prop.PropertyType)
+                           || (prop.PropertyType.IsClass && prop.PropertyType != typeof(string))
                         => JsonSerializer.Serialize(value, JsonSerializerOptions),
-                    
                     _ => value
                 };
             }
-            catch (Exception ex) when (ex is InvalidOperationException && ex.Message.Contains("ImmutableArray"))
+            catch (InvalidOperationException ex)
+                when (ex.Message.Contains("ImmutableArray"))
             {
-                dict[property.Name.Camelize()] = "[]";
+                dict[key] = "[]";
             }
         }
+
         return dict;
     }
 
-    public static bool ByJsonPath<T>(this Record dictionary, string key, out T? val)
-    {
-        val = default;
-        var parts = key.Split('.');
-        object current = dictionary;
+    // ================================
+    // Utilities
+    // ================================
 
-        foreach (var part in parts)
+    public static bool ByJsonPath<T>(this Record record, string path, out T? value)
+    {
+        value = default;
+        object current = record;
+
+        foreach (var part in path.Split('.'))
         {
             if (current is Record dict && dict.TryGetValue(part, out var tmp))
-            {
-                current = tmp;
-            }
+                current = tmp!;
             else
-            {
                 return false;
-            }
         }
 
         if (current is T t)
-        {
-            val = t;
-        }
+            value = t;
 
         return true;
     }
 
     public static Record[] ToTree(this Record[] records, string idField, string parentField)
     {
-        var parentIdField = parentField;
         var lookup = records.ToDictionary(r => r[idField]);
-        var roots = new List<IDictionary<string, object>>();
+        var roots = new List<Record>();
 
         foreach (var record in records)
         {
-            if (record.TryGetValue(parentIdField, out var parentId) && parentId != null &&
-                lookup.TryGetValue(parentId, out var parentRecord))
+            if (record.TryGetValue(parentField, out var parentId)
+                && parentId is not null
+                && lookup.TryGetValue(parentId, out var parent))
             {
-                if (!parentRecord.ContainsKey("children"))
-                {
-                    parentRecord["children"] = new List<Record>();
-                }
+                if (!parent.ContainsKey("children"))
+                    parent["children"] = new List<Record>();
 
-                ((List<Record>)parentRecord["children"]).Add(record);
+                ((List<Record>)parent["children"]).Add(record);
             }
             else
             {
@@ -178,55 +243,48 @@ public static class RecordExtensions
 
     public static JsonElement ToJsonElement(this Record r)
     {
-        if (r == null) throw new ArgumentNullException(nameof(r));
+        if (r is null)
+            throw new ArgumentNullException(nameof(r));
 
-        // Serialize the record to JSON string
         var json = JsonSerializer.Serialize(r, JsonSerializerOptions);
-
-        // Parse into JsonDocument and return the root JsonElement
         using var doc = JsonDocument.Parse(json);
-        return doc.RootElement.Clone(); // Clone so element outlives the JsonDocument
+        return doc.RootElement.Clone();
     }
-    
-    public static Record[] MergeFrom(this Record[] dest, Record[] src, string destKey, string srcKey, params string[] fieldsToCopy)
+
+    public static Record[] MergeFrom(
+        this Record[] dest,
+        Record[] src,
+        string destKey,
+        string srcKey,
+        params string[] fieldsToCopy)
     {
-        if (dest == null) throw new ArgumentNullException(nameof(dest));
-        if (src == null || src.Length == 0 || fieldsToCopy == null || fieldsToCopy.Length == 0) return dest;
-    
-        var srcDict = new Dictionary<string, Record?>(StringComparer.Ordinal);
-        foreach (var r in src)
-        {
-            if (r == null) continue;
-            if (r.TryGetValue(srcKey, out var keyObj) && keyObj != null)
-            {
-                var keyStr = keyObj.ToString() ?? string.Empty;
-                if (!string.IsNullOrEmpty(keyStr) && !srcDict.ContainsKey(keyStr))
-                {
-                    srcDict[keyStr] = r;
-                }
-            }
-        }
-    
+        if (dest is null)
+            throw new ArgumentNullException(nameof(dest));
+
+        if (src is null || src.Length == 0 || fieldsToCopy.Length == 0)
+            return dest;
+
+        var srcDict = src
+            .Where(r => r is not null && r.TryGetValue(srcKey, out var key) && key is not null)
+            .GroupBy(r => r[srcKey]!.ToString()!)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
+
         foreach (var d in dest)
         {
-            if (d == null) continue;
-            if (!d.TryGetValue(destKey, out var destKeyObj) || destKeyObj == null) continue;
-            var destKeyStr = destKeyObj.ToString() ?? string.Empty;
-            if (string.IsNullOrEmpty(destKeyStr)) continue;
-    
-            if (!srcDict.TryGetValue(destKeyStr, out var srcRecord) || srcRecord == null) continue;
-    
+            if (!d.TryGetValue(destKey, out var keyObj) || keyObj is null)
+                continue;
+
+            var key = keyObj.ToString();
+            if (key is null || !srcDict.TryGetValue(key, out var srcRecord))
+                continue;
+
             foreach (var field in fieldsToCopy)
             {
-                if (string.IsNullOrEmpty(field)) continue;
                 if (srcRecord.TryGetValue(field, out var val))
-                {
                     d[field] = val!;
-                }
             }
         }
-    
+
         return dest;
     }
-    
 }

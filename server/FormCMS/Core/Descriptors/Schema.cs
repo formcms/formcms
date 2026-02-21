@@ -26,7 +26,7 @@ public sealed record Settings(Entity? Entity = null, Query? Query =null, Menu? M
 public record Schema(
     string Name ,
     SchemaType Type ,
-    Settings Settings,
+    Settings? Settings,
     string Description = "",
     
     long Id = 0,
@@ -179,10 +179,9 @@ public static class SchemaHelper
         var record = RecordExtensions.FormObject(schema, whiteList: fields);
         return new SqlKata.Query(TableName).AsInsert(record, true);
     }
-    
-    
+
+
 
     public static Result<Schema> RecordToSchema(Record? record)
-        => record is null ? Result.Fail("Can not parse schema, input record is null") : record.ToObject<Schema>();
-   
+        => record is null ? Result.Fail("Can not parse schema, input record is null") : record.ToObject<Schema>(true);
 }

@@ -29,6 +29,7 @@ public sealed class SchemaService(
     {
         var query = SchemaHelper.ByNameAndType(type, names, status);
         var items = await shardGroup.PrimaryDao.Many(query, ct);
+        
         return items.Select(x => SchemaHelper.RecordToSchema(x).Ok()).ToArray();
     }
 

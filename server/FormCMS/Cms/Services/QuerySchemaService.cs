@@ -68,7 +68,7 @@ public sealed class QuerySchemaService(
     public async Task Delete(Schema schema, CancellationToken ct)
     {
         await schemaSvc.Delete(schema, ct);
-        if (schema.Settings.Query is not null)
+        if (schema?.Settings?.Query is not null)
         {
             await queryCache.Remove(schema.Settings.Query.Name, ct);
         }
