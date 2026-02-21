@@ -103,16 +103,22 @@ public static class RecordExtensions
             if (whiteList != null && !whiteList.Contains(property.Name)) continue;
             if (blackList != null && blackList.Contains(property.Name)) continue;
             var value = property.GetValue(input);
-            dict[property.Name.Camelize()] = value switch
+            try {
+                dict[property.Name.Camelize()] = value switch
+                {
+                    null => null!,
+                    Enum valueEnum => valueEnum.Camelize(),
+                    _ when typeof(Record).IsAssignableFrom(property.PropertyType) || 
+                           property.PropertyType.IsClass && property.PropertyType != typeof(string)
+                        => JsonSerializer.Serialize(value, JsonSerializerOptions),
+                    
+                    _ => value
+                };
+            }
+            catch (Exception ex) when (ex is InvalidOperationException && ex.Message.Contains("ImmutableArray"))
             {
-                null => null!,
-                Enum valueEnum => valueEnum.Camelize(),
-                _ when typeof(Record).IsAssignableFrom(property.PropertyType) || 
-                       property.PropertyType.IsClass && property.PropertyType != typeof(string)
-                    => JsonSerializer.Serialize(value, JsonSerializerOptions),
-                
-                _ => value
-            };
+                dict[property.Name.Camelize()] = "[]";
+            }
         }
         return dict;
     }

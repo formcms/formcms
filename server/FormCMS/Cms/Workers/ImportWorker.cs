@@ -96,52 +96,69 @@ public class ImportWorker(
 
         async Task MapAssetLinks(Record[] records)
         {
-            var entityNameToRecordArray = new Dictionary<string, string[]>();
+            if (records.Length == 0) return;
+
+            var entityNameKey = nameof(AssetLink.EntityName).Camelize();
+            var recordIdKey   = nameof(AssetLink.RecordId).Camelize();
+            var assetIdKey    = nameof(AssetLink.AssetId).Camelize();
+            var importKey     = DefaultColumnNames.ImportKey.Camelize();
+
+            // 1️⃣ Group recordIds by entityName
+            var entityToImportKeys = records
+                .GroupBy(r => r.StrOrEmpty(entityNameKey))
+                .ToDictionary(
+                    g => g.Key,
+                    g => g.Select(r => r.StrOrEmpty(recordIdKey)).ToArray()
+                );
+
+            // 2️⃣ Load entity importKey → primaryKey mappings
+            var entityLookup = new Dictionary<string, Dictionary<string, object>>();
+
+            foreach (var (entityName, importKeys) in entityToImportKeys)
+            {
+                var entity = entityNameToEntity[entityName];
+
+                var mapping = await dao.LoadDict(
+                    new Query(entity.TableName).WhereIn(importKey, importKeys),
+                    importKey,
+                    entity.PrimaryKey,
+                    ct
+                );
+
+                entityLookup[entityName] = mapping;
+            }
+
+            // 3️⃣ Load asset importKey → assetId mapping
+            var assetImportKeys = records
+                .Select(r => r.StrOrEmpty(assetIdKey))
+                .Distinct()
+                .ToArray();
+
+            var assetLookup = await dao.LoadDict(
+                new Query(Assets.TableName).WhereIn(importKey, assetImportKeys),
+                importKey,
+                nameof(Asset.Id).Camelize(),
+                ct
+            );
+
+            // 4️⃣ Replace importKeys with real IDs
             foreach (var record in records)
             {
-                var entityName = (string)record[nameof(AssetLink.EntityName).Camelize()];
-                var recordId = record.StrOrEmpty(nameof(AssetLink.RecordId).Camelize());
-                if (entityNameToRecordArray.ContainsKey(entityName))
+                var entityName = record.StrOrEmpty(entityNameKey);
+                var recordImportKey = record.StrOrEmpty(recordIdKey);
+                var assetImportKey = record.StrOrEmpty(assetIdKey);
+
+                if (entityLookup[entityName].ContainsKey(recordImportKey) && assetLookup.ContainsKey(assetImportKey))
                 {
-                    entityNameToRecordArray[entityName] = [..entityNameToRecordArray[entityName], recordId];
+                    record[recordIdKey] = entityLookup[entityName][recordImportKey];
+                    record[assetIdKey] = assetLookup[assetImportKey];
                 }
                 else
                 {
-                    entityNameToRecordArray[entityName] = [recordId];
+                    logger.LogWarning("Fail to import asset links {Unknown} ", new {recordImportKey, assetImportKey});
                 }
             }
-
-            var entityNameToLookupDict = new Dictionary<string, Dictionary<string, object>>();
-            foreach (var (key, ids) in entityNameToRecordArray)
-            {
-                var entity = entityNameToEntity[key];
-                var dictImportKeyToId = await dao.LoadDict(
-                    new Query(entity.TableName).WhereIn(DefaultColumnNames.ImportKey.Camelize(),ids),
-                    DefaultColumnNames.ImportKey.Camelize(),
-                    entity.PrimaryKey,
-                     ct
-                );
-                entityNameToLookupDict[key] = dictImportKeyToId;
-
-            }
-
-            var assetIds = records.Select(x => x.StrOrEmpty(nameof(AssetLink.AssetId).Camelize()));
-            var dictAssetImportKeyToId = await dao.LoadDict(
-                    new Query(Assets.TableName).WhereIn(DefaultColumnNames.ImportKey.Camelize(),assetIds),
-                DefaultColumnNames.ImportKey.Camelize(),
-                nameof(Asset.Id).Camelize(),
-                 ct
-            );
-
-            foreach (var record in records)
-            {
-                var entityName = record.StrOrEmpty(nameof(AssetLink.EntityName).Camelize());
-                var recordId = record.StrOrEmpty(nameof(AssetLink.RecordId).Camelize());
-                var assetId = record.StrOrEmpty(nameof(AssetLink.AssetId).Camelize());
-                record[nameof(AssetLink.RecordId).Camelize()] = entityNameToLookupDict[entityName][recordId];
-                record[nameof(AssetLink.AssetId).Camelize()] = dictAssetImportKeyToId[assetId];
-            }
-        }
+        } 
 
         async Task<(ImmutableArray<Schema>, ImmutableArray<LoadedEntity>, ImmutableDictionary<string, LoadedEntity>,ImmutableArray<Junction>)> LoadData()
         {
