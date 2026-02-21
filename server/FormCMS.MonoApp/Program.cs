@@ -7,7 +7,8 @@ var settings = builder.AddMonoApp(dataPath);
 
 
 builder.Services.AddReverseProxy().LoadFromConfig(builder.Configuration.GetSection("ReverseProxy"));
-builder.WebHost.ConfigureKestrel(options =>  options.Limits.MaxRequestBodySize = 10_000_000);
+var maxRequestSize = builder.Configuration.GetValue<long?>("FORMCMS_MAX_REQUEST_SIZE") ?? 50_000_000;
+builder.WebHost.ConfigureKestrel(options =>  options.Limits.MaxRequestBodySize = maxRequestSize);
 var app = builder.Build();
 app.UseMonoCors();
 app.MapReverseProxy();

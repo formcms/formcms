@@ -3,7 +3,6 @@ using FormCMS.Cms.Builders;
 using FormCMS.Cms.Workers;
 using FormCMS.Core.Auth;
 using FormCMS.Infrastructure.Buffers;
-using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.Fts;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Notify.Models;
@@ -191,12 +190,7 @@ public class Program
         {
             _ = dbProvider switch
             {
-                Constants.Sqlite => builder.Services.AddSqliteCms(dbConnStr, followConnStrings: replicaConnStrs,action:
-                    settings =>
-                    {
-                        settings.MapCmsHomePage = false;
-                        settings.KnownPaths = ["index.html"];
-                    }),
+                Constants.Sqlite => builder.Services.AddSqliteCms(dbConnStr, followConnStrings: replicaConnStrs ),
                 Constants.Postgres => builder.Services.AddPostgresCms(dbConnStr, followConnStrings: replicaConnStrs),
                 Constants.SqlServer => builder.Services.AddSqlServerCms(dbConnStr, followConnStrings: replicaConnStrs),
                 Constants.Mysql => builder.Services.AddMysqlCms(dbConnStr, followConnStrings: replicaConnStrs),
