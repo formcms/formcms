@@ -4,14 +4,8 @@ public sealed record Page(
     string Name,
     string Title,
     string Html,
-    string Source,/* grape.js or ai*/
-    string Metadata,
-    
-    /*for grape.js page*/
-    string? Query,
-    string Css,
-    string Components,
-    string Styles);
+    PageMetadata? Metadata = null
+    );
 
 public record PageArchitecture(
     List<SelectedQuery> SelectedQueries
@@ -25,7 +19,17 @@ public record SelectedQuery(
     Dictionary<string, string> Args // Values: 'fromPath' | 'fromQuery'
 );
 
-public sealed record PageMetadata(PageArchitecture Architecture, PagePlan Plan, bool EnableTopList);
+public sealed record PageMetadata(
+    PageArchitecture Architecture, 
+    PagePlan Plan, 
+    bool EnableTopList,
+    bool EnableEngagementBar = false,
+    bool EnableUserAvatar = false,
+    bool EnableVisitTrack = false,
+    System.Text.Json.JsonElement? LayoutJson = null,
+    System.Text.Json.JsonElement? ComponentInstructions = null,
+    System.Text.Json.JsonElement? Components = null
+);
 
 public class PageConstants
 {
