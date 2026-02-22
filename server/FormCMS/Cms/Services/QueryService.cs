@@ -294,7 +294,7 @@ public sealed class QueryService(
                 var groups = targetRecords.GroupBy(x => desc.TargetAttribute.GetValueOrLookup(x), x => x);
                 foreach (var group in groups)
                 {
-                    var sourceItems = items.Where(x => x[desc.SourceAttribute.Field].Equals(group.Key));
+                    var sourceItems = items.Where(x => x.TryGetValue(desc.SourceAttribute.Field, out var val) && object.Equals(val, group.Key));
                     object? targetValues = desc.IsCollective ? group.ToArray() : group.FirstOrDefault();
                     if (targetValues is null) continue;
                     foreach (var item in sourceItems)
@@ -321,7 +321,7 @@ public sealed class QueryService(
                 targetRecords = new Span().ToPage(targetRecords, collectionArgs.Pagination.Limit);
                 if (targetRecords.Length > 0)
                 {
-                    var sourceItems = items.Where(x => x[desc.SourceAttribute.Field].Equals(id.ObjectValue));
+                    var sourceItems = items.Where(x => x.TryGetValue(desc.SourceAttribute.Field, out var val) && object.Equals(val, id.ObjectValue));
                     foreach (var item in sourceItems)
                     {
                         item[node.LoadedAttribute.Field] = targetRecords;
