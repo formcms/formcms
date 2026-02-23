@@ -14,7 +14,13 @@ public record PageArchitecture(
     string? ArchitectureHints = null,
     System.Text.Json.JsonElement? ComponentInstructions = null
 );
-public record PagePlan(string EntityName);
+public record PagePlan(
+    string? PageName = null,
+    string? EntityName = null,
+    string? PageType = null,
+    string? PrimaryParameter = null,
+    string[]? LinkingRules = null
+);
 
 public record SelectedQuery(
     string FieldName,
@@ -25,15 +31,17 @@ public record SelectedQuery(
 );
 
 public sealed record PageMetadata(
-    PageArchitecture Architecture, 
-    PagePlan Plan, 
-    bool EnableTopList,
-    bool EnableEngagementBar = false,
-    bool EnableUserAvatar = false,
-    bool EnableVisitTrack = false,
+    PageArchitecture? Architecture = null, 
+    PagePlan? Plan = null, 
+    bool? EnableTopList = null,
+    bool? EnableEngagementBar = null,
+    bool? EnableUserAvatar = null,
+    bool? EnableVisitTrack = null,
     System.Text.Json.JsonElement? LayoutJson = null,
     System.Text.Json.JsonElement? ComponentInstructions = null,
-    System.Text.Json.JsonElement? Components = null
+    System.Text.Json.JsonElement? Components = null,
+    string? UserInput = null,
+    string? TemplateId = null
 );
 
 public class PageConstants

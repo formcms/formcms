@@ -46,7 +46,7 @@ public sealed class PageService(
             }
         }
 
-        if (metadata.EnableTopList && !string.IsNullOrEmpty(metadata.Plan.EntityName))
+        if (metadata?.EnableTopList==true && !string.IsNullOrEmpty(metadata.Plan.EntityName))
         {
             StrArgs args  = new()
             {
