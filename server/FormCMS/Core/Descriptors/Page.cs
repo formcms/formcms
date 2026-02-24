@@ -33,9 +33,6 @@ public record SelectedQuery(
 public sealed record PageMetadata(
     PageArchitecture? Architecture = null, 
     PagePlan? Plan = null, 
-    bool? EnableTopList = null,
-    bool? EnableEngagementBar = null,
-    bool? EnableUserAvatar = null,
     bool? EnableVisitTrack = null,
     System.Text.Json.JsonElement? LayoutJson = null,
     System.Text.Json.JsonElement? ComponentInstructions = null,

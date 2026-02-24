@@ -46,7 +46,9 @@ public sealed class PageService(
             }
         }
 
-        if (metadata?.EnableTopList==true && !string.IsNullOrEmpty(metadata.Plan.EntityName))
+        if (metadata?.Components is { ValueKind: System.Text.Json.JsonValueKind.Object } comps
+            && comps.EnumerateObject().Any(p => p.Name == "top-list")
+            && !string.IsNullOrEmpty(metadata.Plan?.EntityName))
         {
             StrArgs args  = new()
             {
