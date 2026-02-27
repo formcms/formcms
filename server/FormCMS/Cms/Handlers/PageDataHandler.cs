@@ -6,7 +6,7 @@ public static class PageDataHandler
 {
     public static RouteGroupBuilder MapPageData(this RouteGroupBuilder app)
     {
-       app.MapGet("/", (IPageService svc, string id, CancellationToken ct) => svc.GetAiPageData(id,ct));
+       app.MapGet("/", (IPageService svc, string id, CancellationToken ct) => svc.GetPageData(id,ct));
        return app;
     }
 }

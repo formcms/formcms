@@ -13,7 +13,7 @@ public record GraphQlRequestDto(Query Query, GraphQLField[] Fields, StrArgs Args
 public static class Resolvers
 {
     public static readonly IFieldResolver ValueResolver = new FuncFieldResolver<object>(context => 
-        context.Source is Record record ? record[context.FieldDefinition.Name] : null);
+        context.Source is Record record && record.TryGetValue(context.FieldDefinition.Name, out var value) ? value : null);
 
     public static IFieldResolver GetSingleResolver(IQueryService queryService, string entityName)
     {

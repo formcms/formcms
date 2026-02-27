@@ -1,4 +1,5 @@
 using FormCMS;
+using FormCMS.Auth.Models;
 using FormCMS.MonoApp;
 
 var builder = WebApplication.CreateBuilder(args);

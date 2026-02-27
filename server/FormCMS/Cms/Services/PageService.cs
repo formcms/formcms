@@ -16,12 +16,12 @@ public sealed class PageService(
     {
         var page = await LoadPage(name, false, strArgs, ct);
         if (page is null) return string.Empty;
-        var aiData = await GetAiPageData(page, strArgs, "", ct);
+        var aiData = await GetPageData(page, strArgs, "", ct);
         var html = ReplaceTitle(page);
         return HandlebarsConfiguration.Instance.Compile(html)(aiData);
     }
 
-    private async Task<Record> GetAiPageData(Page page, StrArgs strArgs, string path, CancellationToken ct)
+    private async Task<Record> GetPageData(Page page, StrArgs strArgs, string path, CancellationToken ct)
     {
         var data = new Dictionary<string, object>();
         var metadata = page.Metadata;
@@ -41,8 +41,8 @@ public sealed class PageService(
             }
             else
             {
-                data[query.FieldName] =
-                    await querySvc.ListWithAction(query.QueryName, new Span(), new Pagination(), strArgs, ct);
+                var items = await querySvc.ListWithAction(query.QueryName, new Span(), new Pagination(), strArgs, ct);
+                data[query.FieldName] = items;
             }
         }
 
@@ -69,15 +69,15 @@ public sealed class PageService(
         var page = await LoadPage(name, true, strArgs, ct);
         if (page is null) return string.Empty;
 
-        var aiPageData = await GetAiPageData(page, strArgs, path, ct);
+        var aiPageData = await GetPageData(page, strArgs, path, ct);
         var html = ReplaceTitle(page);
         return Handlebars.Compile(html)(aiPageData);
     }
 
-    public async Task<Record> GetAiPageData(string schemaId, CancellationToken ct)
+    public async Task<Record> GetPageData(string schemaId, CancellationToken ct)
     {
         var schema = await schemaService.BySchemaId(schemaId,ct);
-        return await GetAiPageData(schema.Settings.Page!, new StrArgs(), "", ct);
+        return await GetPageData(schema.Settings.Page!, new StrArgs(), "", ct);
     }
 
     private async Task<Page?> LoadPage(string pageName, bool matchPrefix, StrArgs arguments,
