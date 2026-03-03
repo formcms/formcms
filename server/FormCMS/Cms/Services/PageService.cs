@@ -11,8 +11,7 @@ public sealed class PageService(
 ) : IPageService
 {
 
-    public async Task<string> Get(string name, StrArgs strArgs, string? nodeId, long? sourceId, Span? span,
-        CancellationToken ct)
+    public async Task<string> Get(string name, StrArgs strArgs, CancellationToken ct)
     {
         var page = await LoadPage(name, false, strArgs, ct);
         if (page is null) return string.Empty;
@@ -41,7 +40,18 @@ public sealed class PageService(
             }
             else
             {
-                var items = await querySvc.ListWithAction(query.QueryName, new Span(), new Pagination(), strArgs, ct);
+                var span = new Span();
+
+                if (strArgs.Remove("last", out var last))
+                {
+                    span = new Span(Last: last);
+                }
+                else if (strArgs.Remove("first", out var first))
+                {
+                    span = new Span(First: first);
+                }
+                
+                var items = await querySvc.ListWithAction(query.QueryName, span, new Pagination(), strArgs, ct);
                 data[query.FieldName] = items;
             }
         }
