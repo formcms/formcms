@@ -4,6 +4,7 @@ using FormCMS.Utils.DataModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using Humanizer;
+using NanoidDotNet;
 using NUlid;
 
 namespace FormCMS.Core.Descriptors;
@@ -145,7 +146,7 @@ public static class SchemaHelper
         => schema with
         {
             IsLatest = true,
-            SchemaId = string.IsNullOrEmpty(schema.SchemaId) ? Ulid.NewUlid().ToString() : schema.SchemaId,
+            SchemaId = string.IsNullOrEmpty(schema.SchemaId) ?Nanoid.Generate(size: 12) : schema.SchemaId,
             PublicationStatus = asPublished || string.IsNullOrEmpty(schema.SchemaId)
                 ? PublicationStatus.Published
                 : PublicationStatus.Draft
