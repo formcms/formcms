@@ -26,17 +26,24 @@ public sealed class PageService(
         var metadata = page.Metadata;
         foreach (var query in metadata?.Architecture?.SelectedQueries ?? [])
         {
+            bool isPathQuery = false;
             if (!string.IsNullOrWhiteSpace(path))
             {
                 foreach (var keyValuePair in query.Args.Where(keyValuePair => keyValuePair.Value == PageConstants.PageQueryArgFromPath))
                 {
                     strArgs[keyValuePair.Key] = path;
+                    isPathQuery = true;
                 }
             }
 
             if (query.Type == PageConstants.PageQueryTypeSingle)
             {
-                data[query.FieldName] = (await querySvc.SingleWithAction(query.QueryName, strArgs, ct))??new Dictionary<string,object>();
+                var res = await querySvc.SingleWithAction(query.QueryName, strArgs, ct)??new Dictionary<string,object>();
+                data[query.FieldName] = res;
+                if (isPathQuery)
+                {
+                    data["id"] = res[QueryConstants.RecordId];
+                }
             }
             else
             {
