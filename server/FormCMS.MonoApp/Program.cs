@@ -19,7 +19,6 @@ app.MapCorsEndpoints();
 if (!string.IsNullOrWhiteSpace(settings?.ConnectionString)   && await app.EnsureDbCreatedAsync())
 {
     await app.UseCmsAsync();
-    await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Sa]);
     app.MapSpas();
 }
 
