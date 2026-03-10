@@ -78,12 +78,6 @@ public static class PageHandler
                 html = await pageService.Get(
                     page,
                     context.Args(),
-                    nodeId: context.Request.Query["node"],
-                    sourceId: long.TryParse(context.Request.Query["source"], out var s) ? s : null,
-                    span: new Span(
-                        context.Request.Query["first"],
-                        context.Request.Query["last"]
-                    ),
                     ct: context.RequestAborted
                 );
             }

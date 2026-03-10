@@ -8,9 +8,24 @@ namespace FormCMS.MonoApp;
 public static class Builder
 {
     private const string MonoCors = "MonoCors";
-    public static MonoSettings? AddMonoApp(this IHostApplicationBuilder builder,string dataPath)
+
+    public static void SetMaxRequestBody(this WebApplicationBuilder builder,string sizeStr)
     {
-        
+        long maxRequestSize = 50_000_000;
+        if (!string.IsNullOrWhiteSpace(sizeStr))
+        {
+            var s = sizeStr.Trim().ToUpper();
+            long calcM = 1;
+            if (s.EndsWith("K")) { calcM = 1024; s = s[..^1]; }
+            else if (s.EndsWith("M")) { calcM = 1024 * 1024; s = s[..^1]; }
+            else if (s.EndsWith("G")) { calcM = 1024 * 1024 * 1024; s = s[..^1]; }
+            if (long.TryParse(s, out var parsed)) maxRequestSize = parsed * calcM;
+        }
+        builder.WebHost.ConfigureKestrel(options =>  options.Limits.MaxRequestBodySize = maxRequestSize);         
+    }
+    
+    public static MonoSettings? AddMonoApp(this WebApplicationBuilder builder,string dataPath)
+    {
         var monoRuntime = new MonoRunTime();
         var storePath = Directory.GetCurrentDirectory();
         if (!string.IsNullOrWhiteSpace(dataPath))

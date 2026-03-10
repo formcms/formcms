@@ -423,6 +423,40 @@ public class MySqlDao(MySqlConnection connection, ILogger<MySqlDao> logger) : IP
         };
     }
 
+    public async Task RenameTable(string oldName, string newName, CancellationToken ct = default)
+    {
+        var sql = $"RENAME TABLE `{oldName}` TO `{newName}`;";
+        await using var command = GetConnection().CreateCommand();
+        command.CommandText = sql;
+        command.Transaction = _transactionManager?.Transaction() as MySqlTransaction;
+        await command.ExecuteNonQueryAsync(ct);
+    }
+
+    public async Task RenameColumn(string table, string oldName, string newName, CancellationToken ct = default)
+    {
+        var sql = $"ALTER TABLE `{table}` RENAME COLUMN `{oldName}` TO `{newName}`;";
+        await using var command = GetConnection().CreateCommand();
+        command.CommandText = sql;
+        command.Transaction = _transactionManager?.Transaction() as MySqlTransaction;
+        await command.ExecuteNonQueryAsync(ct);
+    }
+
+    public async Task DropForeignKey(string table, string fkName, CancellationToken ct = default)
+    {
+        var sql = $"ALTER TABLE `{table}` DROP FOREIGN KEY `{fkName}`;";
+        await using var command = GetConnection().CreateCommand();
+        command.CommandText = sql;
+        command.Transaction = _transactionManager?.Transaction() as MySqlTransaction;
+        try 
+        {
+            await command.ExecuteNonQueryAsync(ct);
+        }
+        catch (MySqlException ex) when (ex.Number == 1091) // ER_CANT_DROP_FIELD_OR_KEY
+        {
+            logger.LogWarning(ex, $"Foreign key {fkName} does not exist on table {table}, skipping drop.");
+        }
+    }
+
     public void Dispose()
     {
         connection.Dispose();

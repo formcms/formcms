@@ -18,18 +18,11 @@ using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.Builders;
 using FormCMS.Utils.DisplayModels;
-using FormCMS.Utils.PageRender;
 using FormCMS.Utils.ResultExt;
 using GraphQL;
-using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Rewrite;
-using Microsoft.AspNetCore.StaticFiles;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Schema = FormCMS.Cms.Graph.Schema;
 
 namespace FormCMS.Cms.Builders;
@@ -86,7 +79,6 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         AddChannelMessageBus();
         AddCacheServices();
         AddGraphqlServices();
-        AddPageTemplateServices();
         AddCmsServices();
 
         return services;
@@ -130,11 +122,6 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
 
             services.AddHttpClient(); //needed by task service
             services.AddScoped<ITaskService, TaskService>();
-        }
-
-        void AddPageTemplateServices()
-        {
-            services.AddSingleton<PageTemplate>(_ => new PageTemplate());
         }
 
         void AddChannelMessageBus()

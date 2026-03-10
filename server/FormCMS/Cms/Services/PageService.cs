@@ -1,77 +1,71 @@
-
-using System.Text.Json;
-using FormCMS.Utils.PageRender;
 using FormCMS.Core.Descriptors;
-using FormCMS.Utils.ResultExt;
-using FormCMS.Utils.StrArgsExt;
 using HandlebarsDotNet;
-using HtmlAgilityPack;
 using Humanizer;
-using Microsoft.AspNetCore.WebUtilities;
 
 namespace FormCMS.Cms.Services;
 
 public sealed class PageService(
     ISchemaService schemaService,
     IQueryService querySvc,
-    IPageResolver pageResolver,
-    PageTemplate template
+    IPageResolver pageResolver
 ) : IPageService
 {
-    
-    public async Task<string> Get(string name, StrArgs strArgs, string? nodeId, long? sourceId, Span? span,
-        CancellationToken ct)
+
+    public async Task<string> Get(string name, StrArgs strArgs, CancellationToken ct)
     {
         var page = await LoadPage(name, false, strArgs, ct);
         if (page is null) return string.Empty;
-        if (page.Source == PageConstants.PageSourceAi)
-        {
-            var aiData = await GetAiPageData(page, strArgs, "", ct);
-            var html = ReplaceTitle(page);
-            return HandlebarsConfiguration.Instance.Compile(html)(aiData); 
-        }
-        
-        var data = new Dictionary<string, object>();
-        var ctx = LoadContext(page);
-        if (nodeId is not null)
-        {
-            return await RenderPartialPage(ctx.LoadPartialContext(nodeId), sourceId, span ?? new Span(), strArgs, ct);
-        }
-
-        var pageCtx = ctx.ParseDataNodes();
-        await LoadData(pageCtx, strArgs, data, ct);
-        return RenderPage(pageCtx, data, ct);
+        var aiData = await GetPageData(page, strArgs, "", ct);
+        var html = ReplaceTitle(page);
+        return HandlebarsConfiguration.Instance.Compile(html)(aiData);
     }
 
-    private async Task<Record> GetAiPageData(Page page, StrArgs strArgs, string path, CancellationToken ct)
+    private async Task<Record> GetPageData(Page page, StrArgs strArgs, string path, CancellationToken ct)
     {
         var data = new Dictionary<string, object>();
-        var metadata = JsonSerializer.Deserialize<PageMetadata>(page.Metadata, new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        });
+        var metadata = page.Metadata;
         foreach (var query in metadata?.Architecture?.SelectedQueries ?? [])
         {
+            bool isPathQuery = false;
             if (!string.IsNullOrWhiteSpace(path))
             {
                 foreach (var keyValuePair in query.Args.Where(keyValuePair => keyValuePair.Value == PageConstants.PageQueryArgFromPath))
                 {
                     strArgs[keyValuePair.Key] = path;
+                    isPathQuery = true;
                 }
             }
 
             if (query.Type == PageConstants.PageQueryTypeSingle)
             {
-                data[query.FieldName] = (await querySvc.SingleWithAction(query.QueryName, strArgs, ct))??new Dictionary<string,object>();
+                var res = await querySvc.SingleWithAction(query.QueryName, strArgs, ct)??new Dictionary<string,object>();
+                data[query.FieldName] = res;
+                if (isPathQuery)
+                {
+                    data["id"] = res[QueryConstants.RecordId];
+                }
             }
             else
             {
-                data[query.FieldName] =
-                    await querySvc.ListWithAction(query.QueryName, new Span(), new Pagination(), strArgs, ct);
+                var span = new Span();
+
+                if (strArgs.Remove("last", out var last))
+                {
+                    span = new Span(Last: last);
+                }
+                else if (strArgs.Remove("first", out var first))
+                {
+                    span = new Span(First: first);
+                }
+                
+                var items = await querySvc.ListWithAction(query.QueryName, span, new Pagination(), strArgs, ct);
+                data[query.FieldName] = items;
             }
         }
 
-        if (metadata.EnableTopList && !string.IsNullOrEmpty(metadata.Plan.EntityName))
+        if (metadata?.Components is { ValueKind: System.Text.Json.JsonValueKind.Object } comps
+            && comps.EnumerateObject().Any(p => p.Name == "top-list")
+            && !string.IsNullOrEmpty(metadata.Plan?.EntityName))
         {
             StrArgs args  = new()
             {
@@ -91,155 +85,17 @@ public sealed class PageService(
     {
         var page = await LoadPage(name, true, strArgs, ct);
         if (page is null) return string.Empty;
-        
-        if (page.Source == PageConstants.PageSourceAi)
-        {
-            var aiPageData = await GetAiPageData(page, strArgs, path, ct);
-            var html = ReplaceTitle(page);
-            return Handlebars.Compile(html)(aiPageData);
-        }
-        
-        var ctx = LoadContext(page);
-        if (nodeId is not null)
-        {
-            return await RenderPartialPage(ctx.LoadPartialContext(nodeId), sourceId, span, strArgs, ct);
-        }
 
-        var routerName = ctx.CurrentPage.Name.Split("/").Last()[1..^1]; // remove '{' and '}'
-        strArgs[routerName] = path;
-
-        var pageCtx = ctx.ParseDataNodes();
-        foreach (var node in pageCtx.DataNodes.Where(x => string.IsNullOrWhiteSpace(x.Query)))
-        {
-            strArgs[node.Field + PaginationConstants.OffsetSuffix] = node.Offset.ToString();
-            strArgs[node.Field + PaginationConstants.LimitSuffix] = node.Limit.ToString();
-        }
-
-        Record data;
-        try
-        {
-            data = string.IsNullOrWhiteSpace(ctx.CurrentPage.Query)
-                ? new Dictionary<string, object>()
-                : await querySvc.SingleWithAction(ctx.CurrentPage.Query, strArgs, ct) ??
-                  throw new ResultException($"Could not data with {routerName} [{path}]");
-        }
-        catch (Exception e)
-        {
-            if (e is ResultException { Code: ErrorCodes.NOT_ENOUGH_ACCESS_LEVEL })
-            {
-                return template.BuildSubsPage( "/portal/sub/view");
-            }
-            throw;
-        }
-        await LoadData(pageCtx, strArgs, data, ct);
-        return RenderPage(pageCtx, data, ct);
+        var aiPageData = await GetPageData(page, strArgs, path, ct);
+        var html = ReplaceTitle(page);
+        return Handlebars.Compile(html)(aiPageData);
     }
 
-    public async Task<Record> GetAiPageData(string schemaId, CancellationToken ct)
+    public async Task<Record> GetPageData(string schemaId, CancellationToken ct)
     {
         var schema = await schemaService.BySchemaId(schemaId,ct);
-        return await GetAiPageData(schema.Settings.Page!, new StrArgs(), "", ct);
+        return await GetPageData(schema.Settings.Page!, new StrArgs(), "", ct);
     }
-
-    private async Task<string> RenderPartialPage(PartialPageContext ctx, long? sourceId, Span span, StrArgs args,
-        CancellationToken ct)
-    {
-        Record[] items;
-        var node = ctx.DataNodes.First();
-
-        if (!string.IsNullOrWhiteSpace(node.Query))
-        {
-            var pagination = new Pagination(null, node.Limit.ToString());
-            args = args.OverwrittenBy(QueryHelpers.ParseQuery(node.QueryString));
-            items = await querySvc.ListWithAction(node.Query, span, pagination, args, ct);
-        }
-        else
-        {
-            items = await querySvc.Partial(ctx.CurrentPage.Query!,
-                node.Field,
-                sourceId!.Value,
-                span,
-                node.Limit,
-                args,
-                ct);
-        }
-
-        var data = new Dictionary<string, object> { [node.Field] = items };
-        if (sourceId is not null)
-        {
-            data[QueryConstants.RecordId] = sourceId.Value;
-        }
-
-        foreach (var n in ctx.DataNodes)
-        {
-            SetMetadata(n.HtmlNode);
-            n.HtmlNode.SetEach(node.Field);
-        }
-
-        return Handlebars.Compile(ctx.Element.InnerHtml)(data);
-    }
-
-    private async Task LoadData(FullPageContext ctx, StrArgs args, Record data, CancellationToken ct)
-    {
-        foreach (var node in ctx.DataNodes.Where(x =>
-                     //lazy query wait to load partial
-                     !string.IsNullOrWhiteSpace(x.Query) && !x.Lazy))
-        {
-            var pagination = new Pagination(node.Offset.ToString(), node.Limit.ToString());
-            var result = await querySvc.ListWithAction(
-                node.Query,
-                new Span(), pagination,
-                args.OverwrittenBy(QueryHelpers.ParseQuery(node.QueryString)),
-                ct);
-            data[node.Field] = result;
-        }
-    }
-
-    private string RenderPage(FullPageContext ctx, Record data, CancellationToken ct)
-    {
-        foreach (var dataNode in ctx.DataNodes)
-        {
-            SetMetadata(dataNode.HtmlNode);
-            dataNode.HtmlNode.SetEach(dataNode.Field);
-        }
-
-        var title = Handlebars.Compile(ctx.CurrentPage.Title)(data);
-        var body = Handlebars.Compile(ctx.Document.DocumentNode.FirstChild.InnerHtml)(data);
-        return template.BuildMainPage(title, body, ctx.CurrentPage.Css);
-    }
-
-    private static void SetMetadata(HtmlNode node)
-    {
-        node.SetAttributeValue(QueryConstants.RecordId, $$$"""{{{{{QueryConstants.RecordId}}}}}""");
-
-        var first = node.FirstChild;
-
-        while (first is { NodeType: HtmlNodeType.Text })
-        {
-            first = first.NextSibling;
-        }
-
-        first.SetAttributeValue(QueryConstants.RecordId, $$$"""{{{{{QueryConstants.RecordId}}}}}""");
-        first.SetAttributeValue(SpanConstants.Cursor, $$$"""{{{{{SpanConstants.Cursor}}}}}""");
-        first.SetAttributeValue(SpanConstants.HasNextPage, $$$"""{{{{{SpanConstants.HasNextPage}}}}}""");
-        first.SetAttributeValue(SpanConstants.HasPreviousPage, $$$"""{{{{{SpanConstants.HasPreviousPage}}}}}""");
-    }
-
-    private record PageProcessingContext(Page CurrentPage, HtmlDocument Document)
-    {
-        public PartialPageContext LoadPartialContext(string elementId)
-        {
-            var htmlElement = Document.GetElementbyId(elementId);
-            return new PartialPageContext(CurrentPage, htmlElement, htmlElement.GetDataNodesIncludeRoot().Ok());
-        }
-
-        public FullPageContext ParseDataNodes() =>
-            new(CurrentPage, Document, Document.DocumentNode.GetDataNodes().Ok());
-    }
-
-    private record FullPageContext(Page CurrentPage, HtmlDocument Document, DataNode[] DataNodes);
-
-    private record PartialPageContext(Page CurrentPage, HtmlNode Element, DataNode[] DataNodes);
 
     private async Task<Page?> LoadPage(string pageName, bool matchPrefix, StrArgs arguments,
         CancellationToken cancellationToken)
@@ -256,12 +112,5 @@ public sealed class PageService(
         {
             return null;
         }
-    }
-
-    private PageProcessingContext LoadContext(Page page)
-    {
-        var document = new HtmlDocument();
-        document.LoadHtml(page.Html);
-        return new PageProcessingContext(page, document);
     }
 }

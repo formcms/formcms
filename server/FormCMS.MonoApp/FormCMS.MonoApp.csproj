@@ -38,6 +38,7 @@
       <_ContentIncludedByDefault Remove="wwwroot\static-assets\templates\template.html" />
     </ItemGroup>
     <ItemGroup>
-        <Content Remove="wwwroot\favicon.ico" />
+        <!--should not mix dev setting with production setting-->
+        <Content Remove="formcms.settings.json" />
     </ItemGroup>
 </Project>

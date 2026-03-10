@@ -108,6 +108,11 @@ public class LocalFileStore(
         await Download(path, localPath, ct);
 
         var parentDir = Path.GetDirectoryName(fullFilePath) ?? sourceRoot;
+        if (!Directory.Exists(parentDir))
+        {
+            Directory.CreateDirectory(parentDir);
+        }
+
         var filePrefix = Path.GetFileName(path);
         var matchingDirs = Directory.EnumerateDirectories(parentDir, $"{filePrefix}*", SearchOption.TopDirectoryOnly);
 

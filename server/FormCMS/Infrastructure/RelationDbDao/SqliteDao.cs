@@ -312,6 +312,28 @@ END;";
     // Helper to safely quote identifiers
     private static string Q(string identifier) => $"\"{identifier}\"";
 
+    public async Task RenameTable(string oldName, string newName, CancellationToken ct = default)
+    {
+        var sql = $"ALTER TABLE {Q(oldName)} RENAME TO {Q(newName)};";
+        await using var command = new SqliteCommand(sql, GetConnection());
+        command.Transaction = _transaction?.Transaction() as SqliteTransaction;
+        await command.ExecuteNonQueryAsync(ct);
+    }
+
+    public async Task RenameColumn(string table, string oldName, string newName, CancellationToken ct = default)
+    {
+        var sql = $"ALTER TABLE {Q(table)} RENAME COLUMN {Q(oldName)} TO {Q(newName)};";
+        await using var command = new SqliteCommand(sql, GetConnection());
+        command.Transaction = _transaction?.Transaction() as SqliteTransaction;
+        await command.ExecuteNonQueryAsync(ct);
+    }
+
+    public Task DropForeignKey(string table, string fkName, CancellationToken ct = default)
+    {
+        // SQLite in FormCMS does not strictly enforce named foreign key constraints via ALTER TABLE.
+        return Task.CompletedTask;
+    }
+
     public void Dispose()
     {
         conn.Dispose();

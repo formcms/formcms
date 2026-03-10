@@ -343,6 +343,33 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
         };
     }
 
+    public async Task RenameTable(string oldName, string newName, CancellationToken ct = default)
+    {
+        var sql = $"EXEC sp_rename '{oldName}', '{newName}';";
+        await using var command = new SqlCommand(sql, GetConnection());
+        command.Transaction = _transaction?.Transaction() as SqlTransaction;
+        await command.ExecuteNonQueryAsync(ct);
+    }
+
+    public async Task RenameColumn(string table, string oldName, string newName, CancellationToken ct = default)
+    {
+        var sql = $"EXEC sp_rename '{table}.{oldName}', '{newName}', 'COLUMN';";
+        await using var command = new SqlCommand(sql, GetConnection());
+        command.Transaction = _transaction?.Transaction() as SqlTransaction;
+        await command.ExecuteNonQueryAsync(ct);
+    }
+
+    public async Task DropForeignKey(string table, string fkName, CancellationToken ct = default)
+    {
+        var sql = $"""
+             IF EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = '{fkName}' AND parent_object_id = OBJECT_ID('{table}'))
+             ALTER TABLE [{table}] DROP CONSTRAINT [{fkName}];
+             """;
+        await using var command = new SqlCommand(sql, GetConnection());
+        command.Transaction = _transaction?.Transaction() as SqlTransaction;
+        await command.ExecuteNonQueryAsync(ct);
+    }
+
     public void Dispose()
     {
         conn.Dispose();

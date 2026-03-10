@@ -4,6 +4,7 @@ using FormCMS.Utils.DataModels;
 using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using Humanizer;
+using NanoidDotNet;
 using NUlid;
 
 namespace FormCMS.Core.Descriptors;
@@ -26,7 +27,7 @@ public sealed record Settings(Entity? Entity = null, Query? Query =null, Menu? M
 public record Schema(
     string Name ,
     SchemaType Type ,
-    Settings Settings,
+    Settings? Settings,
     string Description = "",
     
     long Id = 0,
@@ -145,7 +146,7 @@ public static class SchemaHelper
         => schema with
         {
             IsLatest = true,
-            SchemaId = string.IsNullOrEmpty(schema.SchemaId) ? Ulid.NewUlid().ToString() : schema.SchemaId,
+            SchemaId = string.IsNullOrEmpty(schema.SchemaId) ?Nanoid.Generate(size: 12) : schema.SchemaId,
             PublicationStatus = asPublished || string.IsNullOrEmpty(schema.SchemaId)
                 ? PublicationStatus.Published
                 : PublicationStatus.Draft
@@ -179,10 +180,9 @@ public static class SchemaHelper
         var record = RecordExtensions.FormObject(schema, whiteList: fields);
         return new SqlKata.Query(TableName).AsInsert(record, true);
     }
-    
-    
+
+
 
     public static Result<Schema> RecordToSchema(Record? record)
-        => record is null ? Result.Fail("Can not parse schema, input record is null") : record.ToObject<Schema>();
-   
+        => record is null ? Result.Fail("Can not parse schema, input record is null") : record.ToObject<Schema>(true);
 }

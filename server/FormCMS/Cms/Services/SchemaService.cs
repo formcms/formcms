@@ -3,7 +3,6 @@ using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.ResultExt;
-using Humanizer;
 
 namespace FormCMS.Cms.Services;
 
@@ -29,6 +28,7 @@ public sealed class SchemaService(
     {
         var query = SchemaHelper.ByNameAndType(type, names, status);
         var items = await shardGroup.PrimaryDao.Many(query, ct);
+        
         return items.Select(x => SchemaHelper.RecordToSchema(x).Ok()).ToArray();
     }
 

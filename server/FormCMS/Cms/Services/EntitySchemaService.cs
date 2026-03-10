@@ -9,6 +9,7 @@ using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.ResultExt;
+using FormCMS.Utils.EnumExt;
 using Humanizer;
 using Attribute = FormCMS.Core.Descriptors.Attribute;
 using SchemaType = FormCMS.Core.Descriptors.SchemaType;
@@ -65,8 +66,50 @@ public sealed class EntitySchemaService(
 
     public async Task Delete(Schema schema, CancellationToken ct)
     {
+        if (schema.Settings?.Entity != null)
+        {
+            var entityName = schema.Settings.Entity.Name;
+            var allEntities = await AllEntities(ct);
+
+            var dependents = allEntities.Where(e => 
+                e.Name != entityName && 
+                e.Attributes.Any(a => 
+                    (a.DataType == DataType.Lookup || a.DataType == DataType.Collection || a.DataType == DataType.Junction) &&
+                    a.Options != null && a.Options.StartsWith(entityName)
+                )
+            ).Select(e => e.Name).ToArray();
+
+            if (dependents.Length > 0)
+            {
+                throw new ResultException($"Cannot delete entity '{entityName}' because it is referenced by: {string.Join(", ", dependents)}");
+            }
+
+            if (!string.IsNullOrWhiteSpace(schema.Settings.Entity.TableName))
+            {
+                var oldTableName = schema.Settings.Entity.TableName;
+                var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+                var newTableName = $"{oldTableName}_archive_{timestamp}";
+
+                try
+                {
+                    await shardGroup.PrimaryDao.RenameTable(oldTableName, newTableName, ct);
+
+                    var lookupAttrs = schema.Settings.Entity.Attributes.Where(a => a.DataType == DataType.Lookup).ToArray();
+                    foreach (var attr in lookupAttrs)
+                    {
+                        var fkName = $"fk_{oldTableName}_{attr.Field}";
+                        await shardGroup.PrimaryDao.DropForeignKey(newTableName, fkName, ct);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, $"Failed to archive table or drop foreign keys for entity {entityName}");
+                }
+            }
+        }
+
         await schemaSvc.Delete(schema, ct);
-        if (schema.Settings.Entity is not null) await schemaSvc.RemoveEntityInTopMenuBar(schema.Settings.Entity, ct);
+        if (schema.Settings?.Entity is not null) await schemaSvc.RemoveEntityInTopMenuBar(schema.Settings.Entity, ct);
         await entityCache.Remove("", ct);
     }
 
@@ -250,6 +293,42 @@ public sealed class EntitySchemaService(
  
         if (columns.Length > 0) //if table exists, alter table adds columns
         {
+            var systemColNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+            {
+                "id", DefaultColumnNames.Deleted.Camelize(), DefaultColumnNames.UpdatedAt.Camelize(),
+                DefaultAttributeNames.PublicationStatus.Camelize(), DefaultAttributeNames.PublishedAt.Camelize()
+            };
+
+            var incomingLocalFields = entity.Attributes
+                .Where(x => x.DataType.IsLocal())
+                .Select(x => x.Field)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var deletedCols = columns.Where(c => 
+                !systemColNames.Contains(c.Name) && 
+                !c.Name.StartsWith("_archive", StringComparison.OrdinalIgnoreCase) &&
+                !incomingLocalFields.Contains(c.Name)
+            ).ToArray();
+
+            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            foreach (var col in deletedCols)
+            {
+                var newName = $"_archived_{col.Name}_{timestamp}";
+                try
+                {
+                    Console.WriteLine($"[DEBUG] Archiving column: {col.Name} in table {entity.TableName}");
+                    await shardGroup.PrimaryDao.RenameColumn(entity.TableName, col.Name, newName, ct);
+                    logger.LogInformation($"Successfully archived deleted column {col.Name} to {newName} in table {entity.TableName}");
+                }
+                catch (Exception ex)
+                {
+                    logger.LogWarning(ex, $"Failed to archive column {col.Name} in table {entity.TableName}");
+                }
+            }
+
+            // re-fetch columns after renames to ensure addition logic doesn't clash or duplicate
+            columns = await shardGroup.PrimaryDao.GetColumnDefinitions(entity.TableName, ct);
+
             var set = columns.Select(x => x.Name).ToHashSet();
             var missing = entity.Attributes.Where(c => c.DataType.IsLocal()&& !set.Contains(c.Field)).ToArray();
             if (missing.Length > 0)
