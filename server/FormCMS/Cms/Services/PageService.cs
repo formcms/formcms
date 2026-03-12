@@ -65,11 +65,11 @@ public sealed class PageService(
 
         if (metadata?.Components is { ValueKind: System.Text.Json.JsonValueKind.Object } comps
             && comps.EnumerateObject().Any(p => p.Name == "top-list")
-            && !string.IsNullOrEmpty(metadata.Plan?.EntityName))
+            && !string.IsNullOrEmpty(page.EntityName))
         {
             StrArgs args  = new()
             {
-                [nameof(PagePlan.EntityName).Camelize()] = metadata.Plan.EntityName
+                [nameof(page.EntityName).Camelize()] = page.EntityName
             };
             data[PageConstants.PageFieldToplist] = await querySvc.ListWithAction(
                 PageConstants.PageFieldToplist, new Span(),
