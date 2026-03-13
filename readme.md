@@ -1,6 +1,6 @@
 # FormCMS: The AI-Powered CMS
 
-FormCMS is a cutting-edge, open-source Content Management System designed to revolutionize web development through AI. By automating the most tedious parts of development—schema design, data seeding, API creation, and UI building—FormCMS allows you to build complex, production-ready applications in minutes rather than weeks.
+FormCMS is an open-source CMS that uses AI to generate your entire app — schemas, data, APIs, and UI — from natural language. Build production-ready applications in minutes, not weeks.
 
 ---
 
@@ -25,66 +25,11 @@ FormCMS is a cutting-edge, open-source Content Management System designed to rev
 
 ---
 
-## ⚡ What You Can Do with AI
-
-FormCMS acts as your AI-driven development partner. Describe what you want, and it builds it:
-
-- **Generate the Full Stack**: Entities (schemas), Seed Data, GraphQL Queries, and UI Pages from natural language.
-- **Add Engagement Instantly**: "Add a like button" or "Show user avatar" simply works.
-- **Manage & Iterate**: View version history and manage artifacts in the visual portal.
-
-📖 **[See Wiki for full capabilities →](https://github.com/formcms/formcms/wiki/Building-a-System.md)**
-
----
-
 ## 🎥 In Action
 
 Watch FormCMS build a complete Library system (Entities, Data, Queries, and UI) from scratch in under 60 seconds (sped up 10x).
 
 ![FormCMS Demo](https://github.com/formcms/formmate/blob/main/artifacts/demo_video.webp?raw=true)
-
----
-
-## 🟢 Live Demo
-
-Try the live demo at [formcms.com/mate](https://formcms.com/mate).
-
-**Credentials:**
-- **Username:** `sadmin@cms.com`
-- **Password:** `Admin1!`
-
----
-
-## 🚀 Quick Start (Docker)
-
-The easiest way to get FormCMS running. **No backend setup, no .NET, no database installation required.**
-
-Pull and run from [Docker Hub](https://hub.docker.com/repository/docker/jaike/formcms-mono):
-
-```bash
-docker run -d \
-  --name formcms \
-  -p 5000:5000 \
-  -v formcms_data:/data \
-  -e DATABASE_PROVIDER=0 \
-  -e "CONNECTION_STRING=Data Source=/data/cms.db" \
-  jaike/formcms-mono:latest
-```
-
-Then open **http://localhost:5000/mate** in your browser and follow the setup wizard.
-
-> **📌 That's it!** You have a fully functional AI-powered CMS. Start building your app with React, Vite, or any frontend framework.
-
-For production deployment with PostgreSQL, see the [Docker Hub page](https://hub.docker.com/repository/docker/jaike/formcms-mono) for a full `docker-compose.yml` example.
-
-
-### 💡 Try it out
-Once running, try these prompts:
-- "Design entities for a library management system"
-- "Add sample data for the book entity"
-- "Create a query to display all available books"
-
-🛠️ **Want to contribute or run from source?** See the [Development Setup Guide →](https://github.com/formcms/formcms/wiki/Setup.md)
 
 ---
 
@@ -106,44 +51,50 @@ Once running, try these prompts:
 
 ---
 
-## 📚 Documentation
+## 🧑‍💼 For Non-Developers
 
-For detailed documentation, please refer to our **[Wiki](https://github.com/formcms/formcms/wiki)** (source of truth):
+**No coding skills? No problem.** FormCMS lets you build dynamic, data-driven pages without writing a single line of code.
 
-| Documentation | Description |
-|---------------|-------------|
-| [Setup Guide](https://github.com/formcms/formcms/wiki/Setup.md) | Development environment setup |
-| [Architecture](https://github.com/formcms/formcms/wiki/Architecture.md) | Component architecture and system design |
-| [Orchestrator Strategy](https://github.com/formcms/formcms/wiki/Orchestrator-Strategy.md) | Multi-agent pipeline design and debugging approach |
-| [Performance & Scalability](https://github.com/formcms/formcms/wiki/Performance-Scalability.md) | Benchmarks and scaling strategies |
+- Use the **built-in FormCMS Page** feature to create pages powered by your database
+- Let **AI generate entire pages** for you — not just static HTML, but pages that read and display live data
+- Manage your content, schemas, and pages all from the visual admin panel
 
----
-
-## 🏗️ Architecture Overview
-
-
-
-| Component | Description |
-|-----------|-------------|
-| **formmate** | AI-powered schema & UI builder |
-| **formcms** | High-performance CMS backend (ASP.NET Core) |
-| **AdminApp** | React admin panel for content management |
-| **Portal** | User portal for history, likes, and bookmarks |
-
-📖 **[See Wiki for detailed architecture →](https://github.com/formcms/formcms/wiki/Architecture.md)**
+> **💡 Just describe what you want** — AI handles the schema, the data, and the page. You get a fully functional, dynamic web page.
 
 ---
 
-## ⚡ Performance
+## 🚀 Quick Start (Docker)
 
-| Metric | Performance |
-|--------|-------------|
-| **P95 Latency** | < 200ms |
-| **Throughput** | 2,400+ QPS per node |
-| **Complex Queries** | 5-table joins over 1M rows |
-| **Database Support** | SQLite, PostgreSQL, SQL Server, MySQL |
+The easiest way to get FormCMS running. **No backend setup, no .NET, no database installation required.**
 
-📖 **[See Wiki for performance details →](https://github.com/formcms/formcms/wiki/Performance-Scalability.md)**
+> **🟢 Don't want to install?** Try the [live demo](https://demo.formcms.com/mate) instantly — login: `sadmin@cms.com` / `Admin1!`
+
+Pull and run from [Docker Hub](https://hub.docker.com/repository/docker/jaike/formcms-mono):
+
+```bash
+docker run -d \
+  --name formcms \
+  -p 5000:5000 \
+  -v formcms_data:/data \
+  -e DATABASE_PROVIDER=0 \
+  -e "CONNECTION_STRING=Data Source=/data/cms.db" \
+  -e FORMCMS_DATA_PATH=/data \
+  jaike/formcms-mono:latest
+```
+
+Then open **http://localhost:5000/mate** and follow the setup wizard.
+
+> **📌 That's it!** Try these prompts: *"Design entities for a library system"* · *"Add sample data for books"* · *"Create a query to display all books"*
+
+For production deployment with PostgreSQL, see the [Docker Hub page](https://hub.docker.com/repository/docker/jaike/formcms-mono). Want to contribute or run from source? See the [Development Setup Guide →](https://github.com/formcms/formcms/wiki/Setup.md)
+
+---
+
+## 📚 Learn More
+
+⚡ **Performance:** P95 < 200ms · 2,400+ QPS · SQLite, PostgreSQL, SQL Server, MySQL
+
+📖 [Documentation Wiki](https://github.com/formcms/formcms/wiki) · [Architecture](https://github.com/formcms/formcms/wiki/Architecture.md) · [Performance & Scalability](https://github.com/formcms/formcms/wiki/Performance-Scalability.md) · [Setup Guide](https://github.com/formcms/formcms/wiki/Setup.md)
 
 ---
 
