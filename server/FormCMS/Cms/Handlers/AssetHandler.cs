@@ -70,6 +70,11 @@ public static class AssetHandler
             (IAssetService svc, long id, CancellationToken ct) => svc.Delete(id, ct)
         );
 
+        app.MapPost(
+            "/youtube",
+            (IAssetService svc, string url, CancellationToken ct) => svc.DownloadYoutubeVideo(url, ct)
+        );
+
         app.MapPut(
                 "/hls/progress",
                 async (IAssetService svc, Asset asset, CancellationToken ct) =>

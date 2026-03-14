@@ -26,6 +26,14 @@ public class LocalFileStore(
         return Task.CompletedTask;
     }
 
+    public async Task Upload(Stream stream, string path, CancellationToken ct)
+    {
+        var dest = Path.Join(options.PathPrefix, path);
+        FileUtils.EnsureParentFolder(dest);
+        await using var fileStream = new FileStream(dest, FileMode.Create, FileAccess.Write);
+        await stream.CopyToAsync(fileStream, ct);
+    }
+
     public void Start(WebApplication app)
     {
         if (!File.Exists(options.PathPrefix))

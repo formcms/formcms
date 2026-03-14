@@ -8,6 +8,8 @@ using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
+using YoutubeExplode;
+using YoutubeExplode.Videos.Streams;
 
 namespace FormCMS.Cms.Services;
 
@@ -256,6 +258,61 @@ public class AssetService(
     public async  Task UpdateHlsProgress(Asset asset, CancellationToken ct)
     {
         await shardGroup.PrimaryDao.Exec(asset.UpdateHlsProgress(), ct);
+    }
+
+    public async Task<string> DownloadYoutubeVideo(string youtubeUrl, CancellationToken ct)
+    {
+        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("Access denied");
+        
+        var youtube = new YoutubeClient();
+        var video = await youtube.Videos.GetAsync(youtubeUrl, ct);
+        var streamManifest = await youtube.Videos.Streams.GetManifestAsync(video.Id, ct);
+        
+        // Try to get the highest quality muxed stream (video + audio)
+        var streamInfo = streamManifest.GetMuxedStreams().GetWithHighestVideoQuality();
+        
+        // If highest quality fails, try to get any muxed stream
+        streamInfo ??= streamManifest.GetMuxedStreams().OrderByDescending(s => s.VideoQuality).FirstOrDefault();
+
+        if (streamInfo == null)
+        {
+            var hasVideo = streamManifest.GetVideoOnlyStreams().Any();
+            var hasAudio = streamManifest.GetAudioOnlyStreams().Any();
+            var reason = !hasVideo && !hasAudio ? "No streams found at all." : "Only separate video/audio streams are available for this video.";
+            throw new ResultException($"No muxed YouTube stream found. {reason}");
+        }
+
+        var fileName = $"{video.Title}.{streamInfo.Container}";
+        // Clean filename from invalid characters
+        fileName = string.Join("_", fileName.Split(Path.GetInvalidFileNameChars()));
+        
+        var path = FileUtils.GetFilePath(fileName);
+        var stream = await youtube.Videos.Streams.GetAsync(streamInfo, ct);
+
+        await store.Upload(stream, path, ct);
+
+        var asset = new Asset(
+            CreatedBy: userId,
+            Path: path,
+            Url: store.GetUrl(path),
+            Name: fileName,
+            Title: video.Title,
+            Size: streamInfo.Size.Bytes,
+            Type: $"video/{streamInfo.Container}",
+            Metadata: new Dictionary<string, object>
+            {
+                { "youtubeUrl", youtubeUrl },
+                { "author", video.Author.Title },
+                { "duration", video.Duration?.ToString() ?? "" }
+            }
+        );
+
+        var res = await hookRegistry.AssetPreAdd.Trigger(provider, new AssetPreAddArgs(asset));
+        asset = res.RefAsset;
+        await shardGroup.PrimaryDao.BatchInsert(Assets.TableName, Assets.ToInsertRecords([asset]));
+        await hookRegistry.AssetPostAdd.Trigger(provider, new AssetPostAddArgs(asset));
+
+        return path;
     }
 
     public bool IsValidSignature(IFormFile file)
