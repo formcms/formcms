@@ -1,5 +1,6 @@
 using FormCMS.Core.Assets;
 using FormCMS.Core.HookFactory;
+using FormCMS.Infrastructure.Downloader;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
@@ -8,8 +9,6 @@ using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
-using YoutubeExplode;
-using YoutubeExplode.Videos.Streams;
 
 namespace FormCMS.Cms.Services;
 
@@ -260,58 +259,42 @@ public class AssetService(
         await shardGroup.PrimaryDao.Exec(asset.UpdateHlsProgress(), ct);
     }
 
-    public async Task<string> DownloadYoutubeVideo(string youtubeUrl, CancellationToken ct)
+    public async Task<string> DownloadVideo(string url, CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("Access denied");
-        
-        var youtube = new YoutubeClient();
-        var video = await youtube.Videos.GetAsync(youtubeUrl, ct);
-        var streamManifest = await youtube.Videos.Streams.GetManifestAsync(video.Id, ct);
-        
-        // Try to get the highest quality muxed stream (video + audio)
-        var streamInfo = streamManifest.GetMuxedStreams().GetWithHighestVideoQuality();
-        
-        // If highest quality fails, try to get any muxed stream
-        streamInfo ??= streamManifest.GetMuxedStreams().OrderByDescending(s => s.VideoQuality).FirstOrDefault();
-
-        if (streamInfo == null)
+        var plugins = provider.GetServices<IDownloader>();
+        var tempFileName = "";
+        foreach (var plugin in plugins)
         {
-            var hasVideo = streamManifest.GetVideoOnlyStreams().Any();
-            var hasAudio = streamManifest.GetAudioOnlyStreams().Any();
-            var reason = !hasVideo && !hasAudio ? "No streams found at all." : "Only separate video/audio streams are available for this video.";
-            throw new ResultException($"No muxed YouTube stream found. {reason}");
+            tempFileName = await plugin.DownloadAsync(url, Path.GetTempPath(), ct);
+            if (!string.IsNullOrWhiteSpace(tempFileName)) break;
         }
 
-        var fileName = $"{video.Title}.{streamInfo.Container}";
-        // Clean filename from invalid characters
-        fileName = string.Join("_", fileName.Split(Path.GetInvalidFileNameChars()));
-        
-        var path = FileUtils.GetFilePath(fileName);
-        var stream = await youtube.Videos.Streams.GetAsync(streamInfo, ct);
+        if (string.IsNullOrWhiteSpace(tempFileName))
+        {
+            throw new ResultException("No plugin or fallback could download this URL.");
+        }
 
-        await store.Upload(stream, path, ct);
+        var finalFileName = Path.GetFileName(tempFileName);
+        var path = FileUtils.GetFilePath(finalFileName);
 
+        // Move / upload
+        await store.Upload(File.OpenRead(tempFileName), path, ct);
+        File.Delete(tempFileName); // clean up
+        var metadata = await store.GetMetadata(path,ct);
         var asset = new Asset(
             CreatedBy: userId,
             Path: path,
             Url: store.GetUrl(path),
-            Name: fileName,
-            Title: video.Title,
-            Size: streamInfo.Size.Bytes,
-            Type: $"video/{streamInfo.Container}",
-            Metadata: new Dictionary<string, object>
-            {
-                { "youtubeUrl", youtubeUrl },
-                { "author", video.Author.Title },
-                { "duration", video.Duration?.ToString() ?? "" }
-            }
+            Name: finalFileName,
+            Title: finalFileName,
+            Size: metadata.Size,
+            Type: metadata.ContentType
         );
-
         var res = await hookRegistry.AssetPreAdd.Trigger(provider, new AssetPreAddArgs(asset));
         asset = res.RefAsset;
         await shardGroup.PrimaryDao.BatchInsert(Assets.TableName, Assets.ToInsertRecords([asset]));
         await hookRegistry.AssetPostAdd.Trigger(provider, new AssetPostAddArgs(asset));
-
         return path;
     }
 

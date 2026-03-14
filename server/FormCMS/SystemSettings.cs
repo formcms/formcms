@@ -37,6 +37,7 @@ public sealed class SystemSettings
         "files",
     ];
 
+    public string PluginPath { get; } = Path.Join(Directory.GetCurrentDirectory(), "plugins");
     
     public LocalFileStoreOptions LocalFileStoreOptions { get; } = new(
         pathPrefix: Path.Join(Directory.GetCurrentDirectory(), "wwwroot/files"),

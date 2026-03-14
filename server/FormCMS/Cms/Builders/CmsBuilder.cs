@@ -1,5 +1,6 @@
 using System.Collections.Immutable;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FormCMS.Auth.Services;
@@ -12,6 +13,7 @@ using FormCMS.Core.HookFactory;
 using FormCMS.Core.Identities;
 using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.Cache;
+using FormCMS.Infrastructure.Downloader;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
@@ -81,6 +83,8 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         AddGraphqlServices();
         AddCmsServices();
 
+        LoadPlugins();
+        
         return services;
 
         void AddCamelEnumConverter<T>(Microsoft.AspNetCore.Http.Json.JsonOptions options)
@@ -185,6 +189,38 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 systemSettings.QuerySchemaExpiration
             ));
         }
+        
+        void LoadPlugins()
+        {
+            if (!Directory.Exists(systemSettings.PluginPath))
+            {
+                return;
+            }
+
+            var pluginFiles = Directory.GetFiles(systemSettings.PluginPath, "*.dll", SearchOption.TopDirectoryOnly);
+
+            foreach (var pluginDll in pluginFiles)
+            {
+                try
+                {
+                    var context = new PluginLoadContext(pluginDll);
+                    var assembly = context.LoadFromAssemblyPath(pluginDll);
+
+                    var pluginTypes = assembly.GetTypes()
+                        .Where(t => typeof(IDownloader).IsAssignableFrom(t) &&
+                                    !t.IsInterface && !t.IsAbstract);
+
+                    foreach (var type in pluginTypes)
+                    {
+                        services.AddSingleton(typeof(IDownloader), type);
+                    }
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+            services.AddSingleton<IDownloader, HttpDownloader>();
+        }    
     }
 
     public async Task UseCmsAsync(WebApplication app,IServiceScope scope)
@@ -199,7 +235,6 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         UseGraphql();
         UseExceptionHandler();
         app.Services.GetRequiredService<IFileStore>().Start(app);
-
         return;
 
 
@@ -240,6 +275,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             await schemaService.EnsureTopMenuBar(CancellationToken.None);
         }
 
+        
         void UseExceptionHandler()
         {
             app.UseExceptionHandler(errorApp =>
@@ -284,5 +320,29 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 """
             );
         }
+        
+        
+    }
+}
+
+internal class PluginLoadContext : AssemblyLoadContext
+{
+    private readonly AssemblyDependencyResolver _resolver;
+
+    public PluginLoadContext(string pluginPath) : base(isCollectible: true)
+    {
+        _resolver = new AssemblyDependencyResolver(pluginPath);
+    }
+
+    protected override Assembly? Load(AssemblyName assemblyName)
+    {
+        var assemblyPath = _resolver.ResolveAssemblyToPath(assemblyName);
+        return assemblyPath != null ? LoadFromAssemblyPath(assemblyPath) : null;
+    }
+
+    protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)
+    {
+        var libraryPath = _resolver.ResolveUnmanagedDllToPath(unmanagedDllName);
+        return libraryPath != null ? LoadUnmanagedDllFromPath(libraryPath) : IntPtr.Zero;
     }
 }

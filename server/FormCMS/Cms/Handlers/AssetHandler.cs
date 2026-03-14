@@ -8,6 +8,9 @@ namespace FormCMS.Cms.Handlers;
 
 public static class AssetHandler
 {
+    
+    public sealed record DownloadVideoRequest(string Url);
+
     public static void MapAssetHandlers(this RouteGroupBuilder app)
     {
         app.MapGet(
@@ -70,9 +73,10 @@ public static class AssetHandler
             (IAssetService svc, long id, CancellationToken ct) => svc.Delete(id, ct)
         );
 
+        
         app.MapPost(
-            "/youtube",
-            (IAssetService svc, string url, CancellationToken ct) => svc.DownloadYoutubeVideo(url, ct)
+            "/video",
+            (IAssetService svc, DownloadVideoRequest req, CancellationToken ct) => svc.DownloadVideo(req.Url, ct)
         );
 
         app.MapPut(
