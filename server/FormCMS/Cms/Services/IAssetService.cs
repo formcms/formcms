@@ -18,5 +18,6 @@ public interface IAssetService
     Task UpdateHlsProgress(Asset asset, CancellationToken ct);
     Task<string> AddWithAction(string path, string fileName, CancellationToken ct);
     Task<string> DownloadVideo(string url, CancellationToken ct);
+    Task<string> ConvertToMp3(long id, CancellationToken ct);
     bool IsValidSignature(IFormFile file);
 }

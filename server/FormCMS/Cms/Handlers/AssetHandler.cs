@@ -79,6 +79,11 @@ public static class AssetHandler
             (IAssetService svc, DownloadVideoRequest req, CancellationToken ct) => svc.DownloadVideo(req.Url, ct)
         );
 
+        app.MapPost(
+            "/convert-mp3/{id:long}",
+            (IAssetService svc, long id, CancellationToken ct) => svc.ConvertToMp3(id, ct)
+        );
+
         app.MapPut(
                 "/hls/progress",
                 async (IAssetService svc, Asset asset, CancellationToken ct) =>

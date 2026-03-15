@@ -127,8 +127,8 @@ public class Program
             builder.Services.AddSingleton(new EmitMessageWorkerOptions(taskTimingSeconds?.EmitMessageDelay ?? 30));
             builder.Services.AddHostedService<EmitMessageHandler>();
 
-            builder.Services.AddSingleton(new CmsRestClientSettings(apiBaseUrl, apiKey));
             builder.Services.AddHostedService<FFMpegWorker>();
+            builder.Services.AddHostedService<AssetUpdateMessageHandler>();
 
             _ = dbProvider switch
             {

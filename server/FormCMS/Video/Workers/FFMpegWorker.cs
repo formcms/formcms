@@ -1,7 +1,7 @@
 using System.Text.Json;
+using FormCMS.Cms.Models;
 using FormCMS.Core.Assets;
 using FormCMS.Core.Auth;
-using FormCMS.CoreKit.ApiClient;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Utils.ResultExt;
@@ -13,7 +13,7 @@ namespace FormCMS.Video.Workers;
 public sealed class FFMpegWorker(
     ILogger<FFMpegWorker> logger,
     IStringMessageConsumer consumer,
-    CmsRestClientSettings  restClientSettings,
+    IStringMessageProducer producer,
     IFileStore fileStore
 ) : BackgroundService
 {
@@ -32,15 +32,14 @@ public sealed class FFMpegWorker(
                     var msg = ParseMessage(s);
                     if (msg is null) return;
 
-                    var task = HlsConvertingTaskHelper.CreatTask(msg.Path);
- 
                     if (msg.IsDelete)
                     {
+                        var task = HlsConvertingTaskHelper.CreatTask(msg.Path);
                         await fileStore.DelByPrefix(task.StorageFolder, ct);
                     }
                     else
                     {
-                        await DoConvert(task); 
+                        await DoConvert(msg); 
                     }
                 }
                 catch (Exception ex)
@@ -52,15 +51,36 @@ public sealed class FFMpegWorker(
         );
     }
 
-    private async Task DoConvert(HlsConvertingTask task)
+    private async Task DoConvert(FFMpegMessage msg)
     {
-        await fileStore.Download(task.StoragePath, task.TempPath, CancellationToken.None);
-        await RunConversion(task);
-        await fileStore.UploadFolder(task.TempFolder, task.StorageFolder,CancellationToken.None);
-        File.Delete(task.TempPath);
-        Directory.Delete(task.TempFolder, recursive: true);
-        await UpdateStatus(task);
-        logger.LogInformation( "Processed message. Task={task}", task);       
+        var task = HlsConvertingTaskHelper.CreatTask(msg.Path);
+        var tempPath = task.TempPath;
+        var tempTargetPath = task.TempTargetPath;
+
+        if (msg.TargetFormat == "mp3")
+        {
+            tempTargetPath = Path.ChangeExtension(tempPath, ".mp3");
+        }
+
+        await fileStore.Download(task.StoragePath, tempPath, CancellationToken.None);
+        await RunConversion(tempPath, tempTargetPath, msg.TargetFormat);
+        
+        if (msg.TargetFormat == "mp3")
+        {
+            var newPath = msg.TargetPath ?? Path.ChangeExtension(task.StoragePath, ".mp3");
+            await fileStore.Upload(File.OpenRead(tempTargetPath), newPath, CancellationToken.None);
+            File.Delete(tempTargetPath);
+            File.Delete(tempPath);
+            await UpdateStatusForMp3(msg.Path, newPath);
+        }
+        else // m3u8 conversion
+        {
+            await fileStore.UploadFolder(task.TempFolder, task.StorageFolder,CancellationToken.None);
+            File.Delete(tempPath);
+            Directory.Delete(task.TempFolder, recursive: true);
+            await UpdateStatus(task);
+        }
+        logger.LogInformation( "Processed message. Task={task}", msg.Path);       
     }
 
     private FFMpegMessage? ParseMessage(string s)
@@ -72,11 +92,7 @@ public sealed class FFMpegWorker(
             return null;
         }
 
-        if (
-            string.IsNullOrEmpty(message.Path)
-            || string.IsNullOrEmpty(message.TargetFormat)
-            || message.TargetFormat != "m3u8"
-        )
+        if (string.IsNullOrEmpty(message.Path) || string.IsNullOrEmpty(message.TargetFormat))
         {
             logger.LogWarning(
                 "Invalid message: Missing Path or TargetFormat. Raw: {RawMessage}",
@@ -88,33 +104,59 @@ public sealed class FFMpegWorker(
 
     }
     
-    private async Task RunConversion(HlsConvertingTask task)
+    private async Task RunConversion(string inputPath, string outputPath, string targetFormat)
     {
-        // Directory.CreateDirectory(task.TempFolder);
         var path = Environment.GetEnvironmentVariable("FFMPEG_EXEC_PATH");
         FFmpeg.SetExecutablesPath(path, ffmpegExeutableName: "ffmpeg");
-        var conversion = await FFmpeg.Conversions.FromSnippet.Convert(
-            task.TempPath,
-            task.TempTargetPath
-        );
+
+        IConversion conversion;
+        if (targetFormat == "mp3")
+        {
+            conversion = await FFmpeg.Conversions.FromSnippet.ExtractAudio(inputPath, outputPath);
+        }
+        else // m3u8
+        {
+            conversion = await FFmpeg.Conversions.FromSnippet.Convert(inputPath, outputPath);
+        }
 
         await conversion.Start();
-        logger.LogInformation("Finished conversion file [{TaskStoragePath}]", task.StoragePath);
+        logger.LogInformation("Finished conversion file [{InputPath}] to [{OutputPath}]", inputPath, outputPath);
     }
 
     private async Task UpdateStatus(HlsConvertingTask task)
     {
-        var client=new HttpClient();
-        client.BaseAddress = new Uri(restClientSettings.BaseUrl );
-        client.DefaultRequestHeaders.Add( "X-Cms-Adm-Api-Key", restClientSettings.ApiKey);
-        
-        var assetApiClient = new AssetApiClient(client);
-        var assetToUpdated = new Asset
-        (
-            Path : task.StoragePath,
-            Url : fileStore.GetUrl(task.StorageTargetPath), 
-            Progress : 100
+        var msg = new AssetUpdateMessage(
+            OriginalPath: task.StoragePath,
+            NewUrl: fileStore.GetUrl(task.StorageTargetPath),
+            NewPath: null,
+            NewName: null,
+            NewType: null,
+            NewSize: null,
+            Progress: 100,
+            IsNewAsset: false
         );
-        await assetApiClient.UpdateHlsProgress(assetToUpdated).Ok();
+        await producer.Produce(AssetTopics.AssetUpdate, JsonSerializer.Serialize(msg));
+    }
+
+    private async Task UpdateStatusForMp3(string originalPath, string newPath)
+    {
+        var metadata = await fileStore.GetMetadata(newPath, CancellationToken.None);
+        if (metadata == null)
+        {
+            logger.LogError("Could not get metadata for converted MP3 file: {NewPath}", newPath);
+            return;
+        }
+
+        var msg = new AssetUpdateMessage(
+            OriginalPath: originalPath,
+            NewUrl: fileStore.GetUrl(newPath),
+            NewPath: newPath,
+            NewName: Path.GetFileName(newPath),
+            NewType: metadata.ContentType,
+            NewSize: metadata.Size,
+            Progress: 100,
+            IsNewAsset: true
+        );
+        await producer.Produce(AssetTopics.AssetUpdate, JsonSerializer.Serialize(msg));
     }
 }

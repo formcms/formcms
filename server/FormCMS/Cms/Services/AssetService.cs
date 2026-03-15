@@ -1,6 +1,7 @@
 using FormCMS.Core.Assets;
 using FormCMS.Core.HookFactory;
 using FormCMS.Infrastructure.Downloader;
+using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
@@ -8,7 +9,9 @@ using FormCMS.Utils.DataModels;
 using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
+using FormCMS.Video.Models;
 using Humanizer;
+using System.Text.Json;
 
 namespace FormCMS.Cms.Services;
 
@@ -19,7 +22,8 @@ public class AssetService(
     IServiceProvider provider,
     HookRegistry hookRegistry,
     SystemSettings systemSettings,
-    ShardGroup shardGroup
+    ShardGroup shardGroup,
+    IStringMessageProducer producer
 ) : IAssetService
 {
     public XEntity GetEntity(bool withLinkCount)
@@ -296,6 +300,21 @@ public class AssetService(
         await shardGroup.PrimaryDao.BatchInsert(Assets.TableName, Assets.ToInsertRecords([asset]));
         await hookRegistry.AssetPostAdd.Trigger(provider, new AssetPostAddArgs(asset));
         return path;
+    }
+
+    public async Task<string> ConvertToMp3(long id, CancellationToken ct)
+    {
+        var asset = await Single(id, false, ct);
+        if (!asset.Type.StartsWith("video/") && !asset.Type.StartsWith("audio/"))
+        {
+            throw new ResultException("Asset is not a video or audio file.");
+        }
+
+        var newPath = Path.ChangeExtension(asset.Path, ".mp3");
+        var msg = JsonSerializer.Serialize(new FFMpegMessage(asset.Name, asset.Path, "mp3", false, newPath));
+        await producer.Produce(VideoTopics.Rdy4FfMpeg, msg);
+
+        return newPath;
     }
 
     public bool IsValidSignature(IFormFile file)
