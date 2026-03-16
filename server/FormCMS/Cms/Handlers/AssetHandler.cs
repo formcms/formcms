@@ -1,7 +1,5 @@
 using FormCMS.Cms.Services;
 using FormCMS.Core.Assets;
-using FormCMS.Core.Auth;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace FormCMS.Cms.Handlers;
@@ -83,20 +81,5 @@ public static class AssetHandler
             "/convert-mp3/{id:long}",
             (IAssetService svc, long id, CancellationToken ct) => svc.ConvertToMp3(id, ct)
         );
-
-        app.MapPut(
-                "/hls/progress",
-                async (IAssetService svc, Asset asset, CancellationToken ct) =>
-                {
-                    await svc.UpdateHlsProgress(asset, ct);
-                }
-            )
-            .RequireAuthorization(
-                new AuthorizeAttribute
-                {
-                    AuthenticationSchemes = CmsAuthSchemas.ApiKeyAuth
-                }
-            );
-        
     }
 }

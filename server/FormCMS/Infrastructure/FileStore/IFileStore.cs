@@ -14,6 +14,7 @@ public interface IFileStore
     Task DownloadFileWithRelated(string path, string localPath, CancellationToken ct);
     Task Del(string file, CancellationToken ct);
     Task DelByPrefix(string prefix, CancellationToken ct);
+    Task Duplicate(string oldPath, string newPath, CancellationToken ct);
     Task<string[]> GetUploadedChunks(string path, CancellationToken ct);
     Task<string> UploadChunk(string path, int chunkNumber, Stream stream, CancellationToken ct);
     Task CommitChunks(string path, CancellationToken ct);

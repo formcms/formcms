@@ -1,6 +1,8 @@
 using FormCMS.Auth.Models;
 using FormCMS.Cms.Builders;
+using FormCMS.Cms.Workers;
 using FormCMS.Infrastructure.RelationDbDao;
+using FormCMS.Video.Workers;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 namespace FormCMS.MonoApp;
@@ -92,6 +94,9 @@ public static class Builder
         builder.Services.AddComments();
         builder.Services.AddAuditLog();
         builder.Services.AddNotify();
+        builder.Services.AddHostedService<AssetUpdateMessageHandler>();
+        builder.Services.AddHostedService<FFMpegWorker>();
+        
         return  monoMonoSettings;
     }
 

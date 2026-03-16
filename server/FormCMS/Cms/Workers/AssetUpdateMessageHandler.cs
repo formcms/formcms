@@ -1,7 +1,10 @@
+using System.Security.Claims;
 using System.Text.Json;
+using FormCMS.Auth.Services;
 using FormCMS.Cms.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Assets;
+using FormCMS.Core.Identities;
 using FormCMS.Infrastructure.EventStreaming;
 
 namespace FormCMS.Cms.Workers;
@@ -31,23 +34,51 @@ public sealed class AssetUpdateMessageHandler(
                     }
 
                     await using var scope = provider.CreateAsyncScope();
-                    var assetService = scope.ServiceProvider.GetRequiredService<IAssetService>();
+                    var httpContextAccessor = scope.ServiceProvider.GetService<IHttpContextAccessor>();
+                    var accountService = scope.ServiceProvider.GetService<IAccountService>();
 
-                    if (msg.IsNewAsset)
+                    HttpContext? originalContext = null;
+                    if (httpContextAccessor != null && accountService != null && !string.IsNullOrEmpty(msg.UserId))
                     {
-                        await assetService.AddWithAction(msg.NewPath!, msg.NewName!, ct);
+                        originalContext = httpContextAccessor.HttpContext;
+
+                        // Fetch the user from the database to get all roles/claims
+                        var userResult = await accountService.InternalGetSingleUser(msg.UserId, ct);
+                        var claims = userResult.ToClaims();
+
+                        var identity = new ClaimsIdentity(claims, "QueueImpersonation");
+                        var principal = new ClaimsPrincipal(identity);
+
+                        httpContextAccessor.HttpContext = new DefaultHttpContext
+                        {
+                            User = principal
+                        };
                     }
-                    else
+
+                    try
                     {
+                        var assetService = scope.ServiceProvider.GetRequiredService<IAssetService>();
+
+                        if (msg.IsNewAsset)
+                        {
+                            await assetService.CreateNewAssetRefOriginal(msg.OriginalPath, msg.NewPath!, ct);
+                        }
+
                         var asset = new Asset(
                             Path: msg.OriginalPath,
                             Url: msg.NewUrl,
                             Progress: msg.Progress
                         );
-                        await assetService.UpdateHlsProgress(asset, ct);
+                        await assetService.UpdateConvertProgress(asset, ct);
+                        logger.LogInformation("AssetUpdateMessageHandler processed: {Path}", msg.OriginalPath);
                     }
-
-                    logger.LogInformation("AssetUpdateMessageHandler processed: {Path}", msg.OriginalPath);
+                    finally
+                    {
+                        if (httpContextAccessor != null && !string.IsNullOrEmpty(msg.UserId))
+                        {
+                            httpContextAccessor.HttpContext = originalContext;
+                        }
+                    }
                 }
                 catch (Exception ex)
                 {

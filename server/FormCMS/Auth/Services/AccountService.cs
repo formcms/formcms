@@ -48,6 +48,11 @@ public class AccountService<TUser, TRole,TCtx>(
     public async Task<UserAccess> GetSingleUser(string id, CancellationToken ct)
     {
         profileService.MustHasAnyRole([Roles.Admin, Roles.Sa]);
+        return await InternalGetSingleUser(id, ct);
+    }
+
+    public async Task<UserAccess> InternalGetSingleUser(string id, CancellationToken ct)
+    {
         var query = from user in context.Users
             where user.Id == id 
             join userRole in context.UserRoles

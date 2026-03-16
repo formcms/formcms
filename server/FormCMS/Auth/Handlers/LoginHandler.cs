@@ -10,9 +10,9 @@ public static class LoginHandler
     public static void MapLoginHandlers(this RouteGroupBuilder app)
     {
         
-        app.MapPost("/login", async ( ILoginService s, LoginReq req,HttpContext context) =>
+        app.MapPost("/login", async ( ILoginService s, LoginReq req) =>
         {
-            await s.Login(req.usernameOrEmail, req.Password, context);
+            await s.Login(req.usernameOrEmail, req.Password);
         });
         
         app.MapPost("/register", async ( ILoginService s, RegisterReq req )

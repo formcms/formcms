@@ -209,6 +209,21 @@ public class LocalFileStore(
 
         Directory.Delete(chunkDir, recursive: true);
     }
+
+    public Task Duplicate(string oldPath, string newPath, CancellationToken ct)
+    {
+        var fullOldPath = Path.Join(options.PathPrefix, oldPath);
+        var fullNewPath = Path.Join(options.PathPrefix, newPath);
+
+        if (!File.Exists(fullOldPath))
+        {
+            throw new FileNotFoundException($"Source file not found: {fullOldPath}");
+        }
+
+        CreateDirAndCopy(fullOldPath, fullNewPath);
+        return Task.CompletedTask;
+    }
+
     private string GetContentType(string filePath)
         => _provider.TryGetContentType(filePath, out var contentType)
             ? contentType

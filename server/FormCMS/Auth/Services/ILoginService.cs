@@ -4,7 +4,7 @@ namespace FormCMS.Auth.Services;
 
 public interface ILoginService
 {
-    Task Login(string userName, string password, HttpContext httpContext);
+    Task Login(string userName, string password);
     Task Register(string username, string email, string password);
     Task Logout();
     Task ExternalLogin(string provider, string returnUrl);

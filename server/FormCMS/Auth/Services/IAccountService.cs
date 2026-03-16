@@ -9,6 +9,7 @@ public interface IAccountService
     Task<bool> HasUser(CancellationToken ct = default);
     Task<string[]> GetEntities(CancellationToken ct);
     Task<UserAccess> GetSingleUser(string id,CancellationToken ct);
+    Task<UserAccess> InternalGetSingleUser(string id, CancellationToken ct);
     Task<UserAccess[]> GetUsers(CancellationToken ct);
     Task<string[]> GetRoles(CancellationToken ct);
     Task<Result> EnsureRoles(string[] roles);

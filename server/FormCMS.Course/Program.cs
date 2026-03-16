@@ -101,7 +101,6 @@ public class Program
 
             builder.Services.Configure<StripeSettings>(builder.Configuration.GetSection("Stripe"));
             builder.Services.AddSubscriptions();
-            builder.Services.AddVideo();
         }
 
         void AddMessageProducer()
@@ -127,7 +126,7 @@ public class Program
             builder.Services.AddSingleton(new EmitMessageWorkerOptions(taskTimingSeconds?.EmitMessageDelay ?? 30));
             builder.Services.AddHostedService<EmitMessageHandler>();
 
-            builder.Services.AddHostedService<FFMpegWorker>();
+            builder.Services.AddVideoWorkers();
             builder.Services.AddHostedService<AssetUpdateMessageHandler>();
 
             _ = dbProvider switch

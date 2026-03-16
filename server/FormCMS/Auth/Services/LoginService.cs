@@ -2,11 +2,9 @@ using System.Security.Claims;
 using FormCMS.Auth.Models;
 using FormCMS.Utils.FancyId;
 using FormCMS.Utils.ResultExt;
-using GraphQL;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.OAuth;
 using Microsoft.AspNetCore.Identity;
-using NUlid;
 
 namespace FormCMS.Auth.Services;
 
@@ -23,7 +21,7 @@ public class LoginService<TUser,TRole>(
 
 
 {
-    public async Task Login(string usernameOrEmail, string password, HttpContext context)
+    public async Task Login(string usernameOrEmail, string password)
     {
         if (usernameOrEmail == Constants.GuestUserPrefix && contextAccessor.HttpContext != null)
         {
