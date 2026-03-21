@@ -6,6 +6,7 @@ public static class ServiceCollectionExtensions
     {
         services.AddScoped<IConversionStrategy, HlsConversionStrategy>();
         services.AddScoped<IConversionStrategy, Mp3ConversionStrategy>();
+        services.AddScoped<IConversionStrategy, M4aConversionStrategy>();
         services.AddHostedService<FFMpegWorker>();
         return services;
     }

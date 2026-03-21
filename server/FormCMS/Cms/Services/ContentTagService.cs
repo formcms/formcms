@@ -16,7 +16,6 @@ public class ContentTagService(
 {
     public async Task<ContentTag[]> GetContentTags(LoadedEntity entity, string[] ids, CancellationToken ct)
     {
-
         var contentFieldName = string.IsNullOrWhiteSpace(entity.ContentTagField)
             ? entity.Attributes.FirstOrDefault(x => x.DisplayType == DisplayType.Editor)
                 ?.Field ?? ""

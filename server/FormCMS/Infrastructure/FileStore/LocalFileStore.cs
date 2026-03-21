@@ -49,7 +49,9 @@ public class LocalFileStore(
                 Mappings =
                 {
                     [".m3u8"] = "application/vnd.apple.mpegurl",
-                    [".ts"] = "video/mp2t" 
+                    [".ts"] = "video/mp2t",
+                    [".m4a"] = "audio/mp4",
+                    [".m4b"] = "audio/mp4"
                 }
             }
         });

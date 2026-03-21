@@ -109,7 +109,7 @@ public class AssetService(
         }
 
         files = files.Select(x=>x.IsImage()?resizer.CompressImage(x):x).ToArray();
-        var pairs = files.Select(x => (FileUtils.GetFilePath(x.FileName), x)).ToArray();
+        var pairs = files.Select(x => (FileUtils.GenerateUniqueDatedFilePath(x.FileName), x)).ToArray();
 
         var assets = new List<Asset>();
         foreach (var (path, file) in pairs)
@@ -280,7 +280,13 @@ public class AssetService(
         }
 
         var finalFileName = Path.GetFileName(tempFileName);
-        var path = FileUtils.GetFilePath(finalFileName);
+        var path = FileUtils.GenerateUniqueDatedFilePath(finalFileName);
+        
+        if (await store.GetMetadata(path, ct) != null)
+        {
+            File.Delete(tempFileName);
+            throw new ResultException($"File {path} already exists.");
+        }
 
         // Move / upload
         await store.Upload(File.OpenRead(tempFileName), path, ct);
@@ -318,10 +324,33 @@ public class AssetService(
         return newPath;
     }
 
+    public async Task<string> ConvertToM4a(long id, CancellationToken ct)
+    {
+        var asset = await Single(id, false, ct);
+        if (!asset.Type.StartsWith("video/") && !asset.Type.StartsWith("audio/"))
+        {
+            throw new ResultException("Asset is not a video or audio file.");
+        }
+
+        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("Access denied");
+
+        var newPath = Path.ChangeExtension(asset.Path, ".m4a");
+        var msg = JsonSerializer.Serialize(new ConvertVideoMessage(asset.Name, asset.Path, "m4a", false, newPath, userId));
+        await producer.Produce(AssetTopics.ConvertVideo, msg);
+        return newPath;
+    }
+
     public async Task CreateNewAssetRefOriginal(string oldPath, string newPath, CancellationToken ct)
     {
         var existingAsset = await Single(oldPath, false, ct);
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("Access denied");
+
+        // Check if the asset already exists by path to avoid duplicates
+        var record = await shardGroup.PrimaryDao.Single(Assets.Single(newPath), ct);
+        if (record != null)
+        {
+             return;
+        }
 
         // Get metadata for the new file
         var newFileMetadata = await store.GetMetadata(newPath, ct)

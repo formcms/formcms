@@ -81,5 +81,10 @@ public static class AssetHandler
             "/convert-mp3/{id:long}",
             (IAssetService svc, long id, CancellationToken ct) => svc.ConvertToMp3(id, ct)
         );
+
+        app.MapPost(
+            "/convert-m4a/{id:long}",
+            (IAssetService svc, long id, CancellationToken ct) => svc.ConvertToM4a(id, ct)
+        );
     }
 }

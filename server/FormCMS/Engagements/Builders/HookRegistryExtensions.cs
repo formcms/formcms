@@ -20,7 +20,8 @@ public static class HookRegistryExtensions
                 }
                 else
                 {
-                    throw new ResultException("Can not fond entity name from url query query 'entity'");
+                    var items = await s.GetTopList(pg.Offset, pg.Limit, CancellationToken.None);
+                    args = args with { OutRecords = items };
                 }
 
                 return args;

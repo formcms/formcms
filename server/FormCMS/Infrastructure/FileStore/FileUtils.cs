@@ -18,10 +18,16 @@ public static class FileUtils
         EnsureFolder(destDir);
     }
     
-    public static string GetFilePath(string fileName)
+    public static string GenerateUniqueDatedFilePath(string fileName)
     {
         var dir = DateTime.Now.ToString("/yyyy-MM");
         var file = string.Concat(Nanoid.Generate(size:8), Path.GetExtension(fileName));
         return Path.Join(dir, file);
+    }
+
+    public static string GenerateDatedFilePath(string fileName)
+    {
+        var dir = DateTime.Now.ToString("/yyyy-MM");
+        return Path.Join(dir, fileName);
     }
 }

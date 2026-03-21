@@ -6,6 +6,7 @@ using System.Text.Json.Serialization;
 using FormCMS.Auth.Services;
 using FormCMS.Cms.Graph;
 using FormCMS.Cms.Handlers;
+using FormCMS.Cms.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Assets;
 using FormCMS.Core.Descriptors;
@@ -20,6 +21,7 @@ using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.Builders;
 using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using GraphQL;
 using Microsoft.AspNetCore.Diagnostics;
@@ -235,6 +237,24 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         UseGraphql();
         UseExceptionHandler();
         app.Services.GetRequiredService<IFileStore>().Start(app);
+        app.Services.GetRequiredService<PluginRegistry>().PluginQueries.Add(CmsConstants.ContentTagQuery);
+        app.Services.GetRequiredService<HookRegistry>()
+            .ListPlugInQueryArgs.RegisterDynamic(CmsConstants.ContentTagQuery,
+            async (IContentTagService service,IEntitySchemaService entitySchemaService,
+                ListPlugInQueryArgs args) =>
+        {
+            if (!args.Args.TryGetValue("entityName", out var entityName) 
+                || !args.Args.TryGetValue("recordId", out var ids))
+            {
+                return args;
+            }
+
+            var allEntities = await entitySchemaService.AllEntities(CancellationToken.None);
+            var entity = allEntities.FirstOrDefault(x=>x.Name == entityName)?? throw new Exception($"Entity {entityName} not found");
+            var tags = await service.GetContentTags(entity.ToLoadedEntity(), ids,CancellationToken.None);
+            args = args with{OutRecords =  tags.Select(x=>RecordExtensions.FormObject(x)).ToArray()};
+            return args;
+        });
         return;
 
 
@@ -325,14 +345,9 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
     }
 }
 
-internal class PluginLoadContext : AssemblyLoadContext
+internal class PluginLoadContext(string pluginPath) : AssemblyLoadContext(isCollectible: true)
 {
-    private readonly AssemblyDependencyResolver _resolver;
-
-    public PluginLoadContext(string pluginPath) : base(isCollectible: true)
-    {
-        _resolver = new AssemblyDependencyResolver(pluginPath);
-    }
+    private readonly AssemblyDependencyResolver _resolver = new(pluginPath);
 
     protected override Assembly? Load(AssemblyName assemblyName)
     {

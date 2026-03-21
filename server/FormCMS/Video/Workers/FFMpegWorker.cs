@@ -16,7 +16,8 @@ public sealed class FFMpegWorker(
     private IEnumerable<IConversionStrategy> strategies =
     [
         new HlsConversionStrategy(logger, fileStore, producer),
-        new Mp3ConversionStrategy(logger, fileStore, producer)
+        new Mp3ConversionStrategy(logger, fileStore, producer),
+        new M4aConversionStrategy(logger, fileStore, producer)
     ];
     protected override async Task ExecuteAsync(CancellationToken ct)
     {
