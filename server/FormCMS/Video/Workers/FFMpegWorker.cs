@@ -33,22 +33,15 @@ public sealed class FFMpegWorker(
                     var msg = ParseMessage(s);
                     if (msg is null) return;
 
-                    if (msg.IsDelete)
+                    var strategy = strategies.FirstOrDefault(st => st.CanHandle(msg));
+                    if (strategy != null)
                     {
-                        var task = HlsConvertingTaskHelper.CreatTask(msg.Path);
-                        await fileStore.DelByPrefix(task.StorageFolder, ct);
+                        await strategy.ExecuteAsync(msg, ct);
                     }
                     else
                     {
-                        var strategy = strategies.FirstOrDefault(st => st.CanHandle(msg));
-                        if (strategy != null)
-                        {
-                            await strategy.ExecuteAsync(msg, ct);
-                        }
-                        else
-                        {
-                            logger.LogWarning("No conversion strategy found for target format: {TargetFormat}", msg.TargetFormat);
-                        }
+                        logger.LogWarning("No conversion strategy found for target format of path: {Path}",
+                            msg.TargetPath);
                     }
                 }
                 catch (Exception ex)
@@ -63,20 +56,8 @@ public sealed class FFMpegWorker(
     private ConvertVideoMessage? ParseMessage(string s)
     {
         var message = JsonSerializer.Deserialize<ConvertVideoMessage>(s);
-        if (message is null)
-        {
-            logger.LogWarning("Could not deserialize message: {RawMessage}", s);
-            return null;
-        }
-
-        if (string.IsNullOrEmpty(message.Path) || string.IsNullOrEmpty(message.TargetFormat))
-        {
-            logger.LogWarning(
-                "Invalid message: Missing Path or TargetFormat. Raw: {RawMessage}",
-                s
-            );
-            return null;
-        }
-        return message;
+        if (message is not null) return message;
+        logger.LogWarning("Could not deserialize message: {RawMessage}", s);
+        return null;
     }
 }

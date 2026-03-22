@@ -15,7 +15,7 @@ public static class DatabaseMigratorExtensions
             
         await migrator.MigrateTable(Assets.TableName, Assets.Columns);
         await migrator.MigrateTable(AssetLinks.TableName, AssetLinks.Columns);
-        await migrator.CreateIndex( Assets.TableName, [nameof(Asset.Path).Camelize()], true, CancellationToken.None);
+        await migrator.CreateIndex( Assets.TableName, [nameof(Asset.Path).Camelize()], false, CancellationToken.None);
         await migrator.CreateForeignKey(
             AssetLinks.TableName, nameof(AssetLink.AssetId).Camelize(),
             Assets.TableName, nameof(Asset.Id).Camelize(),

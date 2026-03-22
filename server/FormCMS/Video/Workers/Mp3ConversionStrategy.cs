@@ -13,13 +13,14 @@ public class Mp3ConversionStrategy(
     IStringMessageProducer producer
 ) : IConversionStrategy
 {
-    public bool CanHandle(ConvertVideoMessage message) => message.TargetFormat == "mp3";
+    public bool CanHandle(ConvertVideoMessage message) => message.TargetPath?.EndsWith($".{ConvertVideoFormats.Mp3}") == true;
 
     public async Task ExecuteAsync(ConvertVideoMessage message, CancellationToken ct)
     {
         var task = HlsConvertingTaskHelper.CreatTask(message.Path);
         var tempPath = task.TempPath;
-        var tempTargetPath = Path.ChangeExtension(tempPath, ".mp3");
+        var tempTargetPath = Path.ChangeExtension(tempPath, $".{ConvertVideoFormats.Mp3}");
+        var targetPath = message.TargetPath ?? throw new InvalidOperationException("TargetPath is required");
 
         await fileStore.Download(task.StoragePath, tempPath, ct);
         
@@ -48,16 +49,8 @@ public class Mp3ConversionStrategy(
             {
                 lastPercent = percent;
                 var msg = new AssetUpdateMessage(
-                    "mp3",
-                    OriginalPath: message.Path,
-                    NewUrl: null,
-                    NewPath: null,
-                    NewName: null,
-                    NewType: null,
-                    NewSize: null,
-                    Progress: percent,
-                    IsNewAsset: false,
-                    UserId: message.UserId
+                    NewPath: targetPath, // use targetPath for progress updates
+                    Progress: percent
                 );
                 // Fire and forget so we don't block the FFmpeg event thread
                 _ = producer.Produce(AssetTopics.AssetUpdate, JsonSerializer.Serialize(msg));
@@ -65,42 +58,25 @@ public class Mp3ConversionStrategy(
         };
 
         await conversion.Start(ct);
-        
-        var newPath = message.TargetPath ?? Path.ChangeExtension(task.StoragePath, ".mp3");
 
         await using (var stream = new FileStream(tempTargetPath, FileMode.Open, FileAccess.Read))
         {
-            await fileStore.Upload(stream, newPath, ct);
+            await fileStore.Upload(stream, targetPath, ct);
         }
         
         File.Delete(tempTargetPath);
         
-        await UpdateStatusForMp3(message.Path, newPath, message.UserId);
-        logger.LogInformation("MP3 conversion finished for [{OriginalPath}] to [{NewPath}]", message.Path, newPath);
+        await UpdateStatusForMp3(targetPath);
+        logger.LogInformation("MP3 conversion finished for [{OriginalPath}] to [{NewPath}]", message.Path, targetPath);
 
         File.Delete(tempPath);
     }
 
-    private async Task UpdateStatusForMp3(string originalPath, string newPath, string? userId)
+    private async Task UpdateStatusForMp3(string targetPath)
     {
-        var metadata = await fileStore.GetMetadata(newPath, CancellationToken.None);
-        if (metadata == null)
-        {
-            logger.LogError("Could not get metadata for converted MP3 file: {NewPath}", newPath);
-            return;
-        }
-
         var msg = new AssetUpdateMessage(
-            "mp3",
-            OriginalPath: originalPath,
-            NewUrl: fileStore.GetUrl(newPath),
-            NewPath: newPath,
-            NewName: Path.GetFileName(newPath),
-            NewType: metadata.ContentType,
-            NewSize: metadata.Size,
-            Progress: 100,
-            IsNewAsset: true,
-            UserId: userId
+            NewPath: targetPath,
+            Progress: 100
         );
         await producer.Produce(AssetTopics.AssetUpdate, JsonSerializer.Serialize(msg));
     }

@@ -18,8 +18,6 @@ public interface IAssetService
     Task UpdateConvertProgress(Asset asset, CancellationToken ct);
     Task<string> AddWithAction(string path, string fileName, CancellationToken ct);
     Task<string> DownloadVideo(string url, CancellationToken ct);
-    Task<string> ConvertToMp3(long id, CancellationToken ct);
-    Task<string> ConvertToM4a(long id, CancellationToken ct);
-    Task CreateNewAssetRefOriginal(string oldPath, string newPath, CancellationToken ct);
+    Task<string> Convert(long id, string targetFormat, CancellationToken ct);
     bool IsValidSignature(IFormFile file);
 }

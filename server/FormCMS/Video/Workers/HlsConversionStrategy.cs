@@ -13,7 +13,7 @@ public class HlsConversionStrategy(
     IStringMessageProducer producer
 ) : IConversionStrategy
 {
-    public bool CanHandle(ConvertVideoMessage message) => message.TargetFormat == "m3u8";
+    public bool CanHandle(ConvertVideoMessage message) => message.TargetPath?.EndsWith($".{ConvertVideoFormats.M3u8}") == true;
 
     public async Task ExecuteAsync(ConvertVideoMessage message, CancellationToken ct)
     {
@@ -30,23 +30,15 @@ public class HlsConversionStrategy(
         File.Delete(task.TempPath);
         Directory.Delete(task.TempFolder, recursive: true);
         
-        await UpdateStatus(task, message.UserId);
+        await UpdateStatus(task);
         logger.LogInformation("HLS conversion finished for [{TaskStoragePath}]", task.StoragePath);
     }
 
-    private async Task UpdateStatus(HlsConvertingTask task, string? userId)
+    private async Task UpdateStatus(HlsConvertingTask task)
     {
         var msg = new AssetUpdateMessage(
-            "hls",
-            OriginalPath: task.StoragePath,
-            NewUrl: fileStore.GetUrl(task.StorageTargetPath),
-            NewPath: null,
-            NewName: null,
-            NewType: null,
-            NewSize: null,
-            Progress: 100,
-            IsNewAsset: false,
-            UserId: userId
+            NewPath: task.StorageTargetPath,
+            Progress: 100
         );
         await producer.Produce(AssetTopics.AssetUpdate, JsonSerializer.Serialize(msg));
     }
