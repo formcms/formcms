@@ -127,7 +127,7 @@ public static class Assets
     {
         var record = RecordExtensions.FormObject(
             asset,
-            whiteList: [nameof(Asset.Progress), nameof(Asset.Url)]
+            whiteList: [nameof(Asset.Progress), nameof(Asset.Size) ]
         );
         return new Query(TableName)
             .Where(nameof(Asset.Path).Camelize(), asset.Path)

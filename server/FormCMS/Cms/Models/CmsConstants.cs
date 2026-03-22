@@ -1,6 +1,6 @@
 namespace FormCMS.Cms.Models;
 
-public class CmsConstants
+public abstract class CmsConstants
 {
     public const string ContentTagQuery = "contentTag";
 }

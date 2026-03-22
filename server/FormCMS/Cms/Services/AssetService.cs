@@ -260,6 +260,8 @@ public class AssetService(
 
     public async  Task UpdateConvertProgress(Asset asset, CancellationToken ct)
     {
+        var metadata = await store.GetMetadata(asset.Path, ct);
+        asset = asset with { Size = metadata?.Size??0 };
         await shardGroup.PrimaryDao.Exec(asset.UpdateConvertProgress(), ct);
     }
 
@@ -315,8 +317,11 @@ public class AssetService(
         {
             throw new ResultException("Asset is not a video or audio file.");
         }
-
-        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("Access denied");
+        
+        if (!ConvertVideoFormats.MimeTypes.TryGetValue(targetFormat, out var targetMimeType))
+        {
+            throw new ResultException($"Target format {targetFormat} is not supported.");
+        }
 
         var newPath = Path.ChangeExtension(asset.Path, $".{targetFormat}");
         
@@ -326,16 +331,15 @@ public class AssetService(
             throw new ResultException($"Target file {newPath} already exists.");
         }
 
+        // Add stub asset immediately to track progress
+        await CreateNewAssetStub(asset, newPath, targetMimeType, ct);
+
         var msg = JsonSerializer.Serialize(new ConvertVideoMessage(asset.Path, newPath));
         await producer.Produce(AssetTopics.ConvertVideo, msg);
-        
-        // Add stub asset immediately to track progress
-        await CreateNewAssetStub(asset, newPath, ct);
-
         return newPath;
     }
 
-    private async Task CreateNewAssetStub(Asset originalAsset, string newPath, CancellationToken ct)
+    private async Task CreateNewAssetStub(Asset originalAsset, string newPath, string mimeType, CancellationToken ct)
     {
          var record = await shardGroup.PrimaryDao.Single(Assets.Single(newPath), ct);
          if (record != null)
@@ -351,7 +355,7 @@ public class AssetService(
              Name = Path.GetFileName(newPath),
              Title = Path.GetFileNameWithoutExtension(newPath),
              Size = 0,
-             Type = "audio/mp4", // Or other default type
+             Type = mimeType,
              CreatedAt = DateTime.UtcNow,
              UpdatedAt = DateTime.UtcNow,
              Progress = 0 // Initialize progress to 0

@@ -35,8 +35,8 @@ public sealed class AssetUpdateMessageHandler(
 
                     var asset = new Asset(
                         Path: msg.NewPath,
-                        Url: "",
-                        Progress: msg.Progress
+                        Progress: msg.Progress,
+                        Url: ""
                     );
                     
                     await assetService.UpdateConvertProgress(asset, ct);
