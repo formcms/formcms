@@ -38,7 +38,7 @@ public static class HookRegistryExtensions
             return args with { OutRecords = [] };
         });
         
-        registry.ListPlugInQueryArgs.RegisterDynamic(CommentHelper.CommentContentTagQuery,
+        registry.ListPlugInQuery.RegisterDynamic(CommentHelper.CommentContentTagQuery,
             async (ICommentsQueryPlugin s,ListPlugInQueryArgs args) =>
             {
                 var ids = args.Args[nameof(Comment.Id).Camelize()]

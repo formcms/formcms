@@ -33,7 +33,7 @@ public sealed class QueryService(
     {
         if (registry.PluginQueries.Contains(name))
         {
-            var queryRes = await hook.ListPlugInQueryArgs.Trigger(provider, new ListPlugInQueryArgs(name, span, pagination, args));
+            var queryRes = await hook.ListPlugInQuery.Trigger(provider, new ListPlugInQueryArgs(name, span, pagination, args));
             return queryRes.OutRecords??throw new ResultException($"Fail to get query result for [{name}]");
         }
         var query = await FromSavedQuery(name, args, ct);

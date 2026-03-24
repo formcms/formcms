@@ -60,9 +60,29 @@ public static class Endpoints
         ) =>
         {
             await setupService.UpdateSpaPath(oldPath, newPath);
-            return Results.Ok();
-        });
-    }
+                return Results.Ok();
+            });
+
+            app.MapGet("/api/system/download-plugins", ([FromServices] ISystemSetupService setupService) => setupService.GetDownloadPlugins());
+
+            app.MapDelete("/api/system/download-plugins", async (
+                [FromServices] ISystemSetupService setupService,
+                [FromQuery] string fileName
+            ) =>
+            {
+                await setupService.DeleteDownloadPlugin(fileName);
+                return Results.Ok();
+            });
+
+            app.MapPost("/api/system/download-plugins", async (
+                [FromServices] ISystemSetupService setupService,
+                [FromForm] IFormFile file
+            ) =>
+            {
+                await setupService.AddDownloadPlugin(file);
+                return Results.Ok();
+            }).DisableAntiforgery();
+        }
 
     public static void MapSpas(this WebApplication app)
     {

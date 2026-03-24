@@ -9,7 +9,7 @@ public  static class HookRegistryExtensions
     public static void RegisterFtsHooks(this HookRegistry hookRegistry)
     {
       
-        hookRegistry.ListPlugInQueryArgs.RegisterDynamic(SearchConstants.SearchQueryName, 
+        hookRegistry.ListPlugInQuery.RegisterDynamic(SearchConstants.SearchQueryName, 
             async (ListPlugInQueryArgs args, ISearchService service ) =>
             {
                 if (args.Args.TryGetValue(SearchConstants.Query, out var query))

@@ -34,6 +34,7 @@ public static class Builder
         {
             storePath = Path.Combine(dataPath, "config");
             monoRuntime.AppRoot = Path.Combine(dataPath, "apps");
+            
         }
         
         var settingsStore = new SettingsStore(storePath);
@@ -80,6 +81,7 @@ public static class Builder
             if (!string.IsNullOrWhiteSpace(dataPath))
             {
                 settings.LocalFileStoreOptions.PathPrefix = Path.Combine(dataPath,"files") ;
+                settings.DownloadPluginPath = Path.Combine(dataPath, "download-plugins");
                 
                 Console.WriteLine("---------------------------------");
                 Console.WriteLine($"pathPrefix: {settings.LocalFileStoreOptions.PathPrefix}");

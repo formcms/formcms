@@ -9,7 +9,7 @@ public static class HookRegistryExtensions
 {
     public static void RegisterEngagementHooks(this HookRegistry hookRegistry)
     {
-        hookRegistry.ListPlugInQueryArgs.RegisterDynamic(EngagementQueryPluginConstants.TopList,
+        hookRegistry.ListPlugInQuery.RegisterDynamic(EngagementQueryPluginConstants.TopList,
             async (IEngagementQueryPlugin s, ListPlugInQueryArgs args) =>
             {
                 var pg = PaginationHelper.ToValid(args.Pagination, 10);
