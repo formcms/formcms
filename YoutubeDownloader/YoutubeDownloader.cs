@@ -1,6 +1,7 @@
 ﻿using FormCMS.Infrastructure.Downloader;
 using YoutubeExplode;
 using YoutubeExplode.Videos.Streams;
+using YoutubeExplode.Converter;
 
 namespace YoutubeDownloader;
 
@@ -20,20 +21,38 @@ public class YoutubeDownloader : IDownloader
 
         var streamManifest = await youtube.Videos.Streams.GetManifestAsync(video.Id, ct);
 
-        var streamInfo = streamManifest
-            .GetMuxedStreams()
+        var videoStreamInfo = streamManifest
+            .GetVideoStreams()
+            .Where(s => s.Container == Container.Mp4)
             .GetWithHighestVideoQuality();
 
-        if (streamInfo == null)
-            return "";
+        var audioStreamInfo = streamManifest
+            .GetAudioStreams()
+            .GetWithHighestBitrate();
 
-        var fileName = $"{video.Title}.{streamInfo.Container}";
-        // Clean filename from invalid characters
-        fileName = string.Join("_", fileName.Split(Path.GetInvalidFileNameChars()));
-        var path = Path.Join(destinationPath, fileName);
-        await using var stream = await youtube.Videos.Streams.GetAsync(streamInfo, ct);
-        await using var file = File.Create(path);
-        await stream.CopyToAsync(file, ct);
-        return path;
+        if (videoStreamInfo == null || audioStreamInfo == null)
+        {
+            var muxedStreamInfo = streamManifest
+                .GetMuxedStreams()
+                .GetWithHighestVideoQuality();
+            
+            if (muxedStreamInfo == null)
+                return "";
+                
+            var fileName = $"{video.Title}.{muxedStreamInfo.Container}";
+            fileName = string.Join("_", fileName.Split(Path.GetInvalidFileNameChars()));
+            var path = Path.Join(destinationPath, fileName);
+            await youtube.Videos.Streams.DownloadAsync(muxedStreamInfo, path, cancellationToken: ct);
+            return fileName;
+        }
+
+        var fileNameCombined = $"{video.Title}.mp4";
+        fileNameCombined = string.Join("_", fileNameCombined.Split(Path.GetInvalidFileNameChars()));
+        var pathCombined = Path.Join(destinationPath, fileNameCombined);
+        
+        var streamInfos = new IStreamInfo[] { audioStreamInfo, videoStreamInfo };
+        await youtube.Videos.DownloadAsync(streamInfos, new ConversionRequestBuilder(pathCombined).Build(), cancellationToken: ct);
+        
+        return fileNameCombined ;
     }
 }

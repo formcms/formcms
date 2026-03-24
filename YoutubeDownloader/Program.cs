@@ -8,7 +8,7 @@ class Program
     static async Task Main(string[] args)
     {
         // === CONFIG ===
-        string testUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ"; // Rick Astley (public, safe test video)
+        string testUrl = "https://www.youtube.com/watch?v=udrl-sRp_GE"; 
         string destinationFolder = @"/Users/jingshunchen/aaa"; // CHANGE THIS to a real writable folder on your machine
 
         // Make sure the folder exists

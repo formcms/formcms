@@ -251,7 +251,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
 
             var allEntities = await entitySchemaService.AllEntities(CancellationToken.None);
             var entity = allEntities.FirstOrDefault(x=>x.Name == entityName)?? throw new Exception($"Entity {entityName} not found");
-            var tags = await service.GetContentTags(entity.ToLoadedEntity(), ids,CancellationToken.None);
+            var tags = await service.GetContentTags(entity.ToLoadedEntity(), ids,true,CancellationToken.None);
             args = args with{OutRecords =  tags.Select(x=>RecordExtensions.FormObject(x)).ToArray()};
             return args;
         });

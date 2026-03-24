@@ -72,7 +72,7 @@ public class BookmarkService(
         var (filters, sorts) = QueryStringParser.Parse(args); 
         var executor = ctx.EngagementStatusShardRouter.ReplicaDao(userId);
         var listQuery = Bookmarks.List(userId, folderId, offset, limit);
-        var items = await executor.Many(listQuery, Models.Bookmarks.Columns,filters,sorts,ct);
+        var items = await executor.Many(listQuery, Bookmarks.Columns,filters,sorts,ct);
         var countQuery = Bookmarks.Count(userId, folderId);
         var count = await executor.Count(countQuery,Models.EngagementStatusHelper.Columns,filters,ct);
         return new ListResponse(items,count);  
@@ -137,7 +137,7 @@ public class BookmarkService(
             .ToArray();
         if (ids.Length == 0) return bookmarks;
 
-        var links = await contentTagService.GetContentTags(entity , ids, ct);
+        var links = await contentTagService.GetContentTags(entity , ids, false, ct);
         
         var dict = links.ToDictionary(x => x.RecordId);
         return bookmarks.Select(activity=>

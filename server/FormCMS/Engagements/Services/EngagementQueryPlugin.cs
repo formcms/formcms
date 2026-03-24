@@ -29,7 +29,7 @@ public class EngagementQueryPlugin(
             .ToArray();
 
         var loadedEntity = entity.ToLoadedEntity();
-        var tags = await contentTagService.GetContentTags(loadedEntity, ids!, ct);
+        var tags = await contentTagService.GetContentTags(loadedEntity, ids!,false, ct);
         return tags.Select(x =>
         {
             var rec = RecordExtensions.FormObject(x, blackList: [nameof(ContentTag.Data)]);
@@ -53,7 +53,7 @@ public class EngagementQueryPlugin(
                 .ToArray();
             var entity = allEntities.FirstOrDefault(x=>x.Name == grouping.Key)?? throw new Exception($"Entity {grouping.Key} not found");
             var loadedEntity = entity.ToLoadedEntity();
-            var tags = await contentTagService.GetContentTags(loadedEntity, ids!, ct);
+            var tags = await contentTagService.GetContentTags(loadedEntity, ids!, false, ct);
             foreach (var contentTag in tags)
             {
                 dict[grouping.Key + contentTag.RecordId] = contentTag;

@@ -74,7 +74,7 @@ public  abstract class SyncWorker(
         var contentTagService = scope.ServiceProvider.GetRequiredService<IContentTagService>();
         
         var loadedEntity = await entityService.ValidateEntity(entityName, ct).Ok();
-        var tags = await contentTagService.GetContentTags(loadedEntity, [id], ct);
+        var tags = await contentTagService.GetContentTags(loadedEntity, [id], false,ct);
         if (tags.Length > 0)
         {
             await Upsert(scope,loadedEntity, tags.First(), ct);

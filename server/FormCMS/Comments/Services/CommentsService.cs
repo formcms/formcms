@@ -125,7 +125,7 @@ public class CommentsService(
     
     private async Task<ActivityMessage> SetLinkUrl(ActivityMessage activityMessage,LoadedEntity entity, long recordId, CancellationToken ct)
     {
-        var links =await contentTagService.GetContentTags(entity,[recordId.ToString()],ct);
+        var links =await contentTagService.GetContentTags(entity,[recordId.ToString()],false,ct);
         if (links.Length == 1)
         {
             activityMessage = activityMessage with{Url =links[0].Url};

@@ -14,7 +14,7 @@ public class ContentTagService(
 
 ) : IContentTagService
 {
-    public async Task<ContentTag[]> GetContentTags(LoadedEntity entity, string[] ids, CancellationToken ct)
+    public async Task<ContentTag[]> GetContentTags(LoadedEntity entity, string[] ids, bool includeContent, CancellationToken ct)
     {
         var contentFieldName = string.IsNullOrWhiteSpace(entity.ContentTagField)
             ? entity.Attributes.FirstOrDefault(x => x.DisplayType == DisplayType.Editor)
@@ -66,7 +66,7 @@ public class ContentTagService(
             var tags = records.Select(record => new ContentTag(Data: record,
                 RecordId: record.StrOrEmpty(entity.PrimaryKey),
                 Title: Trim(record.StrOrEmpty(titleFieldName)),
-                Content: Trim(record.StrOrEmpty(contentFieldName)), 
+                Content: includeContent ?record.StrOrEmpty(contentFieldName):"", 
                 Subtitle: Trim(record.StrOrEmpty(subtitleFieldName)),
                 Url: $"/{entity.Name}/{record.StrOrEmpty(entity.PrimaryKey)}", 
                 Image: fileStore.GetUrl(record.StrOrEmpty(imageField)),
@@ -90,7 +90,7 @@ public class ContentTagService(
                     Data: record,
                     RecordId: id,
                     Url: (record.ByJsonPath<string>(entity.PageUrl, out var val) ? val! : entity.PageUrl) + id,
-                    Content: record.ByJsonPath<string>(entity.ContentTagField, out var content) ? content! : "",
+                    Content:includeContent && record.ByJsonPath<string>(entity.ContentTagField, out var content) ? content! : "",
                     Title: record.ByJsonPath<string>(entity.TitleTagField, out var title) ? Trim(title!) : "",
                     Image: record.ByJsonPath<string>(entity.ImageTagField, out var image) ? Trim(image!) : "",
                     Subtitle: record.ByJsonPath<string>(entity.SubtitleTagField, out var subtitle)
