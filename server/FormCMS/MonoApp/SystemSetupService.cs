@@ -4,6 +4,7 @@ using FormCMS.Auth.Services;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.ResultExt;
 using Microsoft.EntityFrameworkCore;
+using FormCMS;
 
 namespace FormCMS.MonoApp;
 
@@ -18,13 +19,18 @@ public interface ISystemSetupService
     Task UpdateSpaPath(string oldPath, string newPath);
     Task UpdateCorsOrigins(string[] origins);
     string[] GetCorsOrigins();
+
+    string[] GetDownloadPlugins();
+    Task DeleteDownloadPlugin(string fileName);
+    Task AddDownloadPlugin(IFormFile file);
 }
 
 public class SystemSetupService(
     SettingsStore settingsStore,
     MonoRunTime runTime,
     IServiceProvider serviceProvider,
-    IHostApplicationLifetime lifetime
+    IHostApplicationLifetime lifetime,
+    SystemSettings systemSettings
 ) : ISystemSetupService
 {
     public async Task<(bool DatabaseReady, bool HasHasSuperAdmin)> GetSystemStatus(CancellationToken ct)
@@ -249,6 +255,55 @@ public class SystemSetupService(
         EnsurePermission();
         var settings = settingsStore.Load();
         return settings?.CorsOrigins ?? [];
+    }
+
+    public string[] GetDownloadPlugins()
+    {
+        EnsurePermission();
+        if (!Directory.Exists(systemSettings.DownloadPluginPath))
+        {
+            return [];
+        }
+
+        return Directory.GetFiles(systemSettings.DownloadPluginPath, "*.dll")
+            .Select(Path.GetFileName).Where(x => x != null).ToArray()!;
+    }
+
+    public Task DeleteDownloadPlugin(string fileName)
+    {
+        EnsurePermission();
+        var filePath = Path.Combine(systemSettings.DownloadPluginPath, fileName);
+        if (File.Exists(filePath))
+        {
+            File.Delete(filePath);
+        }
+
+        RestartApp();
+        return Task.CompletedTask;
+    }
+
+    public async Task AddDownloadPlugin(IFormFile file)
+    {
+        EnsurePermission();
+        if (file.Length == 0)
+        {
+            throw new ResultException("File is empty");
+        }
+
+        if (Path.GetExtension(file.FileName).ToLower() != ".dll")
+        {
+            throw new ResultException("Only .dll files are allowed");
+        }
+
+        if (!Directory.Exists(systemSettings.DownloadPluginPath))
+        {
+            Directory.CreateDirectory(systemSettings.DownloadPluginPath);
+        }
+
+        var filePath = Path.Combine(systemSettings.DownloadPluginPath, file.FileName);
+        await using var stream = new FileStream(filePath, FileMode.Create);
+        await file.CopyToAsync(stream);
+        RestartApp();
     }
 
     private void EnsurePermission()

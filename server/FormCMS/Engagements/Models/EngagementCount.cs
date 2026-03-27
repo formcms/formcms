@@ -77,17 +77,22 @@ public static class EngagementCountHelper
 
 
     public static Query TopCountItems(string entityName, int offset, int limit)
-        => new Query(TableName)
+    {
+        var query = new Query(TableName)
             .Select(nameof(EngagementCount.EntityName).Camelize())
             .Select(nameof(EngagementCount.RecordId).Camelize())
             .Select(nameof(EngagementCount.Count).Camelize())
-            
             .Where(nameof(EngagementCount.EngagementType).Camelize(), Constants.ScoreActivityType)
-            .Where(nameof(EngagementCount.EntityName).Camelize(), entityName)
             .Where(nameof(DefaultColumnNames.Deleted).Camelize(), false)
             .OrderByDesc(nameof(EngagementCount.Count).Camelize())
             .Offset(offset)
             .Limit(limit);
+        if (!string.IsNullOrWhiteSpace(entityName))
+        {
+            query = query.Where(nameof(EngagementCount.EntityName).Camelize(), entityName);
+        }
+        return query;
+    }
 
     public static Query PageVisites(int topN)
         => new Query(TableName)

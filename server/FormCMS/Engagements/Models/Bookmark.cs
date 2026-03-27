@@ -100,6 +100,7 @@ public static class Bookmarks
         var query = new Query(TableName)
             .Select(
                 nameof(Bookmark.Id).Camelize(),
+                nameof(Bookmark.RecordId).Camelize(),
                 nameof(DefaultColumnNames.UpdatedAt).Camelize(),
                 nameof(Bookmark.Image).Camelize(),
                 nameof(Bookmark.Title).Camelize(),

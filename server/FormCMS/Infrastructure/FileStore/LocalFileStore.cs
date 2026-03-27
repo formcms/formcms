@@ -26,6 +26,14 @@ public class LocalFileStore(
         return Task.CompletedTask;
     }
 
+    public async Task Upload(Stream stream, string path, CancellationToken ct)
+    {
+        var dest = Path.Join(options.PathPrefix, path);
+        FileUtils.EnsureParentFolder(dest);
+        await using var fileStream = new FileStream(dest, FileMode.Create, FileAccess.Write);
+        await stream.CopyToAsync(fileStream, ct);
+    }
+
     public void Start(WebApplication app)
     {
         if (!File.Exists(options.PathPrefix))
@@ -41,7 +49,9 @@ public class LocalFileStore(
                 Mappings =
                 {
                     [".m3u8"] = "application/vnd.apple.mpegurl",
-                    [".ts"] = "video/mp2t" 
+                    [".ts"] = "video/mp2t",
+                    [".m4a"] = "audio/mp4",
+                    [".m4b"] = "audio/mp4"
                 }
             }
         });
@@ -201,6 +211,21 @@ public class LocalFileStore(
 
         Directory.Delete(chunkDir, recursive: true);
     }
+
+    public Task Duplicate(string oldPath, string newPath, CancellationToken ct)
+    {
+        var fullOldPath = Path.Join(options.PathPrefix, oldPath);
+        var fullNewPath = Path.Join(options.PathPrefix, newPath);
+
+        if (!File.Exists(fullOldPath))
+        {
+            throw new FileNotFoundException($"Source file not found: {fullOldPath}");
+        }
+
+        CreateDirAndCopy(fullOldPath, fullNewPath);
+        return Task.CompletedTask;
+    }
+
     private string GetContentType(string filePath)
         => _provider.TryGetContentType(filePath, out var contentType)
             ? contentType

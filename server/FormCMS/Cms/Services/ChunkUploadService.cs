@@ -30,7 +30,7 @@ public class ChunkUploadService(
     {
         if (identityService.GetUserAccess()?.CanAccessAdmin != true) throw new ResultException("User not found");
         var userId = identityService.GetUserAccess()!.Id; 
-        var session = new UploadSession(userId, fileName, fileSize, FileUtils.GetFilePath(fileName));
+        var session = new UploadSession(userId, fileName, fileSize, FileUtils.GenerateUniqueDatedFilePath(fileName));
         var record = await shardGroup.PrimaryDao.Single(UploadSessions.Find(userId, fileName, fileSize),ct);
         if (record is null)
         {

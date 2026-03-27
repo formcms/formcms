@@ -9,12 +9,9 @@ using FormCMS.Infrastructure.Fts;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Notify.Builders;
 using FormCMS.Search.Builders;
-using FormCMS.Video.Builders;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.AspNetCore.Rewrite;
 using FormCMS.Subscriptions.Builders;
-using HookRegistryExtensions = FormCMS.Video.Builders.HookRegistryExtensions;
 
 namespace FormCMS;
 
@@ -58,9 +55,6 @@ public static class WebApplicationExt
 
         var notificationBuilder = app.Services.GetService<NotificationBuilder>();
         if (notificationBuilder != null) await notificationBuilder.UseNotification(app, scope);
-
-        var videoBuilder = app.Services.GetService<VideoBuilder>();
-        if (videoBuilder != null) await videoBuilder.UseVideo(app);
 
         var searchBuilder = app.Services.GetService<SearchBuilder>();
         if (searchBuilder != null) await searchBuilder.UseSearch(app, scope);
@@ -123,7 +117,4 @@ public static class WebApplicationExt
     public static IServiceCollection AddCrudMessageProducer(
         this IServiceCollection services, string[] entities
     ) => CmsCrudMessageProduceBuilder.AddCrudMessageProducer(services, entities);
-
-    public static IServiceCollection AddVideo(this IServiceCollection services)
-        => VideoBuilder.AddVideo(services);
 }

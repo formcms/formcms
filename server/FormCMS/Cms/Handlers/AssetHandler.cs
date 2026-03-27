@@ -1,13 +1,15 @@
+using FormCMS.Cms.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Assets;
-using FormCMS.Core.Auth;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.WebUtilities;
 
 namespace FormCMS.Cms.Handlers;
 
 public static class AssetHandler
 {
+    
+    public sealed record DownloadVideoRequest(string Url);
+
     public static void MapAssetHandlers(this RouteGroupBuilder app)
     {
         app.MapGet(
@@ -17,7 +19,7 @@ public static class AssetHandler
 
         app.MapGet(
             "/base",
-            (IAssetService s, HttpContext context) => s.GetBaseUrl());
+            (IAssetService s) => s.GetBaseUrl());
 
         app.MapGet(
             "/",
@@ -41,6 +43,15 @@ public static class AssetHandler
         app.MapGet(
             "/path",
             (IAssetService svc, string path, CancellationToken ct) => svc.Single(path, false, ct)
+        );
+
+        app.MapGet(
+            "/progress",
+            async (IAssetService svc, string path, CancellationToken ct) =>
+            {
+                var asset = await svc.Single(path, false, ct);
+                return new { asset.Progress };
+            }
         );
 
         app.MapGet(
@@ -70,19 +81,25 @@ public static class AssetHandler
             (IAssetService svc, long id, CancellationToken ct) => svc.Delete(id, ct)
         );
 
-        app.MapPut(
-                "/hls/progress",
-                async (IAssetService svc, Asset asset, CancellationToken ct) =>
-                {
-                    await svc.UpdateHlsProgress(asset, ct);
-                }
-            )
-            .RequireAuthorization(
-                new AuthorizeAttribute
-                {
-                    AuthenticationSchemes = CmsAuthSchemas.ApiKeyAuth
-                }
-            );
         
+        app.MapPost(
+            "/video",
+            (IAssetService svc, DownloadVideoRequest req, CancellationToken ct) => svc.DownloadVideo(req.Url, ct)
+        );
+
+        app.MapPost(
+            "/convert-mp3/{id:long}",
+            (IAssetService svc, long id, CancellationToken ct) => svc.Convert(id, ConvertVideoFormats.Mp3, ct)
+        );
+
+        app.MapPost(
+            "/convert-m4a/{id:long}",
+            (IAssetService svc, long id, CancellationToken ct) => svc.Convert(id, ConvertVideoFormats.M4a, ct)
+        );
+        
+        app.MapPost(
+            "/convert-hls/{id:long}",
+            (IAssetService svc, long id, CancellationToken ct) => svc.Convert(id, ConvertVideoFormats.M3u8, ct)
+        );
     }
 }

@@ -1,10 +1,12 @@
 using System.Collections.Immutable;
 using System.Reflection;
+using System.Runtime.Loader;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using FormCMS.Auth.Services;
 using FormCMS.Cms.Graph;
 using FormCMS.Cms.Handlers;
+using FormCMS.Cms.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Assets;
 using FormCMS.Core.Descriptors;
@@ -12,12 +14,14 @@ using FormCMS.Core.HookFactory;
 using FormCMS.Core.Identities;
 using FormCMS.Core.Plugins;
 using FormCMS.Infrastructure.Cache;
+using FormCMS.Infrastructure.Downloader;
 using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.Builders;
 using FormCMS.Utils.DisplayModels;
+using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using GraphQL;
 using Microsoft.AspNetCore.Diagnostics;
@@ -81,6 +85,8 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         AddGraphqlServices();
         AddCmsServices();
 
+        LoadDownloaderPlugins();
+        
         return services;
 
         void AddCamelEnumConverter<T>(Microsoft.AspNetCore.Http.Json.JsonOptions options)
@@ -185,6 +191,38 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 systemSettings.QuerySchemaExpiration
             ));
         }
+        
+        void LoadDownloaderPlugins()
+        {
+            if (!Directory.Exists(systemSettings.DownloadPluginPath))
+            {
+                return;
+            }
+
+            var pluginFiles = Directory.GetFiles(systemSettings.DownloadPluginPath, "*.dll", SearchOption.TopDirectoryOnly);
+
+            foreach (var pluginDll in pluginFiles)
+            {
+                try
+                {
+                    var context = new PluginLoadContext(pluginDll);
+                    var assembly = context.LoadFromAssemblyPath(pluginDll);
+
+                    var pluginTypes = assembly.GetTypes()
+                        .Where(t => typeof(IDownloader).IsAssignableFrom(t) &&
+                                    !t.IsInterface && !t.IsAbstract);
+
+                    foreach (var type in pluginTypes)
+                    {
+                        services.AddSingleton(typeof(IDownloader), type);
+                    }
+                }
+                catch (Exception ex)
+                {
+                }
+            }
+            services.AddSingleton<IDownloader, HttpDownloader>();
+        }    
     }
 
     public async Task UseCmsAsync(WebApplication app,IServiceScope scope)
@@ -199,7 +237,8 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         UseGraphql();
         UseExceptionHandler();
         app.Services.GetRequiredService<IFileStore>().Start(app);
-
+        app.Services.GetRequiredService<PluginRegistry>().PluginQueries.Add(CmsConstants.ContentTagQuery);
+        app.Services.GetRequiredService<HookRegistry>().RegisterContentTagQuery();
         return;
 
 
@@ -240,6 +279,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             await schemaService.EnsureTopMenuBar(CancellationToken.None);
         }
 
+        
         void UseExceptionHandler()
         {
             app.UseExceptionHandler(errorApp =>
@@ -284,5 +324,24 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
                 """
             );
         }
+        
+        
+    }
+}
+
+internal class PluginLoadContext(string pluginPath) : AssemblyLoadContext(isCollectible: true)
+{
+    private readonly AssemblyDependencyResolver _resolver = new(pluginPath);
+
+    protected override Assembly? Load(AssemblyName assemblyName)
+    {
+        var assemblyPath = _resolver.ResolveAssemblyToPath(assemblyName);
+        return assemblyPath != null ? LoadFromAssemblyPath(assemblyPath) : null;
+    }
+
+    protected override IntPtr LoadUnmanagedDll(string unmanagedDllName)
+    {
+        var libraryPath = _resolver.ResolveUnmanagedDllToPath(unmanagedDllName);
+        return libraryPath != null ? LoadUnmanagedDllFromPath(libraryPath) : IntPtr.Zero;
     }
 }

@@ -34,7 +34,7 @@ public class CommentsQueryPlugin(
                 .LoadEntity(grouping.Key, PublicationStatus.Published, CancellationToken.None).Ok();
 
             var ids = grouping.Select(x => x.RecordId.ToString()).ToArray();
-            var tags = await contentTagService.GetContentTags(entity,ids,CancellationToken.None);
+            var tags = await contentTagService.GetContentTags(entity,ids,false,CancellationToken.None);
             var map = tags.ToDictionary(x => x.RecordId);
             foreach (var comment in grouping)
             {

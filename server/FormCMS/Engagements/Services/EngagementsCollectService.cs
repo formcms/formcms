@@ -424,7 +424,7 @@ public class EngagementsCollectService(
             .ToArray();
         if (ids.Length == 0) return statuses;
 
-        var tags = await contentTagService.GetContentTags( entity, ids, ct);
+        var tags = await contentTagService.GetContentTags( entity, ids,false, ct);
         
         var dict = tags.ToDictionary(x => x.RecordId);
         return statuses.Select(status=>

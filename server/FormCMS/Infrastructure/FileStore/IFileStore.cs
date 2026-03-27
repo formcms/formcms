@@ -7,12 +7,14 @@ public interface IFileStore
     void Start(WebApplication app);
     Task Upload(IEnumerable<(string,IFormFile)> files, CancellationToken ct);
     Task Upload(string localPath, string path, CancellationToken ct);
+    Task Upload(Stream stream, string path, CancellationToken ct);
     Task<FileMetadata?> GetMetadata(string filePath, CancellationToken ct);
     string GetUrl(string file);
     Task Download(string path, string localPath, CancellationToken ct);
     Task DownloadFileWithRelated(string path, string localPath, CancellationToken ct);
     Task Del(string file, CancellationToken ct);
     Task DelByPrefix(string prefix, CancellationToken ct);
+    Task Duplicate(string oldPath, string newPath, CancellationToken ct);
     Task<string[]> GetUploadedChunks(string path, CancellationToken ct);
     Task<string> UploadChunk(string path, int chunkNumber, Stream stream, CancellationToken ct);
     Task CommitChunks(string path, CancellationToken ct);

@@ -29,6 +29,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MysqlAppHost", "examples\My
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MysqlWebApp", "examples\MysqlDemo\MysqlWebApp\MysqlWebApp.csproj", "{314DEA26-288C-48D5-A5EF-C8005394248B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "YoutubeDownloader", "YoutubeDownloader\YoutubeDownloader.csproj", "{71BE3CCF-065E-43AB-A256-2C0F80D727DD}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,6 +89,10 @@ Global
 		{314DEA26-288C-48D5-A5EF-C8005394248B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{314DEA26-288C-48D5-A5EF-C8005394248B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{314DEA26-288C-48D5-A5EF-C8005394248B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{71BE3CCF-065E-43AB-A256-2C0F80D727DD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{71BE3CCF-065E-43AB-A256-2C0F80D727DD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{71BE3CCF-065E-43AB-A256-2C0F80D727DD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{71BE3CCF-065E-43AB-A256-2C0F80D727DD}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

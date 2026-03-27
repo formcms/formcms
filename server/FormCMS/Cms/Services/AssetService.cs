@@ -1,5 +1,7 @@
 using FormCMS.Core.Assets;
 using FormCMS.Core.HookFactory;
+using FormCMS.Infrastructure.Downloader;
+using FormCMS.Infrastructure.EventStreaming;
 using FormCMS.Infrastructure.FileStore;
 using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
@@ -8,6 +10,8 @@ using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using Humanizer;
+using System.Text.Json;
+using FormCMS.Cms.Models;
 
 namespace FormCMS.Cms.Services;
 
@@ -18,7 +22,8 @@ public class AssetService(
     IServiceProvider provider,
     HookRegistry hookRegistry,
     SystemSettings systemSettings,
-    ShardGroup shardGroup
+    ShardGroup shardGroup,
+    IStringMessageProducer producer
 ) : IAssetService
 {
     public XEntity GetEntity(bool withLinkCount)
@@ -104,7 +109,7 @@ public class AssetService(
         }
 
         files = files.Select(x=>x.IsImage()?resizer.CompressImage(x):x).ToArray();
-        var pairs = files.Select(x => (FileUtils.GetFilePath(x.FileName), x)).ToArray();
+        var pairs = files.Select(x => (FileUtils.GenerateUniqueDatedFilePath(x.FileName), x)).ToArray();
 
         var assets = new List<Asset>();
         foreach (var (path, file) in pairs)
@@ -253,9 +258,113 @@ public class AssetService(
         }
     }
 
-    public async  Task UpdateHlsProgress(Asset asset, CancellationToken ct)
+    public async  Task UpdateConvertProgress(Asset asset, CancellationToken ct)
     {
-        await shardGroup.PrimaryDao.Exec(asset.UpdateHlsProgress(), ct);
+        var metadata = await store.GetMetadata(asset.Path, ct);
+        asset = asset with { Size = metadata?.Size??0 };
+        await shardGroup.PrimaryDao.Exec(asset.UpdateConvertProgress(), ct);
+    }
+
+    public async Task<string> DownloadVideo(string url, CancellationToken ct)
+    {
+        var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("Access denied");
+        var plugins = provider.GetServices<IDownloader>();
+        var tempFileName = "";
+        foreach (var plugin in plugins)
+        {
+            tempFileName = await plugin.DownloadAsync(url, Path.GetTempPath(), ct);
+            if (!string.IsNullOrWhiteSpace(tempFileName)) break;
+        }
+
+        if (string.IsNullOrWhiteSpace(tempFileName))
+        {
+            throw new ResultException("No plugin or fallback could download this URL.");
+        }
+
+        var finalFileName = Path.GetFileName(tempFileName);
+        var path = FileUtils.GenerateUniqueDatedFilePath(finalFileName);
+        
+        if (await store.GetMetadata(path, ct) != null)
+        {
+            File.Delete(tempFileName);
+            throw new ResultException($"File {path} already exists.");
+        }
+
+        // Move / upload
+        await store.Upload(tempFileName, path, ct);
+        File.Delete(tempFileName); // clean up
+        var metadata = await store.GetMetadata(path,ct);
+        var asset = new Asset(
+            CreatedBy: userId,
+            Path: path,
+            Url: store.GetUrl(path),
+            Name: finalFileName,
+            Title: finalFileName,
+            Size: metadata.Size,
+            Type: metadata.ContentType
+        );
+        var res = await hookRegistry.AssetPreAdd.Trigger(provider, new AssetPreAddArgs(asset));
+        asset = res.RefAsset;
+        await shardGroup.PrimaryDao.BatchInsert(Assets.TableName, Assets.ToInsertRecords([asset]));
+        await hookRegistry.AssetPostAdd.Trigger(provider, new AssetPostAddArgs(asset));
+        return path;
+    }
+
+    public async Task<string> Convert(long id, string targetFormat, CancellationToken ct)
+    {
+        var asset = await Single(id, false, ct);
+        if (!asset.Type.StartsWith("video/") && !asset.Type.StartsWith("audio/"))
+        {
+            throw new ResultException("Asset is not a video or audio file.");
+        }
+        
+        if (!ConvertVideoFormats.MimeTypes.TryGetValue(targetFormat, out var targetMimeType))
+        {
+            throw new ResultException($"Target format {targetFormat} is not supported.");
+        }
+
+        var newPath = Path.ChangeExtension(asset.Path, $".{targetFormat}");
+        
+        var record = await shardGroup.PrimaryDao.Single(Assets.Single(newPath), ct);
+        if (record != null)
+        {
+            throw new ResultException($"Target file {newPath} already exists.");
+        }
+
+        // Add stub asset immediately to track progress
+        await CreateNewAssetStub(asset, newPath, targetMimeType, ct);
+
+        var msg = JsonSerializer.Serialize(new ConvertVideoMessage(asset.Path, newPath));
+        await producer.Produce(AssetTopics.ConvertVideo, msg);
+        return newPath;
+    }
+
+    private async Task CreateNewAssetStub(Asset originalAsset, string newPath, string mimeType, CancellationToken ct)
+    {
+         var record = await shardGroup.PrimaryDao.Single(Assets.Single(newPath), ct);
+         if (record != null)
+         {
+              return; // Already exists
+         }
+         
+         var newAsset = originalAsset with
+         {
+             Id = 0,
+             Path = newPath,
+             Url = store.GetUrl(newPath),
+             Name = Path.GetFileName(newPath),
+             Title = Path.GetFileNameWithoutExtension(newPath),
+             Size = 0,
+             Type = mimeType,
+             CreatedAt = DateTime.UtcNow,
+             UpdatedAt = DateTime.UtcNow,
+             Progress = 0 // Initialize progress to 0
+         };
+         
+         var res = await hookRegistry.AssetPreAdd.Trigger(provider, new AssetPreAddArgs(newAsset));
+         newAsset = res.RefAsset;
+         await shardGroup.PrimaryDao.BatchInsert(Assets.TableName, Assets.ToInsertRecords([newAsset]));
+         await hookRegistry.AssetPostAdd.Trigger(provider, new AssetPostAddArgs(newAsset));
     }
 
     public bool IsValidSignature(IFormFile file)

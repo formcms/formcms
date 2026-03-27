@@ -15,7 +15,9 @@ public interface IAssetService
     Task UpdateMetadata(Asset asset, CancellationToken ct);
     Task UpdateAssetsLinks(Record[]oldLinks, string[] newAssets, string entityName, long id, CancellationToken ct);
     Task Delete(long id, CancellationToken ct);
-    Task UpdateHlsProgress(Asset asset, CancellationToken ct);
+    Task UpdateConvertProgress(Asset asset, CancellationToken ct);
     Task<string> AddWithAction(string path, string fileName, CancellationToken ct);
+    Task<string> DownloadVideo(string url, CancellationToken ct);
+    Task<string> Convert(long id, string targetFormat, CancellationToken ct);
     bool IsValidSignature(IFormFile file);
 }

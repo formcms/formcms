@@ -70,3 +70,4 @@ formcms.settings.json
 *.tfstate
 *.tfstate.backup
 .terraform.lock.hcl
+server/FormCMS.MonoApp/plugins/YoutubeDownloader.dll

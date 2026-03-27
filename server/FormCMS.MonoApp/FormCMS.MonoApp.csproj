@@ -41,4 +41,7 @@
         <!--should not mix dev setting with production setting-->
         <Content Remove="formcms.settings.json" />
     </ItemGroup>
+    <ItemGroup>
+      <Folder Include="plugins\" />
+    </ItemGroup>
 </Project>

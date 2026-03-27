@@ -48,7 +48,25 @@ Watch FormCMS build a complete Library system (Entities, Data, Queries, and UI) 
 | App | Description |
 |-----|-------------|
 | **[Zen Health Tracker](https://zen.formcms.com/)** | A full health tracking app built in hours using FormCMS + AI coding agent — zero manual coding. |
+| **Stash** | A PWA companion app for FormCMS content — bookmark, listen, and cache content with a native mobile feel. |
 
+---
+
+## 📱 Stash — PWA Companion App
+
+**Stash** is a Progressive Web App (PWA) built on top of FormCMS that gives users a native mobile-app experience for consuming and managing content — no App Store required. Install it from the browser on iPhone or Android and it works just like a native app.
+
+### Features
+
+| Feature | What it does |
+|---------|-------------|
+| **Explore & Bookmarks** | Browse content and bookmark items locally — bookmarked content is cached on-device so it loads instantly with no network needed. |
+| **Text-to-Speech with progress memory** | Any article or bookmark can be read aloud. The app remembers exactly where you stopped, so you can pick up later — even across sessions. |
+| **Assets — Download & Convert** | Paste a URL to legally download audio/video content. Convert to **MP3** (original quality, larger file) or **M4A** (64 kbps, compressed to save space) directly from the app. |
+| **Offline audio player** | Your downloaded files play fully offline. Like TTS, playback progress is saved so long audio files (lectures, podcasts) resume right where you left off. |
+
+> **💡 Why a PWA?** Stash uses browser APIs (Web Speech, IndexedDB, Service Worker) to deliver features that feel like a native iPhone/Android app — without the overhead of publishing to an app store.
+> try the pwa at https://demo.formcms.com/stash/ (no login required)
 ---
 
 ## 🧑‍💼 For Non-Developers
@@ -68,6 +86,7 @@ Watch FormCMS build a complete Library system (Entities, Data, Queries, and UI) 
 The easiest way to get FormCMS running. **No backend setup, no .NET, no database installation required.**
 
 > **🟢 Don't want to install?** Try the [live demo](https://demo.formcms.com/mate) instantly — login: `sadmin@cms.com` / `Admin1!`
+> try the pwa at https://demo.formcms.com/stash/ (no login required)
 
 Pull and run from [Docker Hub](https://hub.docker.com/repository/docker/jaike/formcms-mono):
 

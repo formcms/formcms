@@ -12,4 +12,5 @@ public interface IEngagementQueryPlugin
 {
     Task LoadCounts(LoadedEntity entity, GraphNode[] nodes, Record[] records, CancellationToken ct);
     Task<Record[]> GetTopList(string entityName, int offset, int limit, CancellationToken ct);
+    Task<Record[]> GetTopList(int offset, int limit, CancellationToken ct);
 }

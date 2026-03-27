@@ -29,9 +29,52 @@ public class EngagementQueryPlugin(
             .ToArray();
 
         var loadedEntity = entity.ToLoadedEntity();
-        var tags = await contentTagService.GetContentTags(loadedEntity, ids!, ct);
-        return tags.Select(x => RecordExtensions.FormObject(x,blackList: [nameof(ContentTag.Data)])).ToArray();
+        var tags = await contentTagService.GetContentTags(loadedEntity, ids!,false, ct);
+        return tags.Select(x =>
+        {
+            var rec = RecordExtensions.FormObject(x, blackList: [nameof(ContentTag.Data)]);
+            rec[nameof(EngagementCount.EntityName).Camelize()] = entityName;
+            return rec;
+        }).ToArray();
     }  
+    
+    public async Task<Record[]> GetTopList(int offset, int limit, CancellationToken ct)
+    {
+        if (limit > 30 || offset > 30) throw new Exception("Can't access top items");
+        var query = EngagementCountHelper.TopCountItems("", offset, limit);
+        var items = await ctx.EngagementCountShardGroup.ReplicaDao.Many(query , ct);
+        var group = items.GroupBy(x => x.StrOrEmpty(nameof(EngagementCount.EntityName).Camelize()));
+        var allEntities = await entitySchemaService.AllEntities(ct);
+        var dict = new Dictionary<string, ContentTag>();
+        foreach (var grouping in group)
+        {
+            var ids = grouping
+                .Select(x => x[nameof(EngagementCount.RecordId).Camelize()].ToString())
+                .ToArray();
+            var entity = allEntities.FirstOrDefault(x=>x.Name == grouping.Key)?? throw new Exception($"Entity {grouping.Key} not found");
+            var loadedEntity = entity.ToLoadedEntity();
+            var tags = await contentTagService.GetContentTags(loadedEntity, ids!, false, ct);
+            foreach (var contentTag in tags)
+            {
+                dict[grouping.Key + contentTag.RecordId] = contentTag;
+            }
+        }
+        
+        //reserve original order
+        var ret = new List<Record>();
+        foreach (var item in items)
+        {
+            var entityName = item.StrOrEmpty(nameof(EngagementCount.EntityName).Camelize());
+            var key =  entityName+ item.StrOrEmpty(nameof(EngagementCount.RecordId).Camelize());
+            if (dict.TryGetValue(key, out var contentTag))
+            {
+                var rec = RecordExtensions.FormObject(contentTag, blackList: [nameof(ContentTag.Data)]);
+                rec[nameof(EngagementCount.EntityName).Camelize()] = entityName;
+                ret.Add(rec);
+            }
+        }
+        return ret.ToArray();
+    }
     
     public async Task LoadCounts(LoadedEntity entity, GraphNode[] nodes, Record[] records, CancellationToken ct)
     {

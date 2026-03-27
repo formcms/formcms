@@ -9,7 +9,7 @@ public static class HookRegistryExtensions
 {
     public static void RegisterEngagementHooks(this HookRegistry hookRegistry)
     {
-        hookRegistry.ListPlugInQueryArgs.RegisterDynamic(EngagementQueryPluginConstants.TopList,
+        hookRegistry.ListPlugInQuery.RegisterDynamic(EngagementQueryPluginConstants.TopList,
             async (IEngagementQueryPlugin s, ListPlugInQueryArgs args) =>
             {
                 var pg = PaginationHelper.ToValid(args.Pagination, 10);
@@ -20,7 +20,8 @@ public static class HookRegistryExtensions
                 }
                 else
                 {
-                    throw new ResultException("Can not fond entity name from url query query 'entity'");
+                    var items = await s.GetTopList(pg.Offset, pg.Limit, CancellationToken.None);
+                    args = args with { OutRecords = items };
                 }
 
                 return args;

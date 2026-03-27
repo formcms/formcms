@@ -1,0 +1,18 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\server\FormCMS\FormCMS.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="YoutubeExplode" Version="6.5.7" />
+      <PackageReference Include="YoutubeExplode.Converter" Version="6.5.7" />
+    </ItemGroup>
+
+</Project>
