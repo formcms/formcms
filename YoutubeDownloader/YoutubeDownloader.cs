@@ -50,9 +50,9 @@ public class YoutubeDownloader : IDownloader
         fileNameCombined = string.Join("_", fileNameCombined.Split(Path.GetInvalidFileNameChars()));
         var pathCombined = Path.Join(destinationPath, fileNameCombined);
         
-        var streamInfos = new IStreamInfo[] { audioStreamInfo, videoStreamInfo };
+        var streamInfos = new [] { audioStreamInfo, videoStreamInfo };
         await youtube.Videos.DownloadAsync(streamInfos, new ConversionRequestBuilder(pathCombined).Build(), cancellationToken: ct);
         
-        return fileNameCombined ;
+        return pathCombined;
     }
 }

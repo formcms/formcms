@@ -59,6 +59,8 @@
         <PackageReference Include="System.Runtime.Caching" Version="10.0.2" />
         <PackageReference Include="Xabe.FFmpeg" Version="6.0.2" />
         <PackageReference Include="YoutubeExplode" Version="6.5.7" />
+        <PackageReference Include="YoutubeExplode" Version="6.5.7" />
+        <PackageReference Include="YoutubeExplode.Converter" Version="6.5.7" />
     </ItemGroup>
 
     <ItemGroup>

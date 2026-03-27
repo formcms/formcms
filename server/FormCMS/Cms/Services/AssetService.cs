@@ -291,7 +291,7 @@ public class AssetService(
         }
 
         // Move / upload
-        await store.Upload(File.OpenRead(tempFileName), path, ct);
+        await store.Upload(tempFileName, path, ct);
         File.Delete(tempFileName); // clean up
         var metadata = await store.GetMetadata(path,ct);
         var asset = new Asset(

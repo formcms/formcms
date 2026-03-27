@@ -20,7 +20,6 @@ if (!string.IsNullOrWhiteSpace(settings?.ConnectionString)   && await app.Ensure
 {
     await app.UseCmsAsync();
     app.MapSpas();
-    await app.EnsureCmsUser("admin@cms.com", "Admin1!", [Roles.Sa]);
 }
 
 app.Run();
