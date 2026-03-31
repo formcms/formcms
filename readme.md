@@ -29,9 +29,9 @@ FormCMS is an open-source CMS that uses AI to generate your entire app — schem
 
 Watch FormCMS build a complete Library system (Entities, Data, Queries, and UI) from scratch in under 60 seconds (sped up 10x).
 
-[![FormCMS Demo](https://github.com/formcms/formmate/blob/main/artifacts/demo_video.webp?raw=true)](https://www.youtube.com/watch?v=lqjuDNLLaBY)
+[![FormCMS Demo](https://img.youtube.com/vi/lqjuDNLLaBY/maxresdefault.jpg)](https://www.youtube.com/watch?v=lqjuDNLLaBY)
 
-[Watch the full demo on YouTube](https://www.youtube.com/watch?v=lqjuDNLLaBY)
+*Click the image above to watch the full demo on YouTube.*
 
 ---
 
