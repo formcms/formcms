@@ -1,4 +1,5 @@
 using FormCMS.Auth.Models;
+using FormCMS.Cms.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Identities;
 using FormCMS.Infrastructure.FileStore;
@@ -31,11 +32,11 @@ public class UserManageService<TUser>(
         var query = new SqlKata.Query(tableName)
             // primary key can be string(uuid) or long(auto increment)
             .Where(primaryKey, long.TryParse(recordId, out var id)? id : recordId)
-            .Select(Constants.CreatedBy);
+            .Select(AuthConstants.CreatedBy);
         
         var record = await shardGroup.PrimaryDao.Single(query, CancellationToken.None);
         if (record is not null 
-            && record.TryGetValue(Constants.CreatedBy, out var createdBy) && 
+            && record.TryGetValue(AuthConstants.CreatedBy, out var createdBy) && 
             createdBy is  string s)
         {
             return s;

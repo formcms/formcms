@@ -237,7 +237,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         UseGraphql();
         UseExceptionHandler();
         app.Services.GetRequiredService<IFileStore>().Start(app);
-        app.Services.GetRequiredService<PluginRegistry>().PluginQueries.Add(CmsConstants.ContentTagQuery);
+       
         app.Services.GetRequiredService<HookRegistry>().RegisterContentTagQuery();
         return;
 

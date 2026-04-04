@@ -1,6 +1,7 @@
 using System.Collections.Immutable;
 using FluentResults;
 using FormCMS.Auth.Models;
+using FormCMS.Cms.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Utils.ResultExt;
@@ -66,13 +67,13 @@ public class SchemaAuthService(
     {
         var entity = schema.Settings.Entity;
         if (entity is null) return Result.Fail("can not ensure schema have created_by field, invalid Entity payload");
-        if (schema.Settings.Entity?.Attributes.FirstOrDefault(x=>x.Field == Constants.CreatedBy) is not null) return schema;
+        if (schema.Settings.Entity?.Attributes.FirstOrDefault(x=>x.Field == AuthConstants.CreatedBy) is not null) return schema;
 
         ImmutableArray<Descriptors_Attribute> attributes =
         [
             ..entity.Attributes,
             new(
-                Field: Constants.CreatedBy, Header: Constants.CreatedBy, DataType: DataType.String,
+                Field: AuthConstants.CreatedBy, Header: AuthConstants.CreatedBy, DataType: DataType.String,
                 InList: false, InDetail: false, IsDefault: true
             )
         ];

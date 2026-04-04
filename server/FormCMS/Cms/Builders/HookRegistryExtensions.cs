@@ -8,6 +8,7 @@ namespace FormCMS.Cms.Builders;
 
 public static class HookRegistryExtensions
 {
+   
     public static void RegisterContentTagQuery(this HookRegistry registry)
     {
         registry.ListPlugInQuery.RegisterDynamic(CmsConstants.ContentTagQuery,

@@ -1,5 +1,7 @@
 using FluentResults;
+using FormCMS.Auth.Services;
 using FormCMS.Cms.Graph;
+using FormCMS.Cms.Models;
 using FormCMS.Core.Plugins;
 using FormCMS.Core.Assets;
 using FormCMS.Core.Descriptors;
@@ -21,8 +23,8 @@ public sealed class QueryService(
     HookRegistry hook,
     PluginRegistry  registry,
     IUserManageService userManageService,
+    IIdentityService identityService ,
     ShardGroup shardGroup
-    
 ) : IQueryService
 {
     public async Task<Record[]> ListWithAction(GraphQlRequestDto dto)
@@ -521,6 +523,12 @@ public sealed class QueryService(
     
     private Result<ValidFilter[]> ReplaceVariables( IEnumerable<ValidFilter> filters, StrArgs? args )
     {
+        var identity = identityService.GetUserAccess();
+        if (identity != null)
+        {
+            args[AuthConstants.ContextUser] = identity.Id;
+        }
+        
         var ret = new List<ValidFilter>();
         foreach (var filter in filters)
         {

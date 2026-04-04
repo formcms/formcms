@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using FormCMS.Auth.Models;
+using FormCMS.Cms.Models;
 using FormCMS.Utils.FancyId;
 using FormCMS.Utils.ResultExt;
 using Microsoft.AspNetCore.Authentication;
@@ -23,7 +24,7 @@ public class LoginService<TUser,TRole>(
 {
     public async Task Login(string usernameOrEmail, string password)
     {
-        if (usernameOrEmail == Constants.GuestUserPrefix && contextAccessor.HttpContext != null)
+        if (usernameOrEmail == AuthConstants.GuestUserPrefix && contextAccessor.HttpContext != null)
         {
             var roleAccess =await accountService.GetSingleRole(Roles.Guest);
             var (nameId, email) = GuestIdentityFactory.Create();
