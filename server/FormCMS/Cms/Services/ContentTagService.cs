@@ -16,27 +16,8 @@ public class ContentTagService(
 {
     public async Task<ContentTag[]> GetContentTags(LoadedEntity entity, string[] ids, bool includeContent, CancellationToken ct)
     {
-        var contentFieldName = string.IsNullOrWhiteSpace(entity.ContentTagField)
-            ? entity.Attributes.FirstOrDefault(x => x.DisplayType == DisplayType.Editor)
-                ?.Field ?? ""
-            : entity.ContentTagField;
-        
-        var titleFieldName = string.IsNullOrWhiteSpace(entity.TitleTagField)
-            ?entity.LabelAttribute.Field??""
-            : entity.TitleTagField;
-
-        var subtitleFieldName = string.IsNullOrWhiteSpace(entity.SubtitleTagField)
-            ? entity.Attributes
-                .FirstOrDefault(x => x.DisplayType == DisplayType.Textarea )?.Field ?? ""
-            : entity.SubtitleTagField;
-        
-        var publishedAtFieldName =string.IsNullOrWhiteSpace(entity.PublishTimeTagField)
-            ? DefaultAttributeNames.PublishedAt.Camelize()
-            : entity.PublishTimeTagField;
-
-        var imageField = string.IsNullOrWhiteSpace(entity.ImageTagField)
-            ?entity.Attributes.FirstOrDefault(x => x.DisplayType == DisplayType.Image)?.Field ?? ""
-            :entity.ImageTagField;
+        var (contentFieldName, titleFieldName, subtitleFieldName, publishedAtFieldName, imageField) =
+            entity.GetTagsFields();
         
         
         if (string.IsNullOrWhiteSpace(entity.TagsQuery))
@@ -64,6 +45,7 @@ public class ContentTagService(
             var records = await shardGroup.ReplicaDao.Many(query, ct);
 
             var tags = records.Select(record => new ContentTag(Data: record,
+                EntityName:entity.Name,
                 RecordId: record.StrOrEmpty(entity.PrimaryKey),
                 Title: Trim(record.StrOrEmpty(titleFieldName)),
                 Content: includeContent ?record.StrOrEmpty(contentFieldName):"", 
@@ -87,6 +69,7 @@ public class ContentTagService(
             {
                 var id = record.StrOrEmpty(entity.PrimaryKey);
                 return new ContentTag(
+                    EntityName: entity.Name,
                     Data: record,
                     RecordId: id,
                     Url: (record.ByJsonPath<string>(entity.PageUrl, out var val) ? val! : entity.PageUrl) + id,

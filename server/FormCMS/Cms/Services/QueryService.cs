@@ -39,7 +39,38 @@ public sealed class QueryService(
             return queryRes.OutRecords??throw new ResultException($"Fail to get query result for [{name}]");
         }
         var query = await FromSavedQuery(name, args, ct);
-        return await ListWithAction(query, pagination, span, args, ct);
+        var records= await ListWithAction(query, pagination, span, args, ct);
+        if (args.ContainsKey("normalizeTagFields"))
+        {
+            NormalizeTagFields(query, records);
+        }
+        return records;
+    }
+
+    private void NormalizeTagFields(LoadedQuery query,Record[] records)
+    {
+        var tagFields = query.Entity.GetTagsFields();
+        foreach (var rec in records)
+        {
+            Rename(rec, tagFields.Title, nameof(ContentTag.Title).Camelize());
+            Rename(rec, tagFields.Content,nameof(ContentTag.Content).Camelize() );
+            Rename(rec, tagFields.Publish, nameof(ContentTag.PublishedAt).Camelize());
+            Rename(rec, tagFields.SubTitle,nameof(ContentTag.Subtitle).Camelize());
+            rec[nameof(ContentTag.RecordId).Camelize()] = rec[query.Entity.PrimaryKey];
+            rec[nameof(ContentTag.EntityName).Camelize()] = query.Entity.Name;
+            if (rec.TryGetValue(tagFields.Image, out var image) && image is Dictionary<string,object> dict)
+            {
+                rec[nameof(ContentTag.Image).Camelize()] = dict[nameof(Asset.Url).Camelize()];
+                rec.Remove(tagFields.Image);
+            }
+        }
+
+        void Rename(Record rec, string oldName, string newName)
+        {
+            if (oldName == newName || !rec.TryGetValue(oldName, out var oldValue)) return;
+            rec[newName] = oldValue;
+            rec.Remove(oldName);
+        }
     }
 
     public async Task<Record?> SingleWithAction(GraphQlRequestDto dto)

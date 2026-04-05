@@ -69,7 +69,6 @@ public class EngagementQueryPlugin(
             if (dict.TryGetValue(key, out var contentTag))
             {
                 var rec = RecordExtensions.FormObject(contentTag, blackList: [nameof(ContentTag.Data)]);
-                rec[nameof(EngagementCount.EntityName).Camelize()] = entityName;
                 ret.Add(rec);
             }
         }

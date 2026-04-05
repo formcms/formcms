@@ -115,6 +115,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             services.AddScoped<ISchemaService, SchemaService>();
             services.AddScoped<IEntitySchemaService, EntitySchemaService>();
             services.AddScoped<IQuerySchemaService, QuerySchemaService>();
+            services.AddScoped<IStashSchemaService, StashSchemaService>();
             services.AddScoped<IContentTagService, ContentTagService>();
 
             services.AddScoped<IEntityService, EntityService>();
@@ -248,29 +249,38 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
             app.UseGraphQLGraphiQL(settings.GraphQlPath);
         }
 
-        async Task UseApiRouters()
+        Task UseApiRouters()
         {
-            var apiGroup = app.MapGroup(settings.RouteOptions.ApiBaseUrl);
-            apiGroup.MapGroup("/entities").MapEntityHandlers();
-            apiGroup
-                .MapGroup("/schemas")
-                .MapSchemaBuilderSchemaHandlers()
-                .MapAdminPanelSchemaHandlers();
-            apiGroup.MapGroup("/assets").MapAssetHandlers();
-            apiGroup.MapGroup("/chunks").MapChunkUploadHandler();
-            apiGroup
-                .MapGroup("/queries")
-                .MapQueryHandlers()
-                .CacheOutput(SystemSettings.QueryCachePolicyName);
+            try
+            {
+                var apiGroup = app.MapGroup(settings.RouteOptions.ApiBaseUrl);
+                apiGroup.MapGroup("/entities").MapEntityHandlers();
+                apiGroup
+                    .MapGroup("/schemas")
+                    .MapSchemaBuilderSchemaHandlers()
+                    .MapAdminPanelSchemaHandlers()
+                    .MapStashSchemaHandlers();
+                apiGroup.MapGroup("/assets").MapAssetHandlers();
+                apiGroup.MapGroup("/chunks").MapChunkUploadHandler();
+                apiGroup
+                    .MapGroup("/queries")
+                    .MapQueryHandlers()
+                    .CacheOutput(SystemSettings.QueryCachePolicyName);
 
-            apiGroup.MapGroup("/page-data").MapPageData();
-            // if an auth component is not use, the handler will use fake profile service
-            apiGroup.MapIdentityHandlers();
-            apiGroup.MapGroup("/tasks").MapTasksHandler();
+                apiGroup.MapGroup("/page-data").MapPageData();
+                // if an auth component is not use, the handler will use fake profile service
+                apiGroup.MapIdentityHandlers();
+                apiGroup.MapGroup("/tasks").MapTasksHandler();
 
-            app.UsePages(settings.RouteOptions.PageBaseUrl,settings.KnownPaths);
-            if (settings.MapCmsHomePage)
-                app.UseHomePage();
+                app.UsePages(settings.RouteOptions.PageBaseUrl,settings.KnownPaths);
+                if (settings.MapCmsHomePage)
+                    app.UseHomePage();
+                return Task.CompletedTask;
+            }
+            catch (Exception exception)
+            {
+                return Task.FromException(exception);
+            }
         }
 
         async Task Seed(IServiceScope scope)

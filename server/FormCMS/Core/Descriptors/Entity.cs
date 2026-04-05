@@ -66,8 +66,35 @@ public static class EntityConstants
     public const int DefaultPageSize = 50;
 }
 
+public record TagFields(string Content, string Title, string SubTitle, string Publish, string Image);
+
 public static class EntityHelper
 {
+    public static TagFields GetTagsFields(this LoadedEntity entity)
+    {
+        var contentFieldName = string.IsNullOrWhiteSpace(entity.ContentTagField)
+            ? entity.Attributes.FirstOrDefault(x => x.DisplayType == DisplayType.Editor)
+                ?.Field ?? ""
+            : entity.ContentTagField;
+        
+        var titleFieldName = string.IsNullOrWhiteSpace(entity.TitleTagField)
+            ?entity.LabelAttribute.Field??""
+            : entity.TitleTagField;
+
+        var subtitleFieldName = string.IsNullOrWhiteSpace(entity.SubtitleTagField)
+            ? entity.Attributes
+                .FirstOrDefault(x => x.DisplayType == DisplayType.Textarea )?.Field ?? ""
+            : entity.SubtitleTagField;
+        
+        var publishedAtFieldName =string.IsNullOrWhiteSpace(entity.PublishTimeTagField)
+            ? DefaultAttributeNames.PublishedAt.Camelize()
+            : entity.PublishTimeTagField;
+
+        var imageField = string.IsNullOrWhiteSpace(entity.ImageTagField)
+            ?entity.Attributes.FirstOrDefault(x => x.DisplayType == DisplayType.Image)?.Field ?? ""
+            :entity.ImageTagField;
+        return new (contentFieldName, titleFieldName, subtitleFieldName, publishedAtFieldName, imageField);
+    }
     public static Entity AddLookUp(this Entity entity, string lookup)
     {
         if (string.IsNullOrWhiteSpace(lookup)) return entity;
