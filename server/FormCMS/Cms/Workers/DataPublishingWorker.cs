@@ -14,14 +14,14 @@ public sealed class DataPublishingWorker(
     {
         while (!ct.IsCancellationRequested)
         {
-            logger.LogInformation("Wakeup Publishing Worker...");
+            logger.LogTrace("Wakeup Publishing Worker...");
 
             using var scope = serviceScopeFactory.CreateScope();
             var queryExecutor = scope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao;
             try
             {
                 var query = SchemaHelper.ByNameAndType(SchemaType.Entity, null, PublicationStatus.Published);
-                var items = await queryExecutor.Many(query, ct);
+                var items = await queryExecutor.Many(query, ct,true);
                 long count = 0;
                 foreach (var item in items)
                 {
@@ -37,7 +37,7 @@ public sealed class DataPublishingWorker(
                         try
                         {
                             count += await queryExecutor.Exec(
-                                entity.Settings.Entity!.PublishAllScheduled(), ct);
+                                entity.Settings.Entity!.PublishAllScheduled(), ct,true);
                         }
                         catch (Exception e)
                         {
@@ -48,7 +48,7 @@ public sealed class DataPublishingWorker(
                     }
                 }
 
-                logger.LogInformation($"{count} records published");
+                logger.LogTrace($"{count} records published");
             }
             catch (Exception e)
             {

@@ -90,7 +90,7 @@ public static class Builder
         });
         
         CmsWorkerBuilder.AddWorker(builder.Services, monoMonoSettings.DatabaseProvider, monoMonoSettings.ConnectionString,
-            new TaskTimingSeconds(300,300,300,300));
+            new TaskTimingSeconds(60,60,60,60));
         builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(new AuthConfig());
         builder.Services.AddEngagement();
         builder.Services.AddComments();

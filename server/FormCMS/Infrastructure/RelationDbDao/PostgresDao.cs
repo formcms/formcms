@@ -30,11 +30,14 @@ public class PostgresDao( NpgsqlConnection connection,ILogger<PostgresDao> logge
     
     public bool InTransaction() => _transaction?.Transaction() != null;
     
-    public Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
+    public Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc, bool omitLog = false)
     {
         var db = new QueryFactory(GetConnection(), _compiler);
-        db.Logger = result => logger.LogInformation(result.ToString());
-            
+        if (!omitLog)
+        {
+            db.Logger = result => logger.LogInformation(result.ToString());
+        }
+
         return queryFunc(db,_transaction?.Transaction());
     }
 

@@ -126,12 +126,15 @@ public static class KateQueryExtensions
 
     public static async Task<int> Exec(
         this IPrimaryDao dao,
-        Query query, CancellationToken ct = default
+        Query query, 
+        CancellationToken ct = default,
+        Boolean omitLog = false
     ) => await dao.ExecuteKateQuery(async (db, tx)
         => await db.ExecuteAsync(
                 query: query,
                 transaction: tx,
-                cancellationToken: ct)
+                cancellationToken: ct),
+        omitLog
     );
 
     public static async Task<long[]> ExecBatch(
@@ -180,16 +183,22 @@ public static class KateQueryExtensions
 
     public static Task<Record?> Single(
         this IReplicaDao dao,
-        Query query, CancellationToken ct
+        Query query,
+        CancellationToken ct,
+        Boolean omitLog = false
     ) => dao.ExecuteKateQuery(async (db, tx) =>
     {
         var item = await db.FirstOrDefaultAsync(query: query, transaction: tx, cancellationToken: ct);
         return item is null ? null : (Record)new Dictionary<string, object>((Record)item);
-    });
+    }, omitLog);
 
     public static Task<Record[]> Many(
         this IReplicaDao dao,
-        Query query, CancellationToken ct = default
+        Query query, 
+        CancellationToken ct = default,
+        Boolean omitLog = false
+    
+        
     ) => dao.ExecuteKateQuery(async (db, tx) =>
     {
         var items = await db.GetAsync(
@@ -197,7 +206,7 @@ public static class KateQueryExtensions
             transaction: tx,
             cancellationToken: ct);
         return items.Select(x => (Record)new Dictionary<string, object>((Record)x)).ToArray();
-    });
+    }, omitLog);
 
     //resolve filter depends on provider
     public static Task<Record[]> Many(

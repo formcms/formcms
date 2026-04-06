@@ -27,10 +27,14 @@ public class SqlServerDao(SqlConnection conn, ILogger<SqlServerDao> logger ) : I
     public async ValueTask<TransactionManager> BeginTransaction()
             => _transaction = new TransactionManager(await GetConnection().BeginTransactionAsync());
     public bool InTransaction() => _transaction?.Transaction() != null;
-    public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc)
+    public async Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc, bool omitLog = false)
     {
         var db = new QueryFactory(GetConnection(), _compiler);
-        db.Logger = result => logger.LogInformation(result.ToString());
+        if (!omitLog)
+        {
+            db.Logger = result => logger.LogInformation(result.ToString());
+        }
+
         return await queryFunc(db, _transaction?.Transaction());
     }
 

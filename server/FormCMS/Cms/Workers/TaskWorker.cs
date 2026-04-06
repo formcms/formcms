@@ -38,7 +38,7 @@ public abstract class TaskWorker(
         
         using var scope = serviceScopeFactory.CreateScope();
         var dao = scope.ServiceProvider.GetRequiredService<ShardGroup>().PrimaryDao;
-        var record = await dao.Single(TaskHelper.GetNewTask(taskType), ct);
+        var record = await dao.Single(TaskHelper.GetNewTask(taskType), ct,true);
         if (record == null)
         {
             return;
@@ -49,13 +49,14 @@ public abstract class TaskWorker(
         {
             await dao.Exec(
                 TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.InProgress, Progress = 50 }),
-                ct
+                ct,
+                true
             );
             logger.LogInformation("Got {taskType} task, id = {id}", task.Type, task.Id);
             await DoTask(scope, dao, task,ct);
             await dao.Exec(
                 TaskHelper.UpdateTaskStatus(task with { TaskStatus = TaskStatus.Finished, Progress = 100 }),
-                ct);
+                ct,true);
         }
         catch (Exception e)
         {
