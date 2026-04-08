@@ -9,8 +9,6 @@ public static class PluginRegistryExtensions
     public static void RegisterPlugin(this PluginRegistry registry)
     {
         registry.PluginQueries.Add(CmsConstants.ContentTagQuery);
-        var attr = new Attribute(AuthConstants.CreatedBy);
-        registry.PluginAttributes.Add(attr.Field,attr); 
     }
     
 }

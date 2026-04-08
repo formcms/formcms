@@ -5,6 +5,7 @@ using FormCMS.Cms.Services;
 using FormCMS.Core.Descriptors;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.DataModels;
+using FormCMS.Utils.EnumExt;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 
@@ -23,7 +24,7 @@ public class EntityAuthService(
         var level = profileService.MustGetReadLevel(entityName);
         if (level == AccessLevel.Full) return filters;
 
-        var createBy = new LoadedAttribute(TableName: entity.TableName, AuthConstants.CreatedBy);
+        var createBy = new LoadedAttribute(TableName: entity.TableName, DefaultAttributeNames.CreatedBy.Camelize());
         var vector = new AttributeVector("", "", [], createBy);
         var constraint = new ValidConstraint(Matches.EqualsTo, [new ValidValue(identityService.GetUserAccess()!.Id)]);
         var filter = new ValidFilter(vector, MatchTypes.MatchAll, [constraint]);
@@ -62,7 +63,7 @@ public class EntityAuthService(
 
     public void AssignCreatedBy(Record record)
     {
-        record[AuthConstants.CreatedBy] = identityService.GetUserAccess()!.Id;
+        record[DefaultAttributeNames.CreatedBy.Camelize()] = identityService.GetUserAccess()!.Id;
     }
 
     private async Task EnsureCreatedByCurrentUser(LoadedEntity entity, string recordId)

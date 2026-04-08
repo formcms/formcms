@@ -66,6 +66,17 @@ public static class AttributeHelper
                 DisplayType: DisplayType.Number
             ));
         }
+        
+        if (attributes.FirstOrDefault(x => x.Field == DefaultAttributeNames.CreatedBy.Camelize()) is null)
+        {
+            ret.Add(new Attribute
+            (
+                Field: DefaultAttributeNames.CreatedBy.Camelize(), Header: "Create By",
+                IsDefault: true, InDetail: true, InList: true,
+                DataType: DataType.String,
+                DisplayType: DisplayType.Text
+            ));
+        }
 
         ret.AddRange(attributes);
 

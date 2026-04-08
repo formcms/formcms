@@ -32,11 +32,6 @@ public class SchemaAuthService(
         await EnsureWritePermissionAsync(schema);
 
         schema = schema with { CreatedBy = access?.Id ??"" };
-        if (schema.Type == SchemaType.Entity)
-        {
-            schema = EnsureSchemaHaveCreatedByField(schema).Ok();
-        }
-
         return schema;
     }
 
@@ -61,23 +56,6 @@ public class SchemaAuthService(
         {
             throw new ResultException($"You don't have permission to save {schema.Type} [{schema.Name}]");
         }
-    }
-
-    private static Result<Schema> EnsureSchemaHaveCreatedByField(Schema schema)
-    {
-        var entity = schema.Settings.Entity;
-        if (entity is null) return Result.Fail("can not ensure schema have created_by field, invalid Entity payload");
-        if (schema.Settings.Entity?.Attributes.FirstOrDefault(x=>x.Field == AuthConstants.CreatedBy) is not null) return schema;
-
-        ImmutableArray<Descriptors_Attribute> attributes =
-        [
-            ..entity.Attributes,
-            new(
-                Field: AuthConstants.CreatedBy, Header: AuthConstants.CreatedBy, DataType: DataType.String,
-                InList: false, InDetail: false, IsDefault: true
-            )
-        ];
-        return schema with{Settings = new Settings(Entity: entity with{Attributes = attributes})};
     }
 
     private async Task<bool> IsCreatedByCurrentUser(Schema schema)

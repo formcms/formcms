@@ -239,6 +239,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         UseExceptionHandler();
         app.Services.GetRequiredService<IFileStore>().Start(app);
        
+        app.Services.GetRequiredService<PluginRegistry>().RegisterPlugin();
         app.Services.GetRequiredService<HookRegistry>().RegisterContentTagQuery();
         return;
 
