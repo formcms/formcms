@@ -195,31 +195,30 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         
         void LoadDownloaderPlugins()
         {
-            if (!Directory.Exists(systemSettings.DownloadPluginPath))
+            if (Directory.Exists(systemSettings.DownloadPluginPath))
             {
-                return;
-            }
+                var pluginFiles = Directory.GetFiles(
+                    systemSettings.DownloadPluginPath, "*.dll", SearchOption.TopDirectoryOnly);
 
-            var pluginFiles = Directory.GetFiles(systemSettings.DownloadPluginPath, "*.dll", SearchOption.TopDirectoryOnly);
-
-            foreach (var pluginDll in pluginFiles)
-            {
-                try
+                foreach (var pluginDll in pluginFiles)
                 {
-                    var context = new PluginLoadContext(pluginDll);
-                    var assembly = context.LoadFromAssemblyPath(pluginDll);
-
-                    var pluginTypes = assembly.GetTypes()
-                        .Where(t => typeof(IDownloader).IsAssignableFrom(t) &&
-                                    !t.IsInterface && !t.IsAbstract);
-
-                    foreach (var type in pluginTypes)
+                    try
                     {
-                        services.AddSingleton(typeof(IDownloader), type);
+                        var context = new PluginLoadContext(pluginDll);
+                        var assembly = context.LoadFromAssemblyPath(pluginDll);
+
+                        var pluginTypes = assembly.GetTypes()
+                            .Where(t => typeof(IDownloader).IsAssignableFrom(t) &&
+                                        !t.IsInterface && !t.IsAbstract);
+
+                        foreach (var type in pluginTypes)
+                        {
+                            services.AddSingleton(typeof(IDownloader), type);
+                        }
                     }
-                }
-                catch (Exception ex)
-                {
+                    catch (Exception ex)
+                    {
+                    }
                 }
             }
             services.AddSingleton<IDownloader, HttpDownloader>();

@@ -334,7 +334,7 @@ public class AccountService<TUser, TRole,TCtx>(
         }
         return Result.Ok();
     }
-    
+
     public async Task<Result> EnsureRoles(string[] roles)
     {
         foreach (var roleName in roles)
@@ -353,7 +353,50 @@ public class AccountService<TUser, TRole,TCtx>(
 
         return Result.Ok();
     }
-    
+
+    public async Task<Result> EnsureRoleAccess(RoleAccess roleAccess)
+    {
+        if (string.IsNullOrWhiteSpace(roleAccess.Name))
+        {
+            return Result.Fail("Role name can not be null");
+        }
+
+        var ensureRoleResult = await EnsureRoles([roleAccess.Name]);
+        if (ensureRoleResult.IsFailed) return ensureRoleResult;
+
+        var role = await roleManager.FindByNameAsync(roleAccess.Name);
+        var claims = await roleManager.GetClaimsAsync(role!);
+
+        var res = await AppendClaimsToRole(role!, claims, AccessScope.FullAccess, roleAccess.ReadWriteEntities ?? []);
+        if (res.IsFailed) return res;
+
+        res = await AppendClaimsToRole(role!, claims, AccessScope.RestrictedAccess, roleAccess.RestrictedReadWriteEntities ?? []);
+        if (res.IsFailed) return res;
+
+        res = await AppendClaimsToRole(role!, claims, AccessScope.FullRead, roleAccess.ReadonlyEntities ?? []);
+        if (res.IsFailed) return res;
+
+        res = await AppendClaimsToRole(role!, claims, AccessScope.RestrictedRead, roleAccess.RestrictedReadonlyEntities ?? []);
+        return res;
+    }
+
+    private async Task<Result> AppendClaimsToRole(TRole role, IList<Claim> claims, string type, string[] values)
+    {
+        var currentValues = claims.Where(x => x.Type == type).Select(x => x.Value).ToArray();
+        var toAdd = values.Except(currentValues).ToArray();
+
+        foreach (var val in toAdd)
+        {
+            var identityResult = await roleManager.AddClaimAsync(role, new Claim(type, val));
+            if (!identityResult.Succeeded)
+            {
+                return Fail(identityResult);
+            }
+        }
+
+        return Result.Ok();
+    }
+
     private Result Fail(IdentityResult result) =>
         Result.Fail(string.Join("\r\n", result.Errors.Select(e => e.Description)));
 

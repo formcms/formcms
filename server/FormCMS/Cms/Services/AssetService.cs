@@ -16,6 +16,7 @@ using FormCMS.Cms.Models;
 namespace FormCMS.Cms.Services;
 
 public class AssetService(
+    ILogger<AssetService> logger,
     IFileStore store,
     IIdentityService identityService,
     IResizer resizer,
@@ -268,7 +269,9 @@ public class AssetService(
     public async Task<string> DownloadVideo(string url, CancellationToken ct)
     {
         var userId = identityService.GetUserAccess()?.Id ?? throw new ResultException("Access denied");
-        var plugins = provider.GetServices<IDownloader>();
+        var plugins = provider.GetServices<IDownloader>().ToArray();
+        logger.LogInformation($"Got {plugins.Length}  download plugins");
+        
         var tempFileName = "";
         foreach (var plugin in plugins)
         {
@@ -278,7 +281,7 @@ public class AssetService(
 
         if (string.IsNullOrWhiteSpace(tempFileName))
         {
-            throw new ResultException("No plugin or fallback could download this URL.");
+            throw new ResultException("No plugin or fallback could download this URL:" + url);
         }
 
         var finalFileName = Path.GetFileName(tempFileName);

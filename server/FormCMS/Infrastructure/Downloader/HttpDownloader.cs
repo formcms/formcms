@@ -2,7 +2,7 @@ using NanoidDotNet;
 
 namespace FormCMS.Infrastructure.Downloader;
 
-public class HttpDownloader (IHttpClientFactory factory): IDownloader
+public class HttpDownloader (IHttpClientFactory factory, ILogger<HttpDownloader> logger): IDownloader
 {
     private readonly HttpClient _httpClient = factory.CreateClient();
     public async Task<string> DownloadAsync(string url, string destinationPath, CancellationToken ct)
@@ -19,8 +19,9 @@ public class HttpDownloader (IHttpClientFactory factory): IDownloader
             await stream.CopyToAsync(fileStream, ct);
             return fileName;
         }
-        catch
+        catch(SystemException ex)
         {
+            logger.LogError(ex, ex.Message);
             return "";
         }
     }

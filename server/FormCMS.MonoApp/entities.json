@@ -1,0 +1,308 @@
+[
+  {
+    "name": "offlineFile",
+    "type": "entity",
+    "settings": {
+      "entity": {
+        "attributes": [
+          {
+            "field": "id",
+            "header": "id",
+            "dataType": "int",
+            "displayType": "number",
+            "inList": true,
+            "inDetail": true,
+            "isDefault": true,
+            "options": "",
+            "validation": ""
+          },
+          {
+            "field": "fileId",
+            "header": "File Code",
+            "dataType": "string",
+            "displayType": "text",
+            "inList": true,
+            "inDetail": true,
+            "isDefault": false,
+            "options": "",
+            "validation": "^[A-Za-z0-9-]*$"
+          },
+          {
+            "field": "filename",
+            "header": "Filename",
+            "dataType": "string",
+            "displayType": "text",
+            "inList": true,
+            "inDetail": true,
+            "isDefault": false,
+            "options": "",
+            "validation": ".*"
+          },
+          {
+            "field": "title",
+            "header": "Title",
+            "dataType": "string",
+            "displayType": "text",
+            "inList": true,
+            "inDetail": true,
+            "isDefault": false,
+            "options": "",
+            "validation": ".*"
+          },
+          {
+            "field": "type",
+            "header": "File Type",
+            "dataType": "string",
+            "displayType": "text",
+            "inList": true,
+            "inDetail": true,
+            "isDefault": false,
+            "options": "",
+            "validation": ".*"
+          },
+          {
+            "field": "size",
+            "header": "Size (Bytes)",
+            "dataType": "int",
+            "displayType": "number",
+            "inList": true,
+            "inDetail": true,
+            "isDefault": false,
+            "options": "",
+            "validation": "^[0-9]*$"
+          },
+          {
+            "field": "addedAt",
+            "header": "Added Date",
+            "dataType": "datetime",
+            "displayType": "datetime",
+            "inList": true,
+            "inDetail": true,
+            "isDefault": false,
+            "options": "",
+            "validation": ".*"
+          },
+          {
+            "field": "playProgress",
+            "header": "Play Progress (Seconds)",
+            "dataType": "int",
+            "displayType": "number",
+            "inList": true,
+            "inDetail": true,
+            "isDefault": false,
+            "options": "",
+            "validation": "^[0-9]*$"
+          },
+          {
+            "field": "fileMetadata",
+            "header": "Metadata",
+            "dataType": "text",
+            "displayType": "textarea",
+            "inList": true,
+            "inDetail": true,
+            "isDefault": false,
+            "options": "",
+            "validation": ".*"
+          },
+          {
+            "field": "createdBy",
+            "header": "createdBy",
+            "dataType": "string",
+            "displayType": "text",
+            "inList": false,
+            "inDetail": false,
+            "isDefault": true,
+            "options": "",
+            "validation": ""
+          },
+          {
+            "field": "publicationStatus",
+            "header": "Publication Status",
+            "dataType": "string",
+            "displayType": "dropdown",
+            "inList": true,
+            "inDetail": true,
+            "isDefault": true,
+            "options": "draft,published,scheduled",
+            "validation": ""
+          },
+          {
+            "field": "createdAt",
+            "header": "createdAt",
+            "dataType": "datetime",
+            "displayType": "localDatetime",
+            "inList": true,
+            "inDetail": false,
+            "isDefault": true,
+            "options": "",
+            "validation": ""
+          },
+          {
+            "field": "updatedAt",
+            "header": "updatedAt",
+            "dataType": "datetime",
+            "displayType": "localDatetime",
+            "inList": true,
+            "inDetail": false,
+            "isDefault": true,
+            "options": "",
+            "validation": ""
+          },
+          {
+            "field": "publishedAt",
+            "header": "publishedAt",
+            "dataType": "datetime",
+            "displayType": "localDatetime",
+            "inList": true,
+            "inDetail": false,
+            "isDefault": true,
+            "options": "",
+            "validation": ""
+          }
+        ],
+        "name": "offlineFile",
+        "displayName": "Offline File",
+        "tableName": "offlineFile",
+        "labelAttributeName": "title",
+        "primaryKey": "id",
+        "defaultPageSize": 20,
+        "defaultPublicationStatus": "published",
+        "pageUrl": "/offlinefile",
+        "tagsQuery": "",
+        "tagsQueryParam": "",
+        "titleTagField": "",
+        "subtitleTagField": "",
+        "contentTagField": "",
+        "imageTagField": "",
+        "publishTimeTagField": ""
+      },
+      "query": null,
+      "menu": null,
+      "page": null
+    },
+    "description": "create an entity OfflineFile {\n  fileId: string\n  filename: string\n  title: string\n  type: string\n  size: number\n  addedAt: string\n  playProgress: number // in seconds\n  metadata: \n}",
+    "id": 71,
+    "schemaId": "yzo74RcliiPF",
+    "isLatest": true,
+    "publicationStatus": "published",
+    "createdAt": "2026-04-08T00:07:20.938321",
+    "createdBy": "38052b37-45e4-48bb-a687-a9d3b2d3d0f0"
+  },
+  {
+    "name": "progress",
+    "type": "entity",
+    "settings": {
+      "entity": {
+        "attributes": [
+          {
+            "field": "id",
+            "header": "id",
+            "dataType": "int",
+            "displayType": "number",
+            "inList": true,
+            "inDetail": true,
+            "isDefault": true,
+            "options": "",
+            "validation": ""
+          },
+          {
+            "field": "progress",
+            "header": "progress",
+            "dataType": "text",
+            "displayType": "textarea",
+            "inList": true,
+            "inDetail": true,
+            "isDefault": false,
+            "options": "",
+            "validation": ""
+          },
+          {
+            "field": "description",
+            "header": "Description",
+            "dataType": "string",
+            "displayType": "text",
+            "inList": true,
+            "inDetail": true,
+            "isDefault": false,
+            "options": "",
+            "validation": ""
+          },
+          {
+            "field": "createdBy",
+            "header": "createdBy",
+            "dataType": "string",
+            "displayType": "text",
+            "inList": true,
+            "inDetail": false,
+            "isDefault": true,
+            "options": "",
+            "validation": ""
+          },
+          {
+            "field": "publicationStatus",
+            "header": "Publication Status",
+            "dataType": "string",
+            "displayType": "dropdown",
+            "inList": true,
+            "inDetail": true,
+            "isDefault": true,
+            "options": "draft,published,scheduled",
+            "validation": ""
+          },
+          {
+            "field": "createdAt",
+            "header": "createdAt",
+            "dataType": "datetime",
+            "displayType": "localDatetime",
+            "inList": true,
+            "inDetail": false,
+            "isDefault": true,
+            "options": "",
+            "validation": ""
+          },
+          {
+            "field": "updatedAt",
+            "header": "updatedAt",
+            "dataType": "datetime",
+            "displayType": "localDatetime",
+            "inList": true,
+            "inDetail": false,
+            "isDefault": true,
+            "options": "",
+            "validation": ""
+          },
+          {
+            "field": "publishedAt",
+            "header": "publishedAt",
+            "dataType": "datetime",
+            "displayType": "localDatetime",
+            "inList": true,
+            "inDetail": false,
+            "isDefault": true,
+            "options": "",
+            "validation": ""
+          }
+        ],
+        "name": "progress",
+        "displayName": "progress",
+        "tableName": "progress",
+        "labelAttributeName": "description",
+        "primaryKey": "id",
+        "defaultPageSize": 10,
+        "defaultPublicationStatus": "published",
+        "pageUrl": "",
+        "tagsQuery": "",
+        "tagsQueryParam": "",
+        "titleTagField": "",
+        "subtitleTagField": "",
+        "contentTagField": "",
+        "imageTagField": "",
+        "publishTimeTagField": ""
+      },
+      "query": null,
+      "menu": null,
+      "page": null
+    },
+    "description": ""
+  }
+]
