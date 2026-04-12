@@ -1,3 +1,4 @@
+using FormCMS.Auth.Handlers;
 using FormCMS.Infrastructure.RelationDbDao;
 
 namespace FormCMS.MonoApp;
@@ -12,6 +13,7 @@ public record Spa(string Path, string Dir);
 public record MonoSettings(
     DatabaseProvider DatabaseProvider,
     string ConnectionString,
+    string ApiKey ,
 
     Spa[]? Spas = null,
     string[]? CorsOrigins = null
@@ -19,3 +21,4 @@ public record MonoSettings(
 
 public record SuperAdminRequest(string Email, string Password);
 public record DatabaseConfigRequest(DatabaseProvider DatabaseProvider, string ConnectionString);
+public record ApiKeyRequest(string ApiKey);

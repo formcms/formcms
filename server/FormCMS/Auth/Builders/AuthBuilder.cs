@@ -7,6 +7,7 @@ using FormCMS.Core.Auth;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Plugins;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 
@@ -59,10 +60,19 @@ public sealed class AuthBuilder<TCmsUser>(ILogger<AuthBuilder<TCmsUser>> logger)
 
         if (authConfig.KeyAuthConfig is not null)
         {
-            authenticationBuilder.AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(CmsAuthSchemas.ApiKeyAuth, null);
+            authenticationBuilder
+                .AddScheme<AuthenticationSchemeOptions, ApiKeyAuthenticationHandler>(
+                CmsAuthSchemas.ApiKeyAuth, null);
         }
 
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            options.DefaultPolicy = new AuthorizationPolicyBuilder(
+                    IdentityConstants.ApplicationScheme, 
+                    CmsAuthSchemas.ApiKeyAuth)
+                .RequireAuthenticatedUser()
+                .Build();
+        });
 
         services.AddScoped<IUserClaimsPrincipalFactory<CmsUser>, CustomPrincipalFactory>();
         services.AddScoped<ILoginService, LoginService<TUser,TRole>>();
@@ -94,19 +104,6 @@ public sealed class AuthBuilder<TCmsUser>(ILogger<AuthBuilder<TCmsUser>> logger)
         app.Services.GetRequiredService<HookRegistry>().RegisterAuthHooks(settings);
         app.Services.GetRequiredService<PluginRegistry>().RegisterAuditLogPlugins();
         return app;
-    }
-
-    public async Task<Result> EnsureSystemRoles(
-        WebApplication app,
-        string email,
-        string password,
-        string[] role
-    )
-    {
-        using var scope = app.Services.CreateScope();
-        return await scope
-            .ServiceProvider.GetRequiredService<IAccountService>()
-            .EnsureUser(email, password, role);
     }
 
     public async Task<Result> EnsureSysRoles( WebApplication app)

@@ -9,6 +9,7 @@ using FormCMS.Cms.Handlers;
 using FormCMS.Cms.Models;
 using FormCMS.Cms.Services;
 using FormCMS.Core.Assets;
+using FormCMS.Core.Auth;
 using FormCMS.Core.Descriptors;
 using FormCMS.Core.HookFactory;
 using FormCMS.Core.Identities;
@@ -24,9 +25,12 @@ using FormCMS.Utils.DisplayModels;
 using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using GraphQL;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.AspNetCore.Authorization;
+using AuthorizeAttribute = Microsoft.AspNetCore.Authorization.AuthorizeAttribute;
 using Schema = FormCMS.Cms.Graph.Schema;
 
 namespace FormCMS.Cms.Builders;
@@ -253,21 +257,27 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         {
             try
             {
-                var apiGroup = app.MapGroup(settings.RouteOptions.ApiBaseUrl);
+                var publicGroup = app.MapGroup(settings.RouteOptions.ApiBaseUrl).RequireAuthorization();
+                publicGroup.MapGroup("/queries")
+                    .MapQueryHandlers()
+                    .CacheOutput(SystemSettings.QueryCachePolicyName);
+
+                publicGroup.MapGroup("/page-data").MapPageData();
+
+                
+                var apiGroup = app.MapGroup(settings.RouteOptions.ApiBaseUrl).RequireAuthorization();
                 apiGroup.MapGroup("/entities").MapEntityHandlers();
                 apiGroup
                     .MapGroup("/schemas")
                     .MapSchemaBuilderSchemaHandlers()
                     .MapAdminPanelSchemaHandlers()
-                    .MapStashSchemaHandlers();
+                    .MapStashSchemaHandlers()
+                    .RequireAuthorization();
+                
                 apiGroup.MapGroup("/assets").MapAssetHandlers();
                 apiGroup.MapGroup("/chunks").MapChunkUploadHandler();
-                apiGroup
-                    .MapGroup("/queries")
-                    .MapQueryHandlers()
-                    .CacheOutput(SystemSettings.QueryCachePolicyName);
-
-                apiGroup.MapGroup("/page-data").MapPageData();
+                
+               
                 // if an auth component is not use, the handler will use fake profile service
                 apiGroup.MapIdentityHandlers();
                 apiGroup.MapGroup("/tasks").MapTasksHandler();
