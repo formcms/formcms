@@ -88,8 +88,17 @@ public class ProfileService<TUser>(
 
     public async Task EnsureCurrentUserHaveEntityAccess(string entityName)
     {
+        var roles = contextAccessor.HttpContext.User
+            .FindAll(ClaimTypes.Role)
+            .Select(c => c.Value)
+            .ToList();
+        if (roles.Contains(Roles.Sa))
+        {
+            return;
+        }
+            
         var user = await userManager.GetUserAsync(contextAccessor.HttpContext!.User) ??
-                   throw new Exception("User not found.");
+                   throw new Exception("Profile Service, EnsureCurrentUserHaveEntityAccess, User not found.");
 
         var claims = await userManager.GetClaimsAsync(user);
 

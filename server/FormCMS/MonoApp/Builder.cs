@@ -91,7 +91,8 @@ public static class Builder
         
         CmsWorkerBuilder.AddWorker(builder.Services, monoMonoSettings.DatabaseProvider, monoMonoSettings.ConnectionString,
             new TaskTimingSeconds(60,60,60,60));
-        builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(new AuthConfig());
+        builder.Services.AddCmsAuth<CmsUser, IdentityRole, CmsDbContext>(
+            new AuthConfig(KeyAuthConfig: new KeyAuthConfig(monoMonoSettings.ApiKey)));
         builder.Services.AddEngagement();
         builder.Services.AddComments();
         builder.Services.AddAuditLog();

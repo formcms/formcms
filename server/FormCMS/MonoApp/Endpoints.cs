@@ -63,6 +63,17 @@ public static class Endpoints
                 return Results.Ok();
             });
 
+            app.MapGet("/api/system/api-key", ([FromServices] ISystemSetupService setupService) => new { ApiKey = setupService.GetApiKey() });
+
+            app.MapPut("/api/system/api-key", async (
+                [FromServices] ISystemSetupService setupService,
+                [FromBody] ApiKeyRequest request
+            ) =>
+            {
+                await setupService.UpdateApiKey(request.ApiKey);
+                return Results.Ok();
+            });
+
             app.MapGet("/api/system/download-plugins", ([FromServices] ISystemSetupService setupService) => setupService.GetDownloadPlugins());
 
             app.MapDelete("/api/system/download-plugins", async (

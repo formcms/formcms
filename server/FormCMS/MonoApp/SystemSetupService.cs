@@ -23,6 +23,9 @@ public interface ISystemSetupService
     string[] GetDownloadPlugins();
     Task DeleteDownloadPlugin(string fileName);
     Task AddDownloadPlugin(IFormFile file);
+
+    string GetApiKey();
+    Task UpdateApiKey(string apiKey);
 }
 
 public class SystemSetupService(
@@ -79,9 +82,10 @@ public class SystemSetupService(
         }
 
         // Create new settings
-        settings = new MonoSettings(
+        settings =  new MonoSettings(
             DatabaseProvider: databaseProvider,
-            ConnectionString: connectionString
+            ConnectionString: connectionString,
+            ApiKey:""
         );
 
         // Validate database connection
@@ -255,6 +259,25 @@ public class SystemSetupService(
         EnsurePermission();
         var settings = settingsStore.Load();
         return settings?.CorsOrigins ?? [];
+    }
+
+    public Task UpdateApiKey(string apiKey)
+    {
+        EnsurePermission();
+        var settings = settingsStore.Load();
+        if (settings == null) throw new ResultException("Settings not found");
+
+        var newSettings = settings with { ApiKey = apiKey ?? "" };
+        settingsStore.Save(newSettings);
+        RestartApp();
+        return Task.CompletedTask;
+    }
+
+    public string GetApiKey()
+    {
+        EnsurePermission();
+        var settings = settingsStore.Load();
+        return settings?.ApiKey ?? "";
     }
 
     public string[] GetDownloadPlugins()

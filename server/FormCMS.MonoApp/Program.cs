@@ -7,6 +7,7 @@ using FormCMS.Core.Descriptors;
 using FormCMS.MonoApp;
 using System.IO; // Added for Path.Combine and File.ReadAllText
 using System;
+using System.Security.Claims;
 using FormCMS.Auth.Services;
 using FormCMS.Core.Identities; // Added for AppContext.BaseDirectory
 
@@ -26,10 +27,24 @@ app.MapCorsEndpoints();
 
 if (!string.IsNullOrWhiteSpace(settings?.ConnectionString)   && await app.EnsureDbCreatedAsync())
 {
+    await app.UseCmsAsync();
+    app.MapSpas();
+    
     await using var scope = app.Services.CreateAsyncScope();
     var entitiesFilePath = Path.Combine(AppContext.BaseDirectory, "entities.json");
     if (File.Exists(entitiesFilePath))
     {
+        var httpContextAccessor = scope.ServiceProvider.GetRequiredService<IHttpContextAccessor>();
+
+        // Create a fake admin/system principal
+        var identity = new ClaimsIdentity("Seeding");
+        identity.AddClaim(new Claim(ClaimTypes.NameIdentifier, "system-seed"));
+        identity.AddClaim(new Claim(ClaimTypes.Name, "SystemSeeder"));
+        identity.AddClaim(new Claim(ClaimTypes.Role, Roles.Sa));   // or whatever role has full permissions
+
+        httpContextAccessor.HttpContext ??= new DefaultHttpContext(); // in case it's null
+        httpContextAccessor.HttpContext.User = new ClaimsPrincipal(identity);
+        
         var entitySchemaService = scope.ServiceProvider.GetRequiredService<IEntitySchemaService>();
         var jsonContent = await File.ReadAllTextAsync(entitiesFilePath);
         var jsonSerializerOptions = new JsonSerializerOptions
@@ -59,8 +74,6 @@ if (!string.IsNullOrWhiteSpace(settings?.ConnectionString)   && await app.Ensure
             ));
     }
 
-    await app.UseCmsAsync();
-    app.MapSpas();
 }
 
 
