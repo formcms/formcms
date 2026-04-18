@@ -22,15 +22,11 @@ using FormCMS.Infrastructure.ImageUtil;
 using FormCMS.Infrastructure.RelationDbDao;
 using FormCMS.Utils.Builders;
 using FormCMS.Utils.DisplayModels;
-using FormCMS.Utils.RecordExt;
 using FormCMS.Utils.ResultExt;
 using GraphQL;
-using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Rewrite;
 using Microsoft.Extensions.DependencyInjection.Extensions;
-using Microsoft.AspNetCore.Authorization;
-using AuthorizeAttribute = Microsoft.AspNetCore.Authorization.AuthorizeAttribute;
 using Schema = FormCMS.Cms.Graph.Schema;
 
 namespace FormCMS.Cms.Builders;
@@ -249,7 +245,8 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
 
         void UseGraphql()
         {
-            app.UseGraphQL<Schema>();
+            app.MapGraphQL<Schema>("/graphql")
+                .RequireAuthorization();
             app.UseGraphQLGraphiQL(settings.GraphQlPath);
         }
 
@@ -257,7 +254,9 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
         {
             try
             {
-                var publicGroup = app.MapGroup(settings.RouteOptions.ApiBaseUrl).RequireAuthorization();
+
+                
+                var publicGroup = app.MapGroup(settings.RouteOptions.ApiBaseUrl);
                 publicGroup.MapGroup("/queries")
                     .MapQueryHandlers()
                     .CacheOutput(SystemSettings.QueryCachePolicyName);
@@ -266,6 +265,7 @@ public sealed class CmsBuilder(ILogger<CmsBuilder> logger)
 
                 
                 var apiGroup = app.MapGroup(settings.RouteOptions.ApiBaseUrl).RequireAuthorization();
+
                 apiGroup.MapGroup("/entities").MapEntityHandlers();
                 apiGroup
                     .MapGroup("/schemas")
