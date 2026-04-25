@@ -7,7 +7,7 @@ namespace FormCMS.Infrastructure.RelationDbDao;
 public interface IReplicaDao : IDisposable
 {
     // Execute a query against the underlying QueryFactory. Transaction may be null for readonly usage.
-    internal Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc, bool OmitLog = false);
+    internal Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc, bool omitLog = false);
 
     // Read-only metadata / lookup APIs
     Task<Column[]> GetColumnDefinitions(string table, CancellationToken ct);

@@ -20,9 +20,10 @@ builder.SetMaxRequestBody(sizeStr);
 
 var settings = builder.AddMonoApp(dataPath);
 var app = builder.Build();
+var group = app.MapGroup("/api").RequireAuthorization();
+group.MapConfigEndpoints();
 app.UseMonoCors();
 app.MapReverseProxy();
-await app.MapConfigEndpoints();
 app.MapCorsEndpoints();
 
 if (!string.IsNullOrWhiteSpace(settings?.ConnectionString)   && await app.EnsureDbCreatedAsync())

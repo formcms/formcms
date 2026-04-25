@@ -27,8 +27,8 @@ public sealed class SchemaService(
     public async Task<Schema[]> All(SchemaType? type, IEnumerable<string>? names, PublicationStatus? status, CancellationToken ct = default)
     {
         var query = SchemaHelper.ByNameAndType(type, names, status);
-        var items = await shardGroup.PrimaryDao.Many(query, ct);
-        
+        // this api will be call periodically 
+        var items = await shardGroup.PrimaryDao.Many(query, ct, true);
         return items.Select(x => SchemaHelper.RecordToSchema(x).Ok()).ToArray();
     }
 

@@ -4,7 +4,7 @@ namespace FormCMS.MonoApp;
 
 public static class Endpoints
 {
-    public static async Task MapConfigEndpoints(this WebApplication app)
+    public static void MapConfigEndpoints(this RouteGroupBuilder app)
     {
         app.MapGet("/api/system/is-ready",
             async ([FromServices] ISystemSetupService setupService, CancellationToken ct) =>
@@ -60,40 +60,42 @@ public static class Endpoints
         ) =>
         {
             await setupService.UpdateSpaPath(oldPath, newPath);
-                return Results.Ok();
-            });
+            return Results.Ok();
+        });
 
-            app.MapGet("/api/system/api-key", ([FromServices] ISystemSetupService setupService) => new { ApiKey = setupService.GetApiKey() });
+        app.MapGet("/api/system/api-key",
+            ([FromServices] ISystemSetupService setupService) => new { ApiKey = setupService.GetApiKey() });
 
-            app.MapPut("/api/system/api-key", async (
-                [FromServices] ISystemSetupService setupService,
-                [FromBody] ApiKeyRequest request
-            ) =>
-            {
-                await setupService.UpdateApiKey(request.ApiKey);
-                return Results.Ok();
-            });
+        app.MapPut("/api/system/api-key", async (
+            [FromServices] ISystemSetupService setupService,
+            [FromBody] ApiKeyRequest request
+        ) =>
+        {
+            await setupService.UpdateApiKey(request.ApiKey);
+            return Results.Ok();
+        });
 
-            app.MapGet("/api/system/download-plugins", ([FromServices] ISystemSetupService setupService) => setupService.GetDownloadPlugins());
+        app.MapGet("/api/system/download-plugins",
+            ([FromServices] ISystemSetupService setupService) => setupService.GetDownloadPlugins());
 
-            app.MapDelete("/api/system/download-plugins", async (
-                [FromServices] ISystemSetupService setupService,
-                [FromQuery] string fileName
-            ) =>
-            {
-                await setupService.DeleteDownloadPlugin(fileName);
-                return Results.Ok();
-            });
+        app.MapDelete("/api/system/download-plugins", async (
+            [FromServices] ISystemSetupService setupService,
+            [FromQuery] string fileName
+        ) =>
+        {
+            await setupService.DeleteDownloadPlugin(fileName);
+            return Results.Ok();
+        });
 
-            app.MapPost("/api/system/download-plugins", async (
-                [FromServices] ISystemSetupService setupService,
-                [FromForm] IFormFile file
-            ) =>
-            {
-                await setupService.AddDownloadPlugin(file);
-                return Results.Ok();
-            }).DisableAntiforgery();
-        }
+        app.MapPost("/api/system/download-plugins", async (
+            [FromServices] ISystemSetupService setupService,
+            [FromForm] IFormFile file
+        ) =>
+        {
+            await setupService.AddDownloadPlugin(file);
+            return Results.Ok();
+        }).DisableAntiforgery();
+    }
 
     public static void MapSpas(this WebApplication app)
     {

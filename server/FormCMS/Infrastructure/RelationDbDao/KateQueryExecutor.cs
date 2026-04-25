@@ -128,7 +128,7 @@ public static class KateQueryExtensions
         this IPrimaryDao dao,
         Query query, 
         CancellationToken ct = default,
-        Boolean omitLog = false
+        bool omitLog = false
     ) => await dao.ExecuteKateQuery(async (db, tx)
         => await db.ExecuteAsync(
                 query: query,
@@ -185,7 +185,7 @@ public static class KateQueryExtensions
         this IReplicaDao dao,
         Query query,
         CancellationToken ct,
-        Boolean omitLog = false
+        bool omitLog = false
     ) => dao.ExecuteKateQuery(async (db, tx) =>
     {
         var item = await db.FirstOrDefaultAsync(query: query, transaction: tx, cancellationToken: ct);
@@ -196,9 +196,7 @@ public static class KateQueryExtensions
         this IReplicaDao dao,
         Query query, 
         CancellationToken ct = default,
-        Boolean omitLog = false
-    
-        
+        bool omitLog = false
     ) => dao.ExecuteKateQuery(async (db, tx) =>
     {
         var items = await db.GetAsync(

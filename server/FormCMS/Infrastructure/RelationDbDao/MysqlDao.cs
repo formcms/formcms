@@ -29,10 +29,10 @@ public class MySqlDao(MySqlConnection connection, ILogger<MySqlDao> logger) : IP
 
     public bool InTransaction() => _transactionManager?.Transaction() != null;
 
-    public Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc, bool OmitLog = false)
+    public Task<T> ExecuteKateQuery<T>(Func<QueryFactory, IDbTransaction?, Task<T>> queryFunc, bool omitLog = false)
     {
         var db = new QueryFactory(GetConnection(), _compiler);
-        if (!OmitLog)
+        if (!omitLog)
         {
             db.Logger = result => logger.LogInformation(result.ToString());
         }
