@@ -6,14 +6,14 @@ public static class Endpoints
 {
     public static void MapConfigEndpoints(this RouteGroupBuilder app)
     {
-        app.MapGet("/api/system/is-ready",
+        app.MapGet("/is-ready",
             async ([FromServices] ISystemSetupService setupService, CancellationToken ct) =>
             {
                 var (databaseReady, hasSuperAdmin) = await setupService.GetSystemStatus(ct);
                 return new { DatabaseReady = databaseReady, HasSuperAdmin = hasSuperAdmin };
             }).CacheOutput(x => x.NoCache());
 
-        app.MapPost("/api/system/setup-database", async (
+        app.MapPost("/setup-database", async (
             [FromServices] ISystemSetupService setupService,
             [FromBody] DatabaseConfigRequest request
         ) =>
@@ -22,7 +22,7 @@ public static class Endpoints
             return Results.Ok();
         });
 
-        app.MapPost("/api/system/setup-super-admin", async (
+        app.MapPost("/setup-super-admin", async (
             [FromBody] SuperAdminRequest request,
             [FromServices] ISystemSetupService setupService,
             CancellationToken ct) =>
@@ -31,7 +31,7 @@ public static class Endpoints
             return Results.Ok();
         });
 
-        app.MapPost("/api/system/add-spa", async (
+        app.MapPost("/add-spa", async (
             [FromServices] ISystemSetupService setupService,
             [FromForm] IFormFile file,
             [FromForm] string path,
@@ -42,9 +42,9 @@ public static class Endpoints
             return Results.Ok();
         }).DisableAntiforgery();
 
-        app.MapGet("/api/system/spas", ([FromServices] ISystemSetupService setupService) => setupService.GetSpas());
+        app.MapGet("/spas", ([FromServices] ISystemSetupService setupService) => setupService.GetSpas());
 
-        app.MapDelete("/api/system/spas", async (
+        app.MapDelete("/spas", async (
             [FromServices] ISystemSetupService setupService,
             [FromQuery] string path
         ) =>
@@ -53,7 +53,7 @@ public static class Endpoints
             return Results.Ok();
         });
 
-        app.MapPut("/api/system/spas", async (
+        app.MapPut("/spas", async (
             [FromServices] ISystemSetupService setupService,
             [FromQuery] string oldPath,
             [FromQuery] string newPath
@@ -63,10 +63,10 @@ public static class Endpoints
             return Results.Ok();
         });
 
-        app.MapGet("/api/system/api-key",
+        app.MapGet("/api-key",
             ([FromServices] ISystemSetupService setupService) => new { ApiKey = setupService.GetApiKey() });
 
-        app.MapPut("/api/system/api-key", async (
+        app.MapPut("/api-key", async (
             [FromServices] ISystemSetupService setupService,
             [FromBody] ApiKeyRequest request
         ) =>
@@ -75,10 +75,10 @@ public static class Endpoints
             return Results.Ok();
         });
 
-        app.MapGet("/api/system/download-plugins",
+        app.MapGet("/download-plugins",
             ([FromServices] ISystemSetupService setupService) => setupService.GetDownloadPlugins());
 
-        app.MapDelete("/api/system/download-plugins", async (
+        app.MapDelete("/download-plugins", async (
             [FromServices] ISystemSetupService setupService,
             [FromQuery] string fileName
         ) =>
@@ -87,7 +87,7 @@ public static class Endpoints
             return Results.Ok();
         });
 
-        app.MapPost("/api/system/download-plugins", async (
+        app.MapPost("/download-plugins", async (
             [FromServices] ISystemSetupService setupService,
             [FromForm] IFormFile file
         ) =>

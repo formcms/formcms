@@ -20,7 +20,7 @@ builder.SetMaxRequestBody(sizeStr);
 
 var settings = builder.AddMonoApp(dataPath);
 var app = builder.Build();
-var group = app.MapGroup("/api").RequireAuthorization();
+var group = app.MapGroup("/api/system").RequireAuthorization();
 group.MapConfigEndpoints();
 app.UseMonoCors();
 app.MapReverseProxy();
